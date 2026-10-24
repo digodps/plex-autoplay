@@ -248,7 +248,7 @@ python3 -m unittest discover tests
 
 ## 🤝 Contribuindo
 
-Contribuições são muito bem-vindas! Sinta-se livre para abrir issues ou enviar Pull Requests.
+Contribuições são muito bem-vindas! Sinta-se livre para abrir issues ou enviar Pull Requests. Para manter o histórico consistente, siga a [convenção de commits](./CONTRIBUTING.md).
 
 ---
 
