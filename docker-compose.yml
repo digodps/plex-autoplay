@@ -1,0 +1,12 @@
+services:
+  plex-autoplay:
+    build: .
+    container_name: plex-autoplay
+    restart: unless-stopped
+    # network_mode: host permite comunicação direta com players e com o Plex na rede local
+    network_mode: host
+    env_file:
+      - .env
+    volumes:
+      # Opcional: montar arquivo de marcadores customizados para persistência
+      - ./markers.json:/app/markers.json:ro

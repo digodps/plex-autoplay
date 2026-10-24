@@ -1,0 +1,19 @@
+"""Contracts required by application use cases."""
+
+from typing import Any, Optional, Protocol, Tuple
+
+
+class MarkerRepository(Protocol):
+    def get_intro_markers(self, episode: Any) -> Optional[Tuple[int, int]]: ...
+
+    def get_credits_marker(self, episode: Any) -> Optional[int]: ...
+
+
+class PlexGateway(Protocol):
+    def find_player(self, session: Any) -> Optional[Any]: ...
+
+    def seek_player(self, player: Any, offset_ms: int) -> bool: ...
+
+    def play_media(self, player: Any, media_item: Any, offset_ms: int = 0) -> bool: ...
+
+    def get_next_episode(self, current_episode: Any) -> Optional[Any]: ...

@@ -1,0 +1,26 @@
+# Environment files and credentials
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+ENV/
+env/
+
+# Test and tool output
+.pytest_cache/
+.coverage
+htmlcov/
+*.log
+
+# Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store

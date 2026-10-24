@@ -1,0 +1,21 @@
+{
+  "Stranger Things": {
+    "default": {
+      "start": 125,
+      "end": 195,
+      "credits": 2800
+    },
+    "season_1": {
+      "1": {
+        "start": 0,
+        "end": 65
+      }
+    }
+  },
+  "The Office": {
+    "default": {
+      "start": 80,
+      "end": 115
+    }
+  }
+}

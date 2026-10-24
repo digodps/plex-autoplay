@@ -1,0 +1,1 @@
+"""Marker-file persistence adapters."""
