@@ -132,18 +132,32 @@
                     {% else %}
                       <p class="muted empty-inline">Nenhum episódio reconhecido nesta biblioteca.</p>
                     {% endif %}
-                    {% if library.ambiguities or library.errors or library.pending %}
-                      <div class="issue-list" id="activity">
-                        {% for issue in library.ambiguities %}<p class="issue issue-warning"><strong>Ambiguidade</strong> {{ issue }}</p>{% endfor %}
-                        {% for issue in library.pending %}<p class="issue issue-warning"><strong>Pendente</strong> {{ issue.reason or issue }}</p>{% endfor %}
-                        {% for issue in library.errors %}<p class="issue issue-error"><strong>Erro</strong> {{ issue }}</p>{% endfor %}
-                      </div>
-                    {% endif %}
                   </div>
                 </details>
               </article>
             {% endfor %}
           </div>
+        {% endif %}
+      </section>
+
+      <section class="content-section" id="activity">
+        <div class="section-heading"><div><p class="eyebrow">VARREDURA</p><h2>Atividade</h2></div></div>
+        {% set activity = namespace(has_items=false) %}
+        {% for library in libraries %}
+          {% if library.ambiguities or library.errors or library.pending %}
+            {% set activity.has_items = true %}
+            <div class="activity-group">
+              <h3>{{ library.name }}</h3>
+              <div class="issue-list">
+                {% for issue in library.ambiguities %}<p class="issue issue-warning"><strong>Ambiguidade</strong> {{ issue }}</p>{% endfor %}
+                {% for issue in library.pending %}<p class="issue issue-warning"><strong>Pendente</strong> {{ issue.reason or issue }}</p>{% endfor %}
+                {% for issue in library.errors %}<p class="issue issue-error"><strong>Erro</strong> {{ issue }}</p>{% endfor %}
+              </div>
+            </div>
+          {% endif %}
+        {% endfor %}
+        {% if not activity.has_items %}
+          <p class="muted">Nenhuma pendência ou erro registrado na última varredura.</p>
         {% endif %}
       </section>
 

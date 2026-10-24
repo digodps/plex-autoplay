@@ -132,6 +132,43 @@ class TestDashboardApp(unittest.TestCase):
         self.assertIn("/api/status", script.get_data(as_text=True))
         script.close()
 
+    def test_dashboard_navigation_targets_exist_without_scan_results(self):
+        self._setup_admin()
+
+        response = self.client.get("/")
+        page = response.get_data(as_text=True)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('href="#activity"', page)
+        self.assertEqual(page.count('id="activity"'), 1)
+        self.assertIn("Nenhuma pendência ou erro registrado", page)
+
+    def test_dashboard_shows_configured_libraries_while_scan_is_running(self):
+        self.repository.add_library("Anime", "anime")
+        scan_gate = threading.Event()
+        coordinator = ScanCoordinator(lambda: (scan_gate.wait(2), {"libraries": []})[1])
+        app = create_app(
+            self.repository,
+            Path(self.temp_dir.name) / "config",
+            scan_coordinator=coordinator,
+        )
+        client = app.test_client()
+        token = re.search(r'name="csrf_token" value="([^"]+)"', client.get("/setup").get_data(as_text=True)).group(1)
+        client.post(
+            "/setup",
+            data={"csrf_token": token, "username": "admin", "password": "valid-password"},
+        )
+        self.assertTrue(coordinator.start())
+        try:
+            page = client.get("/").get_data(as_text=True)
+        finally:
+            scan_gate.set()
+            coordinator.wait(2)
+
+        self.assertIn("Anime", page)
+        self.assertIn("0 episódios", page)
+        self.assertNotIn("Nenhuma biblioteca cadastrada", page)
+
     def test_scan_endpoint_rejects_concurrent_requests(self):
         scan_gate = threading.Event()
         coordinator = ScanCoordinator(lambda: (scan_gate.wait(3), {"libraries": []})[1])

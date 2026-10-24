@@ -318,11 +318,33 @@ def create_app(
             else {"status": "idle", "started_at": None, "completed_at": None, "result": None, "error": None}
         )
         result = snapshot.get("result") if isinstance(snapshot.get("result"), dict) else {}
-        libraries = result.get("libraries", [])
-        if not isinstance(libraries, list):
-            libraries = []
-        else:
-            libraries = copy.deepcopy(libraries)
+        report_libraries = result.get("libraries", [])
+        if not isinstance(report_libraries, list):
+            report_libraries = []
+        reports_by_path = {
+            library["path"]: library
+            for library in report_libraries
+            if isinstance(library, dict) and isinstance(library.get("path"), str)
+        }
+        libraries = copy.deepcopy(report_libraries)
+        for configured_library in library_repository.list_libraries():
+            if configured_library.path in reports_by_path:
+                continue
+            libraries.append(
+                {
+                    "name": configured_library.name,
+                    "path": configured_library.path,
+                    "kind": configured_library.kind,
+                    "episode_count": 0,
+                    "with_intro": 0,
+                    "with_credits": 0,
+                    "episodes": [],
+                    "missing": [],
+                    "ambiguities": [],
+                    "pending": [],
+                    "errors": [],
+                }
+            )
         for library in libraries:
             by_series: Dict[str, Dict[int, list[dict[str, Any]]]] = {}
             for episode in library.get("episodes", []):
