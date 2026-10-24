@@ -2,7 +2,7 @@
 
 ## 1. Objetivo
 
-Adicionar um comando para varrer uma pasta de mídia montada pelo usuário, identificar animes e episódios pelo caminho/nome dos arquivos, consultar APIs públicas para obter marcadores de abertura e encerramento e gerar um `markers.json` compatível com o serviço atual.
+Permitir configurar bibliotecas independentes de Anime e Séries comuns no Docker, varrer Anime ao iniciar o serviço, identificar episódios pelo caminho/nome dos arquivos, consultar APIs públicas para obter marcadores de abertura e encerramento e gerar um `markers.json` compatível com o serviço atual. Uma CLI também oferece prévia e geração manual.
 
 O recurso gera **marcadores temporais** (segmentos de intro e encerramento), não arquivos de metadados descritivos nem alterações na biblioteca Plex.
 
@@ -11,11 +11,12 @@ O recurso gera **marcadores temporais** (segmentos de intro e encerramento), nã
 - Anime em arquivos de vídeo locais acessíveis pelo container.
 - Consulta de dados externos somente por APIs públicas documentadas.
 - Geração local de `markers.json`; sem escrita ou atualização da biblioteca Plex.
-- Execução explícita por CLI, com modo de prévia e confirmação antes de gravar.
+- Varredura automática no startup do Docker Compose e execução manual por CLI, com modo de prévia e confirmação antes de gravar pela CLI.
+- Mounts de Anime e Séries comuns independentes e somente leitura; somente Anime é varrida e consultada nas APIs de anime.
 - Reutilização do formato de marcadores já lido por `JsonMarkerRepository`.
 - Nenhuma dependência de API privada do Plex, scraping de páginas ou credencial de usuário Plex para buscar timestamps.
 
-Fora do MVP: filmes, séries não-anime, download/edição de vídeo, identificação por visão computacional, submissão automática de timestamps e sincronização contínua em background.
+Fora do escopo: geração para séries comuns ou filmes, download/edição de vídeo, identificação por visão computacional, submissão automática de timestamps e monitoramento contínuo das alterações na pasta.
 
 ## 3. Requisito de caminho e nomenclatura
 
@@ -44,8 +45,8 @@ Regras de parsing:
 3. O nome do arquivo deve terminar com hífen, número do episódio (um a três dígitos, zeros à esquerda aceitos) e extensão. O texto anterior ao sufixo é apenas uma pista para confirmar a identificação.
 4. A extensão deve pertencer a uma lista configurada de formatos de vídeo comuns. Arquivos auxiliares e não correspondentes ao padrão são ignorados com registro informativo.
 5. Episódio `01` é normalizado para o inteiro `1`.
-6. Não inferir temporadas especiais, cour, episódios divididos ou recaps automaticamente. Se o número da temporada local não mapear de forma inequívoca à temporada/obra de anime da API, exigir configuração ou confirmação manual.
-7. A raiz deverá ser fornecida explicitamente ao comando e montada no container em modo somente leitura. O programa não deve percorrer caminhos fora dessa raiz.
+6. No modo de CLI sem uma escolha inequívoca, deixar a série pendente ou solicitar confirmação interativa. No startup automatizado, estimar candidato e offset de temporada e registrar cada suposição.
+7. As raízes são fornecidas por configuração Docker e montadas em modo somente leitura; a raiz de Séries comuns não é percorrida pelo gerador. O programa não deve percorrer caminhos fora da raiz de Anime.
 
 ## 4. APIs públicas
 
@@ -58,7 +59,7 @@ Regras de parsing:
 - Autenticação: nenhuma chave de API.
 - Jikan é uma API pública não oficial para dados do MyAnimeList; disponibilidade e limites podem mudar.
 
-Usar o título da pasta como consulta primária. A busca retorna candidatos com `mal_id`, títulos alternativos e dados básicos. O usuário deverá escolher um candidato quando houver mais de uma correspondência plausível. A escolha será persistida localmente para não repetir a pesquisa a cada execução.
+Usar o título da pasta como consulta primária. A busca retorna candidatos com `mal_id`, títulos alternativos e dados básicos. A CLI solicita seleção quando não houver correspondência inequívoca; no startup automatizado, o primeiro candidato é usado como estimativa e a suposição é registrada. O mapeamento é persistido localmente para reduzir pesquisas repetidas.
 
 ### 4.2 AniSkip — timestamps de abertura e encerramento
 
@@ -68,30 +69,28 @@ Usar o título da pasta como consulta primária. A busca retorna candidatos com 
 - Os tipos `op` e `ed` representam abertura e encerramento; os intervalos retornados usam segundos.
 - Respostas podem não encontrar segmentos; limites podem retornar `429`.
 
-O formato de resposta observado contém `found` e `results`; cada resultado contém `skipType`, `interval.startTime`, `interval.endTime` e `episodeLength`. O contrato, parâmetros e comportamento de erros devem ser revalidados contra a API pública no momento da implementação. Não assumir que temporada local × episódio identifica diretamente o episódio esperado pelo AniSkip.
+O formato de resposta contém `found` e `results`; cada resultado contém `skipType`, `interval.startTime`, `interval.endTime` e `episodeLength`. Não assumir que temporada local × episódio identifica diretamente o episódio esperado pelo AniSkip; a CLI permite informar o offset e o startup usa offset zero estimado quando não há mapeamento em cache.
 
 ### 4.3 Duração do arquivo
 
-O parâmetro `episodeLength` deve ser a duração real da mídia em segundos. Preferência:
-
-1. Ler duração do objeto de mídia já reconhecido pelo Plex, quando disponível no fluxo.
-2. Para a CLI que recebe uma pasta, usar `ffprobe` instalado no host/container, ou outra biblioteca de leitura de container de mídia validada antes da implementação.
-3. Se não for possível obter uma duração válida, não consultar AniSkip para esse arquivo; reportar como pendente.
+O parâmetro `episodeLength` deve ser a duração real da mídia em segundos. A implementação usa `ffprobe` no host/container para a CLI e para a varredura no startup. Se não for possível obter uma duração válida, não consulta AniSkip para esse arquivo e o reporta como pendente.
 
 Não enviar arquivos ou conteúdo de mídia para provedores externos.
 
 ## 5. Fluxo funcional
 
-1. Usuário executa uma varredura indicando a raiz de mídia e o arquivo de destino.
-2. O sistema percorre somente a raiz indicada e extrai título, temporada local, episódio e extensão.
+1. No Docker Compose, o usuário configura os caminhos host separados para Anime e Séries comuns; ambas são montadas em modo somente leitura, e marcadores/cache persistem em `/config`.
+2. Ao iniciar o serviço, se `AUTO_GENERATE_ANIME_MARKERS` estiver habilitada, o sistema percorre somente a raiz de Anime e extrai título, temporada local, episódio e extensão. A raiz de Séries comuns não é varrida nem consultada nas APIs de anime.
 3. O sistema agrupa arquivos pela série e evita consultas repetidas usando cache local.
-4. Para séries ainda não mapeadas, consulta Jikan e apresenta candidatos com título, ano/formato e `mal_id`.
-5. Sem candidato ou com resultado ambíguo, deixa a série pendente; não escolhe automaticamente um resultado incerto.
-6. Resolve explicitamente a relação entre a temporada local e a série/temporada/numeração usada pelo AniSkip. Uma temporada/cour pode ser um anime separado no MAL; nesses casos, o usuário confirma o título/ID e o offset ou mapeamento dos episódios.
+4. Para séries ainda não mapeadas, consulta Jikan; no startup, seleciona uma estimativa quando não houver correspondência exata única e registra a suposição.
+5. Na CLI interativa, apresenta candidatos e permite confirmação; em modo não interativo sem `--auto-guess`, deixa a série pendente.
+6. Resolve a relação entre a temporada local e a numeração usada pelo AniSkip. No startup, usa offset zero como estimativa quando não houver mapeamento em cache e registra a suposição; a CLI pode solicitar confirmação.
 7. Obtém a duração real do arquivo e consulta AniSkip para `op` e `ed`.
 8. Valida e normaliza os intervalos em segundos.
-9. Exibe uma prévia indicando IDs, episódio, duração, segmentos encontrados, ausentes e conflitos.
-10. Com confirmação, mescla os resultados ao `markers.json` sem apagar entradas manuais e grava o arquivo de forma atômica.
+9. A CLI exibe uma prévia indicando IDs, episódio, duração, segmentos encontrados, ausentes e conflitos; o startup registra o resumo, as estimativas e as pendências nos logs.
+10. No startup, mescla automaticamente os resultados ao `markers.json` preservando valores já existentes e grava o arquivo de forma atômica. Na CLI, a gravação requer confirmação explícita; `--force` permite substituir valores existentes.
+
+A varredura acontece uma vez por inicialização do processo/container, não acompanha continuamente mudanças na biblioteca. Se a geração falhar, o erro é registrado e o serviço Plex continua a inicialização.
 
 ## 6. Formato de saída
 
@@ -130,34 +129,24 @@ O formato atual não registra ID externo, fonte, data de busca, duração ou con
 ## 8. Interface CLI proposta
 
 ```text
-python -m plex_autoplay metadata scan \
+python -m plex_autoplay \
   --media-root /media/anime \
   --output /config/markers.json \
-  --cache /config/metadata-cache.json \
   --dry-run
 ```
 
-Comportamento:
+Opções disponíveis:
 
-- `--dry-run` é o padrão; não escreve arquivos.
-- `--apply` habilita a gravação após mostrar o resumo.
-- `--mapping <arquivo>` carrega confirmações de títulos e mapeamentos de temporada/episódio.
-- Exit code diferente de zero para erro de configuração, diretório inválido ou falha de gravação; itens sem timestamp permanecem como pendências e são listados no relatório.
+- `--media-root` seleciona a raiz de Anime; `--output` e `--cache-file` definem os arquivos de marcadores e cache.
+- `--dry-run` mostra a prévia sem gravar marcadores; sem essa opção, a CLI solicita confirmação antes da mesclagem.
+- `--auto-guess` permite estimar candidatos e offsets também pela CLI; sem isso, ambiguidade permanece pendente ou é resolvida pela seleção interativa.
+- `--yes` confirma a gravação explicitamente em modo não interativo; `--force` autoriza substituir campos existentes, mas a gravação ainda exige confirmação.
+- `--cache-ttl-hours` define o TTL do cache.
+- A CLI retorna status diferente de zero para diretório inválido, ausência de marcadores graváveis ou falha de gravação; itens sem timestamp são listados como pendências.
 
-Os flags e o formato do arquivo de mapeamento devem ser finalizados antes da implementação da CLI.
+## 9. Implementação
 
-## 9. Arquitetura prevista
-
-Seguindo as camadas atuais:
-
-- `domain`: modelos de mídia/segmentos e validação de intervalos; parser puro de nomes/caminhos.
-- `application`: caso de uso de scan, resolução explícita de ambiguidades, merge e relatório.
-- `application/ports.py`: contratos para pesquisa de anime, consulta de segmentos, leitura de duração e persistência/cache.
-- `infrastructure/anime`: adaptador HTTP para Jikan.
-- `infrastructure/segments`: adaptador HTTP para AniSkip.
-- `infrastructure/media`: leitor de duração.
-- `infrastructure/markers`: merge seguro e gravação atômica.
-- `__main__.py`/CLI: comando separado do watcher de reprodução.
+O fluxo de descoberta, consulta Jikan/AniSkip, cache e merge está implementado em `plex_autoplay/infrastructure/media/directory_monitor.py`. O entry point `plex_autoplay/main.py` compõe o comando CLI e chama a geração de Anime no startup quando `AUTO_GENERATE_ANIME_MARKERS` estiver habilitada. A rotina de startup recebe as configurações de caminhos/cache de `plex_autoplay/config.py`; os watchers de reprodução do Plex continuam separados desse fluxo.
 
 Os testes unitários devem usar respostas HTTP simuladas; nenhum teste automatizado deve depender de chamadas reais às APIs.
 
@@ -166,21 +155,22 @@ Os testes unitários devem usar respostas HTTP simuladas; nenhum teste automatiz
 1. O exemplo de pasta e arquivo acima é interpretado como título, temporada 1 e episódio 1.
 2. Um arquivo cujo nome não termina no padrão `-<episódio>.<extensão>` é ignorado com motivo claro.
 3. O parser não ultrapassa a raiz informada e não altera mídias.
-4. Resultado Jikan ambíguo ou mapeamento de temporada incerto não gera timestamps sem confirmação.
+4. A CLI sem confirmação ou `--auto-guess` não gera timestamps com mapeamentos ambíguos; o modo automático usa estimativas e as registra.
 5. A consulta AniSkip recebe MAL ID, episódio resolvido e duração real em segundos.
 6. Resposta com `op` e `ed` gera `start`, `end` e `credits` em segundos no JSON compatível.
 7. Ausência de dados, erro de rede, `404` e `429` não produzem marcadores falsos nem apagam marcadores existentes.
 8. Entradas manuais são preservadas por padrão; conflitos são mostrados antes de qualquer substituição.
 9. Modo de prévia não cria nem altera arquivos.
 10. Execução sem conectividade mantém resultados anteriores e informa itens pendentes.
-11. Existem testes para filme/arquivo inválido, nomes longos, zeros à esquerda, episódio sem segmento, erro de API, throttling, conflito manual e escrita atômica.
+11. A geração automática é executada somente na raiz de Anime no startup do Docker; falhas não impedem a inicialização do serviço Plex.
+12. Existem testes para arquivo inválido, zeros à esquerda, episódio sem segmento, erro de API, throttling, conflito manual e escrita atômica.
 
-## 11. Questões a resolver antes da implementação
+## 11. Configuração de implantação
 
-- Como identificar continuations/cours e especiais da biblioteca: confirmação interativa ou arquivo de mapeamento por série?
-- Como obter `episodeLength` no container final: incluir `ffprobe` na imagem ou exigir Plex como fonte?
-- A saída de encerramento deve continuar se chamando `credits` para compatibilidade, mesmo que AniSkip classifique a sequência como `ed`?
-- O usuário quer somente anime no primeiro lançamento ou deve haver uma arquitetura genérica para provedores de filmes/séries futuramente?
+- Compose local recebe caminhos host por `ANIME_LIBRARY_PATH` e `SERIES_LIBRARY_PATH` no `.env`.
+- No ZimaOS, os caminhos host são configurados nos bind mounts em `docker-compose.zimaos.yml`.
+- `/config/markers.json` e `/config/metadata-cache.json` são persistidos pelo volume de configuração.
+- `AUTO_GENERATE_ANIME_MARKERS` está habilitada nos arquivos Compose fornecidos e desabilitada por padrão fora deles.
 
 ## 12. Referências
 

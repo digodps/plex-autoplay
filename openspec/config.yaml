@@ -17,15 +17,19 @@ context: |
   com `docker compose config`; testes automatizados não devem depender de APIs
   reais.
 
-  Requisitos do projeto: preservar compatibilidade do markers.json e não
-  sobrescrever marcadores manuais sem confirmação. Segredos e tokens nunca
-  devem ser versionados. Integrações externas devem usar APIs públicas e
-  respeitar limites e indisponibilidade.
+  Requisitos do projeto: preservar compatibilidade do markers.json e preservar
+  marcadores manuais durante a mesclagem automática; substituições explícitas
+  exigem confirmação. Segredos e tokens nunca devem ser versionados.
+  Integrações externas devem usar APIs públicas e respeitar limites e
+  indisponibilidade.
 
-  A geração automática de marcadores de anime ainda não está implementada.
-  A convenção de mídia e o escopo proposto estão em
-  docs/specs/automatic-anime-markers.md; use OpenSpec changes para formalizar
-  a proposta de implementação antes de alterar o comportamento.
+  A geração automática de marcadores de anime é executada no startup quando
+  habilitada. No Docker Compose, somente a biblioteca de Anime é varrida; a
+  biblioteca de Séries comuns é montada separadamente sem consultas às APIs de
+  anime. A operação de startup pode estimar mapeamentos incertos e deve
+  registrar essas suposições. A documentação funcional está em
+  docs/specs/automatic-anime-markers.md; mudanças relevantes devem ser
+  formalizadas com OpenSpec.
 githubCopilot:
   cloudAgent: false
 

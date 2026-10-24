@@ -2,7 +2,7 @@
 
 ## Why
 
-A geração automática de marcadores de anime ainda não existe no projeto, mas a arquitetura atual já oferece um ponto natural para integrar isso: o serviço lê e usa `markers.json` para pular intros e créditos, e o repositório atual depende apenas do formato já suportado. O recurso reduz o trabalho manual de localizar episódios, consultar APIs públicas e montar os timestamps sem alterar a biblioteca Plex ou o contrato atual dos marcadores.
+A proposta estende o uso atual de `markers.json`, já consumido pelo serviço para pular intros e créditos, com geração de marcadores de anime a partir das bibliotecas montadas. O recurso reduz o trabalho manual de localizar episódios, consultar APIs públicas e montar timestamps sem alterar a biblioteca Plex ou o contrato dos marcadores.
 
 ## What Changes
 

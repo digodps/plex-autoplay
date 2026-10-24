@@ -37,7 +37,7 @@ Animes/
         └── Kyouran Reijou Nia Liston Byoujaku Reijou ni Tensei shita Kamigoroshi no Bujin no Karei Naru Musouroku -01.mkv
 ```
 
-O nome da pasta da série é a referência principal para localizar o anime; `Temporada <número>` informa a temporada local; e o sufixo numérico após o hífen no nome do arquivo informa o episódio, com ou sem zeros à esquerda. O recurso deverá aceitar extensões de vídeo comuns, ignorar arquivos que não correspondam ao padrão e pedir confirmação quando a identificação da obra ou da numeração não for segura. Os diretórios de mídia deverão ser montados no container em modo somente leitura.
+O nome da pasta da série é a referência principal para localizar o anime; `Temporada <número>` informa a temporada local; e o sufixo numérico após o hífen no nome do arquivo informa o episódio, com ou sem zeros à esquerda. A descoberta aceita extensões de vídeo comuns e ignora arquivos que não correspondam ao padrão. Na varredura automática do startup, associações incertas são estimadas e registradas nos logs; na CLI interativa, é possível confirmar a seleção. Os diretórios de mídia devem ser montados no container em modo somente leitura.
 
 Este padrão é usado pelo comando de geração de marcadores descrito em [Geração de marcadores de anime](#-geração-de-marcadores-de-anime). Veja a [especificação da funcionalidade](./docs/specs/automatic-anime-markers.md).
 
@@ -225,9 +225,9 @@ Para séries em que você deseja definir os tempos exatos de início e fim da ab
 
 ## 🎌 Geração de marcadores de anime
 
-Quando executado pelo Docker, o serviço varre automaticamente a biblioteca montada em `/media/anime` ao iniciar. O diretório `/media/series` é montado separadamente para a biblioteca de séries comuns, mas não é consultado nas APIs Jikan/AniSkip. Ambas as raízes podem estar em locais diferentes no host e devem seguir `<série>/Temporada <número>/<arquivo> -<episódio>.<extensão>`. `ffprobe` obtém a duração real; nenhum arquivo de vídeo é enviado às APIs.
+Quando executado pelo Docker Compose fornecido, o serviço varre automaticamente a biblioteca montada em `/media/anime` durante cada inicialização do container. Isso é uma varredura no startup, não um monitoramento contínuo de alterações na pasta. O diretório `/media/series` é montado separadamente para a biblioteca de séries comuns, mas não é percorrido nem consultado nas APIs Jikan/AniSkip. Ambas as raízes podem estar em locais diferentes no host; somente a raiz de Anime precisa seguir `<série>/Temporada <número>/<arquivo> -<episódio>.<extensão>`. `ffprobe` obtém a duração real; nenhum arquivo de vídeo é enviado às APIs.
 
-Para Docker Compose local, configure `ANIME_LIBRARY_PATH` e `SERIES_LIBRARY_PATH` no `.env` copiado de `.env.example`. Para ZimaOS, edite os caminhos de origem à esquerda dos dois mounts em `docker-compose.zimaos.yml` antes da importação. No início, a seleção de candidatos e o offset de temporadas podem ser estimados automaticamente; as estimativas são registradas nos logs. As indisponibilidades das APIs deixam episódios pendentes e não impedem o serviço Plex de iniciar.
+Para Docker Compose local, configure `ANIME_LIBRARY_PATH` e `SERIES_LIBRARY_PATH` no `.env` copiado de `.env.example`. Para ZimaOS, configure os caminhos de origem dos dois mounts em `docker-compose.zimaos.yml` antes da importação. O Compose habilita essa geração com `AUTO_GENERATE_ANIME_MARKERS=true`; fora desses arquivos Compose, a opção é desabilitada por padrão e pode ser ativada por variável de ambiente. No startup, a seleção de candidatos e o offset de temporadas podem ser estimados automaticamente; as estimativas e itens pendentes são registrados nos logs. Falhas na geração não impedem o serviço Plex de iniciar.
 
 Também é possível solicitar uma prévia manual:
 ```bash
@@ -237,7 +237,7 @@ python -m plex_autoplay \
   --cache-file /config/metadata-cache.json
 ```
 
-Em uma sessão interativa, o comando pede a seleção de obra e o offset da numeração de episódios por temporada quando necessário; esses mapeamentos são guardados no cache local. A prévia identifica dados ausentes e episódios pendentes. Para apenas visualizar sem persistir marcadores:
+Em uma sessão interativa, o comando pode pedir a seleção de obra e o offset da numeração de episódios por temporada quando necessário; esses mapeamentos são guardados no cache local. Sem escolha interativa, itens ambíguos ficam pendentes, a menos que `--auto-guess` seja informado. A prévia identifica dados ausentes e episódios pendentes. Para apenas visualizar sem persistir marcadores:
 
 ```bash
 python -m plex_autoplay --media-root /media/anime --output /config/markers.json --dry-run
