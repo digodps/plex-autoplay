@@ -45,6 +45,34 @@ class TestAnimeMarkersDiscovery(unittest.TestCase):
             self.assertEqual(episodes[0].season, 1)
             self.assertEqual(episodes[0].episode, 1)
 
+    def test_scan_media_root_parses_season_from_title_season_episode_filename(self):
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            series_dir = root / "Ao no Hako"
+            season_dir = series_dir / "Temporada 1"
+            season_dir.mkdir(parents=True)
+            filename = season_dir / "Ao no Hako 2 -01.mp4"
+            filename.write_bytes(b"video")
+
+            episodes = scan_media_root(root)
+
+            self.assertEqual(len(episodes), 1)
+            self.assertEqual(episodes[0].title, "Ao no Hako 2")
+            self.assertEqual(episodes[0].season, 2)
+            self.assertEqual(episodes[0].episode, 1)
+
+    def test_scan_media_root_supports_title_season_episode_without_season_folder(self):
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            series_dir = root / "Ao no Hako"
+            series_dir.mkdir(parents=True)
+            (series_dir / "Ao no Hako 2 -01.mp4").write_bytes(b"video")
+
+            episodes = scan_media_root(root)
+
+            self.assertEqual(len(episodes), 1)
+            self.assertEqual((episodes[0].title, episodes[0].season, episodes[0].episode), ("Ao no Hako 2", 2, 1))
+
     def test_scan_media_root_ignores_invalid_structure_and_extensions(self):
         with tempfile.TemporaryDirectory() as tmp_dir:
             root = Path(tmp_dir)

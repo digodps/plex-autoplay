@@ -40,6 +40,21 @@ class TestTVLibraryScanner(unittest.TestCase):
             self.assertEqual(result.episodes[0].season.number, 2)
             self.assertEqual(result.ambiguities.__len__(), 1)
 
+    def test_parses_season_number_embedded_in_episode_filename(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            series = root / "Ao no Hako"
+            series.mkdir(parents=True)
+            (series / "Ao no Hako 2 -01.mp4").write_bytes(b"video")
+
+            result = scan_tv_library(TVLibrary(name="Anime", path=str(root), kind="anime"))
+
+            self.assertEqual(
+                [(episode.season.series.title, episode.season.number, episode.number) for episode in result.episodes],
+                [("Ao no Hako", 2, 1)],
+            )
+            self.assertEqual(result.unrecognized_files, [])
+
     def test_records_directory_walk_errors_and_returns_other_results(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)

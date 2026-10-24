@@ -34,6 +34,10 @@ VIDEO_EXTENSIONS = {
 }
 SEASON_RE = re.compile(r"^temporada\s*(\d+)$", re.IGNORECASE)
 EPISODE_RE = re.compile(r"-(\d{1,3})$")
+TITLE_SEASON_EPISODE_RE = re.compile(
+    r"^(?P<title>.+?)\s+(?P<season>\d{1,3})\s*-\s*(?P<episode>\d{1,3})$",
+    re.IGNORECASE,
+)
 MAX_RESPONSE_BYTES = 1024 * 1024
 
 
@@ -80,16 +84,38 @@ def _parse_episode_file(path: Path, root: Path) -> Optional[MediaEpisode]:
 
     season_number = _parse_season_name(path.parent.name)
     series_dir = path.parent.parent
-    if season_number is None or series_dir.parent != root:
+    direct_series_file = series_dir == root
+    if direct_series_file:
+        series_dir = path.parent
+        season_number = None
+    elif series_dir.parent != root:
         return None
 
-    match = EPISODE_RE.search(path.stem)
-    if not match:
+    season_episode_match = TITLE_SEASON_EPISODE_RE.fullmatch(path.stem)
+    if season_episode_match:
+        parsed_season = int(season_episode_match.group("season"))
+        episode_number = int(season_episode_match.group("episode"))
+        file_title = season_episode_match.group("title").strip()
+        if parsed_season < 1 or episode_number < 1 or not file_title:
+            return None
+        season_number = parsed_season
+    else:
+        match = EPISODE_RE.search(path.stem)
+        if not match or season_number is None or direct_series_file:
+            logger.info("Ignorando arquivo sem temporada e episódio reconhecidos: %s", path)
+            return None
+        episode_number = int(match.group(1))
+        file_title = ""
+
+    if season_number is None:
         logger.info("Ignorando arquivo sem sufixo de episódio reconhecido: %s", path)
         return None
 
     title = series_dir.name.strip()
-    episode_number = int(match.group(1))
+    if file_title:
+        file_series_title = f"{file_title} {season_number}".strip()
+        if title.casefold() in {file_title.casefold(), file_series_title.casefold()}:
+            title = file_series_title
     if not title or episode_number < 1:
         return None
 
@@ -111,10 +137,17 @@ def scan_media_root(media_root: str | Path) -> List[MediaEpisode]:
     for show_dir in sorted(root.iterdir(), key=lambda item: item.name.lower()):
         if not _safe_path_within_root(root, show_dir) or not show_dir.is_dir():
             continue
-        for season_dir in sorted(show_dir.iterdir(), key=lambda item: item.name.lower()):
-            if not _safe_path_within_root(root, season_dir) or not season_dir.is_dir():
+        for child in sorted(show_dir.iterdir(), key=lambda item: item.name.lower()):
+            if not _safe_path_within_root(root, child):
                 continue
-            for file_path in sorted(season_dir.iterdir(), key=lambda item: item.name.lower()):
+            if child.is_file():
+                episode = _parse_episode_file(child, root)
+                if episode is not None:
+                    discovered.append(episode)
+                continue
+            if not child.is_dir():
+                continue
+            for file_path in sorted(child.iterdir(), key=lambda item: item.name.lower()):
                 if file_path.is_file():
                     episode = _parse_episode_file(file_path, root)
                     if episode is not None:

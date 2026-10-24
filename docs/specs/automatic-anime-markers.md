@@ -30,6 +30,14 @@ Estrutura obrigatória para descoberta automática:
         └── <qualquer texto> -<episódio>.<extensão>
 ```
 
+Também são aceitos arquivos no padrão `<título> <temporada> -<episódio>.<extensão>`. Nesse padrão, o número antes do hífen determina a temporada, independentemente da pasta de temporada; o arquivo pode ficar diretamente dentro da pasta da série:
+
+```text
+Animes/
+└── Ao no Hako/
+    └── Ao no Hako 2 -01.mp4
+```
+
 Exemplo aceito:
 
 ```text
@@ -43,7 +51,7 @@ Regras de parsing:
 
 1. O diretório imediatamente abaixo da raiz de mídia fornece o título usado na busca inicial.
 2. `Temporada <número>` é case-insensitive; espaços adicionais são permitidos. A temporada é um número inteiro positivo.
-3. O nome do arquivo deve terminar com hífen, número do episódio (um a três dígitos, zeros à esquerda aceitos) e extensão. O texto anterior ao sufixo é apenas uma pista para confirmar a identificação.
+3. No padrão legado, o nome do arquivo deve terminar com hífen, número do episódio (um a três dígitos, zeros à esquerda aceitos) e extensão. No padrão alternativo, o arquivo deve terminar com `<temporada> -<episódio>`; ambos os números devem ser positivos.
 4. A extensão deve pertencer a uma lista configurada de formatos de vídeo comuns. Arquivos auxiliares e não correspondentes ao padrão são ignorados com registro informativo.
 5. Episódio `01` é normalizado para o inteiro `1`.
 6. No modo de CLI sem uma escolha inequívoca, deixar a série pendente ou solicitar confirmação interativa. No startup automatizado, estimar candidato e offset de temporada e registrar cada suposição.

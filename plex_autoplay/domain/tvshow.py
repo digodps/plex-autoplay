@@ -58,11 +58,22 @@ _X_EPISODE_RE = re.compile(
 )
 _CONTEXTUAL_EPISODE_RE = re.compile(r"(?<![A-Za-z0-9])E(?P<episode>\d{1,3})(?!\d)", re.IGNORECASE)
 _LEGACY_EPISODE_RE = re.compile(r"-(?P<episode>\d{1,3})$")
+_TITLE_SEASON_EPISODE_RE = re.compile(
+    r"^(?P<title>.+?)\s+(?P<season>\d{1,3})\s*-\s*(?P<episode>\d{1,3})$"
+)
 
 
 def parse_episode_numbers(filename: str, season_context: Optional[int] = None) -> Optional[EpisodeParseResult]:
     """Parse a filename episode identifier, optionally using its season folder."""
     stem = Path(filename).stem
+    match = _TITLE_SEASON_EPISODE_RE.fullmatch(stem)
+    if match:
+        season = int(match.group("season"))
+        episode = int(match.group("episode"))
+        if season < 1 or episode < 1:
+            return None
+        return _episode_result(season, episode, episode, season_context)
+
     match = _STANDARD_EPISODE_RE.search(stem)
     if match:
         season = int(match.group("season"))
