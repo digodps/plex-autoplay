@@ -1,0 +1,52 @@
+schema: spec-driven
+
+context: |
+  Linguagem: português. Escreva os artefatos em português, mantendo os nomes
+  estruturais exigidos pelo schema OpenSpec.
+
+  Projeto: plex-autoplay é um serviço Python que monitora sessões do Plex e
+  controla reprodução para pular intros e avançar episódios. Não possui UI.
+
+  Arquitetura: DDD leve/hexagonal em plex_autoplay/domain,
+  plex_autoplay/application e plex_autoplay/infrastructure. O ponto de entrada
+  é `python -m plex_autoplay`. Integrações externas ficam atrás de ports da
+  aplicação; regras de domínio devem ser testáveis sem rede ou Plex.
+
+  Validação: executar `python -m unittest discover -v` e
+  `python -m compileall -q plex_autoplay tests`. Validar mudanças de Compose
+  com `docker compose config`; testes automatizados não devem depender de APIs
+  reais.
+
+  Requisitos do projeto: preservar compatibilidade do markers.json e não
+  sobrescrever marcadores manuais sem confirmação. Segredos e tokens nunca
+  devem ser versionados. Integrações externas devem usar APIs públicas e
+  respeitar limites e indisponibilidade.
+
+  A geração automática de marcadores de anime ainda não está implementada.
+  A convenção de mídia e o escopo proposto estão em
+  docs/specs/automatic-anime-markers.md; use OpenSpec changes para formalizar
+  a proposta de implementação antes de alterar o comportamento.
+githubCopilot:
+  cloudAgent: false
+
+# Per-artifact rules (optional)
+# Add custom rules for specific artifacts.
+# Example:
+#   rules:
+#     proposal:
+#       - Keep proposals under 500 words
+#       - Always state what is out of scope
+#     tasks:
+#       - Break tasks into chunks of max 2 hours
+
+# Per-operation guidance (optional)
+# Add advisory guidance for how apply and archive work should be conducted.
+# This is separate from artifact rules above.
+# Example:
+#   operations:
+#     apply:
+#       guidance:
+#         - Keep test summaries concise
+#     archive:
+#       guidance:
+#         - Summarize the archive outcome before finishing
