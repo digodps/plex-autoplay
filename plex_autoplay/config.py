@@ -53,7 +53,13 @@ class Settings:
     media_root: str = os.getenv("MEDIA_ROOT", "/media-root")
     config_dir: str = os.getenv("CONFIG_DIR", "/config")
     dashboard_port: int = int(os.getenv("WEB_PORT", "8080"))
-    dashboard_cookie_secure: bool = _str_to_bool(os.getenv("DASHBOARD_COOKIE_SECURE", "false"))
+    dashboard_cookie_secure: bool = _str_to_bool(os.getenv("DASHBOARD_COOKIE_SECURE", "true"), default=True)
+    dashboard_https: bool = _str_to_bool(os.getenv("DASHBOARD_HTTPS", "true"), default=True)
+    dashboard_tls_hosts: List[str] = field(
+        default_factory=lambda: _str_to_list(
+            os.getenv("DASHBOARD_TLS_HOSTS", "localhost,plex-autoplay,host.docker.internal")
+        )
+    )
     anime_markers_cache_file: str = os.getenv(
         "ANIME_MARKERS_CACHE_FILE",
         "/config/metadata-cache.json",

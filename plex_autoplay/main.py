@@ -10,8 +10,6 @@ import time
 from pathlib import Path
 from typing import Callable, Optional
 
-from waitress import create_server
-
 from plex_autoplay.application.playback_service import PlaybackService
 from plex_autoplay.application.dashboard_scan_service import DashboardScanService
 from plex_autoplay.application.manual_marker_service import ManualMarkerService
@@ -27,6 +25,7 @@ from plex_autoplay.application.scan_coordinator import ScanCoordinator
 from plex_autoplay.infrastructure.plex.client import PlexManager
 from plex_autoplay.infrastructure.plex.session_watcher import SessionWatcher
 from plex_autoplay.infrastructure.web.app import create_app
+from plex_autoplay.infrastructure.web.server import create_dashboard_server
 
 
 def setup_logging(log_level: str) -> None:
@@ -297,9 +296,17 @@ def main(argv: list[str] | None = None) -> int:
                 manual_marker_service=ManualMarkerService(config.custom_markers_file),
                 marker_reload=marker_repository.load_custom_markers,
             )
-            web_server = create_server(dashboard_app, host="0.0.0.0", port=config.dashboard_port)
+            web_server = create_dashboard_server(
+                dashboard_app,
+                host="0.0.0.0",
+                port=config.dashboard_port,
+                https_enabled=config.dashboard_https,
+                config_dir=config.config_dir,
+                tls_hosts=config.dashboard_tls_hosts,
+            )
             threading.Thread(target=web_server.run, name="plex-autoplay-dashboard", daemon=True).start()
-            logger.info("Dashboard web iniciado na porta %d.", config.dashboard_port)
+            protocol = "HTTPS" if config.dashboard_https else "HTTP"
+            logger.info("Dashboard %s iniciado na porta %d.", protocol, config.dashboard_port)
         except (OSError, RuntimeError, ValueError) as error:
             logger.exception("Dashboard não pôde ser iniciado; o watcher Plex continuará: %s", error)
     else:

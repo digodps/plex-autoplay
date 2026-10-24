@@ -15,6 +15,9 @@ services:
       AUTO_GENERATE_ANIME_MARKERS: "${AUTO_GENERATE_ANIME_MARKERS:-true}"
       MEDIA_ROOT: /media-root
       WEB_PORT: "8080"
+      DASHBOARD_COOKIE_SECURE: "${DASHBOARD_COOKIE_SECURE:-true}"
+      DASHBOARD_HTTPS: "${DASHBOARD_HTTPS:-true}"
+      DASHBOARD_TLS_HOSTS: "${DASHBOARD_TLS_HOSTS:-localhost,plex-autoplay,host.docker.internal}"
       ANIME_MARKERS_CACHE_FILE: /config/metadata-cache.json
     volumes:
       - ./config:/config

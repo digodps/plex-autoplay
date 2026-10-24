@@ -8,6 +8,7 @@ from functools import wraps
 import hashlib
 import hmac
 import json
+import logging
 import os
 from pathlib import Path
 import secrets
@@ -28,6 +29,11 @@ PASSWORD_HASH_ITERATIONS = 600_000
 SESSION_LIFETIME_SECONDS = 12 * 60 * 60
 LOGIN_WINDOW_SECONDS = 5 * 60
 MAX_LOGIN_ATTEMPTS = 5
+logger = logging.getLogger("plex-autoplay.dashboard")
+
+
+class SetupTokenError(ValueError):
+    """Raised when the one-time dashboard bootstrap token is missing or invalid."""
 
 
 class AdminStore:
@@ -35,6 +41,7 @@ class AdminStore:
         self.config_dir = Path(config_dir)
         self.credentials_path = self.config_dir / "dashboard-admin.json"
         self.secret_path = self.config_dir / "dashboard-session.key"
+        self.setup_token_path = self.config_dir / "dashboard-setup-token"
         self._lock = threading.Lock()
 
     @property
@@ -50,12 +57,28 @@ class AdminStore:
             self._write_atomic(self.secret_path, secret.encode("ascii"))
             return secret
 
-    def create(self, username: str, password: str) -> None:
+    def setup_token(self) -> str:
+        self.config_dir.mkdir(parents=True, exist_ok=True)
+        with self._lock:
+            try:
+                return self.setup_token_path.read_text(encoding="ascii").strip()
+            except FileNotFoundError:
+                token = secrets.token_urlsafe(32)
+                self._write_atomic(self.setup_token_path, token.encode("ascii"))
+                return token
+
+    def create(self, username: str, password: str, setup_token: str) -> None:
         if not username.strip() or len(password) < 8:
             raise ValueError("Informe um usuário e uma senha com pelo menos 8 caracteres.")
         with self._lock:
             if self.configured:
                 raise ValueError("A conta administrativa já foi configurada.")
+            try:
+                expected_setup_token = self.setup_token_path.read_text(encoding="ascii").strip()
+            except FileNotFoundError as error:
+                raise SetupTokenError("Token de primeiro acesso ausente. Reinicie o serviço e tente novamente.") from error
+            if not expected_setup_token or not hmac.compare_digest(expected_setup_token, setup_token):
+                raise SetupTokenError("Token de primeiro acesso inválido.")
             salt = secrets.token_bytes(16)
             password_hash = hashlib.pbkdf2_hmac(
                 "sha256",
@@ -73,6 +96,12 @@ class AdminStore:
                 self.credentials_path,
                 (json.dumps(payload, ensure_ascii=False) + "\n").encode("utf-8"),
             )
+            try:
+                self.setup_token_path.unlink()
+            except FileNotFoundError:
+                pass
+            except OSError:
+                logger.exception("Não foi possível remover o token de primeiro acesso após configurar o administrador.")
 
     def verify(self, username: str, password: str) -> bool:
         if not self.configured:
@@ -209,7 +238,7 @@ def create_app(
     library_repository: LibraryRepository,
     config_dir: str | Path,
     *,
-    cookie_secure: bool = False,
+    cookie_secure: bool = True,
     scan_coordinator: Optional[ScanCoordinator] = None,
     manual_marker_service: Optional[ManualMarkerService] = None,
     marker_reload: Optional[Callable[[], None]] = None,
@@ -217,6 +246,8 @@ def create_app(
     app = Flask(__name__)
     admin_store = AdminStore(config_dir)
     app.secret_key = admin_store.session_secret()
+    if not admin_store.configured:
+        admin_store.setup_token()
     app.permanent_session_lifetime = SESSION_LIFETIME_SECONDS
     app.config.update(
         SESSION_COOKIE_HTTPONLY=True,
@@ -264,6 +295,7 @@ def create_app(
     def setup() -> Any:
         if admin_store.configured:
             return redirect(url_for("login"))
+        admin_store.setup_token()
         return render_template("auth.html", title="Criar administrador", setup=True)
 
     @app.post("/setup")
@@ -271,7 +303,13 @@ def create_app(
         if admin_store.configured:
             return jsonify(error="A conta administrativa já foi configurada."), 409
         try:
-            admin_store.create(request.form.get("username", ""), request.form.get("password", ""))
+            admin_store.create(
+                request.form.get("username", ""),
+                request.form.get("password", ""),
+                request.form.get("setup_token", ""),
+            )
+        except SetupTokenError as error:
+            return jsonify(error=str(error)), 403
         except ValueError as error:
             return jsonify(error=str(error)), 400
         session.clear()

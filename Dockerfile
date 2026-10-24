@@ -17,6 +17,7 @@ EXPOSE 8080
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     ffmpeg \
+    openssl \
     && rm -rf /var/lib/apt/lists/*
 
 # Instala dependências Python

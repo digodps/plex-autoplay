@@ -24,6 +24,7 @@ class TestDashboardApp(unittest.TestCase):
         self.app = create_app(
             self.repository,
             base / "config",
+            cookie_secure=False,
             scan_coordinator=self.coordinator,
             manual_marker_service=ManualMarkerService(self.markers_file),
         )
@@ -39,26 +40,61 @@ class TestDashboardApp(unittest.TestCase):
         self.assertIsNotNone(match)
         return match.group(1)
 
+    def _setup_token(self):
+        return (Path(self.temp_dir.name) / "config" / "dashboard-setup-token").read_text(encoding="ascii")
+
     def _setup_admin(self):
         token = self._csrf("/setup")
         response = self.client.post(
             "/setup",
-            data={"csrf_token": token, "username": "admin", "password": "valid-password"},
+            data={
+                "csrf_token": token,
+                "setup_token": self._setup_token(),
+                "username": "admin",
+                "password": "valid-password",
+            },
         )
         self.assertEqual(response.status_code, 302)
 
     def test_first_access_creates_hashed_admin_and_disables_setup(self):
         self.assertEqual(self.client.get("/").status_code, 302)
         token = self._csrf("/setup")
+        setup_token_path = Path(self.temp_dir.name) / "config" / "dashboard-setup-token"
+        self.assertEqual(setup_token_path.stat().st_mode & 0o777, 0o600)
+        self.assertEqual(
+            self.client.post(
+                "/setup",
+                data={"csrf_token": token, "username": "admin", "password": "valid-password"},
+            ).status_code,
+            403,
+        )
+        self.assertEqual(
+            self.client.post(
+                "/setup",
+                data={
+                    "csrf_token": token,
+                    "setup_token": "wrong-token",
+                    "username": "admin",
+                    "password": "valid-password",
+                },
+            ).status_code,
+            403,
+        )
         response = self.client.post(
             "/setup",
-            data={"csrf_token": token, "username": "admin", "password": "valid-password"},
+            data={
+                "csrf_token": token,
+                "setup_token": self._setup_token(),
+                "username": "admin",
+                "password": "valid-password",
+            },
         )
 
         self.assertEqual(response.status_code, 302)
         stored_credentials = (Path(self.temp_dir.name) / "config" / "dashboard-admin.json").read_text()
         self.assertNotIn("valid-password", stored_credentials)
         self.assertEqual(self.client.get("/setup").status_code, 302)
+        self.assertFalse(setup_token_path.exists())
         self.assertTrue((Path(self.temp_dir.name) / "config" / "dashboard-session.key").is_file())
 
     def test_library_routes_require_authentication_and_csrf(self):
@@ -116,6 +152,10 @@ class TestDashboardApp(unittest.TestCase):
             Path(self.temp_dir.name) / "config",
             cookie_secure=True,
         )
+        self.assertTrue(secure_app.config["SESSION_COOKIE_SECURE"])
+
+    def test_secure_cookie_is_enabled_by_default(self):
+        secure_app = create_app(self.repository, Path(self.temp_dir.name) / "secure-config")
         self.assertTrue(secure_app.config["SESSION_COOKIE_SECURE"])
 
     def test_scan_endpoint_returns_progress_and_completion(self):
@@ -183,13 +223,19 @@ class TestDashboardApp(unittest.TestCase):
         app = create_app(
             self.repository,
             Path(self.temp_dir.name) / "config",
+            cookie_secure=False,
             scan_coordinator=coordinator,
         )
         client = app.test_client()
         token = re.search(r'name="csrf_token" value="([^"]+)"', client.get("/setup").get_data(as_text=True)).group(1)
         client.post(
             "/setup",
-            data={"csrf_token": token, "username": "admin", "password": "valid-password"},
+            data={
+                "csrf_token": token,
+                "setup_token": (Path(self.temp_dir.name) / "config" / "dashboard-setup-token").read_text(),
+                "username": "admin",
+                "password": "valid-password",
+            },
         )
 
         self.assertTrue(coordinator.start())
@@ -214,13 +260,19 @@ class TestDashboardApp(unittest.TestCase):
         app = create_app(
             self.repository,
             Path(self.temp_dir.name) / "config",
+            cookie_secure=False,
             scan_coordinator=coordinator,
         )
         client = app.test_client()
         token = re.search(r'name="csrf_token" value="([^"]+)"', client.get("/setup").get_data(as_text=True)).group(1)
         client.post(
             "/setup",
-            data={"csrf_token": token, "username": "admin", "password": "valid-password"},
+            data={
+                "csrf_token": token,
+                "setup_token": (Path(self.temp_dir.name) / "config" / "dashboard-setup-token").read_text(),
+                "username": "admin",
+                "password": "valid-password",
+            },
         )
         self.assertTrue(coordinator.start())
         try:
@@ -239,6 +291,7 @@ class TestDashboardApp(unittest.TestCase):
         app = create_app(
             self.repository,
             Path(self.temp_dir.name) / "config",
+            cookie_secure=False,
             scan_coordinator=coordinator,
             manual_marker_service=ManualMarkerService(self.markers_file),
         )
@@ -246,7 +299,12 @@ class TestDashboardApp(unittest.TestCase):
         token = re.search(r'name="csrf_token" value="([^"]+)"', client.get("/setup").get_data(as_text=True)).group(1)
         client.post(
             "/setup",
-            data={"csrf_token": token, "username": "admin", "password": "valid-password"},
+            data={
+                "csrf_token": token,
+                "setup_token": (Path(self.temp_dir.name) / "config" / "dashboard-setup-token").read_text(),
+                "username": "admin",
+                "password": "valid-password",
+            },
         )
         with client.session_transaction() as session:
             csrf = session["_csrf_token"]
@@ -335,6 +393,7 @@ class TestDashboardApp(unittest.TestCase):
         app = create_app(
             self.repository,
             Path(self.temp_dir.name) / "config",
+            cookie_secure=False,
             scan_coordinator=coordinator,
             manual_marker_service=ManualMarkerService(self.markers_file),
         )
@@ -342,7 +401,12 @@ class TestDashboardApp(unittest.TestCase):
         token = re.search(r'name="csrf_token" value="([^"]+)"', client.get("/setup").get_data(as_text=True)).group(1)
         client.post(
             "/setup",
-            data={"csrf_token": token, "username": "admin", "password": "valid-password"},
+            data={
+                "csrf_token": token,
+                "setup_token": (Path(self.temp_dir.name) / "config" / "dashboard-setup-token").read_text(),
+                "username": "admin",
+                "password": "valid-password",
+            },
         )
         with client.session_transaction() as session:
             csrf = session["_csrf_token"]
@@ -430,6 +494,7 @@ class TestDashboardApp(unittest.TestCase):
         app = create_app(
             self.repository,
             Path(self.temp_dir.name) / "config",
+            cookie_secure=False,
             scan_coordinator=coordinator,
             manual_marker_service=ManualMarkerService(self.markers_file),
         )
@@ -437,7 +502,12 @@ class TestDashboardApp(unittest.TestCase):
         setup_token = re.search(r'name="csrf_token" value="([^"]+)"', client.get("/setup").get_data(as_text=True)).group(1)
         client.post(
             "/setup",
-            data={"csrf_token": setup_token, "username": "admin", "password": "valid-password"},
+            data={
+                "csrf_token": setup_token,
+                "setup_token": (Path(self.temp_dir.name) / "config" / "dashboard-setup-token").read_text(),
+                "username": "admin",
+                "password": "valid-password",
+            },
         )
 
         page = client.get("/").get_data(as_text=True)
