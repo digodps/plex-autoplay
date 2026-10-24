@@ -50,6 +50,38 @@ class PlexManager:
             logger.warning("Erro ao consultar sessões ativas: %s", error)
             return []
 
+    def list_show_episodes(self, library_name: str, show_title: str) -> List[Any]:
+        sections = [
+            section
+            for section in self.get_server().library.sections()
+            if getattr(section, "type", None) == "show"
+        ]
+        preferred_sections = [
+            section
+            for section in sections
+            if str(getattr(section, "title", "")).strip().casefold() == library_name.strip().casefold()
+        ]
+        search_sections = preferred_sections + [section for section in sections if section not in preferred_sections]
+        matching_shows = []
+        for section in search_sections:
+            shows = section.search(title=show_title, libtype="show")
+            matching_shows.extend(
+                show
+                for show in shows
+                if str(getattr(show, "title", "")).strip().casefold() == show_title.strip().casefold()
+            )
+            if matching_shows and section in preferred_sections:
+                break
+
+        if len(matching_shows) != 1:
+            if len(matching_shows) > 1:
+                logger.warning(
+                    "Série '%s' encontrada em mais de uma seção Plex; marcadores nativos não foram associados.",
+                    show_title,
+                )
+            return []
+        return matching_shows[0].episodes()
+
     def find_player(self, session: Any) -> Optional[Any]:
         for attr in ("player", "client"):
             player = getattr(session, attr, None)

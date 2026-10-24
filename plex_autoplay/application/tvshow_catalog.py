@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass, field
 from pathlib import Path
 from types import SimpleNamespace
@@ -13,6 +14,8 @@ from plex_autoplay.infrastructure.media.library_repository import LibraryReposit
 from plex_autoplay.infrastructure.media.tvshow_scanner import scan_tv_library
 
 ProgressReporter = Callable[[Dict[str, Any]], None]
+PlexEpisodeLookup = Callable[[str, str], List[Any]]
+logger = logging.getLogger("plex-autoplay.tvshow-catalog")
 
 
 @dataclass(frozen=True)
@@ -41,6 +44,7 @@ class EpisodeCoverage:
 class LibraryCatalog:
     library: TVLibrary
     episodes: List[EpisodeCoverage] = field(default_factory=list)
+    native_markers: Dict[tuple[str, int, int], List[Any]] = field(default_factory=dict, repr=False)
     unrecognized_files: List[str] = field(default_factory=list)
     ambiguities: List[str] = field(default_factory=list)
     pending: List[dict[str, object]] = field(default_factory=list)
@@ -49,9 +53,15 @@ class LibraryCatalog:
 
 
 class TVShowCatalog:
-    def __init__(self, libraries: LibraryRepository, markers: JsonMarkerRepository):
+    def __init__(
+        self,
+        libraries: LibraryRepository,
+        markers: JsonMarkerRepository,
+        plex_episode_lookup: Optional[PlexEpisodeLookup] = None,
+    ):
         self.libraries = libraries
         self.markers = markers
+        self.plex_episode_lookup = plex_episode_lookup
 
     def build(self, progress_callback: Optional[ProgressReporter] = None) -> List[LibraryCatalog]:
         catalogs = []
@@ -94,7 +104,7 @@ class TVShowCatalog:
                     )
 
             files_scanned_in_library = 0
-            catalogs.append(self._build_library(library, report_directory))
+            catalogs.append(self._build_library(library, report_directory, progress_callback))
             if progress_callback is not None:
                 progress_callback(
                     {
@@ -191,6 +201,10 @@ class TVShowCatalog:
                         path=episode.path,
                         extension=Path(episode.path).suffix.lower(),
                     ),
+                    catalog.native_markers.get(
+                        (episode.series_title.casefold(), episode.season_number, episode.episode_number),
+                        [],
+                    ),
                 )
                 for episode in catalog.episodes
             ]
@@ -199,6 +213,7 @@ class TVShowCatalog:
         self,
         library: TVLibrary,
         progress_callback: Optional[Callable[[str, int], None]] = None,
+        activity_callback: Optional[ProgressReporter] = None,
     ) -> LibraryCatalog:
         catalog = LibraryCatalog(library=library)
         scan_library = TVLibrary(
@@ -214,14 +229,57 @@ class TVShowCatalog:
         catalog.unrecognized_files = scan.unrecognized_files
         catalog.ambiguities = scan.ambiguities
         catalog.errors = scan.errors
+        plex_markers_by_episode: Dict[tuple[str, int, int], List[Any]] = {}
+        if library.kind in {"anime", "series"} and self.plex_episode_lookup is not None:
+            for series_title in sorted(
+                {episode.season.series.title for episode in scan.episodes},
+                key=str.casefold,
+            ):
+                try:
+                    if activity_callback is not None:
+                        activity_callback(
+                            {
+                                "stage": "plex-markers",
+                                "message": f"Consultando marcadores nativos do Plex para {series_title}.",
+                                "library": library.name,
+                                "current_directory": series_title,
+                            }
+                        )
+                    plex_episodes = self.plex_episode_lookup(library.name, series_title)
+                    for plex_episode in plex_episodes:
+                        season_number = getattr(plex_episode, "seasonNumber", None)
+                        episode_number = getattr(plex_episode, "episodeNumber", None)
+                        if isinstance(season_number, int) and isinstance(episode_number, int):
+                            plex_markers_by_episode[
+                                (series_title.casefold(), season_number, episode_number)
+                            ] = list(getattr(plex_episode, "markers", []))
+                except Exception as error:
+                    logger.exception(
+                        "Não foi possível consultar marcadores Plex da série %s na biblioteca %s.",
+                        series_title,
+                        library.name,
+                    )
+                    catalog.errors.append(
+                        f"Falha ao consultar marcadores Plex de '{series_title}': {error}"
+                    )
+        catalog.native_markers = plex_markers_by_episode
         for episode in scan.episodes:
             try:
-                catalog.episodes.append(self._coverage(library, episode))
+                native_markers = plex_markers_by_episode.get(
+                    (episode.season.series.title.casefold(), episode.season.number, episode.number),
+                    [],
+                )
+                catalog.episodes.append(self._coverage(library, episode, native_markers))
             except ValueError as error:
                 catalog.errors.append(f"{episode.path}: {error}")
         return catalog
 
-    def _coverage(self, library: TVLibrary, episode: TVEpisode) -> EpisodeCoverage:
+    def _coverage(
+        self,
+        library: TVLibrary,
+        episode: TVEpisode,
+        native_markers: Optional[List[Any]] = None,
+    ) -> EpisodeCoverage:
         series_title = episode.season.series.title
         plex_episode = SimpleNamespace(
             grandparentTitle=series_title,
@@ -233,6 +291,7 @@ class TVShowCatalog:
             markers=[],
         )
         values = self.markers.get_custom_marker_values(plex_episode)
+        values.update(self._native_marker_values(native_markers or []))
         return EpisodeCoverage(
             library_name=library.name,
             library_path=library.path,
@@ -245,3 +304,20 @@ class TVShowCatalog:
             intro_end_ms=int(values["end"] * 1000) if "end" in values else None,
             credits_ms=int(values["credits"] * 1000) if "credits" in values else None,
         )
+
+    @staticmethod
+    def _native_marker_values(markers: List[Any]) -> Dict[str, float]:
+        values: Dict[str, float] = {}
+        for marker in markers:
+            marker_type = str(getattr(marker, "type", "")).casefold()
+            if marker_type in {"intro", "intro_marker"}:
+                start = getattr(marker, "start", None)
+                end = getattr(marker, "end", None)
+                if isinstance(start, (int, float)) and isinstance(end, (int, float)) and end > start >= 0:
+                    values["start"] = float(start) / 1000
+                    values["end"] = float(end) / 1000
+            elif marker_type in {"credits", "outro"}:
+                start = getattr(marker, "start", None)
+                if isinstance(start, (int, float)) and start >= 0:
+                    values["credits"] = float(start) / 1000
+        return values

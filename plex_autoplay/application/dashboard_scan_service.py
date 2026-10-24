@@ -7,7 +7,12 @@ import logging
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
-from plex_autoplay.application.tvshow_catalog import LibraryCatalog, ProgressReporter, TVShowCatalog
+from plex_autoplay.application.tvshow_catalog import (
+    LibraryCatalog,
+    PlexEpisodeLookup,
+    ProgressReporter,
+    TVShowCatalog,
+)
 from plex_autoplay.infrastructure.markers.json_repository import JsonMarkerRepository
 from plex_autoplay.infrastructure.media.directory_monitor import build_preview_for_root, merge_markers_file
 from plex_autoplay.infrastructure.media.library_repository import LibraryRepository
@@ -24,6 +29,7 @@ class DashboardScanService:
         cache_file: str | Path,
         cache_ttl_seconds: int,
         auto_generate_anime_markers: bool,
+        plex_episode_lookup: Optional[PlexEpisodeLookup] = None,
     ):
         self.libraries = libraries
         self.markers = markers
@@ -31,7 +37,7 @@ class DashboardScanService:
         self.cache_file = Path(cache_file).expanduser()
         self.cache_ttl_seconds = cache_ttl_seconds
         self.auto_generate_anime_markers = auto_generate_anime_markers
-        self.catalog = TVShowCatalog(libraries, markers)
+        self.catalog = TVShowCatalog(libraries, markers, plex_episode_lookup)
 
     def scan(self, progress_callback: Optional[ProgressReporter] = None) -> Dict[str, Any]:
         progress_state: Dict[str, Any] = {}
@@ -52,7 +58,7 @@ class DashboardScanService:
                 report_progress(
                     {
                         "stage": "anime-metadata",
-                        "message": f"Consultando Jikan e AniSkip para {catalog.library.name}.",
+                        "message": f"Consultando AniList e AniSkip para {catalog.library.name}.",
                         "library": catalog.library.name,
                         "current_directory": None,
                     }

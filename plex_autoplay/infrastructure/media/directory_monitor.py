@@ -131,12 +131,14 @@ def build_series_map(media_root: str | Path) -> Dict[str, List[MediaEpisode]]:
     return items
 
 
-def _http_json(url: str, timeout: int = 10) -> Dict[str, Any]:
+def _http_json(url: str, timeout: int = 10, data: Optional[bytes] = None) -> Dict[str, Any]:
     headers = {
         "Accept": "application/json",
         "User-Agent": "plex-autoplay/auto-markers",
     }
-    request_obj = request.Request(url, headers=headers)
+    if data is not None:
+        headers["Content-Type"] = "application/json"
+    request_obj = request.Request(url, data=data, headers=headers)
     try:
         with request.urlopen(request_obj, timeout=timeout) as response:
             content_type = response.headers.get("Content-Type", "")
@@ -184,15 +186,49 @@ def _match_candidate_title(title: str, candidate: Dict[str, Any]) -> bool:
     )
 
 
-def search_jikan_candidates(title: str, limit: int = 5) -> List[Dict[str, Any]]:
+def search_anilist_candidates(title: str, limit: int = 5) -> List[Dict[str, Any]]:
     if not title or not title.strip():
         return []
-    query = parse.urlencode({"q": title.strip(), "limit": limit})
-    payload = _http_json(f"https://api.jikan.moe/v4/anime?{query}")
-    return _normalize_candidates(payload.get("data", []))
+    graphql_query = {
+        "query": (
+            "query ($search: String, $limit: Int) { "
+            "Page(perPage: $limit) { "
+            "media(search: $search, type: ANIME) { "
+            "idMal title { romaji english native } "
+            "} } }"
+        ),
+        "variables": {"search": title.strip(), "limit": limit},
+    }
+    payload = _http_json(
+        "https://graphql.anilist.co",
+        data=json.dumps(graphql_query).encode("utf-8"),
+    )
+    if payload.get("errors"):
+        raise ExternalApiError("AniList retornou um erro GraphQL.")
+    data = payload.get("data")
+    page = data.get("Page") if isinstance(data, dict) else None
+    media = page.get("media") if isinstance(page, dict) else None
+    if not isinstance(media, list):
+        raise ExternalApiError("AniList retornou resultados com formato inválido.")
+
+    candidates = []
+    for item in _normalize_candidates(media):
+        titles = item.get("title")
+        mal_id = item.get("idMal")
+        if not isinstance(titles, dict) or isinstance(mal_id, bool) or not isinstance(mal_id, int) or mal_id <= 0:
+            continue
+        candidates.append(
+            {
+                "mal_id": mal_id,
+                "title": titles.get("romaji"),
+                "title_english": titles.get("english"),
+                "title_japanese": titles.get("native"),
+            }
+        )
+    return candidates
 
 
-def select_jikan_candidate(title: str, candidates: Iterable[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
+def select_anilist_candidate(title: str, candidates: Iterable[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
     candidate_list = list(candidates)
     exact_matches = [candidate for candidate in candidate_list if _match_candidate_title(title, candidate)]
     return exact_matches[0] if len(exact_matches) == 1 else None
@@ -356,7 +392,7 @@ def _select_candidate_interactively(
     candidates: List[Dict[str, Any]],
     chooser: Callable[[str], str],
 ) -> Optional[Dict[str, Any]]:
-    selected = select_jikan_candidate(title, candidates)
+    selected = select_anilist_candidate(title, candidates)
     if selected is not None or not candidates:
         return selected
 
@@ -419,7 +455,7 @@ def build_preview_for_root(
             progress_callback(
                 {
                     "stage": "anime-metadata",
-                    "message": f"Consultando identificação no Jikan para {show_title}.",
+                    "message": f"Consultando identificação no AniList para {show_title}.",
                     "series": show_title,
                 }
             )
@@ -431,32 +467,32 @@ def build_preview_for_root(
         if isinstance(mal_id, bool) or (mal_id is not None and (not isinstance(mal_id, int) or mal_id <= 0)):
             preview["pending"].append({"title": show_title, "reason": "Mapeamento MAL inválido no cache local."})
             continue
-        search_key = f"jikan:{mapping_key}"
+        search_key = f"anilist:{mapping_key}"
         candidates = _cache_get(cache, search_key, now)
         if mal_id is None:
             if candidates is None:
                 try:
-                    candidates = search_jikan_candidates(show_title)
+                    candidates = search_anilist_candidates(show_title)
                     _cache_set(cache, search_key, candidates, now, cache_ttl_seconds)
                 except ExternalApiError as exc:
                     if exc.status_code == 429:
                         cache["api_retry_until"] = _retry_deadline(exc.retry_after, now)
                     if exc.status_code == 429 or exc.status_code is None or exc.status_code >= 500:
                         pause_remaining_queries = True
-                        pause_reason = _api_failure_reason("Jikan", exc)
+                        pause_reason = _api_failure_reason("AniList", exc)
                     else:
                         preview["pending"].append(
-                            {"title": show_title, "reason": _api_failure_reason("Jikan", exc)}
+                            {"title": show_title, "reason": _api_failure_reason("AniList", exc)}
                         )
                     continue
-            selected = select_jikan_candidate(show_title, candidates)
+            selected = select_anilist_candidate(show_title, candidates)
             if selected is None and candidates and auto_guess:
                 selected = candidates[0]
                 preview["assumptions"].append(
                     {
                         "title": show_title,
                         "mal_id": selected.get("mal_id"),
-                        "reason": "Usado o primeiro candidato Jikan por modo de estimativa automática.",
+                        "reason": "Usado o primeiro candidato AniList por modo de estimativa automática.",
                     }
                 )
             if selected is None and chooser is not None and candidates:

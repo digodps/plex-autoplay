@@ -267,6 +267,7 @@ def main(argv: list[str] | None = None) -> int:
         default_intro_skip_seconds=config.default_intro_skip_seconds,
     )
     web_server = None
+    scan_coordinator = None
     media_root = Path(config.media_root).expanduser()
     if media_root.is_dir():
         try:
@@ -282,6 +283,7 @@ def main(argv: list[str] | None = None) -> int:
                 cache_file=config.anime_markers_cache_file,
                 cache_ttl_seconds=config.anime_markers_cache_ttl_hours * 60 * 60,
                 auto_generate_anime_markers=config.auto_generate_anime_markers,
+                plex_episode_lookup=plex_manager.list_show_episodes,
             )
             scan_coordinator = ScanCoordinator(
                 lambda progress_callback: scan_service.scan(progress_callback),
@@ -297,8 +299,6 @@ def main(argv: list[str] | None = None) -> int:
             )
             web_server = create_server(dashboard_app, host="0.0.0.0", port=config.dashboard_port)
             threading.Thread(target=web_server.run, name="plex-autoplay-dashboard", daemon=True).start()
-            if not scan_coordinator.start():
-                logger.warning("A varredura anterior já está ativa; não foi criada outra execução de startup.")
             logger.info("Dashboard web iniciado na porta %d.", config.dashboard_port)
         except (OSError, RuntimeError, ValueError) as error:
             logger.exception("Dashboard não pôde ser iniciado; o watcher Plex continuará: %s", error)
@@ -334,6 +334,9 @@ def main(argv: list[str] | None = None) -> int:
         logger.error("Não foi possível conectar ao servidor Plex: %s", error)
         logger.error("Verifique se o PLEX_URL e o PLEX_TOKEN estão corretos.")
         sys.exit(1)
+
+    if scan_coordinator is not None and not scan_coordinator.start():
+        logger.warning("A varredura anterior já está ativa; não foi criada outra execução de startup.")
 
     watcher.start()
     logger.info("Serviço ativo e monitorando reproduções. Pressione Ctrl+C para encerrar.")

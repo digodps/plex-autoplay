@@ -4,7 +4,7 @@
 
 Permitir inventariar bibliotecas de TV shows cadastradas no dashboard e, opcionalmente, enriquecer bibliotecas classificadas como Anime ao iniciar o serviço, consultando APIs públicas para gerar marcadores de abertura e encerramento em um `markers.json` compatível. Uma CLI também oferece prévia e geração manual.
 
-O recurso gera **marcadores temporais** (segmentos de intro e encerramento), não arquivos de metadados descritivos nem alterações na biblioteca Plex. O dashboard de TV shows mantém inventário e cobertura de marcadores para todos os tipos de série; Jikan e AniSkip são usados somente como enriquecimento automático das bibliotecas classificadas como Anime. Séries comuns podem receber marcadores manualmente pela interface.
+O recurso gera **marcadores temporais** (segmentos de intro e encerramento), não arquivos de metadados descritivos nem alterações na biblioteca Plex. O dashboard de TV shows mantém inventário e cobertura de marcadores para todos os tipos de série; consulta marcadores nativos do Plex em bibliotecas classificadas como Anime ou Série e usa AniList/AniSkip para enriquecimento automático de Anime. Marcadores nativos prevalecem por campo quando disponíveis; dados automáticos ou manuais em `markers.json` continuam sendo usados como fallback para os campos ausentes.
 
 ## 2. Escopo do MVP
 
@@ -15,9 +15,9 @@ O recurso gera **marcadores temporais** (segmentos de intro e encerramento), nã
 - Uma raiz de mídia montada em modo somente leitura; todas as bibliotecas cadastradas são inventariadas, mas somente Anime pode ser consultada nas APIs específicas.
 - A descoberta genérica do dashboard aceita `S01E02`, faixas `S01E02-E03`, `1x02`, `E02` contextualizado por pasta de temporada e o formato legado; ver [descoberta de episódios de TV shows](./tvshow-episode-discovery.md).
 - Reutilização do formato de marcadores já lido por `JsonMarkerRepository`.
-- Nenhuma dependência de API privada do Plex, scraping de páginas ou credencial de usuário Plex para buscar timestamps.
+- Os marcadores nativos Plex são consultados pela conexão Plex já configurada para Anime e Série; a associação exige título exato, temporada e episódio.
 
-Fora do escopo: geração para séries comuns ou filmes, download/edição de vídeo, identificação por visão computacional, submissão automática de timestamps e monitoramento contínuo das alterações na pasta.
+Fora do escopo: geração automática de timestamps para séries comuns ou filmes, download/edição de vídeo, identificação por visão computacional, submissão automática de timestamps e monitoramento contínuo das alterações na pasta.
 
 ## 3. Requisito de caminho e nomenclatura
 
@@ -51,16 +51,15 @@ Regras de parsing:
 
 ## 4. APIs públicas
 
-### 4.1 Jikan REST API v4 — pesquisa e identificação
+### 4.1 AniList GraphQL — pesquisa e identificação
 
-- Documentação: <https://docs.api.jikan.moe/>
-- Base: `https://api.jikan.moe/v4`
-- Endpoint de pesquisa: `GET /anime?q=<título>&limit=<limite>`
-- Endpoint de detalhes: `GET /anime/{mal_id}/full`
-- Autenticação: nenhuma chave de API.
-- Jikan é uma API pública não oficial para dados do MyAnimeList; disponibilidade e limites podem mudar.
+- Documentação: <https://docs.anilist.co/>
+- Endpoint: `POST https://graphql.anilist.co`
+- Consulta: pesquisa mídia do tipo `ANIME` por título e retorna `idMal` e títulos romaji, inglês e nativo.
+- Autenticação: nenhuma chave para consultas públicas.
+- AniList é um serviço externo; disponibilidade e limites podem mudar.
 
-Usar o título da pasta como consulta primária. A busca retorna candidatos com `mal_id`, títulos alternativos e dados básicos. A CLI solicita seleção quando não houver correspondência inequívoca; no startup automatizado, o primeiro candidato é usado como estimativa e a suposição é registrada. O mapeamento é persistido localmente para reduzir pesquisas repetidas.
+Usar o título da pasta como consulta primária. A busca retorna candidatos com ID do MyAnimeList e títulos alternativos. A CLI solicita seleção quando não houver correspondência inequívoca; no startup automatizado, o primeiro candidato é usado como estimativa e a suposição é registrada. O mapeamento é persistido localmente para reduzir pesquisas repetidas. O ID do MyAnimeList retornado pelo AniList alimenta as consultas de timestamps no AniSkip.
 
 ### 4.2 AniSkip — timestamps de abertura e encerramento
 
@@ -83,7 +82,7 @@ Não enviar arquivos ou conteúdo de mídia para provedores externos.
 1. No Docker Compose, o usuário configura uma raiz host que contenha as bibliotecas; ela é montada em modo somente leitura, enquanto marcadores, cache, bibliotecas e relatório persistem em `/config`.
 2. No modo de dashboard, a varredura em segundo plano inventaria todas as bibliotecas cadastradas; quando `AUTO_GENERATE_ANIME_MARKERS` estiver habilitada, somente bibliotecas classificadas como Anime são enriquecidas via APIs. No modo legado sem raiz do dashboard, o serviço percorre as raízes listadas em `ANIME_MEDIA_DIRS`; `SERIES_MEDIA_DIRS` nunca é enviada às APIs de anime.
 3. O sistema agrupa arquivos pela série e evita consultas repetidas usando cache local.
-4. Para séries ainda não mapeadas, consulta Jikan; no startup, seleciona uma estimativa quando não houver correspondência exata única e registra a suposição.
+4. Para séries ainda não mapeadas, consulta AniList; no startup, seleciona uma estimativa quando não houver correspondência exata única e registra a suposição.
 5. Na CLI interativa, apresenta candidatos e permite confirmação; em modo não interativo sem `--auto-guess`, deixa a série pendente.
 6. Resolve a relação entre a temporada local e a numeração usada pelo AniSkip. No startup, usa offset zero como estimativa quando não houver mapeamento em cache e registra a suposição; a CLI pode solicitar confirmação.
 7. Obtém a duração real do arquivo e consulta AniSkip para `op` e `ed`.
@@ -147,7 +146,7 @@ Opções disponíveis:
 
 ## 9. Implementação
 
-O fluxo de descoberta, consulta Jikan/AniSkip, cache e merge está implementado em `plex_autoplay/infrastructure/media/directory_monitor.py`. O entry point `plex_autoplay/main.py` compõe o comando CLI e chama a geração de Anime no startup quando `AUTO_GENERATE_ANIME_MARKERS` estiver habilitada. A rotina de startup recebe as configurações de caminhos/cache de `plex_autoplay/config.py`; os watchers de reprodução do Plex continuam separados desse fluxo.
+O fluxo de descoberta, consulta AniList/AniSkip, cache e merge está implementado em `plex_autoplay/infrastructure/media/directory_monitor.py`. O entry point `plex_autoplay/main.py` compõe o comando CLI e chama a geração de Anime no startup quando `AUTO_GENERATE_ANIME_MARKERS` estiver habilitada. A rotina de startup recebe as configurações de caminhos/cache de `plex_autoplay/config.py`; os watchers de reprodução do Plex continuam separados desse fluxo.
 
 Os testes unitários devem usar respostas HTTP simuladas; nenhum teste automatizado deve depender de chamadas reais às APIs.
 
@@ -176,6 +175,6 @@ Os testes unitários devem usar respostas HTTP simuladas; nenhum teste automatiz
 
 ## 12. Referências
 
-- [Jikan REST API v4](https://docs.api.jikan.moe/)
+- [AniList GraphQL API](https://docs.anilist.co/)
 - [AniSkip API](https://api.aniskip.com/)
 - [Python PlexAPI: objetos de vídeo](https://python-plexapi.readthedocs.io/en/latest/modules/video.html)

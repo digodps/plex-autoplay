@@ -2,7 +2,8 @@ import json
 import tempfile
 import unittest
 from pathlib import Path
-from unittest.mock import patch
+from types import SimpleNamespace
+from unittest.mock import Mock, patch
 
 from plex_autoplay.infrastructure.markers.json_repository import JsonMarkerRepository
 from plex_autoplay.infrastructure.media.library_repository import LibraryRepository
@@ -66,14 +67,108 @@ class TestTVShowCatalog(unittest.TestCase):
             libraries.add_library("Ordinary Show", "series")
             markers = JsonMarkerRepository(str(base / "markers.json"))
 
-            with patch("plex_autoplay.infrastructure.media.directory_monitor.search_jikan_candidates") as jikan, patch(
+            with patch("plex_autoplay.infrastructure.media.directory_monitor.search_anilist_candidates") as anilist, patch(
                 "plex_autoplay.infrastructure.media.directory_monitor.fetch_aniskip_times"
             ) as aniskip:
                 result = TVShowCatalog(libraries, markers).build()
 
             self.assertEqual(len(result[0].episodes), 1)
-            jikan.assert_not_called()
+            anilist.assert_not_called()
             aniskip.assert_not_called()
+
+    def test_series_coverage_uses_native_plex_markers_and_keeps_them_after_refresh(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            base = Path(temp_dir)
+            media_root = base / "media"
+            season = media_root / "Series" / "Ordinary Show" / "Season 1"
+            season.mkdir(parents=True)
+            (season / "Ordinary.Show.S01E01.mkv").write_bytes(b"video")
+            libraries = LibraryRepository(media_root, base / "libraries.json")
+            libraries.add_library("Series", "series")
+            markers_path = base / "markers.json"
+            markers_path.write_text(
+                json.dumps(
+                    {"Ordinary Show": {"season_1": {"1": {"start": 1.0, "end": 9.0, "credits": 60.0}}}}
+                ),
+                encoding="utf-8",
+            )
+            native_episode = SimpleNamespace(
+                seasonNumber=1,
+                episodeNumber=1,
+                markers=[
+                    SimpleNamespace(type="intro", start=12_000, end=32_000),
+                    SimpleNamespace(type="credits", start=1_200_000, end=1_300_000),
+                ],
+            )
+            lookup = Mock(return_value=[native_episode])
+            catalog = TVShowCatalog(
+                libraries,
+                JsonMarkerRepository(str(markers_path), default_intro_skip_seconds=0),
+                plex_episode_lookup=lookup,
+            )
+            events = []
+
+            result = catalog.build(progress_callback=events.append)[0]
+
+            self.assertEqual(result.episodes[0].intro_start_ms, 12_000)
+            self.assertEqual(result.episodes[0].intro_end_ms, 32_000)
+            self.assertEqual(result.episodes[0].credits_ms, 1_200_000)
+            lookup.assert_called_once_with("Series", "Ordinary Show")
+            self.assertTrue(any(event["stage"] == "plex-markers" for event in events))
+            catalog.refresh_markers([result])
+            self.assertEqual(result.episodes[0].intro_start_ms, 12_000)
+            self.assertEqual(result.episodes[0].credits_ms, 1_200_000)
+
+    def test_anime_coverage_prefers_native_plex_markers_over_generated_markers(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            base = Path(temp_dir)
+            media_root = base / "media"
+            season = media_root / "Anime" / "Anime Show" / "Season 1"
+            season.mkdir(parents=True)
+            (season / "Anime.Show.S01E01.mkv").write_bytes(b"video")
+            libraries = LibraryRepository(media_root, base / "libraries.json")
+            libraries.add_library("Anime", "anime")
+            markers_path = base / "markers.json"
+            markers_path.write_text(
+                json.dumps(
+                    {"Anime Show": {"season_1": {"1": {"start": 1.0, "end": 20.0, "credits": 60.0}}}}
+                ),
+                encoding="utf-8",
+            )
+            plex_episode = SimpleNamespace(
+                seasonNumber=1,
+                episodeNumber=1,
+                markers=[SimpleNamespace(type="intro", start=11_000, end=31_000)],
+            )
+            lookup = Mock(return_value=[plex_episode])
+
+            catalog = TVShowCatalog(
+                libraries,
+                JsonMarkerRepository(str(markers_path), default_intro_skip_seconds=0),
+                plex_episode_lookup=lookup,
+            )
+            result = catalog.build()[0]
+
+            self.assertEqual(result.episodes[0].intro_start_ms, 11_000)
+            self.assertEqual(result.episodes[0].intro_end_ms, 31_000)
+            self.assertEqual(result.episodes[0].credits_ms, 60_000)
+            lookup.assert_called_once_with("Anime", "Anime Show")
+
+    def test_plex_marker_lookup_is_not_used_without_plex_gateway(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            base = Path(temp_dir)
+            media_root = base / "media"
+            season = media_root / "Anime" / "Anime Show" / "Season 1"
+            season.mkdir(parents=True)
+            (season / "Anime.Show.S01E01.mkv").write_bytes(b"video")
+            libraries = LibraryRepository(media_root, base / "libraries.json")
+            libraries.add_library("Anime", "anime")
+            result = TVShowCatalog(
+                libraries,
+                JsonMarkerRepository(str(base / "markers.json")),
+            ).build()[0]
+
+            self.assertEqual(len(result.episodes), 1)
 
     def test_reports_inventory_progress_for_each_library_directory(self):
         with tempfile.TemporaryDirectory() as temp_dir:

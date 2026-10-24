@@ -16,7 +16,8 @@ from plex_autoplay.infrastructure.media.directory_monitor import (
     get_media_duration_seconds,
     load_cache,
     save_cache,
-    select_jikan_candidate,
+    search_anilist_candidates,
+    select_anilist_candidate,
 )
 from plex_autoplay.infrastructure.media.directory_monitor import (
     build_series_map,
@@ -143,13 +144,52 @@ class TestAnimeMarkersMerge(unittest.TestCase):
 
 
 class TestPublicApisAndCache(unittest.TestCase):
-    def test_ambiguous_jikan_candidates_are_not_selected_automatically(self):
+    def test_anilist_search_maps_titles_and_mal_id_for_aniskip(self):
+        response = {
+            "data": {
+                "Page": {
+                    "media": [
+                        {
+                            "idMal": 20,
+                            "title": {
+                                "romaji": "NARUTO",
+                                "english": "Naruto",
+                                "native": "NARUTO -ナルト-",
+                            },
+                        },
+                        {"idMal": None, "title": {"romaji": "Unmapped", "english": None, "native": None}},
+                    ]
+                }
+            }
+        }
+        with patch(
+            "plex_autoplay.infrastructure.media.directory_monitor._http_json",
+            return_value=response,
+        ) as http_json:
+            candidates = search_anilist_candidates("Naruto")
+
+        self.assertEqual(
+            candidates,
+            [
+                {
+                    "mal_id": 20,
+                    "title": "NARUTO",
+                    "title_english": "Naruto",
+                    "title_japanese": "NARUTO -ナルト-",
+                }
+            ],
+        )
+        request_body = json.loads(http_json.call_args.kwargs["data"])
+        self.assertEqual(http_json.call_args.args, ("https://graphql.anilist.co",))
+        self.assertEqual(request_body["variables"], {"search": "Naruto", "limit": 5})
+
+    def test_ambiguous_anilist_candidates_are_not_selected_automatically(self):
         candidates = [
             {"mal_id": 1, "title": "Example"},
             {"mal_id": 2, "title": "Example"},
         ]
-        self.assertIsNone(select_jikan_candidate("Example", candidates))
-        self.assertIsNone(select_jikan_candidate("Different title", [{"mal_id": 3, "title": "Unrelated"}]))
+        self.assertIsNone(select_anilist_candidate("Example", candidates))
+        self.assertIsNone(select_anilist_candidate("Different title", [{"mal_id": 3, "title": "Unrelated"}]))
 
     def test_aniskip_rejects_interval_outside_episode_duration(self):
         payload = {
@@ -196,7 +236,7 @@ class TestPublicApisAndCache(unittest.TestCase):
             (season_dir / "Example -02.mkv").write_bytes(b"video")
 
             with patch(
-                "plex_autoplay.infrastructure.media.directory_monitor.search_jikan_candidates",
+                "plex_autoplay.infrastructure.media.directory_monitor.search_anilist_candidates",
                 return_value=[{"mal_id": 42, "title": "Example"}],
             ), patch(
                 "plex_autoplay.infrastructure.media.directory_monitor.fetch_aniskip_times",
@@ -214,7 +254,7 @@ class TestPublicApisAndCache(unittest.TestCase):
             self.assertIn("Network is unreachable", preview["pending"][0]["reason"])
             self.assertEqual(preview["series"], {})
 
-    def test_preview_pauses_remaining_jikan_searches_after_connection_failure(self):
+    def test_preview_pauses_remaining_anilist_searches_after_connection_failure(self):
         with tempfile.TemporaryDirectory() as tmp_dir:
             root = Path(tmp_dir) / "media"
             for title in ("First", "Second"):
@@ -223,16 +263,16 @@ class TestPublicApisAndCache(unittest.TestCase):
                 (season_dir / f"{title} -01.mkv").write_bytes(b"video")
 
             with patch(
-                "plex_autoplay.infrastructure.media.directory_monitor.search_jikan_candidates",
+                "plex_autoplay.infrastructure.media.directory_monitor.search_anilist_candidates",
                 side_effect=ExternalApiError("Falha de conexão com API pública: Network is unreachable"),
-            ) as jikan:
+            ) as anilist:
                 preview = build_preview_for_root(
                     root,
                     cache_file=Path(tmp_dir) / "cache.json",
                     auto_guess=True,
                 )
 
-            self.assertEqual(jikan.call_count, 1)
+            self.assertEqual(anilist.call_count, 1)
             self.assertEqual(len(preview["pending"]), 1)
             self.assertIn("Network is unreachable", preview["pending"][0]["reason"])
 
@@ -323,9 +363,9 @@ class TestPublicApisAndCache(unittest.TestCase):
                 return 1423.75
 
             with patch(
-                "plex_autoplay.infrastructure.media.directory_monitor.search_jikan_candidates",
+                "plex_autoplay.infrastructure.media.directory_monitor.search_anilist_candidates",
                 return_value=candidates,
-            ) as jikan, patch(
+            ) as anilist, patch(
                 "plex_autoplay.infrastructure.media.directory_monitor.fetch_aniskip_times",
                 return_value=times,
             ) as aniskip:
@@ -344,7 +384,7 @@ class TestPublicApisAndCache(unittest.TestCase):
             expected = {"Example": {"season_1": {"1": {"start": 10.0, "end": 30.0}}}}
             self.assertEqual(first["series"], expected)
             self.assertEqual(second["series"], expected)
-            jikan.assert_called_once_with("Example")
+            anilist.assert_called_once_with("Example")
             aniskip.assert_called_once_with(42, 1, 1423.75)
 
     def test_auto_guess_uses_top_candidate_and_zero_episode_offset(self):
@@ -358,7 +398,7 @@ class TestPublicApisAndCache(unittest.TestCase):
                 {"mal_id": 77, "title": "Example TV"},
             ]
             with patch(
-                "plex_autoplay.infrastructure.media.directory_monitor.search_jikan_candidates",
+                "plex_autoplay.infrastructure.media.directory_monitor.search_anilist_candidates",
                 return_value=candidates,
             ), patch(
                 "plex_autoplay.infrastructure.media.directory_monitor.fetch_aniskip_times",
@@ -440,13 +480,13 @@ class TestPublicApisAndCache(unittest.TestCase):
                 "plex_autoplay.infrastructure.media.directory_monitor.time.time",
                 return_value=100,
             ), patch(
-                "plex_autoplay.infrastructure.media.directory_monitor.search_jikan_candidates"
-            ) as jikan:
+                "plex_autoplay.infrastructure.media.directory_monitor.search_anilist_candidates"
+            ) as anilist:
                 preview = build_preview_for_root(root, cache_file=cache_file)
 
             self.assertEqual(preview["series"], {})
             self.assertIn("limite da API", preview["pending"][0]["reason"])
-            jikan.assert_not_called()
+            anilist.assert_not_called()
 
 
 class TestMediaDuration(unittest.TestCase):
