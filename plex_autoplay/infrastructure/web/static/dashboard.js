@@ -10,6 +10,10 @@
   const activityEvents = document.querySelector("#activity-events");
   const serviceCpu = document.querySelector("#service-cpu");
   const serviceMemory = document.querySelector("#service-memory");
+  const networkDownloadSpeed = document.querySelector("#network-download-speed");
+  const networkUploadSpeed = document.querySelector("#network-upload-speed");
+  const networkDownloadTotal = document.querySelector("#network-download-total");
+  const networkUploadTotal = document.querySelector("#network-upload-total");
   let lastCompletedAt = statusBanner?.dataset.completedAt || "";
   let polling = false;
 
@@ -79,8 +83,16 @@
     if (resources.error) {
       serviceCpu.textContent = "Indisponível";
       serviceMemory.textContent = "Indisponível";
+      networkDownloadSpeed.textContent = "Indisponível";
+      networkUploadSpeed.textContent = "Indisponível";
+      networkDownloadTotal.textContent = "Indisponível";
+      networkUploadTotal.textContent = "Indisponível";
       serviceCpu.title = resources.error;
       serviceMemory.title = resources.error;
+      networkDownloadSpeed.title = resources.error;
+      networkUploadSpeed.title = resources.error;
+      networkDownloadTotal.title = resources.error;
+      networkUploadTotal.title = resources.error;
     } else {
       serviceCpu.textContent = Number.isFinite(resources.cpu_percent)
         ? `${resources.cpu_percent.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}%`
@@ -88,9 +100,34 @@
       serviceMemory.textContent = Number.isFinite(resources.memory_bytes)
         ? `${(resources.memory_bytes / (1024 * 1024)).toLocaleString("pt-BR", { maximumFractionDigits: 1 })} MiB`
         : "Indisponível";
+      networkDownloadSpeed.textContent = formatNetworkRate(resources.network_download_bytes_per_second);
+      networkUploadSpeed.textContent = formatNetworkRate(resources.network_upload_bytes_per_second);
+      networkDownloadTotal.textContent = formatBytes(resources.network_received_bytes_total);
+      networkUploadTotal.textContent = formatBytes(resources.network_sent_bytes_total);
       serviceCpu.removeAttribute("title");
       serviceMemory.removeAttribute("title");
+      networkDownloadSpeed.removeAttribute("title");
+      networkUploadSpeed.removeAttribute("title");
+      networkDownloadTotal.removeAttribute("title");
+      networkUploadTotal.removeAttribute("title");
     }
+  }
+
+  function formatBytes(value) {
+    if (!Number.isFinite(value)) return "Indisponível";
+    if (value < 1024) return `${value.toLocaleString("pt-BR")} B`;
+    const units = ["KiB", "MiB", "GiB", "TiB"];
+    let size = value;
+    let unitIndex = -1;
+    do {
+      size /= 1024;
+      unitIndex += 1;
+    } while (size >= 1024 && unitIndex < units.length - 1);
+    return `${size.toLocaleString("pt-BR", { maximumFractionDigits: 1 })} ${units[unitIndex]}`;
+  }
+
+  function formatNetworkRate(value) {
+    return Number.isFinite(value) ? `${formatBytes(value)}/s` : "Calculando...";
   }
 
   function setStatus(snapshot) {

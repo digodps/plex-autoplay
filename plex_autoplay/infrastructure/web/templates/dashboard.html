@@ -151,7 +151,7 @@
             <progress id="activity-progress-bar" aria-label="Progresso da varredura"></progress>
           </div>
         </div>
-        <div class="resource-grid" aria-label="Recursos do serviço Plex Autoplay">
+        <div class="resource-grid" aria-label="Recursos do serviço e tráfego da rede do container">
           <article class="stat-card resource-card">
             <span class="stat-label">CPU do serviço</span>
             <strong id="service-cpu">Calculando...</strong>
@@ -161,6 +161,26 @@
             <span class="stat-label">Memória do serviço</span>
             <strong id="service-memory">Calculando...</strong>
             <span class="stat-caption">memória residente (RSS)</span>
+          </article>
+          <article class="stat-card resource-card">
+            <span class="stat-label">Download</span>
+            <strong id="network-download-speed">Calculando...</strong>
+            <span class="stat-caption">velocidade recebida pelo container</span>
+          </article>
+          <article class="stat-card resource-card">
+            <span class="stat-label">Upload</span>
+            <strong id="network-upload-speed">Calculando...</strong>
+            <span class="stat-caption">velocidade enviada pelo container</span>
+          </article>
+          <article class="stat-card resource-card">
+            <span class="stat-label">Recebido</span>
+            <strong id="network-download-total">Calculando...</strong>
+            <span class="stat-caption">total acumulado nas interfaces do container</span>
+          </article>
+          <article class="stat-card resource-card">
+            <span class="stat-label">Enviado</span>
+            <strong id="network-upload-total">Calculando...</strong>
+            <span class="stat-caption">total acumulado nas interfaces do container</span>
           </article>
         </div>
         <div class="activity-log-wrap">

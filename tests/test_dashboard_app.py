@@ -129,6 +129,10 @@ class TestDashboardApp(unittest.TestCase):
         self.assertEqual(self.client.get("/api/status").json["result"], {"libraries": []})
         resources = self.client.get("/api/status").json["resources"]
         self.assertGreater(resources["memory_bytes"], 0)
+        self.assertIn("network_received_bytes_total", resources)
+        self.assertIn("network_sent_bytes_total", resources)
+        self.assertIn("network_download_bytes_per_second", resources)
+        self.assertIn("network_upload_bytes_per_second", resources)
         script = self.client.get("/static/dashboard.js")
         self.assertEqual(script.status_code, 200)
         self.assertIn("/api/status", script.get_data(as_text=True))
@@ -145,6 +149,10 @@ class TestDashboardApp(unittest.TestCase):
         self.assertEqual(page.count('id="activity"'), 1)
         self.assertIn("Nenhuma pendência ou erro registrado", page)
         self.assertIn("CPU do serviço", page)
+        self.assertIn("velocidade recebida pelo container", page)
+        self.assertIn("velocidade enviada pelo container", page)
+        self.assertIn('id="network-download-total"', page)
+        self.assertIn('id="network-upload-total"', page)
         self.assertIn("Eventos recentes", page)
         self.assertIn('id="activity-progress"', page)
 
