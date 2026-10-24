@@ -13,6 +13,7 @@ import shutil
 import subprocess
 import tempfile
 import time
+import unicodedata
 from pathlib import Path
 from typing import Any, Callable, Dict, Iterable, List, Optional
 from urllib import error, parse, request
@@ -54,6 +55,8 @@ class ExternalApiError(RuntimeError):
 @dataclass(frozen=True)
 class MediaEpisode:
     title: str
+    filename_title: str
+    directory_title: str
     season: int
     episode: int
     path: str
@@ -113,6 +116,7 @@ def _parse_episode_file(path: Path, root: Path) -> Optional[MediaEpisode]:
         return None
 
     title = series_dir.name.strip()
+    file_series_title = ""
     if file_title:
         file_series_title = f"{file_title} {season_number}".strip()
         if title.casefold() in {file_title.casefold(), file_series_title.casefold()}:
@@ -122,6 +126,8 @@ def _parse_episode_file(path: Path, root: Path) -> Optional[MediaEpisode]:
 
     return MediaEpisode(
         title=title,
+        filename_title=file_series_title if file_title else "",
+        directory_title=series_dir.name.strip(),
         season=season_number,
         episode=episode_number,
         path=str(path.resolve()),
@@ -166,13 +172,33 @@ def build_series_map(media_root: str | Path) -> Dict[str, List[MediaEpisode]]:
 
 
 def _anime_lookup_titles(show_title: str, episodes: List[MediaEpisode]) -> List[str]:
+    lookup_titles: List[str] = []
+    filename_titles = sorted(
+        {episode.filename_title for episode in episodes if episode.filename_title.strip()},
+        key=str.casefold,
+    )
+    for filename_title in filename_titles:
+        if filename_title.casefold() not in {title.casefold() for title in lookup_titles}:
+            lookup_titles.append(filename_title)
+    directory_titles = {episode.directory_title for episode in episodes if episode.directory_title.strip()}
+    for directory_title in sorted(directory_titles, key=str.casefold):
+        if filename_titles:
+            seasons = sorted({episode.season for episode in episodes})
+            for season in seasons:
+                season_title = f"{directory_title} Season {season}"
+                if season_title.casefold() not in {title.casefold() for title in lookup_titles}:
+                    lookup_titles.append(season_title)
+        if directory_title.casefold() not in {title.casefold() for title in lookup_titles}:
+            lookup_titles.append(directory_title)
+    if show_title.casefold() not in {title.casefold() for title in lookup_titles}:
+        lookup_titles.append(show_title)
+
     season_suffix = SEASON_SUFFIX_RE.search(show_title)
-    seasons = {episode.season for episode in episodes}
-    if season_suffix and int(season_suffix.group(1)) in seasons:
+    if season_suffix and int(season_suffix.group(1)) in {episode.season for episode in episodes}:
         base_title = show_title[: season_suffix.start()].strip()
-        if base_title:
-            return [show_title, base_title]
-    return [show_title]
+        if base_title and base_title.casefold() not in {title.casefold() for title in lookup_titles}:
+            lookup_titles.append(base_title)
+    return lookup_titles
 
 
 def _http_json(url: str, timeout: int = 10, data: Optional[bytes] = None) -> Dict[str, Any]:
@@ -218,7 +244,7 @@ def _normalize_candidates(items: Iterable[Any]) -> List[Dict[str, Any]]:
 
 
 def _match_candidate_title(title: str, candidate: Dict[str, Any]) -> bool:
-    normalized_title = " ".join(re.sub(r"\b(?:season|temporada)\s*", " ", title.strip().casefold()).split())
+    normalized_title = _normalize_anilist_title(title)
     candidate_titles = (
         candidate.get("title"),
         candidate.get("title_english"),
@@ -226,12 +252,14 @@ def _match_candidate_title(title: str, candidate: Dict[str, Any]) -> bool:
     )
     return any(
         isinstance(candidate_title, str)
-        and " ".join(
-            re.sub(r"\b(?:season|temporada)\s*", " ", candidate_title.strip().casefold()).split()
-        )
-        == normalized_title
+        and _normalize_anilist_title(candidate_title) == normalized_title
         for candidate_title in candidate_titles
     )
+
+
+def _normalize_anilist_title(title: str) -> str:
+    normalized_title = unicodedata.normalize("NFKC", title).casefold()
+    return " ".join(re.sub(r"\b(?:season|temporada)\s*", " ", normalized_title.strip()).split())
 
 
 def search_anilist_candidates(title: str, limit: int = 5) -> List[Dict[str, Any]]:
@@ -508,7 +536,7 @@ def build_preview_for_root(
                 }
             )
         lookup_titles = _anime_lookup_titles(show_title, episodes)
-        marker_title = lookup_titles[-1]
+        marker_title = episodes[0].directory_title if episodes else show_title
         mapping_key = show_title.casefold()
         anime_map = cache.setdefault("anime_mappings", {})
         if not isinstance(anime_map, dict):
@@ -546,7 +574,7 @@ def build_preview_for_root(
                     candidate_id = candidate.get("mal_id")
                     if not any(existing.get("mal_id") == candidate_id for existing in candidates):
                         candidates.append(candidate)
-                selected = select_anilist_candidate(show_title, search_candidates)
+                selected = select_anilist_candidate(lookup_title, search_candidates)
                 if selected is not None:
                     break
 
@@ -554,7 +582,14 @@ def build_preview_for_root(
                 continue
 
             if selected is None:
-                selected = select_anilist_candidate(show_title, candidates)
+                selected = next(
+                    (
+                        match
+                        for lookup_title in lookup_titles
+                        if (match := select_anilist_candidate(lookup_title, candidates)) is not None
+                    ),
+                    None,
+                )
             if selected is None and candidates and auto_guess and len(lookup_titles) == 1:
                 selected = candidates[0]
                 preview["assumptions"].append(

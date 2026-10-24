@@ -46,6 +46,7 @@ class TestAnimeMarkersDiscovery(unittest.TestCase):
             self.assertEqual(episodes[0].title, "Kyouran Reijou Nia Liston")
             self.assertEqual(episodes[0].season, 1)
             self.assertEqual(episodes[0].episode, 1)
+            self.assertEqual(episodes[0].directory_title, "Kyouran Reijou Nia Liston")
 
     def test_scan_media_root_parses_season_from_title_season_episode_filename(self):
         with tempfile.TemporaryDirectory() as tmp_dir:
@@ -60,6 +61,8 @@ class TestAnimeMarkersDiscovery(unittest.TestCase):
 
             self.assertEqual(len(episodes), 1)
             self.assertEqual(episodes[0].title, "Ao no Hako 2")
+            self.assertEqual(episodes[0].filename_title, "Ao no Hako 2")
+            self.assertEqual(episodes[0].directory_title, "Ao no Hako")
             self.assertEqual(episodes[0].season, 2)
             self.assertEqual(episodes[0].episode, 1)
 
@@ -312,9 +315,48 @@ class TestPublicApisAndCache(unittest.TestCase):
 
             self.assertEqual(
                 [call.args[0] for call in anilist.call_args_list],
-                ["Ao no Hako 2", "Ao no Hako"],
+                ["Ao no Hako 2", "Ao no Hako Season 2"],
             )
             aniskip.assert_called_once_with(61323, 1, 1500.0)
+            self.assertEqual(preview["details"][0]["title_english"], "Blue Box Season 2")
+
+    def test_preview_uses_series_directory_as_anilist_fallback(self):
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir) / "media"
+            season_dir = root / "アオのハコ" / "Temporada 2"
+            season_dir.mkdir(parents=True)
+            (season_dir / "Ao no Hako 2 -01.mp4").write_bytes(b"video")
+            candidates = [
+                {
+                    "mal_id": 61323,
+                    "title": "アオのハコ Season２",
+                    "title_english": "Blue Box Season 2",
+                    "title_japanese": "アオのハコ Season２",
+                }
+            ]
+            with patch(
+                "plex_autoplay.infrastructure.media.directory_monitor.search_anilist_candidates",
+                side_effect=[[], candidates],
+            ) as anilist, patch(
+                "plex_autoplay.infrastructure.media.directory_monitor.fetch_aniskip_times",
+                return_value={"op": {"start": 5.0, "end": 90.0}},
+            ) as aniskip:
+                preview = build_preview_for_root(
+                    root,
+                    cache_file=Path(tmp_dir) / "metadata-cache.json",
+                    auto_guess=True,
+                    duration_reader=lambda _path: 1500.0,
+                )
+
+            self.assertEqual(
+                [call.args[0] for call in anilist.call_args_list],
+                ["Ao no Hako 2", "アオのハコ Season 2"],
+            )
+            aniskip.assert_called_once_with(61323, 1, 1500.0)
+            self.assertEqual(
+                preview["series"],
+                {"アオのハコ": {"season_2": {"1": {"start": 5.0, "end": 90.0}}}},
+            )
             self.assertEqual(preview["details"][0]["title_english"], "Blue Box Season 2")
 
     def test_ambiguous_anilist_candidates_are_not_selected_automatically(self):
