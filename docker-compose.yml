@@ -7,6 +7,13 @@ services:
     network_mode: host
     env_file:
       - .env
+    environment:
+      CUSTOM_MARKERS_FILE: /config/markers.json
+      AUTO_GENERATE_ANIME_MARKERS: "true"
+      ANIME_MEDIA_DIR: /media/anime
+      SERIES_MEDIA_DIR: /media/series
+      ANIME_MARKERS_CACHE_FILE: /config/metadata-cache.json
     volumes:
-      # Opcional: montar arquivo de marcadores customizados para persistência
-      - ./markers.json:/app/markers.json:ro
+      - ./config:/config
+      - "${ANIME_LIBRARY_PATH:?Defina ANIME_LIBRARY_PATH no arquivo .env}:/media/anime:ro"
+      - "${SERIES_LIBRARY_PATH:?Defina SERIES_LIBRARY_PATH no arquivo .env}:/media/series:ro"

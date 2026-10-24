@@ -16,9 +16,18 @@ services:
       POLL_INTERVAL_SECONDS: "2"
       CUSTOM_MARKERS_FILE: "/config/markers.json"
       DEFAULT_INTRO_SKIP_SECONDS: "0"
+      AUTO_GENERATE_ANIME_MARKERS: "true"
+      ANIME_MEDIA_DIR: "/media/anime"
+      SERIES_MEDIA_DIR: "/media/series"
+      ANIME_MARKERS_CACHE_FILE: "/config/metadata-cache.json"
+      ANIME_MARKERS_CACHE_TTL_HOURS: "168"
       LOG_LEVEL: "INFO"
     volumes:
       - /DATA/AppData/plex-autoplay:/config
+      # Edite o caminho à esquerda na instalação para a raiz de animes do host.
+      - ${ANIME_LIBRARY_PATH:-/DATA/Media/Anime}:/media/anime:ro
+      # Edite o caminho à esquerda na instalação para a raiz de séries do host.
+      - ${SERIES_LIBRARY_PATH:-/DATA/Media/Series}:/media/series:ro
 x-casaos:
   hostname: ""
   index: /

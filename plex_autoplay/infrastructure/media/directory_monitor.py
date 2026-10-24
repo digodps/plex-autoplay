@@ -194,8 +194,6 @@ def search_jikan_candidates(title: str, limit: int = 5) -> List[Dict[str, Any]]:
 
 def select_jikan_candidate(title: str, candidates: Iterable[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
     candidate_list = list(candidates)
-    if len(candidate_list) == 1:
-        return candidate_list[0]
     exact_matches = [candidate for candidate in candidate_list if _match_candidate_title(title, candidate)]
     return exact_matches[0] if len(exact_matches) == 1 else None
 
@@ -359,7 +357,7 @@ def _select_candidate_interactively(
     chooser: Callable[[str], str],
 ) -> Optional[Dict[str, Any]]:
     selected = select_jikan_candidate(title, candidates)
-    if selected is not None or len(candidates) <= 1:
+    if selected is not None or not candidates:
         return selected
 
     print(f"Candidatos encontrados para {title}:")
@@ -386,12 +384,13 @@ def build_preview_for_root(
     cache_ttl_seconds: int = 7 * 24 * 60 * 60,
     chooser: Optional[Callable[[str], str]] = None,
     duration_reader: Callable[[str | Path], float] = get_media_duration_seconds,
+    auto_guess: bool = False,
 ) -> Dict[str, Any]:
     if cache_ttl_seconds < 0:
         raise ValueError("O TTL do cache não pode ser negativo.")
     cache = load_cache(cache_file)
     series_map = build_series_map(media_root)
-    preview: Dict[str, Any] = {"series": {}, "pending": [], "details": []}
+    preview: Dict[str, Any] = {"series": {}, "pending": [], "details": [], "assumptions": []}
     now = time.time()
     retry_until = cache.get("api_retry_until", 0)
     if (
@@ -438,6 +437,15 @@ def build_preview_for_root(
                         rate_limited = True
                     continue
             selected = select_jikan_candidate(show_title, candidates)
+            if selected is None and candidates and auto_guess:
+                selected = candidates[0]
+                preview["assumptions"].append(
+                    {
+                        "title": show_title,
+                        "mal_id": selected.get("mal_id"),
+                        "reason": "Usado o primeiro candidato Jikan por modo de estimativa automática.",
+                    }
+                )
             if selected is None and chooser is not None and candidates:
                 selected = _select_candidate_interactively(show_title, candidates, chooser)
             if selected is None:
@@ -461,7 +469,17 @@ def build_preview_for_root(
             season_key = f"{mal_id}:{season_number}"
             episode_offset = season_mappings.get(season_key)
             if isinstance(episode_offset, bool) or not isinstance(episode_offset, int):
-                if chooser is None:
+                if auto_guess:
+                    episode_offset = 0
+                    season_mappings[season_key] = episode_offset
+                    preview["assumptions"].append(
+                        {
+                            "title": show_title,
+                            "season": season_number,
+                            "reason": "Assumido offset de episódio 0 para esta temporada.",
+                        }
+                    )
+                elif chooser is None:
                     preview["pending"].append(
                         {
                             "title": show_title,
@@ -470,6 +488,7 @@ def build_preview_for_root(
                         }
                     )
                     continue
+            if not isinstance(episode_offset, int):
                 answer = chooser(
                     f"Offset de episódio da temporada local {season_number} para AniSkip "
                     "(ex.: 0 para manter a numeração; Enter para pendente): "

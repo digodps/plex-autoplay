@@ -1,10 +1,12 @@
 import json
+import logging
 import tempfile
 import unittest
 from pathlib import Path
 from unittest.mock import patch
 from urllib.error import HTTPError
 
+from plex_autoplay.config import config
 from plex_autoplay.infrastructure.media.directory_monitor import (
     ExternalApiError,
     _cache_get,
@@ -21,7 +23,7 @@ from plex_autoplay.infrastructure.media.directory_monitor import (
     merge_markers_file,
     scan_media_root,
 )
-from plex_autoplay.main import main
+from plex_autoplay.main import _run_startup_anime_marker_generation, main
 
 
 class TestAnimeMarkersDiscovery(unittest.TestCase):
@@ -133,6 +135,7 @@ class TestPublicApisAndCache(unittest.TestCase):
             {"mal_id": 2, "title": "Example"},
         ]
         self.assertIsNone(select_jikan_candidate("Example", candidates))
+        self.assertIsNone(select_jikan_candidate("Different title", [{"mal_id": 3, "title": "Unrelated"}]))
 
     def test_aniskip_rejects_interval_outside_episode_duration(self):
         payload = {
@@ -280,6 +283,68 @@ class TestPublicApisAndCache(unittest.TestCase):
             self.assertEqual(second["series"], expected)
             jikan.assert_called_once_with("Example")
             aniskip.assert_called_once_with(42, 1, 1423.75)
+
+    def test_auto_guess_uses_top_candidate_and_zero_episode_offset(self):
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir) / "media"
+            season_dir = root / "Example" / "Temporada 2"
+            season_dir.mkdir(parents=True)
+            (season_dir / "Example -03.mkv").write_bytes(b"fake")
+            candidates = [
+                {"mal_id": 42, "title": "Example Season 2"},
+                {"mal_id": 77, "title": "Example TV"},
+            ]
+            with patch(
+                "plex_autoplay.infrastructure.media.directory_monitor.search_jikan_candidates",
+                return_value=candidates,
+            ), patch(
+                "plex_autoplay.infrastructure.media.directory_monitor.fetch_aniskip_times",
+                return_value={"ed": {"start": 1200.0, "end": 1300.0}},
+            ) as aniskip:
+                preview = build_preview_for_root(
+                    root,
+                    cache_file=Path(tmp_dir) / "metadata-cache.json",
+                    auto_guess=True,
+                    duration_reader=lambda _path: 1400.0,
+                )
+
+            self.assertEqual(
+                preview["series"],
+                {"Example": {"season_2": {"3": {"credits": 1200.0}}}},
+            )
+            self.assertEqual(len(preview["assumptions"]), 2)
+            aniskip.assert_called_once_with(42, 3, 1400.0)
+
+    def test_startup_scans_anime_root_and_merges_generated_markers(self):
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            anime_root = Path(tmp_dir) / "anime"
+            series_root = Path(tmp_dir) / "series"
+            anime_root.mkdir()
+            series_root.mkdir()
+            preview = {
+                "series": {"Example": {"season_1": {"1": {"start": 10.0, "end": 30.0}}}},
+                "pending": [],
+                "assumptions": [],
+            }
+            with patch.object(config, "auto_generate_anime_markers", True), patch.object(
+                config, "anime_media_dir", str(anime_root)
+            ), patch.object(config, "series_media_dir", str(series_root)), patch.object(
+                config, "anime_markers_cache_file", str(Path(tmp_dir) / "metadata-cache.json")
+            ), patch.object(config, "anime_markers_cache_ttl_hours", 168), patch.object(
+                config, "custom_markers_file", str(Path(tmp_dir) / "markers.json")
+            ), patch(
+                "plex_autoplay.main.build_preview_for_root",
+                return_value=preview,
+            ) as build_preview, patch("plex_autoplay.main.merge_markers_file") as merge:
+                _run_startup_anime_marker_generation(logging.getLogger("test"))
+
+            build_preview.assert_called_once_with(
+                anime_root,
+                cache_file=str(Path(tmp_dir) / "metadata-cache.json"),
+                cache_ttl_seconds=168 * 60 * 60,
+                auto_guess=True,
+            )
+            merge.assert_called_once_with(str(Path(tmp_dir) / "markers.json"), preview["series"])
 
     def test_cached_rate_limit_prevents_immediate_api_retry(self):
         with tempfile.TemporaryDirectory() as tmp_dir:

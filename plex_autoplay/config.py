@@ -36,6 +36,17 @@ class Settings:
     allowed_usernames: List[str] = field(default_factory=lambda: _str_to_list(os.getenv("ALLOWED_USERNAMES", "")))
     custom_markers_file: str = os.getenv("CUSTOM_MARKERS_FILE", "markers.json")
     default_intro_skip_seconds: int = int(os.getenv("DEFAULT_INTRO_SKIP_SECONDS", "0"))
+    auto_generate_anime_markers: bool = _str_to_bool(
+        os.getenv("AUTO_GENERATE_ANIME_MARKERS", "false"),
+        default=False,
+    )
+    anime_media_dir: str = os.getenv("ANIME_MEDIA_DIR", "/media/anime")
+    series_media_dir: str = os.getenv("SERIES_MEDIA_DIR", "/media/series")
+    anime_markers_cache_file: str = os.getenv(
+        "ANIME_MARKERS_CACHE_FILE",
+        "/config/metadata-cache.json",
+    )
+    anime_markers_cache_ttl_hours: int = int(os.getenv("ANIME_MARKERS_CACHE_TTL_HOURS", "168"))
     log_level: str = os.getenv("LOG_LEVEL", "INFO").upper()
 
     def validate(self) -> None:
@@ -49,6 +60,8 @@ class Settings:
             raise ValueError("NEXT_EPISODE_THRESHOLD_SECONDS deve ser de pelo menos 1 segundo.")
         if self.poll_interval_seconds < 1:
             raise ValueError("POLL_INTERVAL_SECONDS deve ser de pelo menos 1 segundo.")
+        if self.anime_markers_cache_ttl_hours < 0:
+            raise ValueError("ANIME_MARKERS_CACHE_TTL_HOURS não pode ser negativo.")
 
 
 config = Settings()

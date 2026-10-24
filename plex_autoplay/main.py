@@ -29,6 +29,68 @@ def setup_logging(log_level: str) -> None:
     )
 
 
+def _run_startup_anime_marker_generation(logger: logging.Logger) -> None:
+    if not config.auto_generate_anime_markers:
+        return
+
+    anime_root = Path(config.anime_media_dir).expanduser()
+    if not anime_root.is_dir():
+        logger.warning(
+            "Geração automática ignorada: diretório de animes não montado ou inválido (%s).",
+            anime_root,
+        )
+        return
+
+    series_root = Path(config.series_media_dir).expanduser()
+    if not series_root.is_dir():
+        logger.warning(
+            "Diretório de séries comuns não montado ou inválido (%s); nenhuma consulta de timestamps será feita para ele.",
+            series_root,
+        )
+    else:
+        logger.info("Biblioteca de séries comuns montada em modo somente leitura: %s", series_root)
+
+    try:
+        preview = build_preview_for_root(
+            anime_root,
+            cache_file=config.anime_markers_cache_file,
+            cache_ttl_seconds=config.anime_markers_cache_ttl_hours * 60 * 60,
+            auto_guess=True,
+        )
+        marker_data = preview.get("series", {})
+        if marker_data:
+            merge_markers_file(config.custom_markers_file, marker_data)
+        generated_episodes = sum(
+            len(episodes)
+            for seasons in marker_data.values()
+            for episodes in seasons.values()
+            if isinstance(episodes, dict)
+        )
+        logger.info(
+            "Varredura automática de animes concluída: %d episódio(s) com marcadores, %d pendência(s), %d estimativa(s).",
+            generated_episodes,
+            len(preview.get("pending", [])),
+            len(preview.get("assumptions", [])),
+        )
+        for assumption in preview.get("assumptions", []):
+            logger.warning(
+                "Mapeamento estimado para '%s' (temporada %s): %s",
+                assumption.get("title", "desconhecido"),
+                assumption.get("season", "n/a"),
+                assumption.get("reason", "sem detalhe"),
+            )
+        for pending in preview.get("pending", []):
+            logger.warning(
+                "Item de anime pendente '%s' (temporada %s, episódio %s): %s",
+                pending.get("title", "biblioteca"),
+                pending.get("season", "n/a"),
+                pending.get("episode", "n/a"),
+                pending.get("reason", "sem detalhe"),
+            )
+    except (OSError, RuntimeError, ValueError) as error:
+        logger.error("Falha na geração automática de marcadores; o serviço Plex continuará: %s", error)
+
+
 def _run_markers_command(args: argparse.Namespace) -> int:
     media_root = Path(args.media_root).expanduser().resolve()
     if not media_root.exists() or not media_root.is_dir():
@@ -51,6 +113,7 @@ def _run_markers_command(args: argparse.Namespace) -> int:
             cache_file=cache_file,
             cache_ttl_seconds=args.cache_ttl_hours * 60 * 60,
             chooser=chooser,
+            auto_guess=args.auto_guess,
         )
         print(json.dumps(preview, ensure_ascii=False, indent=2))
         return 0
@@ -60,6 +123,7 @@ def _run_markers_command(args: argparse.Namespace) -> int:
         cache_file=cache_file,
         cache_ttl_seconds=args.cache_ttl_hours * 60 * 60,
         chooser=chooser,
+        auto_guess=args.auto_guess,
     )
     print(json.dumps(preview, ensure_ascii=False, indent=2))
     marker_data = preview.get("series", {})
@@ -108,6 +172,11 @@ def main(argv: list[str] | None = None) -> int:
         help="Substitui campos de marcadores existentes (ainda exige confirmação)",
     )
     parser.add_argument(
+        "--auto-guess",
+        action="store_true",
+        help="Escolhe candidatos e offsets por estimativa quando a identificação for ambígua",
+    )
+    parser.add_argument(
         "--yes",
         action="store_true",
         help="Confirma a gravação explicitamente, útil em execuções automatizadas",
@@ -143,10 +212,13 @@ def main(argv: list[str] | None = None) -> int:
     logger.info(" - Auto Next Episode: %s", config.auto_next_episode)
     logger.info(" - Threshold Próximo Episódio: %ds", config.next_episode_threshold_seconds)
     logger.info(" - Intervalo de Polling: %ds", config.poll_interval_seconds)
+    logger.info(" - Geração de marcadores de anime no start: %s", config.auto_generate_anime_markers)
     if config.allowed_usernames:
         logger.info(" - Usuários Permitidos: %s", ", ".join(config.allowed_usernames))
     if config.allowed_client_ids:
         logger.info(" - Dispositivos Permitidos: %s", ", ".join(config.allowed_client_ids))
+
+    _run_startup_anime_marker_generation(logger)
 
     plex_manager = PlexManager(url=config.plex_url, token=config.plex_token)
     marker_repository = JsonMarkerRepository(
