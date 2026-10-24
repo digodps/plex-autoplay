@@ -64,6 +64,23 @@ h3 { margin-bottom: 8px; font-size: 17px; }
 .section-heading { margin-bottom: 15px; }
 .section-heading h2 { margin: 0; }
 .section-count { display: grid; place-items: center; min-width: 27px; height: 27px; border-radius: 20px; background: #282932; color: #d4d4da; font-size: 12px; }
+.scan-progress { display: flex; align-items: flex-start; gap: 12px; padding: 15px; border: 1px solid var(--border); border-radius: 7px; background: var(--panel); }
+.scan-progress .status-indicator { margin-top: 5px; }
+.scan-progress.status-running .status-indicator, .scan-progress.status-queued .status-indicator { background: var(--accent); }
+.scan-progress.status-failed .status-indicator { background: var(--red); }
+.scan-progress-content { flex: 1; min-width: 0; }
+.scan-progress-content strong { display: block; font-size: 13px; }
+.scan-progress-content .muted { margin-top: 5px; font-size: 11px; overflow-wrap: anywhere; }
+.scan-progress progress { display: block; width: 100%; height: 5px; margin-top: 12px; accent-color: var(--accent); }
+.resource-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 12px; }
+.resource-card { min-height: 98px; }
+.resource-card strong { font-size: 23px; }
+.activity-log-wrap { margin-top: 22px; }
+.activity-log-wrap h3 { margin-bottom: 9px; font-size: 13px; }
+.activity-log { display: grid; gap: 7px; margin: 0; padding: 0; list-style: none; }
+.activity-log li { display: flex; gap: 12px; padding: 9px 11px; border: 1px solid #292a33; border-radius: 5px; background: #17181e; font-size: 11px; line-height: 1.5; }
+.activity-log time { flex: 0 0 auto; color: #858693; font-variant-numeric: tabular-nums; }
+.activity-log li span { color: #c5c5cd; overflow-wrap: anywhere; }
 .library-list { display: grid; gap: 11px; }
 .library-card, .manager-card { overflow: hidden; border: 1px solid var(--border); border-radius: 8px; background: var(--panel); }
 .library-summary { display: flex; align-items: center; gap: 13px; min-height: 69px; padding: 12px 17px; list-style: none; cursor: pointer; }
@@ -168,6 +185,8 @@ h3 { margin-bottom: 8px; font-size: 17px; }
   .welcome-row .button { width: 42px; min-width: 42px; padding: 0; font-size: 0; }
   .welcome-row .button span { display: none; }
   .stats-grid { gap: 9px; }
+  .resource-grid { gap: 9px; }
+  .activity-log li { flex-direction: column; gap: 3px; }
   .stat-card { min-height: 108px; padding: 13px; }
   .stat-card strong { font-size: 24px; }
   .content-section { margin-top: 29px; }

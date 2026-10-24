@@ -75,6 +75,25 @@ class TestTVShowCatalog(unittest.TestCase):
             jikan.assert_not_called()
             aniskip.assert_not_called()
 
+    def test_reports_inventory_progress_for_each_library_directory(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            base = Path(temp_dir)
+            media_root = base / "media"
+            season = media_root / "Example" / "Season 1"
+            season.mkdir(parents=True)
+            (season / "Example.S01E01.mkv").write_bytes(b"video")
+            libraries = LibraryRepository(media_root, base / "libraries.json")
+            libraries.add_library("Example", "series")
+            catalog = TVShowCatalog(libraries, JsonMarkerRepository(str(base / "markers.json")))
+            events = []
+
+            catalog.build(progress_callback=events.append)
+
+            self.assertEqual(events[-1]["completed_libraries"], 1)
+            self.assertEqual(events[-1]["total_libraries"], 1)
+            self.assertGreaterEqual(events[-1]["directories_scanned"], 2)
+            self.assertEqual(events[-1]["files_scanned"], 1)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -29,11 +29,11 @@ class TestScanReportRepository(unittest.TestCase):
     def test_coordinator_persists_results_and_restores_latest_report(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             repository = ScanReportRepository(Path(temp_dir) / "scan.json")
-            coordinator = ScanCoordinator(lambda: {"libraries": [{"episodes": 2}]}, repository)
+            coordinator = ScanCoordinator(lambda _progress: {"libraries": [{"episodes": 2}]}, repository)
             self.assertTrue(coordinator.start())
 
             result = coordinator.wait(2)
-            restored = ScanCoordinator(lambda: {}, repository).snapshot()
+            restored = ScanCoordinator(lambda _progress: {}, repository).snapshot()
 
             self.assertEqual(result.status, "completed")
             self.assertEqual(repository.load()["result"]["libraries"][0]["episodes"], 2)

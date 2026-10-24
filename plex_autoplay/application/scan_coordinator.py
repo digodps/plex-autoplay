@@ -19,6 +19,7 @@ class ScanSnapshot:
     completed_at: Optional[str]
     result: Optional[Dict[str, Any]]
     error: Optional[str]
+    progress: Optional[Dict[str, Any]]
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -27,6 +28,7 @@ class ScanSnapshot:
             "completed_at": self.completed_at,
             "result": self.result,
             "error": self.error,
+            "progress": copy.deepcopy(self.progress),
         }
 
 
@@ -41,7 +43,7 @@ class ScanCoordinator:
 
     def __init__(
         self,
-        scan_callback: Callable[[], Dict[str, Any]],
+        scan_callback: Callable[[Callable[[Dict[str, Any]], None]], Dict[str, Any]],
         report_store: Optional[ScanReportStore] = None,
     ):
         self._scan_callback = scan_callback
@@ -53,6 +55,7 @@ class ScanCoordinator:
             completed_at=None,
             result=None,
             error=None,
+            progress=None,
         )
         if report_store is not None:
             previous_report = report_store.load()
@@ -70,6 +73,7 @@ class ScanCoordinator:
                     completed_at=previous_report.get("completed_at"),
                     result=result if isinstance(result, dict) else None,
                     error=previous_report.get("error"),
+                    progress=previous_report.get("progress"),
                 )
         self._worker: Optional[threading.Thread] = None
 
@@ -84,6 +88,16 @@ class ScanCoordinator:
                 completed_at=None,
                 result=None,
                 error=None,
+                progress={
+                    "stage": "queued",
+                    "message": "Varredura aguardando execução.",
+                    "library": None,
+                    "directories_scanned": 0,
+                    "files_scanned": 0,
+                    "completed_libraries": 0,
+                    "total_libraries": 0,
+                    "events": [],
+                },
             )
             try:
                 self._persist(self._state)
@@ -100,6 +114,7 @@ class ScanCoordinator:
                     completed_at=datetime.now(timezone.utc).isoformat(),
                     result=None,
                     error=f"Não foi possível iniciar worker da varredura: {error}",
+                    progress={"stage": "failed", "message": "Não foi possível iniciar a varredura."},
                 )
                 self._persist(self._state)
                 raise
@@ -123,6 +138,7 @@ class ScanCoordinator:
                 completed_at=current.completed_at,
                 result=result,
                 error=current.error,
+                progress=copy.deepcopy(current.progress),
             )
             self._state = updated
             try:
@@ -148,6 +164,7 @@ class ScanCoordinator:
                 completed_at=None,
                 result=None,
                 error=None,
+                progress=copy.deepcopy(current.progress),
             )
             self._state = running
         try:
@@ -156,7 +173,7 @@ class ScanCoordinator:
             self._set_failed(f"Falha ao persistir o estado da varredura: {error}")
             return
         try:
-            result = self._scan_callback()
+            result = self._scan_callback(self.report_progress)
         except Exception as error:
             self._set_failed(str(error))
             return
@@ -169,6 +186,11 @@ class ScanCoordinator:
                 completed_at=datetime.now(timezone.utc).isoformat(),
                 result=result,
                 error=None,
+                progress={
+                    **(current.progress or {}),
+                    "stage": "completed",
+                    "message": "Varredura concluída.",
+                },
             )
             self._state = completed
         try:
@@ -185,6 +207,11 @@ class ScanCoordinator:
                 completed_at=datetime.now(timezone.utc).isoformat(),
                 result=None,
                 error=message,
+                progress={
+                    **(current.progress or {}),
+                    "stage": "failed",
+                    "message": message,
+                },
             )
             self._state = failed
         try:
@@ -195,3 +222,28 @@ class ScanCoordinator:
     def _persist(self, snapshot: ScanSnapshot) -> None:
         if self._report_store is not None:
             self._report_store.save(snapshot.to_dict())
+
+    def report_progress(self, progress: Dict[str, Any]) -> None:
+        with self._lock:
+            current = self._state
+            if current.status not in self.ACTIVE_STATUSES:
+                return
+            updated_progress = copy.deepcopy(progress)
+            events = list((current.progress or {}).get("events", []))
+            event = {
+                "stage": updated_progress.get("stage", "scan"),
+                "message": updated_progress.get("message", "Varredura em andamento."),
+                "library": updated_progress.get("library"),
+                "at": datetime.now(timezone.utc).isoformat(),
+            }
+            if not events or any(events[-1].get(key) != value for key, value in event.items() if key != "at"):
+                events.append(event)
+            updated_progress["events"] = events[-12:]
+            self._state = ScanSnapshot(
+                status=current.status,
+                started_at=current.started_at,
+                completed_at=current.completed_at,
+                result=current.result,
+                error=current.error,
+                progress=updated_progress,
+            )

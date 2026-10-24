@@ -3,6 +3,13 @@
   const scanButton = document.querySelector("#scan-button");
   const statusBanner = document.querySelector("#scan-status");
   const statusMessage = document.querySelector("#status-message");
+  const activityProgress = document.querySelector("#activity-progress");
+  const activityMessage = document.querySelector("#activity-message");
+  const activityDetail = document.querySelector("#activity-detail");
+  const activityProgressBar = document.querySelector("#activity-progress-bar");
+  const activityEvents = document.querySelector("#activity-events");
+  const serviceCpu = document.querySelector("#service-cpu");
+  const serviceMemory = document.querySelector("#service-memory");
   let lastCompletedAt = statusBanner?.dataset.completedAt || "";
   let polling = false;
 
@@ -25,6 +32,67 @@
     return payload;
   }
 
+  function renderActivity(snapshot) {
+    if (!activityProgress) return;
+    const progress = snapshot.progress || {};
+    const active = snapshot.status === "queued" || snapshot.status === "running";
+    activityProgress.className = `scan-progress status-${snapshot.status}`;
+    activityMessage.textContent = progress.message || "Aguardando a próxima varredura.";
+    const details = [];
+    if (progress.library) details.push(`Biblioteca: ${progress.library}`);
+    if (progress.current_directory) details.push(`Pasta atual: ${progress.current_directory}`);
+    if (Number.isFinite(progress.directories_scanned)) {
+      details.push(`Pastas verificadas: ${progress.directories_scanned}`);
+    }
+    if (Number.isFinite(progress.files_scanned)) {
+      details.push(`Arquivos de vídeo verificados: ${progress.files_scanned}`);
+    }
+    if (Number.isFinite(progress.total_libraries) && progress.total_libraries > 0) {
+      details.push(`Bibliotecas: ${progress.completed_libraries || 0}/${progress.total_libraries}`);
+    }
+    activityDetail.textContent = details.join(" · ");
+    activityDetail.hidden = details.length === 0;
+    activityProgressBar.hidden = !active;
+    if (active) activityProgressBar.removeAttribute("value");
+    else activityProgressBar.value = snapshot.status === "completed" ? 100 : 0;
+
+    if (activityEvents) {
+      activityEvents.replaceChildren();
+      for (const event of progress.events || []) {
+        const row = document.createElement("li");
+        const time = document.createElement("time");
+        const message = document.createElement("span");
+        const date = new Date(event.at);
+        time.textContent = Number.isNaN(date.getTime()) ? "" : date.toLocaleTimeString();
+        message.textContent = event.message || "";
+        row.append(time, message);
+        activityEvents.append(row);
+      }
+      if (activityEvents.children.length === 0) {
+        const empty = document.createElement("li");
+        empty.textContent = "Os eventos da varredura aparecerão aqui.";
+        activityEvents.append(empty);
+      }
+    }
+
+    const resources = snapshot.resources || {};
+    if (resources.error) {
+      serviceCpu.textContent = "Indisponível";
+      serviceMemory.textContent = "Indisponível";
+      serviceCpu.title = resources.error;
+      serviceMemory.title = resources.error;
+    } else {
+      serviceCpu.textContent = Number.isFinite(resources.cpu_percent)
+        ? `${resources.cpu_percent.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}%`
+        : "Calculando...";
+      serviceMemory.textContent = Number.isFinite(resources.memory_bytes)
+        ? `${(resources.memory_bytes / (1024 * 1024)).toLocaleString("pt-BR", { maximumFractionDigits: 1 })} MiB`
+        : "Indisponível";
+      serviceCpu.removeAttribute("title");
+      serviceMemory.removeAttribute("title");
+    }
+  }
+
   function setStatus(snapshot) {
     if (!statusBanner || !statusMessage) return;
     const labels = {
@@ -39,6 +107,7 @@
     }
     statusBanner.className = `status-banner status-${snapshot.status}`;
     statusMessage.textContent = labels[snapshot.status];
+    renderActivity(snapshot);
     if (scanButton) {
       const active = snapshot.status === "queued" || snapshot.status === "running";
       scanButton.disabled = active;
@@ -84,7 +153,11 @@
         await refreshStatus();
       }
     });
-    window.setInterval(refreshStatus, 5000);
+  }
+
+  if (statusBanner) {
+    window.setInterval(refreshStatus, 3000);
+    refreshStatus();
   }
 
   for (const form of document.querySelectorAll(".marker-form")) {

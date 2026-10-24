@@ -20,7 +20,7 @@ class TestDashboardApp(unittest.TestCase):
         (self.media_root / "Anime").mkdir(parents=True)
         self.repository = LibraryRepository(self.media_root, base / "config" / "libraries.json")
         self.markers_file = base / "config" / "markers.json"
-        self.coordinator = ScanCoordinator(lambda: {"libraries": []})
+        self.coordinator = ScanCoordinator(lambda _progress: {"libraries": []})
         self.app = create_app(
             self.repository,
             base / "config",
@@ -127,6 +127,8 @@ class TestDashboardApp(unittest.TestCase):
 
         self.assertEqual(completed.status, "completed")
         self.assertEqual(self.client.get("/api/status").json["result"], {"libraries": []})
+        resources = self.client.get("/api/status").json["resources"]
+        self.assertGreater(resources["memory_bytes"], 0)
         script = self.client.get("/static/dashboard.js")
         self.assertEqual(script.status_code, 200)
         self.assertIn("/api/status", script.get_data(as_text=True))
@@ -142,11 +144,63 @@ class TestDashboardApp(unittest.TestCase):
         self.assertIn('href="#activity"', page)
         self.assertEqual(page.count('id="activity"'), 1)
         self.assertIn("Nenhuma pendência ou erro registrado", page)
+        self.assertIn("CPU do serviço", page)
+        self.assertIn("Eventos recentes", page)
+        self.assertIn('id="activity-progress"', page)
+
+    def test_dashboard_activity_updates_with_live_scan_progress(self):
+        started = threading.Event()
+        release = threading.Event()
+
+        def scan(report_progress):
+            report_progress(
+                {
+                    "stage": "inventory",
+                    "message": "Varrendo arquivos em Anime/Temporada 1.",
+                    "library": "Anime",
+                    "current_directory": "Temporada 1",
+                    "directories_scanned": 3,
+                    "files_scanned": 8,
+                    "completed_libraries": 0,
+                    "total_libraries": 1,
+                }
+            )
+            started.set()
+            release.wait(2)
+            return {"libraries": []}
+
+        coordinator = ScanCoordinator(scan)
+        app = create_app(
+            self.repository,
+            Path(self.temp_dir.name) / "config",
+            scan_coordinator=coordinator,
+        )
+        client = app.test_client()
+        token = re.search(r'name="csrf_token" value="([^"]+)"', client.get("/setup").get_data(as_text=True)).group(1)
+        client.post(
+            "/setup",
+            data={"csrf_token": token, "username": "admin", "password": "valid-password"},
+        )
+
+        self.assertTrue(coordinator.start())
+        try:
+            self.assertTrue(started.wait(2))
+            status = client.get("/api/status").json
+        finally:
+            release.set()
+            coordinator.wait(2)
+
+        self.assertEqual(status["progress"]["message"], "Varrendo arquivos em Anime/Temporada 1.")
+        self.assertEqual(status["progress"]["files_scanned"], 8)
+        self.assertTrue(status["progress"]["events"])
+        self.assertGreater(status["resources"]["memory_bytes"], 0)
+        page = client.get("/").get_data(as_text=True)
+        self.assertIn("Varrendo arquivos em Anime/Temporada 1.", page)
 
     def test_dashboard_shows_configured_libraries_while_scan_is_running(self):
         self.repository.add_library("Anime", "anime")
         scan_gate = threading.Event()
-        coordinator = ScanCoordinator(lambda: (scan_gate.wait(2), {"libraries": []})[1])
+        coordinator = ScanCoordinator(lambda _progress: (scan_gate.wait(2), {"libraries": []})[1])
         app = create_app(
             self.repository,
             Path(self.temp_dir.name) / "config",
@@ -171,7 +225,7 @@ class TestDashboardApp(unittest.TestCase):
 
     def test_scan_endpoint_rejects_concurrent_requests(self):
         scan_gate = threading.Event()
-        coordinator = ScanCoordinator(lambda: (scan_gate.wait(3), {"libraries": []})[1])
+        coordinator = ScanCoordinator(lambda _progress: (scan_gate.wait(3), {"libraries": []})[1])
         app = create_app(
             self.repository,
             Path(self.temp_dir.name) / "config",
@@ -265,7 +319,7 @@ class TestDashboardApp(unittest.TestCase):
             ]
         }
         report_file = Path(self.temp_dir.name) / "config" / "scan-report.json"
-        coordinator = ScanCoordinator(lambda: report, ScanReportRepository(report_file))
+        coordinator = ScanCoordinator(lambda _progress: report, ScanReportRepository(report_file))
         coordinator.start()
         coordinator.wait(2)
         app = create_app(
@@ -360,7 +414,7 @@ class TestDashboardApp(unittest.TestCase):
                 }
             ]
         }
-        coordinator = ScanCoordinator(lambda: report)
+        coordinator = ScanCoordinator(lambda _progress: report)
         coordinator.start()
         coordinator.wait(2)
         app = create_app(

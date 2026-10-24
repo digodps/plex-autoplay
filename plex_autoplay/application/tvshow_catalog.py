@@ -5,12 +5,14 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from pathlib import Path
 from types import SimpleNamespace
-from typing import List, Optional
+from typing import Any, Callable, Dict, List, Optional
 
 from plex_autoplay.domain.tvshow import TVEpisode, TVLibrary, TVSeason, TVSeries
 from plex_autoplay.infrastructure.markers.json_repository import JsonMarkerRepository
 from plex_autoplay.infrastructure.media.library_repository import LibraryRepository
 from plex_autoplay.infrastructure.media.tvshow_scanner import scan_tv_library
+
+ProgressReporter = Callable[[Dict[str, Any]], None]
 
 
 @dataclass(frozen=True)
@@ -51,10 +53,61 @@ class TVShowCatalog:
         self.libraries = libraries
         self.markers = markers
 
-    def build(self) -> List[LibraryCatalog]:
+    def build(self, progress_callback: Optional[ProgressReporter] = None) -> List[LibraryCatalog]:
         catalogs = []
-        for library in self.libraries.list_libraries():
-            catalogs.append(self._build_library(library))
+        libraries = self.libraries.list_libraries()
+        directories_scanned = 0
+        files_scanned = 0
+        for index, library in enumerate(libraries):
+            completed_libraries = index
+            if progress_callback is not None:
+                progress_callback(
+                    {
+                        "stage": "inventory",
+                        "message": f"Preparando a varredura da biblioteca {library.name}.",
+                        "library": library.name,
+                        "current_directory": None,
+                        "directories_scanned": directories_scanned,
+                        "files_scanned": files_scanned,
+                        "completed_libraries": completed_libraries,
+                        "total_libraries": len(libraries),
+                    }
+                )
+
+            def report_directory(relative_directory: str, library_files_scanned: int) -> None:
+                nonlocal directories_scanned, files_scanned, files_scanned_in_library
+                directories_scanned += 1
+                files_scanned += max(0, library_files_scanned - files_scanned_in_library)
+                files_scanned_in_library = library_files_scanned
+                if progress_callback is not None:
+                    progress_callback(
+                        {
+                            "stage": "inventory",
+                            "message": f"Varrendo arquivos em {library.name}/{relative_directory}.",
+                            "library": library.name,
+                            "current_directory": relative_directory,
+                            "directories_scanned": directories_scanned,
+                            "files_scanned": files_scanned,
+                            "completed_libraries": completed_libraries,
+                            "total_libraries": len(libraries),
+                        }
+                    )
+
+            files_scanned_in_library = 0
+            catalogs.append(self._build_library(library, report_directory))
+            if progress_callback is not None:
+                progress_callback(
+                    {
+                        "stage": "inventory",
+                        "message": f"Inventário da biblioteca {library.name} concluído.",
+                        "library": library.name,
+                        "current_directory": None,
+                        "directories_scanned": directories_scanned,
+                        "files_scanned": files_scanned,
+                        "completed_libraries": index + 1,
+                        "total_libraries": len(libraries),
+                    }
+                )
         return catalogs
 
     def build_report(
@@ -142,7 +195,11 @@ class TVShowCatalog:
                 for episode in catalog.episodes
             ]
 
-    def _build_library(self, library: TVLibrary) -> LibraryCatalog:
+    def _build_library(
+        self,
+        library: TVLibrary,
+        progress_callback: Optional[Callable[[str, int], None]] = None,
+    ) -> LibraryCatalog:
         catalog = LibraryCatalog(library=library)
         scan_library = TVLibrary(
             name=library.name,
@@ -150,7 +207,7 @@ class TVShowCatalog:
             kind=library.kind,
         )
         try:
-            scan = scan_tv_library(scan_library)
+            scan = scan_tv_library(scan_library, progress_callback=progress_callback)
         except (OSError, RuntimeError, ValueError) as error:
             catalog.errors.append(str(error))
             return catalog

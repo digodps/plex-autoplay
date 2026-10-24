@@ -6,7 +6,7 @@ from dataclasses import dataclass, field
 import os
 from pathlib import Path
 import re
-from typing import List, Optional
+from typing import Callable, List, Optional
 
 from plex_autoplay.domain.tvshow import TVEpisode, TVLibrary, TVSeason, TVSeries, parse_episode_numbers
 
@@ -59,12 +59,16 @@ def _series_title(root: Path, relative_parts: tuple[str, ...], season_index: Opt
     return root.name
 
 
-def scan_tv_library(library: TVLibrary) -> TVLibraryScan:
+def scan_tv_library(
+    library: TVLibrary,
+    progress_callback: Optional[Callable[[str, int], None]] = None,
+) -> TVLibraryScan:
     root = Path(library.path).expanduser().resolve()
     if not root.exists() or not root.is_dir():
         raise ValueError(f"Diretório de biblioteca inválido: {library.path}")
 
     result = TVLibraryScan()
+    scanned_video_files = 0
 
     def record_walk_error(error: OSError) -> None:
         result.errors.append(f"{getattr(error, 'filename', root)}: {error}")
@@ -88,6 +92,7 @@ def scan_tv_library(library: TVLibrary) -> TVLibraryScan:
             try:
                 if not file_path.is_file() or not _is_within(root, file_path):
                     continue
+                scanned_video_files += 1
                 relative_parts = file_path.relative_to(root).parts
                 season_directories = [
                     (index, _season_number(part))
@@ -116,6 +121,9 @@ def scan_tv_library(library: TVLibrary) -> TVLibraryScan:
                     )
             except OSError as error:
                 result.errors.append(f"{file_path}: {error}")
+        if progress_callback is not None:
+            relative_directory = current_path.relative_to(root).as_posix() or "."
+            progress_callback(relative_directory, scanned_video_files)
 
     result.episodes.sort(
         key=lambda episode: (

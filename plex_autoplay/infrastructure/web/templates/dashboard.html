@@ -142,6 +142,35 @@
 
       <section class="content-section" id="activity">
         <div class="section-heading"><div><p class="eyebrow">VARREDURA</p><h2>Atividade</h2></div></div>
+        {% set progress = snapshot.progress or {} %}
+        <div class="scan-progress" id="activity-progress" aria-live="polite">
+          <span class="status-indicator"></span>
+          <div class="scan-progress-content">
+            <strong id="activity-message">{{ progress.get("message", "Aguardando a próxima varredura.") }}</strong>
+            <p id="activity-detail" class="muted"></p>
+            <progress id="activity-progress-bar" aria-label="Progresso da varredura"></progress>
+          </div>
+        </div>
+        <div class="resource-grid" aria-label="Recursos do serviço Plex Autoplay">
+          <article class="stat-card resource-card">
+            <span class="stat-label">CPU do serviço</span>
+            <strong id="service-cpu">Calculando...</strong>
+            <span class="stat-caption">uso do processo, por núcleo</span>
+          </article>
+          <article class="stat-card resource-card">
+            <span class="stat-label">Memória do serviço</span>
+            <strong id="service-memory">Calculando...</strong>
+            <span class="stat-caption">memória residente (RSS)</span>
+          </article>
+        </div>
+        <div class="activity-log-wrap">
+          <h3>Eventos recentes</h3>
+          <ol class="activity-log" id="activity-events" aria-live="polite">
+            {% for event in progress.get("events", []) %}
+              <li><time>{{ event.at }}</time><span>{{ event.message }}</span></li>
+            {% endfor %}
+          </ol>
+        </div>
         {% set activity = namespace(has_items=false) %}
         {% for library in libraries %}
           {% if library.ambiguities or library.errors or library.pending %}
@@ -157,7 +186,7 @@
           {% endif %}
         {% endfor %}
         {% if not activity.has_items %}
-          <p class="muted">Nenhuma pendência ou erro registrado na última varredura.</p>
+          <p class="muted" id="activity-empty">Nenhuma pendência ou erro registrado na última varredura.</p>
         {% endif %}
       </section>
 

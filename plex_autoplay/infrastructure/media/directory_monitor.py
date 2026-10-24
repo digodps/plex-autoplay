@@ -385,6 +385,7 @@ def build_preview_for_root(
     chooser: Optional[Callable[[str], str]] = None,
     duration_reader: Callable[[str | Path], float] = get_media_duration_seconds,
     auto_guess: bool = False,
+    progress_callback: Optional[Callable[[Dict[str, Any]], None]] = None,
 ) -> Dict[str, Any]:
     if cache_ttl_seconds < 0:
         raise ValueError("O TTL do cache não pode ser negativo.")
@@ -408,11 +409,20 @@ def build_preview_for_root(
         )
         save_cache(cache_file, cache)
         return preview
-    rate_limited = False
+    pause_remaining_queries = False
+    pause_reason: Optional[str] = None
 
     for show_title, episodes in sorted(series_map.items()):
-        if rate_limited:
+        if pause_remaining_queries:
             break
+        if progress_callback is not None:
+            progress_callback(
+                {
+                    "stage": "anime-metadata",
+                    "message": f"Consultando identificação no Jikan para {show_title}.",
+                    "series": show_title,
+                }
+            )
         mapping_key = show_title.casefold()
         anime_map = cache.setdefault("anime_mappings", {})
         if not isinstance(anime_map, dict):
@@ -429,12 +439,15 @@ def build_preview_for_root(
                     candidates = search_jikan_candidates(show_title)
                     _cache_set(cache, search_key, candidates, now, cache_ttl_seconds)
                 except ExternalApiError as exc:
-                    preview["pending"].append(
-                        {"title": show_title, "reason": _api_failure_reason("Jikan", exc)}
-                    )
                     if exc.status_code == 429:
                         cache["api_retry_until"] = _retry_deadline(exc.retry_after, now)
-                        rate_limited = True
+                    if exc.status_code == 429 or exc.status_code is None or exc.status_code >= 500:
+                        pause_remaining_queries = True
+                        pause_reason = _api_failure_reason("Jikan", exc)
+                    else:
+                        preview["pending"].append(
+                            {"title": show_title, "reason": _api_failure_reason("Jikan", exc)}
+                        )
                     continue
             selected = select_jikan_candidate(show_title, candidates)
             if selected is None and candidates and auto_guess:
@@ -516,6 +529,19 @@ def build_preview_for_root(
                 season_mappings[season_key] = episode_offset
 
             for media_episode in (item for item in episodes if item.season == season_number):
+                if progress_callback is not None:
+                    progress_callback(
+                        {
+                            "stage": "anime-metadata",
+                            "message": (
+                                f"Consultando AniSkip para {show_title}, temporada {season_number}, "
+                                f"episódio {media_episode.episode}."
+                            ),
+                            "series": show_title,
+                            "season": season_number,
+                            "episode": media_episode.episode,
+                        }
+                    )
                 episode_length: float
                 try:
                     episode_length = duration_reader(media_episode.path)
@@ -551,6 +577,12 @@ def build_preview_for_root(
                         skip_times = fetch_aniskip_times(mal_id, mapped_episode, episode_length)
                         _cache_set(cache, response_key, skip_times, now, cache_ttl_seconds)
                     except ExternalApiError as exc:
+                        if exc.status_code == 429:
+                            cache["api_retry_until"] = _retry_deadline(exc.retry_after, now)
+                        if exc.status_code == 429 or exc.status_code is None or exc.status_code >= 500:
+                            pause_remaining_queries = True
+                            pause_reason = _api_failure_reason("AniSkip", exc)
+                            break
                         preview["pending"].append(
                             {
                                 "title": show_title,
@@ -560,10 +592,6 @@ def build_preview_for_root(
                                 "retry_after": exc.retry_after,
                             }
                         )
-                        if exc.status_code == 429:
-                            cache["api_retry_until"] = _retry_deadline(exc.retry_after, now)
-                            rate_limited = True
-                            break
                         continue
 
                 entry: Dict[str, float] = {}
@@ -602,16 +630,21 @@ def build_preview_for_root(
                         "markers": entry,
                     }
                 )
-            if rate_limited:
+            if pause_remaining_queries:
                 break
 
-    if rate_limited:
+    if pause_remaining_queries:
         retry_until = cache.get("api_retry_until")
         preview["pending"].append(
             {
                 "reason": (
-                    "As demais consultas desta varredura foram adiadas por limite da API até "
-                    f"{time.strftime('%Y-%m-%d %H:%M:%S UTC', time.gmtime(retry_until))}."
+                    f"Consultas pausadas após falha na API ({pause_reason}). "
+                    "As próximas tentativas ocorrerão na próxima varredura."
+                    if retry_until is None
+                    else (
+                        f"Consultas pausadas após limite da API ({pause_reason}) até "
+                        f"{time.strftime('%Y-%m-%d %H:%M:%S UTC', time.gmtime(retry_until))}."
+                    )
                 )
             }
         )

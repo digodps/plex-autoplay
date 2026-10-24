@@ -5,9 +5,9 @@ from __future__ import annotations
 import json
 import logging
 from pathlib import Path
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
-from plex_autoplay.application.tvshow_catalog import LibraryCatalog, TVShowCatalog
+from plex_autoplay.application.tvshow_catalog import LibraryCatalog, ProgressReporter, TVShowCatalog
 from plex_autoplay.infrastructure.markers.json_repository import JsonMarkerRepository
 from plex_autoplay.infrastructure.media.directory_monitor import build_preview_for_root, merge_markers_file
 from plex_autoplay.infrastructure.media.library_repository import LibraryRepository
@@ -33,8 +33,15 @@ class DashboardScanService:
         self.auto_generate_anime_markers = auto_generate_anime_markers
         self.catalog = TVShowCatalog(libraries, markers)
 
-    def scan(self) -> Dict[str, Any]:
-        catalogs = self.catalog.build()
+    def scan(self, progress_callback: Optional[ProgressReporter] = None) -> Dict[str, Any]:
+        progress_state: Dict[str, Any] = {}
+
+        def report_progress(progress: Dict[str, Any]) -> None:
+            progress_state.update(progress)
+            if progress_callback is not None:
+                progress_callback(dict(progress_state))
+
+        catalogs = self.catalog.build(report_progress)
         added_by_library: Dict[str, List[Dict[str, object]]] = {}
         preserved_by_library: Dict[str, List[Dict[str, object]]] = {}
 
@@ -42,8 +49,34 @@ class DashboardScanService:
             for catalog in catalogs:
                 if catalog.library.kind != "anime" or catalog.errors:
                     continue
-                self._enrich_anime_library(catalog, added_by_library, preserved_by_library)
+                report_progress(
+                    {
+                        "stage": "anime-metadata",
+                        "message": f"Consultando Jikan e AniSkip para {catalog.library.name}.",
+                        "library": catalog.library.name,
+                        "current_directory": None,
+                    }
+                )
+                self._enrich_anime_library(
+                    catalog,
+                    added_by_library,
+                    preserved_by_library,
+                    progress_callback=lambda progress: report_progress(
+                        {
+                            **progress,
+                            "library": catalog.library.name,
+                        }
+                    ),
+                )
 
+        report_progress(
+            {
+                "stage": "markers",
+                "message": "Atualizando a cobertura dos marcadores.",
+                "library": None,
+                "current_directory": None,
+            }
+        )
         self.catalog.refresh_markers(catalogs)
         return self.catalog.build_report(
             added_by_library=added_by_library,
@@ -56,6 +89,7 @@ class DashboardScanService:
         catalog: LibraryCatalog,
         added_by_library: Dict[str, List[Dict[str, object]]],
         preserved_by_library: Dict[str, List[Dict[str, object]]],
+        progress_callback: Optional[ProgressReporter] = None,
     ) -> None:
         root = self.libraries.media_root / catalog.library.path
         try:
@@ -64,6 +98,7 @@ class DashboardScanService:
                 cache_file=self.cache_file,
                 cache_ttl_seconds=self.cache_ttl_seconds,
                 auto_guess=True,
+                progress_callback=progress_callback,
             )
             catalog.pending.extend(preview.get("pending", []))
             catalog.assumptions.extend(preview.get("assumptions", []))

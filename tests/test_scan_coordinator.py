@@ -10,8 +10,9 @@ class TestScanCoordinator(unittest.TestCase):
         release = threading.Event()
         calls = []
 
-        def scan():
+        def scan(report_progress):
             calls.append("scan")
+            report_progress({"stage": "inventory", "message": "Varrendo biblioteca."})
             started.set()
             self.assertTrue(release.wait(2))
             return {"episodes": 3}
@@ -20,19 +21,25 @@ class TestScanCoordinator(unittest.TestCase):
         self.assertTrue(coordinator.start())
         self.assertTrue(started.wait(2))
         self.assertEqual(coordinator.snapshot().status, "running")
+        self.assertEqual(coordinator.snapshot().progress["message"], "Varrendo biblioteca.")
         self.assertFalse(coordinator.start())
         release.set()
 
         result = coordinator.wait(2)
 
         self.assertEqual(result.status, "completed")
+        self.assertEqual(result.progress["stage"], "completed")
+        self.assertEqual(
+            [event["message"] for event in result.progress["events"]],
+            ["Varrendo biblioteca."],
+        )
         self.assertEqual(result.result, {"episodes": 3})
         self.assertEqual(len(calls), 1)
 
     def test_publishes_failed_state_and_allows_retry(self):
         calls = []
 
-        def scan():
+        def scan(_report_progress):
             calls.append(None)
             if len(calls) == 1:
                 raise RuntimeError("scan failed")

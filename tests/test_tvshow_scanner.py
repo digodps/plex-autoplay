@@ -56,6 +56,21 @@ class TestTVLibraryScanner(unittest.TestCase):
             self.assertEqual(len(result.errors), 1)
             self.assertIn("permission denied", result.errors[0])
 
+    def test_reports_directory_and_video_file_progress(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir) / "TV"
+            season = root / "Show" / "Season 1"
+            season.mkdir(parents=True)
+            (season / "Show.S01E01.mkv").write_bytes(b"video")
+            events = []
+
+            scan_tv_library(
+                TVLibrary(name="TV", path=str(root), kind="series"),
+                progress_callback=lambda directory, count: events.append((directory, count)),
+            )
+
+            self.assertEqual(events[-1], ("Show/Season 1", 1))
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -283,7 +283,10 @@ def main(argv: list[str] | None = None) -> int:
                 cache_ttl_seconds=config.anime_markers_cache_ttl_hours * 60 * 60,
                 auto_generate_anime_markers=config.auto_generate_anime_markers,
             )
-            scan_coordinator = ScanCoordinator(scan_service.scan, report_repository)
+            scan_coordinator = ScanCoordinator(
+                lambda progress_callback: scan_service.scan(progress_callback),
+                report_repository,
+            )
             dashboard_app = create_app(
                 library_repository,
                 config.config_dir,

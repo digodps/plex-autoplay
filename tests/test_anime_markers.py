@@ -187,6 +187,55 @@ class TestPublicApisAndCache(unittest.TestCase):
                 fetch_aniskip_times(10, 1, 100.0)
         self.assertEqual(raised.exception.status_code, 404)
 
+    def test_preview_pauses_remaining_aniskip_requests_after_connection_failure(self):
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir) / "media"
+            season_dir = root / "Example" / "Temporada 1"
+            season_dir.mkdir(parents=True)
+            (season_dir / "Example -01.mkv").write_bytes(b"video")
+            (season_dir / "Example -02.mkv").write_bytes(b"video")
+
+            with patch(
+                "plex_autoplay.infrastructure.media.directory_monitor.search_jikan_candidates",
+                return_value=[{"mal_id": 42, "title": "Example"}],
+            ), patch(
+                "plex_autoplay.infrastructure.media.directory_monitor.fetch_aniskip_times",
+                side_effect=ExternalApiError("Falha de conexão com API pública: Network is unreachable"),
+            ) as aniskip:
+                preview = build_preview_for_root(
+                    root,
+                    cache_file=Path(tmp_dir) / "cache.json",
+                    auto_guess=True,
+                    duration_reader=lambda _path: 1200,
+                )
+
+            self.assertEqual(aniskip.call_count, 1)
+            self.assertEqual(len(preview["pending"]), 1)
+            self.assertIn("Network is unreachable", preview["pending"][0]["reason"])
+            self.assertEqual(preview["series"], {})
+
+    def test_preview_pauses_remaining_jikan_searches_after_connection_failure(self):
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir) / "media"
+            for title in ("First", "Second"):
+                season_dir = root / title / "Temporada 1"
+                season_dir.mkdir(parents=True)
+                (season_dir / f"{title} -01.mkv").write_bytes(b"video")
+
+            with patch(
+                "plex_autoplay.infrastructure.media.directory_monitor.search_jikan_candidates",
+                side_effect=ExternalApiError("Falha de conexão com API pública: Network is unreachable"),
+            ) as jikan:
+                preview = build_preview_for_root(
+                    root,
+                    cache_file=Path(tmp_dir) / "cache.json",
+                    auto_guess=True,
+                )
+
+            self.assertEqual(jikan.call_count, 1)
+            self.assertEqual(len(preview["pending"]), 1)
+            self.assertIn("Network is unreachable", preview["pending"][0]["reason"])
+
     def test_cache_uses_ttl_and_persists(self):
         cache = {}
         _cache_set(cache, "lookup", ["result"], now=100, ttl_seconds=10)

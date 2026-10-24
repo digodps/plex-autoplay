@@ -21,6 +21,7 @@ from flask import Flask, jsonify, redirect, render_template, request, session, u
 from plex_autoplay.application.manual_marker_service import ManualMarkerService, MarkerConflictError
 from plex_autoplay.application.scan_coordinator import ScanCoordinator
 from plex_autoplay.infrastructure.media.library_repository import LibraryRepository
+from plex_autoplay.infrastructure.web.process_metrics import ProcessMetricsSampler
 
 
 PASSWORD_HASH_ITERATIONS = 600_000
@@ -223,6 +224,7 @@ def create_app(
         SESSION_COOKIE_SECURE=cookie_secure,
     )
     limiter = LoginLimiter()
+    process_metrics = ProcessMetricsSampler()
 
     def csrf_token() -> str:
         token = session.get("_csrf_token")
@@ -393,7 +395,13 @@ def create_app(
     def status() -> Any:
         if scan_coordinator is None:
             return jsonify(error="Serviço de varredura indisponível."), 503
-        return jsonify(scan_coordinator.snapshot().to_dict())
+        payload = scan_coordinator.snapshot().to_dict()
+        try:
+            payload["resources"] = process_metrics.sample()
+        except (OSError, ValueError) as error:
+            app.logger.exception("Não foi possível coletar métricas do processo.")
+            payload["resources"] = {"error": str(error)}
+        return jsonify(payload)
 
     @app.post("/api/scan")
     @authenticated
