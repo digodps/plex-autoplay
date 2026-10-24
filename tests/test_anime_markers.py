@@ -211,6 +211,96 @@ class TestPublicApisAndCache(unittest.TestCase):
         self.assertEqual(http_json.call_args.args, ("https://graphql.anilist.co",))
         self.assertEqual(request_body["variables"], {"search": "Naruto", "limit": 5})
 
+    def test_preview_strips_season_suffix_and_uses_resolved_english_title_and_mal_id(self):
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir) / "media"
+            season_dir = root / "Ao no Hako" / "Temporada 2"
+            season_dir.mkdir(parents=True)
+            (season_dir / "Ao no Hako 2 -01.mp4").write_bytes(b"video")
+            candidates = [
+                {
+                    "mal_id": 57181,
+                    "title": "Ao no Hako",
+                    "title_english": "Blue Box",
+                    "title_japanese": "アオのハコ",
+                },
+                {
+                    "mal_id": 61323,
+                    "title": "Ao no Hako Season 2",
+                    "title_english": "Blue Box Season 2",
+                    "title_japanese": "アオのハコ Season２",
+                },
+            ]
+            with patch(
+                "plex_autoplay.infrastructure.media.directory_monitor.search_anilist_candidates",
+                return_value=candidates,
+            ) as anilist, patch(
+                "plex_autoplay.infrastructure.media.directory_monitor.fetch_aniskip_times",
+                return_value={"op": {"start": 5.583, "end": 93.086}},
+            ) as aniskip:
+                preview = build_preview_for_root(
+                    root,
+                    cache_file=Path(tmp_dir) / "metadata-cache.json",
+                    auto_guess=True,
+                    duration_reader=lambda _path: 1554.0,
+                )
+                cached_preview = build_preview_for_root(
+                    root,
+                    cache_file=Path(tmp_dir) / "metadata-cache.json",
+                    auto_guess=True,
+                    duration_reader=lambda _path: 1554.0,
+                )
+
+            anilist.assert_called_once_with("Ao no Hako 2")
+            aniskip.assert_called_once_with(61323, 1, 1554.0)
+            self.assertEqual(
+                preview["series"],
+                {"Ao no Hako 2": {"season_2": {"1": {"start": 5.583, "end": 93.086}}}},
+            )
+            self.assertEqual(preview["details"][0]["title_english"], "Blue Box Season 2")
+            self.assertEqual(cached_preview["details"][0]["title_english"], "Blue Box Season 2")
+
+    def test_preview_falls_back_to_base_search_and_selects_matching_season(self):
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir) / "media"
+            season_dir = root / "Ao no Hako" / "Temporada 2"
+            season_dir.mkdir(parents=True)
+            (season_dir / "Ao no Hako 2 -01.mp4").write_bytes(b"video")
+            candidates = [
+                {
+                    "mal_id": 57181,
+                    "title": "Ao no Hako",
+                    "title_english": "Blue Box",
+                    "title_japanese": "アオのハコ",
+                },
+                {
+                    "mal_id": 61323,
+                    "title": "Ao no Hako Season 2",
+                    "title_english": "Blue Box Season 2",
+                    "title_japanese": "アオのハコ Season２",
+                },
+            ]
+            with patch(
+                "plex_autoplay.infrastructure.media.directory_monitor.search_anilist_candidates",
+                side_effect=[[], candidates],
+            ) as anilist, patch(
+                "plex_autoplay.infrastructure.media.directory_monitor.fetch_aniskip_times",
+                return_value={"op": {"start": 5.0, "end": 90.0}},
+            ) as aniskip:
+                preview = build_preview_for_root(
+                    root,
+                    cache_file=Path(tmp_dir) / "metadata-cache.json",
+                    auto_guess=True,
+                    duration_reader=lambda _path: 1500.0,
+                )
+
+            self.assertEqual(
+                [call.args[0] for call in anilist.call_args_list],
+                ["Ao no Hako 2", "Ao no Hako"],
+            )
+            aniskip.assert_called_once_with(61323, 1, 1500.0)
+            self.assertEqual(preview["details"][0]["title_english"], "Blue Box Season 2")
+
     def test_ambiguous_anilist_candidates_are_not_selected_automatically(self):
         candidates = [
             {"mal_id": 1, "title": "Example"},

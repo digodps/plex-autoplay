@@ -34,6 +34,7 @@ VIDEO_EXTENSIONS = {
 }
 SEASON_RE = re.compile(r"^temporada\s*(\d+)$", re.IGNORECASE)
 EPISODE_RE = re.compile(r"-(\d{1,3})$")
+SEASON_SUFFIX_RE = re.compile(r"\s+(?:season\s*|temporada\s*)?(\d+)$", re.IGNORECASE)
 TITLE_SEASON_EPISODE_RE = re.compile(
     r"^(?P<title>.+?)\s+(?P<season>\d{1,3})\s*-\s*(?P<episode>\d{1,3})$",
     re.IGNORECASE,
@@ -164,6 +165,16 @@ def build_series_map(media_root: str | Path) -> Dict[str, List[MediaEpisode]]:
     return items
 
 
+def _anime_lookup_titles(show_title: str, episodes: List[MediaEpisode]) -> List[str]:
+    season_suffix = SEASON_SUFFIX_RE.search(show_title)
+    seasons = {episode.season for episode in episodes}
+    if season_suffix and int(season_suffix.group(1)) in seasons:
+        base_title = show_title[: season_suffix.start()].strip()
+        if base_title:
+            return [show_title, base_title]
+    return [show_title]
+
+
 def _http_json(url: str, timeout: int = 10, data: Optional[bytes] = None) -> Dict[str, Any]:
     headers = {
         "Accept": "application/json",
@@ -207,14 +218,18 @@ def _normalize_candidates(items: Iterable[Any]) -> List[Dict[str, Any]]:
 
 
 def _match_candidate_title(title: str, candidate: Dict[str, Any]) -> bool:
-    normalized_title = title.strip().casefold()
+    normalized_title = " ".join(re.sub(r"\b(?:season|temporada)\s*", " ", title.strip().casefold()).split())
     candidate_titles = (
         candidate.get("title"),
         candidate.get("title_english"),
         candidate.get("title_japanese"),
     )
     return any(
-        isinstance(candidate_title, str) and candidate_title.strip().casefold() == normalized_title
+        isinstance(candidate_title, str)
+        and " ".join(
+            re.sub(r"\b(?:season|temporada)\s*", " ", candidate_title.strip().casefold()).split()
+        )
+        == normalized_title
         for candidate_title in candidate_titles
     )
 
@@ -492,6 +507,7 @@ def build_preview_for_root(
                     "series": show_title,
                 }
             )
+        lookup_titles = _anime_lookup_titles(show_title, episodes)
         mapping_key = show_title.casefold()
         anime_map = cache.setdefault("anime_mappings", {})
         if not isinstance(anime_map, dict):
@@ -500,26 +516,45 @@ def build_preview_for_root(
         if isinstance(mal_id, bool) or (mal_id is not None and (not isinstance(mal_id, int) or mal_id <= 0)):
             preview["pending"].append({"title": show_title, "reason": "Mapeamento MAL inválido no cache local."})
             continue
-        search_key = f"anilist:{mapping_key}"
-        candidates = _cache_get(cache, search_key, now)
+        selected: Optional[Dict[str, Any]] = None
+        candidates: List[Dict[str, Any]] = []
+        search_errors: List[str] = []
         if mal_id is None:
-            if candidates is None:
-                try:
-                    candidates = search_anilist_candidates(show_title)
-                    _cache_set(cache, search_key, candidates, now, cache_ttl_seconds)
-                except ExternalApiError as exc:
-                    if exc.status_code == 429:
-                        cache["api_retry_until"] = _retry_deadline(exc.retry_after, now)
-                    if exc.status_code == 429 or exc.status_code is None or exc.status_code >= 500:
-                        pause_remaining_queries = True
-                        pause_reason = _api_failure_reason("AniList", exc)
-                    else:
-                        preview["pending"].append(
-                            {"title": show_title, "reason": _api_failure_reason("AniList", exc)}
-                        )
-                    continue
-            selected = select_anilist_candidate(show_title, candidates)
-            if selected is None and candidates and auto_guess:
+            for lookup_title in lookup_titles:
+                search_key = f"anilist:{lookup_title.casefold()}"
+                search_candidates = _cache_get(cache, search_key, now)
+                if search_candidates is None:
+                    try:
+                        search_candidates = search_anilist_candidates(lookup_title)
+                        _cache_set(cache, search_key, search_candidates, now, cache_ttl_seconds)
+                    except ExternalApiError as exc:
+                        if exc.status_code == 429:
+                            cache["api_retry_until"] = _retry_deadline(exc.retry_after, now)
+                        if exc.status_code == 429 or exc.status_code is None or exc.status_code >= 500:
+                            pause_remaining_queries = True
+                            pause_reason = _api_failure_reason("AniList", exc)
+                            break
+                        search_errors.append(_api_failure_reason("AniList", exc))
+                        continue
+                if not isinstance(search_candidates, list):
+                    search_errors.append("Cache AniList contém candidatos inválidos.")
+                    break
+                for candidate in search_candidates:
+                    if not isinstance(candidate, dict):
+                        continue
+                    candidate_id = candidate.get("mal_id")
+                    if not any(existing.get("mal_id") == candidate_id for existing in candidates):
+                        candidates.append(candidate)
+                selected = select_anilist_candidate(show_title, search_candidates)
+                if selected is not None:
+                    break
+
+            if pause_remaining_queries:
+                continue
+
+            if selected is None:
+                selected = select_anilist_candidate(show_title, candidates)
+            if selected is None and candidates and auto_guess and len(lookup_titles) == 1:
                 selected = candidates[0]
                 preview["assumptions"].append(
                     {
@@ -531,11 +566,12 @@ def build_preview_for_root(
             if selected is None and chooser is not None and candidates:
                 selected = _select_candidate_interactively(show_title, candidates, chooser)
             if selected is None:
-                reason = (
-                    "Identificação ambígua; escolha um candidato na próxima execução."
-                    if candidates
-                    else "Nenhum candidato encontrado na API pública."
-                )
+                if candidates:
+                    reason = "Identificação ambígua; escolha um candidato na próxima execução."
+                elif search_errors:
+                    reason = "; ".join(search_errors)
+                else:
+                    reason = "Nenhum candidato encontrado na API pública."
                 preview["pending"].append({"title": show_title, "reason": reason})
                 continue
             mal_id = selected.get("mal_id")
@@ -543,6 +579,15 @@ def build_preview_for_root(
                 preview["pending"].append({"title": show_title, "reason": "Candidato sem MAL ID válido."})
                 continue
             anime_map[mapping_key] = mal_id
+
+        english_titles = cache.setdefault("anime_english_titles", {})
+        if not isinstance(english_titles, dict):
+            raise RuntimeError("A propriedade anime_english_titles no cache precisa ser um objeto JSON.")
+        title_english = english_titles.get(mapping_key)
+        selected_english_title = selected.get("title_english") if isinstance(selected, dict) else None
+        if isinstance(selected_english_title, str) and selected_english_title.strip():
+            title_english = selected_english_title.strip()
+            english_titles[mapping_key] = title_english
 
         season_mappings = cache.setdefault("season_mappings", {})
         if not isinstance(season_mappings, dict):
@@ -603,7 +648,7 @@ def build_preview_for_root(
                         {
                             "stage": "anime-metadata",
                             "message": (
-                                f"Consultando AniSkip para {show_title}, temporada {season_number}, "
+                                f"Consultando AniSkip para {title_english or show_title}, temporada {season_number}, "
                                 f"episódio {media_episode.episode}."
                             ),
                             "series": show_title,
@@ -691,6 +736,7 @@ def build_preview_for_root(
                 preview["details"].append(
                     {
                         "title": show_title,
+                        "title_english": title_english,
                         "mal_id": mal_id,
                         "season": season_number,
                         "episode": media_episode.episode,

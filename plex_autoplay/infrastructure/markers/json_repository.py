@@ -128,10 +128,31 @@ class JsonMarkerRepository:
         if not show_title or not self.custom_markers:
             return None
 
-        clean_title = show_title.strip().lower()
-        for key, value in self.custom_markers.items():
-            if key.strip().lower() == clean_title and isinstance(value, dict):
-                return value
+        clean_title = show_title.strip().casefold()
+        exact_matches = [
+            value
+            for key, value in self.custom_markers.items()
+            if isinstance(key, str) and key.strip().casefold() == clean_title and isinstance(value, dict)
+        ]
+        if exact_matches:
+            return exact_matches[0]
+
+        normalized_title = "".join(clean_title.split())
+        normalized_matches = [
+            value
+            for key, value in self.custom_markers.items()
+            if isinstance(key, str)
+            and "".join(key.strip().casefold().split()) == normalized_title
+            and isinstance(value, dict)
+        ]
+        if len(normalized_matches) > 1:
+            logger.warning(
+                "Mais de uma entrada de marcadores corresponde ao título '%s' ignorando espaços; nenhuma foi associada.",
+                show_title,
+            )
+            return None
+        if normalized_matches:
+            return normalized_matches[0]
         return None
 
     def _find_episode_credits(

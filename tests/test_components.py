@@ -59,6 +59,40 @@ class TestJsonMarkerRepository(unittest.TestCase):
         self.assertIsNotNone(intro)
         self.assertEqual(intro, (80000, 115000))
 
+    def test_custom_markers_match_titles_with_different_spacing(self):
+        repository = JsonMarkerRepository()
+        repository.custom_markers = {
+            "Ao Ashi": {
+                "season_2": {
+                    "2": {"start": 5.583, "end": 93.086, "credits": 1355.125},
+                }
+            }
+        }
+        episode = SimpleNamespace(
+            grandparentTitle="Aoashi",
+            seasonNumber=2,
+            episodeNumber=2,
+            markers=[],
+        )
+
+        self.assertEqual(repository.get_intro_markers(episode), (5583, 93086))
+        self.assertEqual(repository.get_credits_marker(episode), 1355125)
+
+    def test_custom_marker_title_spacing_match_rejects_ambiguous_entries(self):
+        repository = JsonMarkerRepository()
+        repository.custom_markers = {
+            "Ao Ashi": {"season_2": {"2": {"start": 5, "end": 90}}},
+            "Aoashi": {"season_2": {"2": {"start": 10, "end": 95}}},
+        }
+        episode = SimpleNamespace(
+            grandparentTitle="Ao  Ashi",
+            seasonNumber=2,
+            episodeNumber=2,
+            markers=[],
+        )
+
+        self.assertIsNone(repository.get_intro_markers(episode))
+
 
 class TestPlexManager(unittest.TestCase):
     def test_show_episode_lookup_prefers_matching_plex_library(self):
