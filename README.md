@@ -17,6 +17,30 @@ O **`plex-autoplay`** atua como um serviço companheiro (*sidecar*) em segundo p
 - 🎯 **Filtro por Usuários e Dispositivos**: Escolha quais aparelhos ou perfis da casa terão o autoplay ativado.
 - ⚡ **WebSocket em Tempo Real + Polling de Fallback**: Reação imediata a eventos de reprodução combinada com verificação periódica de segurança.
 
+## 📂 Requisito de organização das mídias
+
+Para usar a geração automática de marcadores de anime, a biblioteca deverá seguir este padrão:
+
+```text
+<biblioteca>/
+└── <Nome da série>/
+    └── Temporada <número>/
+        └── <nome do episódio> -<número do episódio>.<extensão>
+```
+
+Exemplo:
+
+```text
+Animes/
+└── Kyouran Reijou Nia Liston/
+    └── Temporada 1/
+        └── Kyouran Reijou Nia Liston Byoujaku Reijou ni Tensei shita Kamigoroshi no Bujin no Karei Naru Musouroku -01.mkv
+```
+
+O nome da pasta da série é a referência principal para localizar o anime; `Temporada <número>` informa a temporada local; e o sufixo numérico após o hífen no nome do arquivo informa o episódio, com ou sem zeros à esquerda. O recurso deverá aceitar extensões de vídeo comuns, ignorar arquivos que não correspondam ao padrão e pedir confirmação quando a identificação da obra ou da numeração não for segura. Os diretórios de mídia deverão ser montados no container em modo somente leitura.
+
+Este padrão é usado pelo comando de geração de marcadores descrito em [Geração de marcadores de anime](#-geração-de-marcadores-de-anime). Veja a [especificação da funcionalidade](./docs/specs/automatic-anime-markers.md).
+
 ---
 
 ## 🛠️ Como Funciona
@@ -196,6 +220,27 @@ Para séries em que você deseja definir os tempos exatos de início e fim da ab
 
 ---
 
+## 🎌 Geração de marcadores de anime
+
+O comando de geração varre uma pasta montada em modo somente leitura, consulta as APIs públicas Jikan e AniSkip e exibe uma prévia antes de gravar. A estrutura reconhecida é `<série>/Temporada <número>/<arquivo> -<episódio>.<extensão>`. `ffprobe` precisa estar instalado para obter a duração real dos episódios (já incluído na imagem Docker); nenhum arquivo de vídeo é enviado às APIs.
+
+```bash
+python -m plex_autoplay \
+  --media-root /media/anime \
+  --output /config/markers.json \
+  --cache-file /config/metadata-cache.json
+```
+
+Em uma sessão interativa, o comando pede a seleção de obra e o offset da numeração de episódios por temporada quando necessário; esses mapeamentos são guardados no cache local. A prévia identifica dados ausentes e episódios pendentes. Para apenas visualizar sem persistir marcadores:
+
+```bash
+python -m plex_autoplay --media-root /media/anime --output /config/markers.json --dry-run
+```
+
+A gravação exige confirmação. `--yes` confirma explicitamente em automações não interativas; `--force` também exige confirmação e substitui campos já existentes. Sem `--force`, os marcadores existentes são preservados e somente campos ausentes são preenchidos. O cache expira após 168 horas por padrão (`--cache-ttl-hours` altera o prazo). Após resposta HTTP 429, novas consultas ficam pausadas pelo período informado em `Retry-After` (ou 60 segundos quando ausente).
+
+---
+
 ## 📁 Estrutura do Projeto
 
 ```text
@@ -243,6 +288,19 @@ Execute a suíte de testes com:
 ```bash
 python3 -m unittest discover tests
 ```
+
+## 🧭 OpenSpec
+
+O projeto usa OpenSpec para propor, especificar e acompanhar mudanças. No VS Code, reinicie a janela após configurar o OpenSpec para carregar os workflows do GitHub Copilot.
+
+Use `/opsx:explore` para investigar uma ideia e `/opsx:propose` para criar uma proposta com requisitos e tarefas. Depois da implementação, use `/opsx:verify` quando disponível e `/opsx:archive` para arquivar a mudança concluída. O CLI também pode listar e validar artefatos:
+
+```bash
+openspec list
+openspec validate --all
+```
+
+Consulte [openspec/config.yaml](./openspec/config.yaml) para o contexto do projeto e a documentação oficial do [OpenSpec](https://openspec.dev/docs/).
 
 ---
 
