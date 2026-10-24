@@ -318,33 +318,52 @@ class TestPublicApisAndCache(unittest.TestCase):
     def test_startup_scans_anime_root_and_merges_generated_markers(self):
         with tempfile.TemporaryDirectory() as tmp_dir:
             anime_root = Path(tmp_dir) / "anime"
+            dubbed_anime_root = Path(tmp_dir) / "anime-dubbed"
             series_root = Path(tmp_dir) / "series"
+            second_series_root = Path(tmp_dir) / "series-2"
             anime_root.mkdir()
+            dubbed_anime_root.mkdir()
             series_root.mkdir()
+            second_series_root.mkdir()
             preview = {
                 "series": {"Example": {"season_1": {"1": {"start": 10.0, "end": 30.0}}}},
                 "pending": [],
                 "assumptions": [],
             }
+            dubbed_preview = {
+                "series": {"Dubbed Example": {"season_1": {"1": {"start": 12.0, "end": 32.0}}}},
+                "pending": [],
+                "assumptions": [],
+            }
             with patch.object(config, "auto_generate_anime_markers", True), patch.object(
-                config, "anime_media_dir", str(anime_root)
-            ), patch.object(config, "series_media_dir", str(series_root)), patch.object(
+                config, "anime_media_dirs", [str(anime_root), str(dubbed_anime_root)]
+            ), patch.object(config, "series_media_dirs", [str(series_root), str(second_series_root)]), patch.object(
                 config, "anime_markers_cache_file", str(Path(tmp_dir) / "metadata-cache.json")
             ), patch.object(config, "anime_markers_cache_ttl_hours", 168), patch.object(
                 config, "custom_markers_file", str(Path(tmp_dir) / "markers.json")
             ), patch(
                 "plex_autoplay.main.build_preview_for_root",
-                return_value=preview,
+                side_effect=[preview, dubbed_preview],
             ) as build_preview, patch("plex_autoplay.main.merge_markers_file") as merge:
                 _run_startup_anime_marker_generation(logging.getLogger("test"))
 
-            build_preview.assert_called_once_with(
-                anime_root,
-                cache_file=str(Path(tmp_dir) / "metadata-cache.json"),
-                cache_ttl_seconds=168 * 60 * 60,
-                auto_guess=True,
+            self.assertEqual(
+                [call.args[0] for call in build_preview.call_args_list],
+                [anime_root, dubbed_anime_root],
             )
-            merge.assert_called_once_with(str(Path(tmp_dir) / "markers.json"), preview["series"])
+            self.assertEqual(
+                build_preview.call_args_list[0].kwargs,
+                {
+                    "cache_file": str(Path(tmp_dir) / "metadata-cache.json"),
+                    "cache_ttl_seconds": 168 * 60 * 60,
+                    "auto_guess": True,
+                },
+            )
+            expected_markers = {
+                **preview["series"],
+                **dubbed_preview["series"],
+            }
+            merge.assert_called_once_with(str(Path(tmp_dir) / "markers.json"), expected_markers)
 
     def test_cached_rate_limit_prevents_immediate_api_retry(self):
         with tempfile.TemporaryDirectory() as tmp_dir:

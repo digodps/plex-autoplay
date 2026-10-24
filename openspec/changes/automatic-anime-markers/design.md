@@ -7,8 +7,8 @@ O projeto já possui uma camada de persisting de marcadores via `JsonMarkerRepos
 ## Goals / Non-Goals
 
 **Goals:**
-- Gerar marcadores de intro e credits automaticamente a partir da pasta de Anime montada pelo Docker.
-- Permitir que as bibliotecas de Anime e Séries comuns sejam configuradas separadamente e montadas somente leitura.
+- Gerar marcadores de intro e credits automaticamente a partir das pastas de Anime montadas pelo Docker.
+- Permitir que múltiplas raízes de Anime e Séries comuns sejam configuradas separadamente e montadas somente leitura.
 - Consultar as APIs Jikan/AniSkip somente para Anime; estimar e registrar associações/offsets incertos no modo de inicialização.
 - Preservar compatibilidade do formato de `markers.json` e evitar sobrescrita involuntária de dados manuais.
 
@@ -36,11 +36,11 @@ O projeto já possui uma camada de persisting de marcadores via `JsonMarkerRepos
 
 1. Introduzir a descoberta e o parser de caminho sem alterar o comportamento atual do monitoramento do Plex.
 2. Adicionar as integrações para Jikan e AniSkip com tratamento de erro, cache local e registro de estimativas.
-3. Montar as bibliotecas informadas pelo usuário como somente leitura e executar a varredura automática apenas na raiz de Anime.
+3. Montar cada biblioteca informada pelo usuário em um destino somente leitura próprio e executar a varredura automática em todas as raízes de Anime.
 4. Validar a mesclagem do resultado em `markers.json`, preservando marcadores existentes, e manter a CLI de prévia/execução manual.
 5. Executar a suíte de validação do projeto e validar as configurações Docker Compose/ZimaOS.
 
 ## Resolved Deployment Configuration
 
-- No Compose local, as origens são informadas por `ANIME_LIBRARY_PATH` e `SERIES_LIBRARY_PATH` no `.env`.
-- No ZimaOS, as origens são configuradas nos dois bind mounts do Compose; o diretório persistente `/config` guarda os marcadores e o cache.
+- No Compose local, as origens padrão são informadas por `ANIME_LIBRARY_PATH` e `SERIES_LIBRARY_PATH` no `.env`; raízes adicionais exigem mounts próprios.
+- No ZimaOS, as origens são configuradas em bind mounts próprios; `ANIME_MEDIA_DIRS` e `SERIES_MEDIA_DIRS` listam os destinos internos, e `/config` persiste os marcadores e o cache.

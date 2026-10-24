@@ -2,7 +2,7 @@
 
 ## 1. Objetivo
 
-Permitir configurar bibliotecas independentes de Anime e Séries comuns no Docker, varrer Anime ao iniciar o serviço, identificar episódios pelo caminho/nome dos arquivos, consultar APIs públicas para obter marcadores de abertura e encerramento e gerar um `markers.json` compatível com o serviço atual. Uma CLI também oferece prévia e geração manual.
+Permitir configurar múltiplas raízes independentes de Anime e Séries comuns no Docker, varrer todas as raízes de Anime ao iniciar o serviço, identificar episódios pelo caminho/nome dos arquivos, consultar APIs públicas para obter marcadores de abertura e encerramento e gerar um `markers.json` compatível com o serviço atual. Uma CLI também oferece prévia e geração manual.
 
 O recurso gera **marcadores temporais** (segmentos de intro e encerramento), não arquivos de metadados descritivos nem alterações na biblioteca Plex.
 
@@ -12,7 +12,7 @@ O recurso gera **marcadores temporais** (segmentos de intro e encerramento), nã
 - Consulta de dados externos somente por APIs públicas documentadas.
 - Geração local de `markers.json`; sem escrita ou atualização da biblioteca Plex.
 - Varredura automática no startup do Docker Compose e execução manual por CLI, com modo de prévia e confirmação antes de gravar pela CLI.
-- Mounts de Anime e Séries comuns independentes e somente leitura; somente Anime é varrida e consultada nas APIs de anime.
+- Mounts de Anime e Séries comuns independentes e somente leitura; somente as raízes de Anime são varridas e consultadas nas APIs de anime.
 - Reutilização do formato de marcadores já lido por `JsonMarkerRepository`.
 - Nenhuma dependência de API privada do Plex, scraping de páginas ou credencial de usuário Plex para buscar timestamps.
 
@@ -79,8 +79,8 @@ Não enviar arquivos ou conteúdo de mídia para provedores externos.
 
 ## 5. Fluxo funcional
 
-1. No Docker Compose, o usuário configura os caminhos host separados para Anime e Séries comuns; ambas são montadas em modo somente leitura, e marcadores/cache persistem em `/config`.
-2. Ao iniciar o serviço, se `AUTO_GENERATE_ANIME_MARKERS` estiver habilitada, o sistema percorre somente a raiz de Anime e extrai título, temporada local, episódio e extensão. A raiz de Séries comuns não é varrida nem consultada nas APIs de anime.
+1. No Docker Compose, o usuário configura os caminhos host separados para cada pasta de Anime e Séries comuns; todas são montadas em modo somente leitura, e marcadores/cache persistem em `/config`.
+2. Ao iniciar o serviço, se `AUTO_GENERATE_ANIME_MARKERS` estiver habilitada, o sistema percorre todas as raízes listadas em `ANIME_MEDIA_DIRS` e extrai título, temporada local, episódio e extensão. As raízes listadas em `SERIES_MEDIA_DIRS` não são varridas nem consultadas nas APIs de anime.
 3. O sistema agrupa arquivos pela série e evita consultas repetidas usando cache local.
 4. Para séries ainda não mapeadas, consulta Jikan; no startup, seleciona uma estimativa quando não houver correspondência exata única e registra a suposição.
 5. Na CLI interativa, apresenta candidatos e permite confirmação; em modo não interativo sem `--auto-guess`, deixa a série pendente.
@@ -167,8 +167,9 @@ Os testes unitários devem usar respostas HTTP simuladas; nenhum teste automatiz
 
 ## 11. Configuração de implantação
 
-- Compose local recebe caminhos host por `ANIME_LIBRARY_PATH` e `SERIES_LIBRARY_PATH` no `.env`.
+- Compose local recebe os caminhos host por `ANIME_LIBRARY_PATH` e `SERIES_LIBRARY_PATH` no `.env`; origens adicionais requerem mounts separados.
 - No ZimaOS, os caminhos host são configurados nos bind mounts em `docker-compose.zimaos.yml`.
+- `ANIME_MEDIA_DIRS` e `SERIES_MEDIA_DIRS` listam os destinos internos dos mounts separados por vírgulas. Novas raízes requerem um destino interno exclusivo e sua inclusão na lista correspondente.
 - `/config/markers.json` e `/config/metadata-cache.json` são persistidos pelo volume de configuração.
 - `AUTO_GENERATE_ANIME_MARKERS` está habilitada nos arquivos Compose fornecidos e desabilitada por padrão fora deles.
 

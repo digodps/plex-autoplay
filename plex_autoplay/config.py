@@ -41,7 +41,15 @@ class Settings:
         default=False,
     )
     anime_media_dir: str = os.getenv("ANIME_MEDIA_DIR", "/media/anime")
+    anime_media_dirs: List[str] = field(
+        default_factory=lambda: _str_to_list(os.getenv("ANIME_MEDIA_DIRS", ""))
+        or [os.getenv("ANIME_MEDIA_DIR", "/media/anime")]
+    )
     series_media_dir: str = os.getenv("SERIES_MEDIA_DIR", "/media/series")
+    series_media_dirs: List[str] = field(
+        default_factory=lambda: _str_to_list(os.getenv("SERIES_MEDIA_DIRS", ""))
+        or [os.getenv("SERIES_MEDIA_DIR", "/media/series")]
+    )
     anime_markers_cache_file: str = os.getenv(
         "ANIME_MARKERS_CACHE_FILE",
         "/config/metadata-cache.json",

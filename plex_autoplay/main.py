@@ -33,31 +33,64 @@ def _run_startup_anime_marker_generation(logger: logging.Logger) -> None:
     if not config.auto_generate_anime_markers:
         return
 
-    anime_root = Path(config.anime_media_dir).expanduser()
-    if not anime_root.is_dir():
-        logger.warning(
-            "Geração automática ignorada: diretório de animes não montado ou inválido (%s).",
-            anime_root,
-        )
+    for series_dir in config.series_media_dirs:
+        series_root = Path(series_dir).expanduser()
+        if not series_root.is_dir():
+            logger.warning(
+                "Diretório de séries comuns não montado ou inválido (%s); nenhuma consulta de timestamps será feita para ele.",
+                series_root,
+            )
+        else:
+            logger.info("Biblioteca de séries comuns montada em modo somente leitura: %s", series_root)
+
+    marker_data: dict[str, dict[str, dict[str, dict[str, float]]]] = {}
+    pending: list[dict[str, object]] = []
+    assumptions: list[dict[str, object]] = []
+    valid_roots = 0
+
+    for media_dir in config.anime_media_dirs:
+        anime_root = Path(media_dir).expanduser()
+        if not anime_root.is_dir():
+            logger.warning(
+                "Geração automática ignorada: diretório de animes não montado ou inválido (%s).",
+                anime_root,
+            )
+            continue
+
+        valid_roots += 1
+        try:
+            preview = build_preview_for_root(
+                anime_root,
+                cache_file=config.anime_markers_cache_file,
+                cache_ttl_seconds=config.anime_markers_cache_ttl_hours * 60 * 60,
+                auto_guess=True,
+            )
+        except (OSError, RuntimeError, ValueError) as error:
+            logger.error("Falha ao varrer a biblioteca de Anime %s: %s", anime_root, error)
+            continue
+
+        for title, seasons in preview.get("series", {}).items():
+            target_seasons = marker_data.setdefault(title, {})
+            for season, episodes in seasons.items():
+                target_episodes = target_seasons.setdefault(season, {})
+                for episode, markers in episodes.items():
+                    if episode in target_episodes and target_episodes[episode] != markers:
+                        logger.warning(
+                            "Marcadores conflitantes para '%s', %s, episódio %s; mantendo o primeiro resultado.",
+                            title,
+                            season,
+                            episode,
+                        )
+                        continue
+                    target_episodes[episode] = markers
+        pending.extend(preview.get("pending", []))
+        assumptions.extend(preview.get("assumptions", []))
+
+    if not valid_roots:
+        logger.warning("Nenhum diretório de Anime configurado está montado; varredura automática não executada.")
         return
 
-    series_root = Path(config.series_media_dir).expanduser()
-    if not series_root.is_dir():
-        logger.warning(
-            "Diretório de séries comuns não montado ou inválido (%s); nenhuma consulta de timestamps será feita para ele.",
-            series_root,
-        )
-    else:
-        logger.info("Biblioteca de séries comuns montada em modo somente leitura: %s", series_root)
-
     try:
-        preview = build_preview_for_root(
-            anime_root,
-            cache_file=config.anime_markers_cache_file,
-            cache_ttl_seconds=config.anime_markers_cache_ttl_hours * 60 * 60,
-            auto_guess=True,
-        )
-        marker_data = preview.get("series", {})
         if marker_data:
             merge_markers_file(config.custom_markers_file, marker_data)
         generated_episodes = sum(
@@ -67,25 +100,26 @@ def _run_startup_anime_marker_generation(logger: logging.Logger) -> None:
             if isinstance(episodes, dict)
         )
         logger.info(
-            "Varredura automática de animes concluída: %d episódio(s) com marcadores, %d pendência(s), %d estimativa(s).",
+            "Varredura automática de %d biblioteca(s) de Anime concluída: %d episódio(s) com marcadores, %d pendência(s), %d estimativa(s).",
+            valid_roots,
             generated_episodes,
-            len(preview.get("pending", [])),
-            len(preview.get("assumptions", [])),
+            len(pending),
+            len(assumptions),
         )
-        for assumption in preview.get("assumptions", []):
+        for assumption in assumptions:
             logger.warning(
                 "Mapeamento estimado para '%s' (temporada %s): %s",
                 assumption.get("title", "desconhecido"),
                 assumption.get("season", "n/a"),
                 assumption.get("reason", "sem detalhe"),
             )
-        for pending in preview.get("pending", []):
+        for item in pending:
             logger.warning(
                 "Item de anime pendente '%s' (temporada %s, episódio %s): %s",
-                pending.get("title", "biblioteca"),
-                pending.get("season", "n/a"),
-                pending.get("episode", "n/a"),
-                pending.get("reason", "sem detalhe"),
+                item.get("title", "biblioteca"),
+                item.get("season", "n/a"),
+                item.get("episode", "n/a"),
+                item.get("reason", "sem detalhe"),
             )
     except (OSError, RuntimeError, ValueError) as error:
         logger.error("Falha na geração automática de marcadores; o serviço Plex continuará: %s", error)

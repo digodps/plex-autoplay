@@ -8,23 +8,23 @@ Este capability permite que o sistema identifique animes em uma árvore de mídi
 
 ### Requirement: Geração automática de marcadores de anime
 
-O sistema deve permitir configurar raízes independentes de Anime e Séries comuns no Docker, montá-las em modo somente leitura e executar automaticamente a varredura da raiz de Anime na inicialização. A raiz de Séries comuns não deve ser consultada nas APIs Jikan/AniSkip. A CLI também deve permitir varredura manual e prévia.
+O sistema deve permitir configurar múltiplas raízes independentes de Anime e Séries comuns no Docker, montá-las em modo somente leitura e executar automaticamente a varredura de todas as raízes de Anime na inicialização. As raízes de Séries comuns não devem ser varridas nem consultadas nas APIs Jikan/AniSkip. A CLI também deve permitir varredura manual e prévia.
 
-#### Scenario: Bibliotecas configuradas separadamente no Docker
-- **WHEN** o usuário configurar os caminhos de Anime e Séries comuns no Compose
-- **THEN** cada raiz deve ser montada em seu destino interno próprio e somente leitura, mesmo que as origens do host sejam diferentes
+#### Scenario: Múltiplas bibliotecas configuradas no Docker
+- **WHEN** o usuário configurar uma ou mais pastas de Anime e Séries comuns no Compose
+- **THEN** cada pasta deve ser montada em um destino interno próprio e somente leitura, mesmo que as origens do host sejam diferentes
 
 #### Scenario: Varredura automática na inicialização
-- **WHEN** a geração automática estiver habilitada e a raiz de Anime estiver montada
-- **THEN** o serviço deve varrer somente Anime, mesclar marcadores gerados sem apagar valores existentes e persistir saída/cache na configuração do container
+- **WHEN** a geração automática estiver habilitada e uma ou mais raízes de Anime estiverem montadas
+- **THEN** o serviço deve varrer todas as raízes de Anime configuradas, mesclar marcadores gerados sem apagar valores existentes e persistir saída/cache na configuração do container
 
-#### Scenario: Falha na geração automática
-- **WHEN** a raiz de Anime estiver indisponível ou uma consulta falhar
-- **THEN** a falha deve ser registrada e o serviço Plex deve continuar sua inicialização
+#### Scenario: Falha em uma raiz durante a geração automática
+- **WHEN** uma raiz de Anime estiver indisponível ou uma consulta falhar
+- **THEN** a falha deve ser registrada, as demais raízes devem continuar sendo processadas e o serviço Plex deve continuar sua inicialização
 
 #### Scenario: Séries comuns não consultadas nas APIs de anime
-- **WHEN** a raiz de Séries comuns estiver montada
-- **THEN** ela deve permanecer disponível como biblioteca montada, sem varredura ou chamadas a Jikan/AniSkip
+- **WHEN** uma ou mais raízes de Séries comuns estiverem montadas
+- **THEN** elas devem permanecer disponíveis como bibliotecas montadas, sem varredura ou chamadas a Jikan/AniSkip
 
 #### Scenario: Descoberta válida de arquivos e estrutura de pastas
 - **WHEN** a raiz de mídia contiver uma estrutura compatível com `<título>/Temporada <número>/<arquivo -episódio.ext>`
