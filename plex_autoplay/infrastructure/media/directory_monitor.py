@@ -508,6 +508,7 @@ def build_preview_for_root(
                 }
             )
         lookup_titles = _anime_lookup_titles(show_title, episodes)
+        marker_title = lookup_titles[-1]
         mapping_key = show_title.casefold()
         anime_map = cache.setdefault("anime_mappings", {})
         if not isinstance(anime_map, dict):
@@ -729,7 +730,7 @@ def build_preview_for_root(
                     )
                     continue
 
-                season_markers = preview["series"].setdefault(show_title, {}).setdefault(
+                season_markers = preview["series"].setdefault(marker_title, {}).setdefault(
                     f"season_{season_number}", {}
                 )
                 season_markers[str(media_episode.episode)] = entry

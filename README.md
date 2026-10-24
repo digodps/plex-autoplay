@@ -215,7 +215,7 @@ sudo systemctl enable --now plex-autoplay
 
 ## 🎯 Configuração de Marcadores de Abertura (`markers.json`)
 
-Para identificar Anime automaticamente, o serviço consulta a API pública GraphQL do AniList, que retorna títulos em romaji, inglês e japonês e o ID do MyAnimeList. Quando o nome do arquivo termina com o número da temporada detectada (por exemplo, `Ao no Hako 2 -01.mp4` na temporada 2), a pesquisa tenta primeiro o título completo com a temporada e depois o título-base. A correspondência respeita a temporada para não confundir a série original com uma sequência. O título em inglês retornado pelo AniList é exibido na atividade da varredura; o AniSkip recebe o ID do MyAnimeList, não o título.
+Para identificar Anime automaticamente, o serviço consulta a API pública GraphQL do AniList, que retorna títulos em romaji, inglês e japonês e o ID do MyAnimeList. Quando o nome do arquivo termina com o número da temporada detectada (por exemplo, `Ao no Hako 2 -01.mp4` na temporada 2), a pesquisa tenta primeiro o título completo com a temporada e depois o título-base. A correspondência respeita a temporada para não confundir a série original com uma sequência. O título em inglês retornado pelo AniList é exibido na atividade da varredura; o AniSkip recebe o ID do MyAnimeList, não o título. Os marcadores gerados são salvos usando o nome da série da biblioteca (por exemplo, `Ao no Hako`), sem anexar o sufixo da temporada.
 
 Para séries em que você deseja definir os tempos exatos de início e fim da abertura (ou créditos), você pode criar um arquivo `markers.json` (veja [markers.example.json](file:///var/home/diego/Documentos/Digodps/plex-autoplay/markers.example.json)):
 

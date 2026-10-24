@@ -3,10 +3,12 @@ import logging
 import tempfile
 import unittest
 from pathlib import Path
+from types import SimpleNamespace
 from unittest.mock import patch
 from urllib.error import HTTPError
 
 from plex_autoplay.config import config
+from plex_autoplay.infrastructure.markers.json_repository import JsonMarkerRepository
 from plex_autoplay.infrastructure.media.directory_monitor import (
     ExternalApiError,
     _cache_get,
@@ -255,10 +257,24 @@ class TestPublicApisAndCache(unittest.TestCase):
             aniskip.assert_called_once_with(61323, 1, 1554.0)
             self.assertEqual(
                 preview["series"],
-                {"Ao no Hako 2": {"season_2": {"1": {"start": 5.583, "end": 93.086}}}},
+                {"Ao no Hako": {"season_2": {"1": {"start": 5.583, "end": 93.086}}}},
             )
             self.assertEqual(preview["details"][0]["title_english"], "Blue Box Season 2")
             self.assertEqual(cached_preview["details"][0]["title_english"], "Blue Box Season 2")
+
+            marker_file = Path(tmp_dir) / "markers.json"
+            merge_markers_file(marker_file, preview["series"])
+            repository = JsonMarkerRepository(str(marker_file))
+            episode = SimpleNamespace(
+                grandparentTitle="Ao no Hako",
+                showTitle="Ao no Hako",
+                seasonNumber=2,
+                parentIndex=2,
+                episodeNumber=1,
+                index=1,
+                markers=[],
+            )
+            self.assertEqual(repository.get_intro_markers(episode), (5583, 93086))
 
     def test_preview_falls_back_to_base_search_and_selects_matching_season(self):
         with tempfile.TemporaryDirectory() as tmp_dir:
