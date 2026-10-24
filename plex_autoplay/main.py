@@ -1,13 +1,21 @@
 """Application composition root and service entry point."""
 
+import argparse
+import json
 import logging
 import signal
 import sys
 import time
+from pathlib import Path
+from typing import Callable, Optional
 
 from plex_autoplay.application.playback_service import PlaybackService
 from plex_autoplay.config import config
 from plex_autoplay.infrastructure.markers.json_repository import JsonMarkerRepository
+from plex_autoplay.infrastructure.media.directory_monitor import (
+    build_preview_for_root,
+    merge_markers_file,
+)
 from plex_autoplay.infrastructure.plex.client import PlexManager
 from plex_autoplay.infrastructure.plex.session_watcher import SessionWatcher
 
@@ -21,7 +29,100 @@ def setup_logging(log_level: str) -> None:
     )
 
 
-def main() -> None:
+def _run_markers_command(args: argparse.Namespace) -> int:
+    media_root = Path(args.media_root).expanduser().resolve()
+    if not media_root.exists() or not media_root.is_dir():
+        raise ValueError(f"Diretório de mídia inválido: {args.media_root}")
+
+    output_path = (
+        Path(args.output).expanduser().resolve()
+        if args.output
+        else Path(config.custom_markers_file).expanduser().resolve()
+    )
+    cache_file = (
+        Path(args.cache_file).expanduser().resolve()
+        if args.cache_file
+        else Path(".anime-markers-cache.json").resolve()
+    )
+    chooser: Optional[Callable[[str], str]] = input if sys.stdin.isatty() else None
+    if args.dry_run:
+        preview = build_preview_for_root(
+            media_root,
+            cache_file=cache_file,
+            cache_ttl_seconds=args.cache_ttl_hours * 60 * 60,
+            chooser=chooser,
+        )
+        print(json.dumps(preview, ensure_ascii=False, indent=2))
+        return 0
+
+    preview = build_preview_for_root(
+        media_root,
+        cache_file=cache_file,
+        cache_ttl_seconds=args.cache_ttl_hours * 60 * 60,
+        chooser=chooser,
+    )
+    print(json.dumps(preview, ensure_ascii=False, indent=2))
+    marker_data = preview.get("series", {})
+    if not marker_data:
+        print("Nenhum marcador válido para gravar; arquivo de saída preservado.", file=sys.stderr)
+        return 1
+
+    if args.yes:
+        confirmed = True
+    elif not sys.stdin.isatty():
+        raise RuntimeError("Confirmação necessária em execução não interativa; use --yes para confirmar.")
+    else:
+        action = "substituir marcadores existentes e mesclar os novos" if args.force else "mesclar sem substituir marcadores existentes"
+        confirmed = input(f"Confirmar gravação em {output_path} para {action}? [s/N] ").strip().casefold() in {
+            "s",
+            "sim",
+            "y",
+            "yes",
+        }
+    if not confirmed:
+        print("Gravação cancelada; arquivo de saída preservado.")
+        return 0
+
+    merge_markers_file(output_path, marker_data, force=args.force)
+
+    if not args.quiet:
+        print(f"Marcadores gerados para {media_root} -> {output_path}")
+    return 0
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description="plex-autoplay")
+    parser.add_argument("--media-root", help="Diretório raiz contendo series/Temporada n/arquivos")
+    parser.add_argument("--output", help="Arquivo JSON de saída para marcadores automáticos")
+    parser.add_argument("--cache-file", help="Arquivo JSON para cache de busca e metadados")
+    parser.add_argument(
+        "--cache-ttl-hours",
+        type=int,
+        default=168,
+        help="Validade do cache de respostas de API em horas (padrão: 168)",
+    )
+    parser.add_argument("--dry-run", action="store_true", help="Mostra a prévia sem gravar o arquivo final")
+    parser.add_argument(
+        "--force",
+        action="store_true",
+        help="Substitui campos de marcadores existentes (ainda exige confirmação)",
+    )
+    parser.add_argument(
+        "--yes",
+        action="store_true",
+        help="Confirma a gravação explicitamente, útil em execuções automatizadas",
+    )
+    parser.add_argument("--quiet", action="store_true", help="Reduz a saída para uso não interativo")
+    args = parser.parse_args(argv)
+
+    if args.cache_ttl_hours < 0:
+        parser.error("--cache-ttl-hours não pode ser negativo")
+    if args.media_root:
+        try:
+            return _run_markers_command(args)
+        except (EOFError, OSError, RuntimeError, ValueError) as error:
+            print(f"Erro ao gerar marcadores: {error}", file=sys.stderr)
+            return 1
     setup_logging(config.log_level)
     logger = logging.getLogger("plex-autoplay")
 
