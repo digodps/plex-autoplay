@@ -1,0 +1,29 @@
+services:
+  plex-autoplay:
+    build:
+      context: https://github.com/digodps/plex-autoplay.git#main
+    image: plex-autoplay:latest
+    pull_policy: build
+    container_name: plex-autoplay
+    restart: unless-stopped
+    network_mode: host
+    environment:
+      PLEX_URL: "http://localhost:32400"
+      PLEX_TOKEN: "COLE_SEU_TOKEN_AQUI"
+      AUTO_SKIP_INTRO: "true"
+      AUTO_NEXT_EPISODE: "false"
+      NEXT_EPISODE_THRESHOLD_SECONDS: "15"
+      POLL_INTERVAL_SECONDS: "2"
+      CUSTOM_MARKERS_FILE: "/config/markers.json"
+      DEFAULT_INTRO_SKIP_SECONDS: "0"
+      LOG_LEVEL: "INFO"
+    volumes:
+      - /DATA/AppData/plex-autoplay:/config
+x-casaos:
+  hostname: ""
+  index: /
+  main: plex-autoplay
+  scheme: http
+  title:
+    custom: plex-autoplay
+  port_map: ""
