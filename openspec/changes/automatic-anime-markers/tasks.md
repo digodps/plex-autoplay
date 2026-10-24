@@ -17,3 +17,9 @@
 - [x] 3.1 Implementar a normalização dos intervalos de `op` e `ed` em segundos e a junção com `markers.json` preservando entradas manuais e sem sobrescrita sem confirmação. Verificar com testes unitários de merge e compatibilidade de formato.
 - [x] 3.2 Implementar a gravação segura em arquivo temporário e rename atômico, garantindo que a escrita permaneça dentro da raiz configurada e que o arquivo atual seja preservado em falhas. Verificar com testes de escrita atômica e integração do CLI em modo de prévia.
 - [x] 3.3 Executar a validação do projeto com `python -m unittest discover -v`, `python -m compileall -q plex_autoplay tests` e `docker compose config` para confirmar compatibilidade e ausência de regressões.
+
+## 4. Configurar bibliotecas e geração no Docker
+
+- [x] 4.1 Configurar variáveis e mounts independentes, somente leitura, para Anime e Séries comuns no Docker Compose local e ZimaOS; persistir marcadores e cache em `/config`.
+- [x] 4.2 Executar a varredura automática de Anime no startup, mantendo Séries comuns fora das APIs de anime, mesclando marcadores e registrando estimativas/pendências.
+- [x] 4.3 Atualizar documentação e validar testes, compilação e as configurações Compose para ambas as bibliotecas.

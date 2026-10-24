@@ -108,6 +108,8 @@ Edite o `.env` com as configurações do seu Plex:
 ```env
 PLEX_URL=http://localhost:32400
 PLEX_TOKEN=seu_token_aqui
+ANIME_LIBRARY_PATH=/caminho/no/host/animes
+SERIES_LIBRARY_PATH=/caminho/no/host/series
 AUTO_SKIP_INTRO=true
 AUTO_NEXT_EPISODE=true
 NEXT_EPISODE_THRESHOLD_SECONDS=15
@@ -135,12 +137,13 @@ O arquivo [`docker-compose.zimaos.yml`](./docker-compose.zimaos.yml) pode ser im
 
 1. Baixe o arquivo `docker-compose.zimaos.yml` deste repositório e abra-o em um editor de texto.
 2. Altere `PLEX_URL` para o endereço do servidor Plex acessível pelo ZimaOS, por exemplo `http://192.168.1.50:32400`, e substitua `PLEX_TOKEN` pelo seu token. Não publique nem compartilhe o arquivo depois de inserir o token.
-3. Na interface do ZimaOS, abra a área de aplicativos, escolha a opção para instalar/importar um aplicativo personalizado via Docker Compose e selecione o arquivo editado.
-4. Inicie o aplicativo e consulte os logs no ZimaOS. Procure a mensagem de conexão bem-sucedida com o Plex.
+3. Em `volumes`, informe os caminhos absolutos do host nas duas entradas de biblioteca: `/caminho/animes:/media/anime:ro` e `/caminho/series:/media/series:ro`. Os destinos `/media/anime` e `/media/series` devem ser mantidos; apenas o caminho à esquerda é específico do seu NAS.
+4. Na interface do ZimaOS, abra a área de aplicativos, escolha a opção para instalar/importar um aplicativo personalizado via Docker Compose e selecione o arquivo editado.
+5. Inicie o aplicativo e consulte os logs no ZimaOS. Procure a mensagem de conexão bem-sucedida com o Plex e o resultado da varredura automática de animes.
 
-O Compose constrói a imagem a partir do repositório público do projeto durante a instalação. A opção `network_mode: host` permite que o serviço alcance o Plex e os players na rede local. Mantenha `AUTO_NEXT_EPISODE` como `false` no primeiro teste; depois de confirmar o funcionamento, você pode mudar para `true` nas configurações do aplicativo.
+O Compose constrói a imagem a partir do repositório público do projeto durante a instalação. A opção `network_mode: host` permite que o serviço alcance o Plex e os players na rede local. As duas bibliotecas são montadas como somente leitura; no início do serviço, Anime é varrida para gerar marcadores e Séries comuns é montada sem consultas às APIs de anime. Mantenha `AUTO_NEXT_EPISODE` como `false` no primeiro teste; depois de confirmar o funcionamento, você pode mudar para `true` nas configurações do aplicativo.
 
-O diretório `/DATA/AppData/plex-autoplay` é montado em `/config` para marcadores personalizados. Se quiser usá-los, crie `markers.json` nesse diretório com base em [`markers.example.json`](./markers.example.json). Para remoção, pare e remova o aplicativo pela interface do ZimaOS.
+O diretório `/DATA/AppData/plex-autoplay` é montado em `/config` para persistir `markers.json` e o cache de metadados. Marcadores existentes são preservados; a geração automática preenche campos ausentes. Para remoção, pare e remova o aplicativo pela interface do ZimaOS.
 
 ---
 
@@ -222,8 +225,11 @@ Para séries em que você deseja definir os tempos exatos de início e fim da ab
 
 ## 🎌 Geração de marcadores de anime
 
-O comando de geração varre uma pasta montada em modo somente leitura, consulta as APIs públicas Jikan e AniSkip e exibe uma prévia antes de gravar. A estrutura reconhecida é `<série>/Temporada <número>/<arquivo> -<episódio>.<extensão>`. `ffprobe` precisa estar instalado para obter a duração real dos episódios (já incluído na imagem Docker); nenhum arquivo de vídeo é enviado às APIs.
+Quando executado pelo Docker, o serviço varre automaticamente a biblioteca montada em `/media/anime` ao iniciar. O diretório `/media/series` é montado separadamente para a biblioteca de séries comuns, mas não é consultado nas APIs Jikan/AniSkip. Ambas as raízes podem estar em locais diferentes no host e devem seguir `<série>/Temporada <número>/<arquivo> -<episódio>.<extensão>`. `ffprobe` obtém a duração real; nenhum arquivo de vídeo é enviado às APIs.
 
+Para Docker Compose local, configure `ANIME_LIBRARY_PATH` e `SERIES_LIBRARY_PATH` no `.env` copiado de `.env.example`. Para ZimaOS, edite os caminhos de origem à esquerda dos dois mounts em `docker-compose.zimaos.yml` antes da importação. No início, a seleção de candidatos e o offset de temporadas podem ser estimados automaticamente; as estimativas são registradas nos logs. As indisponibilidades das APIs deixam episódios pendentes e não impedem o serviço Plex de iniciar.
+
+Também é possível solicitar uma prévia manual:
 ```bash
 python -m plex_autoplay \
   --media-root /media/anime \
