@@ -5,34 +5,46 @@ services:
     image: plex-autoplay:latest
     pull_policy: build
     container_name: plex-autoplay
+    network_mode: bridge
     restart: unless-stopped
     ports:
-      - "${WEB_HOST_PORT:-8080}:8080"
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
+      - protocol: tcp
+        published: "8080"
+        target: 8080
     environment:
-      PLEX_URL: "${PLEX_URL:-http://host.docker.internal:32400}"
-      PLEX_TOKEN: "${PLEX_TOKEN:?Defina PLEX_TOKEN no ambiente do Docker Compose}"
+      PLEX_URL: "http://192.168.1.100:32400"
+      PLEX_TOKEN: "COLOQUE_SEU_TOKEN_PLEX"
       AUTO_SKIP_INTRO: "true"
       AUTO_NEXT_EPISODE: "false"
       NEXT_EPISODE_THRESHOLD_SECONDS: "15"
       POLL_INTERVAL_SECONDS: "2"
       CUSTOM_MARKERS_FILE: /config/markers.json
       DEFAULT_INTRO_SKIP_SECONDS: "0"
-      AUTO_GENERATE_ANIME_MARKERS: "${AUTO_GENERATE_ANIME_MARKERS:-true}"
+      AUTO_GENERATE_ANIME_MARKERS: "true"
       MEDIA_ROOT: /media-root
       WEB_PORT: "8080"
       ANIME_MARKERS_CACHE_FILE: /config/metadata-cache.json
       ANIME_MARKERS_CACHE_TTL_HOURS: "168"
       LOG_LEVEL: INFO
     volumes:
-      - /DATA/AppData/plex-autoplay:/config
-      - "${MEDIA_ROOT_HOST}:/media-root:ro"
+      - type: bind
+        source: /DATA/AppData/plex-autoplay
+        target: /config
+      - type: bind
+        source: /media/Storage/Media
+        target: /media-root
+        read_only: true
+
 x-casaos:
+  author: self
+  category: self
   hostname: ""
   index: /
+  is_uncontrolled: false
   main: plex-autoplay
   scheme: http
   title:
     custom: Plex Autoplay
-  port_map: "${WEB_HOST_PORT:-8080}"
+    en_us: Plex Autoplay
+    pt_br: Plex Autoplay
+  port_map: "8080"
