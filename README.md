@@ -146,13 +146,13 @@ docker compose logs -f
 
 ### Opção B: Instalando pela interface do ZimaOS
 
-O arquivo [`docker-compose.zimaos.yml`](./docker-compose.zimaos.yml) pode ser importado como um aplicativo personalizado no ZimaOS. O serviço roda em um container separado do Plex e usa rede bridge.
+O arquivo [`docker-compose.zimaos.yml`](./docker-compose.zimaos.yml) pode ser importado como um aplicativo personalizado no ZimaOS. O serviço roda em um container separado do Plex e usa rede bridge. O workflow do GitHub Actions publica `ghcr.io/digodps/plex-autoplay:latest` no GHCR a cada atualização da branch `main`; antes de importar, confirme que o pacote está público no GitHub Packages para que o ZimaOS possa baixar a imagem sem autenticação.
 
 1. Antes da migração, faça backup de `/DATA/AppData/plex-autoplay`, especialmente de `markers.json`.
-2. Escolha uma pasta raiz que contenha as bibliotecas e configure `MEDIA_ROOT_HOST` com esse caminho, `WEB_HOST_PORT` com a porta externa e `PLEX_TOKEN` com seu token. Não publique nem compartilhe o token.
-3. Configure `PLEX_URL` para o endereço do Plex acessível pela bridge, por exemplo `http://192.168.1.50:32400`. `host.docker.internal` é incluído como alternativa para o host, mas use o endereço LAN se esse nome não resolver no ZimaOS.
-4. Na interface do ZimaOS, importe o Compose. Se o seletor de pastas estiver disponível para a variável `MEDIA_ROOT_HOST`, selecione a raiz escolhida; caso contrário, informe o caminho absoluto no arquivo Compose.
-5. Inicie o aplicativo, acesse `http://<endereço-do-zimaos>:<WEB_HOST_PORT>` e cadastre as pastas de Anime e Séries em **Gerenciar bibliotecas**.
+2. Na aba **Packages** do repositório GitHub, abra as configurações do pacote `plex-autoplay` e defina a visibilidade como pública. Se o pacote ainda não existir, aguarde a primeira execução bem-sucedida do workflow.
+3. Edite `PLEX_URL`, `PLEX_TOKEN` e o `source` do mount `/media-root` em `docker-compose.zimaos.yml` para corresponder ao seu servidor. Não publique nem compartilhe o token.
+4. Na interface do ZimaOS, importe o Compose. Ele usa a imagem pública `ghcr.io/digodps/plex-autoplay:latest`; não é necessário compilar a imagem no ZimaOS.
+5. Inicie o aplicativo, acesse `http://<endereço-do-zimaos>:8080` e cadastre as pastas de Anime e Séries em **Gerenciar bibliotecas**.
 
 As bibliotecas antigas montadas individualmente devem estar dentro da nova raiz escolhida. Se estiverem em caminhos separados, escolha uma pasta pai comum ou reorganize os mounts antes da migração. A lista de bibliotecas é armazenada em `/config/libraries.json`; cadastre novamente as subpastas pela interface após atualizar o Compose. O volume antigo `/config` mantém `markers.json` e o cache de metadados.
 

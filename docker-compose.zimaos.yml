@@ -1,9 +1,6 @@
 services:
   plex-autoplay:
-    build:
-      context: https://github.com/digodps/plex-autoplay.git#main
-    image: plex-autoplay:latest
-    pull_policy: build
+    image: ghcr.io/digodps/plex-autoplay:latest
     container_name: plex-autoplay
     network_mode: bridge
     restart: unless-stopped
