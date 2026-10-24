@@ -6,35 +6,33 @@ services:
     pull_policy: build
     container_name: plex-autoplay
     restart: unless-stopped
-    network_mode: host
+    ports:
+      - "${WEB_HOST_PORT:-8080}:8080"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     environment:
-      PLEX_URL: "http://localhost:32400"
-      PLEX_TOKEN: "COLE_SEU_TOKEN_AQUI"
+      PLEX_URL: "${PLEX_URL:-http://host.docker.internal:32400}"
+      PLEX_TOKEN: "${PLEX_TOKEN:?Defina PLEX_TOKEN no ambiente do Docker Compose}"
       AUTO_SKIP_INTRO: "true"
       AUTO_NEXT_EPISODE: "false"
       NEXT_EPISODE_THRESHOLD_SECONDS: "15"
       POLL_INTERVAL_SECONDS: "2"
-      CUSTOM_MARKERS_FILE: "/config/markers.json"
+      CUSTOM_MARKERS_FILE: /config/markers.json
       DEFAULT_INTRO_SKIP_SECONDS: "0"
-      AUTO_GENERATE_ANIME_MARKERS: "true"
-      ANIME_MEDIA_DIR: "/media/anime"
-      ANIME_MEDIA_DIRS: "/media/anime,/media/anime-dublado"
-      SERIES_MEDIA_DIR: "/media/series"
-      SERIES_MEDIA_DIRS: "/media/series,/media/series-2"
-      ANIME_MARKERS_CACHE_FILE: "/config/metadata-cache.json"
+      AUTO_GENERATE_ANIME_MARKERS: "${AUTO_GENERATE_ANIME_MARKERS:-true}"
+      MEDIA_ROOT: /media-root
+      WEB_PORT: "8080"
+      ANIME_MARKERS_CACHE_FILE: /config/metadata-cache.json
       ANIME_MARKERS_CACHE_TTL_HOURS: "168"
-      LOG_LEVEL: "INFO"
+      LOG_LEVEL: INFO
     volumes:
       - /DATA/AppData/plex-autoplay:/config
-      - /DATA/Media/Anime:/media/anime:ro
-      - /DATA/Media/Anime-Dublado:/media/anime-dublado:ro
-      - /DATA/Media/Series:/media/series:ro
-      - /DATA/Media/Series-2:/media/series-2:ro
+      - "${MEDIA_ROOT_HOST}:/media-root:ro"
 x-casaos:
   hostname: ""
   index: /
   main: plex-autoplay
   scheme: http
   title:
-    custom: plex-autoplay
-  port_map: ""
+    custom: Plex Autoplay
+  port_map: "${WEB_HOST_PORT:-8080}"

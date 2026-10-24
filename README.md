@@ -16,6 +16,7 @@ O **`plex-autoplay`** atua como um serviço companheiro (*sidecar*) em segundo p
 - 🛋️ **Experiência Hands-Free Universal**: Funciona com qualquer player conectado na sua rede (Smart TV LG/Samsung, Chromecast, Android TV, Fire TV, Apple TV, Web, etc.).
 - 🎯 **Filtro por Usuários e Dispositivos**: Escolha quais aparelhos ou perfis da casa terão o autoplay ativado.
 - ⚡ **WebSocket em Tempo Real + Polling de Fallback**: Reação imediata a eventos de reprodução combinada com verificação periódica de segurança.
+- 🖥️ **Dashboard de TV shows**: Inventário genérico de episódios, cobertura de marcadores, cadastro de bibliotecas e edição manual autenticada; geração automática via Jikan/AniSkip permanece exclusiva para Anime.
 
 ## 📂 Requisito de organização das mídias
 
@@ -103,24 +104,36 @@ Copie o arquivo de exemplo de configuração:
 cp .env.example .env
 ```
 
-Edite o `.env` com as configurações do seu Plex:
+Edite o `.env` com as configurações do seu Plex e os caminhos do host:
 
 ```env
-PLEX_URL=http://localhost:32400
+PLEX_URL=http://host.docker.internal:32400
 PLEX_TOKEN=seu_token_aqui
-ANIME_LIBRARY_PATH=/caminho/no/host/animes
-SERIES_LIBRARY_PATH=/caminho/no/host/series
+MEDIA_ROOT_HOST=/caminho/no/host/que-contem-as-bibliotecas
+WEB_HOST_PORT=8080
 AUTO_SKIP_INTRO=true
 AUTO_NEXT_EPISODE=true
 NEXT_EPISODE_THRESHOLD_SECONDS=15
 POLL_INTERVAL_SECONDS=2
 ```
 
+O Compose usa rede bridge, então `localhost` em `PLEX_URL` apontaria para o próprio container. Para um Plex no mesmo host, `host.docker.internal` é mapeado para o gateway do host; para outro servidor, informe um nome DNS ou endereço IP acessível pelo container. Escolha em `MEDIA_ROOT_HOST` uma pasta que contenha todas as bibliotecas que deseja cadastrar. Ela será montada uma única vez, somente para leitura, em `/media-root`.
+
+### Dashboard de bibliotecas
+
+Após iniciar o container, acesse `http://<endereço-do-host>:<WEB_HOST_PORT>` (porta padrão `8080`). No primeiro acesso, crie a conta administrativa; nos acessos seguintes, entre com essa conta. Pela interface, selecione subpastas disponíveis sob a raiz de mídia configurada, classifique cada biblioteca como Anime ou Série e inicie uma varredura para consultar episódios e cobertura de marcadores.
+
+Use **Gerenciar bibliotecas** para navegar pelas subpastas disponíveis, adicionar bibliotecas como Anime ou Série e remover cadastros sem apagar os arquivos. O painel consulta o estado da varredura a cada cinco segundos; **Executar varredura** inicia uma atualização em segundo plano, e o botão fica indisponível enquanto houver uma execução ativa. Ao concluir, o painel recarrega o inventário e a cobertura. Uma solicitação concorrente é recusada e o estado atual continua visível.
+
+As credenciais administrativas, bibliotecas cadastradas, marcadores e relatórios são persistidos em `/config`. O Compose local mapeia esse diretório para `./config`; o exemplo ZimaOS usa `/DATA/AppData/plex-autoplay`. Proteja esse volume como dado sensível e mantenha o dashboard em uma rede local confiável. Para acesso remoto, use um proxy reverso com HTTPS e configure `DASHBOARD_COOKIE_SECURE=true`; não exponha o serviço diretamente à Internet por HTTP.
+
+Ao iniciar, o serviço agenda uma varredura em segundo plano de todas as bibliotecas cadastradas. O inventário e a cobertura são genéricos; somente bibliotecas classificadas como Anime podem consultar Jikan/AniSkip, se `AUTO_GENERATE_ANIME_MARKERS=true`. Uma falha em uma biblioteca é registrada sem interromper o watcher Plex nem as demais bibliotecas. O relatório mais recente fica em `/config/scan-report.json`; uma nova solicitação enquanto a varredura está ativa é recusada até a execução atual terminar.
+
 ---
 
 ### Opção A: Rodando via Docker (Recomendado)
 
-O `docker-compose.yml` já está configurado com `network_mode: host` para comunicação direta com os clientes e servidores na rede local:
+O `docker-compose.yml` usa rede bridge, publica a interface web e monta uma única raiz de mídia em modo somente leitura:
 
 ```bash
 docker compose up -d
@@ -133,23 +146,21 @@ docker compose logs -f
 
 ### Opção B: Instalando pela interface do ZimaOS
 
-O arquivo [`docker-compose.zimaos.yml`](./docker-compose.zimaos.yml) pode ser importado como um aplicativo personalizado no ZimaOS. O serviço roda em um container separado do Plex e se conecta ao servidor pela rede.
+O arquivo [`docker-compose.zimaos.yml`](./docker-compose.zimaos.yml) pode ser importado como um aplicativo personalizado no ZimaOS. O serviço roda em um container separado do Plex e usa rede bridge.
 
-1. Baixe o arquivo `docker-compose.zimaos.yml` deste repositório.
-2. Altere `PLEX_URL` para o endereço do servidor Plex acessível pelo ZimaOS, por exemplo `http://192.168.1.50:32400`, e substitua `PLEX_TOKEN` pelo seu token. Não publique nem compartilhe o arquivo depois de inserir o token.
-3. Na interface do ZimaOS, abra a área de aplicativos, escolha a opção para instalar/importar um aplicativo personalizado via Docker Compose e selecione o arquivo.
-4. Na configuração de volumes, use o seletor de pasta no campo **Anfitrião** para escolher as pastas de Anime, Anime Dublado e Séries. As entradas de exemplo incluem ainda uma segunda pasta de Séries. Mantenha os destinos internos correspondentes (`/media/anime`, `/media/anime-dublado`, `/media/series` e `/media/series-2`) e o modo somente leitura (`ro`).
-5. Inicie o aplicativo e consulte os logs no ZimaOS. Procure a mensagem de conexão bem-sucedida com o Plex e o resultado da varredura automática de animes.
+1. Antes da migração, faça backup de `/DATA/AppData/plex-autoplay`, especialmente de `markers.json`.
+2. Escolha uma pasta raiz que contenha as bibliotecas e configure `MEDIA_ROOT_HOST` com esse caminho, `WEB_HOST_PORT` com a porta externa e `PLEX_TOKEN` com seu token. Não publique nem compartilhe o token.
+3. Configure `PLEX_URL` para o endereço do Plex acessível pela bridge, por exemplo `http://192.168.1.50:32400`. `host.docker.internal` é incluído como alternativa para o host, mas use o endereço LAN se esse nome não resolver no ZimaOS.
+4. Na interface do ZimaOS, importe o Compose. Se o seletor de pastas estiver disponível para a variável `MEDIA_ROOT_HOST`, selecione a raiz escolhida; caso contrário, informe o caminho absoluto no arquivo Compose.
+5. Inicie o aplicativo, acesse `http://<endereço-do-zimaos>:<WEB_HOST_PORT>` e cadastre as pastas de Anime e Séries em **Gerenciar bibliotecas**.
 
-O Compose constrói a imagem a partir do repositório público do projeto durante a instalação. A opção `network_mode: host` permite que o serviço alcance o Plex e os players na rede local. Todas as pastas são montadas como somente leitura; no início do serviço, as raízes listadas em `ANIME_MEDIA_DIRS` são varridas para gerar marcadores. As raízes de Séries listadas em `SERIES_MEDIA_DIRS` são apenas montadas e não são consultadas nas APIs de anime. Mantenha `AUTO_NEXT_EPISODE` como `false` no primeiro teste; depois de confirmar o funcionamento, você pode mudar para `true` nas configurações do aplicativo.
-
-Para adicionar outras pastas, crie uma montagem para cada origem no Compose, com destino interno único e sufixo `:ro`; depois inclua esse destino na variável correspondente, separando múltiplos destinos por vírgulas. Anime será varrida no startup. Pastas de Séries adicionais ficam montadas, mas não são processadas pelo gerador de marcadores de anime.
-
-O diretório `/DATA/AppData/plex-autoplay` é montado em `/config` para persistir `markers.json` e o cache de metadados. Marcadores existentes são preservados; a geração automática preenche campos ausentes. Para remoção, pare e remova o aplicativo pela interface do ZimaOS.
+As bibliotecas antigas montadas individualmente devem estar dentro da nova raiz escolhida. Se estiverem em caminhos separados, escolha uma pasta pai comum ou reorganize os mounts antes da migração. A lista de bibliotecas é armazenada em `/config/libraries.json`; cadastre novamente as subpastas pela interface após atualizar o Compose. O volume antigo `/config` mantém `markers.json` e o cache de metadados.
 
 ---
 
 ### Opção C: Rodando com Python
+
+Crie o `.env` como acima e configure `MEDIA_ROOT` para uma pasta local de mídia; `MEDIA_ROOT_HOST` só é usado pelo Compose. As dependências incluem Flask e Waitress para o dashboard, servido na porta interna `WEB_PORT` (padrão `8080`).
 
 ```bash
 # Crie e ative o ambiente virtual
@@ -227,9 +238,9 @@ Para séries em que você deseja definir os tempos exatos de início e fim da ab
 
 ## 🎌 Geração de marcadores de anime
 
-Quando executado pelo Docker Compose fornecido, o serviço varre automaticamente todas as bibliotecas listadas em `ANIME_MEDIA_DIRS` durante cada inicialização do container. Isso é uma varredura no startup, não um monitoramento contínuo de alterações nas pastas. As bibliotecas listadas em `SERIES_MEDIA_DIRS` são montadas separadamente, mas não são percorridas nem consultadas nas APIs Jikan/AniSkip. Cada raiz pode estar em um local diferente no host; as raízes de Anime devem seguir `<série>/Temporada <número>/<arquivo> -<episódio>.<extensão>`. `ffprobe` obtém a duração real; nenhum arquivo de vídeo é enviado às APIs.
+Quando executado pelo Docker Compose fornecido, o serviço inventaria no startup as bibliotecas cadastradas no dashboard. Todas as bibliotecas recebem descoberta e cobertura genéricas; somente as classificadas como Anime podem gerar marcadores por Jikan/AniSkip quando `AUTO_GENERATE_ANIME_MARKERS=true`. Essa é uma varredura no startup, não um monitoramento contínuo de alterações nas pastas. A raiz única é montada como `/media-root:ro`; nenhum arquivo de vídeo é enviado às APIs. `ffprobe` obtém a duração real quando necessário.
 
-Para Docker Compose local, configure `ANIME_LIBRARY_PATH` e `SERIES_LIBRARY_PATH` no `.env` copiado de `.env.example`. Para ZimaOS, configure os caminhos de origem dos dois mounts em `docker-compose.zimaos.yml` antes da importação. O Compose habilita essa geração com `AUTO_GENERATE_ANIME_MARKERS=true`; fora desses arquivos Compose, a opção é desabilitada por padrão e pode ser ativada por variável de ambiente. No startup, a seleção de candidatos e o offset de temporadas podem ser estimados automaticamente; as estimativas e itens pendentes são registrados nos logs. Falhas na geração não impedem o serviço Plex de iniciar.
+No Compose, configure `MEDIA_ROOT_HOST` com uma pasta que contenha os diretórios de mídia e cadastre as bibliotecas pela interface. O exemplo Compose habilita o enriquecimento Anime com `AUTO_GENERATE_ANIME_MARKERS=true`; fora desses arquivos, a opção é desabilitada por padrão e pode ser ativada por variável de ambiente. No startup, a seleção de candidatos e o offset de temporadas podem ser estimados automaticamente; as estimativas e itens pendentes são registrados nos logs. Falhas na geração não impedem o serviço Plex de iniciar.
 
 Também é possível solicitar uma prévia manual:
 ```bash

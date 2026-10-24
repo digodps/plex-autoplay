@@ -2,17 +2,18 @@
 
 ## 1. Objetivo
 
-Permitir configurar múltiplas raízes independentes de Anime e Séries comuns no Docker, varrer todas as raízes de Anime ao iniciar o serviço, identificar episódios pelo caminho/nome dos arquivos, consultar APIs públicas para obter marcadores de abertura e encerramento e gerar um `markers.json` compatível com o serviço atual. Uma CLI também oferece prévia e geração manual.
+Permitir inventariar bibliotecas de TV shows cadastradas no dashboard e, opcionalmente, enriquecer bibliotecas classificadas como Anime ao iniciar o serviço, consultando APIs públicas para gerar marcadores de abertura e encerramento em um `markers.json` compatível. Uma CLI também oferece prévia e geração manual.
 
-O recurso gera **marcadores temporais** (segmentos de intro e encerramento), não arquivos de metadados descritivos nem alterações na biblioteca Plex.
+O recurso gera **marcadores temporais** (segmentos de intro e encerramento), não arquivos de metadados descritivos nem alterações na biblioteca Plex. O dashboard de TV shows mantém inventário e cobertura de marcadores para todos os tipos de série; Jikan e AniSkip são usados somente como enriquecimento automático das bibliotecas classificadas como Anime. Séries comuns podem receber marcadores manualmente pela interface.
 
 ## 2. Escopo do MVP
 
 - Anime em arquivos de vídeo locais acessíveis pelo container.
 - Consulta de dados externos somente por APIs públicas documentadas.
 - Geração local de `markers.json`; sem escrita ou atualização da biblioteca Plex.
-- Varredura automática no startup do Docker Compose e execução manual por CLI, com modo de prévia e confirmação antes de gravar pela CLI.
-- Mounts de Anime e Séries comuns independentes e somente leitura; somente as raízes de Anime são varridas e consultadas nas APIs de anime.
+- Varredura automática no startup e execução sob demanda pelo dashboard ou por CLI, com modo de prévia e confirmação antes de gravar pela CLI.
+- Uma raiz de mídia montada em modo somente leitura; todas as bibliotecas cadastradas são inventariadas, mas somente Anime pode ser consultada nas APIs específicas.
+- A descoberta genérica do dashboard aceita `S01E02`, faixas `S01E02-E03`, `1x02`, `E02` contextualizado por pasta de temporada e o formato legado; ver [descoberta de episódios de TV shows](./tvshow-episode-discovery.md).
 - Reutilização do formato de marcadores já lido por `JsonMarkerRepository`.
 - Nenhuma dependência de API privada do Plex, scraping de páginas ou credencial de usuário Plex para buscar timestamps.
 
@@ -46,7 +47,7 @@ Regras de parsing:
 4. A extensão deve pertencer a uma lista configurada de formatos de vídeo comuns. Arquivos auxiliares e não correspondentes ao padrão são ignorados com registro informativo.
 5. Episódio `01` é normalizado para o inteiro `1`.
 6. No modo de CLI sem uma escolha inequívoca, deixar a série pendente ou solicitar confirmação interativa. No startup automatizado, estimar candidato e offset de temporada e registrar cada suposição.
-7. As raízes são fornecidas por configuração Docker e montadas em modo somente leitura; a raiz de Séries comuns não é percorrida pelo gerador. O programa não deve percorrer caminhos fora da raiz de Anime.
+7. A raiz única é fornecida por configuração Docker e montada em modo somente leitura. O dashboard restringe o cadastro e a varredura às subpastas dessa raiz; Séries comuns não são consultadas nas APIs de Anime.
 
 ## 4. APIs públicas
 
@@ -79,8 +80,8 @@ Não enviar arquivos ou conteúdo de mídia para provedores externos.
 
 ## 5. Fluxo funcional
 
-1. No Docker Compose, o usuário configura os caminhos host separados para cada pasta de Anime e Séries comuns; todas são montadas em modo somente leitura, e marcadores/cache persistem em `/config`.
-2. Ao iniciar o serviço, se `AUTO_GENERATE_ANIME_MARKERS` estiver habilitada, o sistema percorre todas as raízes listadas em `ANIME_MEDIA_DIRS` e extrai título, temporada local, episódio e extensão. As raízes listadas em `SERIES_MEDIA_DIRS` não são varridas nem consultadas nas APIs de anime.
+1. No Docker Compose, o usuário configura uma raiz host que contenha as bibliotecas; ela é montada em modo somente leitura, enquanto marcadores, cache, bibliotecas e relatório persistem em `/config`.
+2. No modo de dashboard, a varredura em segundo plano inventaria todas as bibliotecas cadastradas; quando `AUTO_GENERATE_ANIME_MARKERS` estiver habilitada, somente bibliotecas classificadas como Anime são enriquecidas via APIs. No modo legado sem raiz do dashboard, o serviço percorre as raízes listadas em `ANIME_MEDIA_DIRS`; `SERIES_MEDIA_DIRS` nunca é enviada às APIs de anime.
 3. O sistema agrupa arquivos pela série e evita consultas repetidas usando cache local.
 4. Para séries ainda não mapeadas, consulta Jikan; no startup, seleciona uma estimativa quando não houver correspondência exata única e registra a suposição.
 5. Na CLI interativa, apresenta candidatos e permite confirmação; em modo não interativo sem `--auto-guess`, deixa a série pendente.
@@ -90,7 +91,7 @@ Não enviar arquivos ou conteúdo de mídia para provedores externos.
 9. A CLI exibe uma prévia indicando IDs, episódio, duração, segmentos encontrados, ausentes e conflitos; o startup registra o resumo, as estimativas e as pendências nos logs.
 10. No startup, mescla automaticamente os resultados ao `markers.json` preservando valores já existentes e grava o arquivo de forma atômica. Na CLI, a gravação requer confirmação explícita; `--force` permite substituir valores existentes.
 
-A varredura acontece uma vez por inicialização do processo/container, não acompanha continuamente mudanças na biblioteca. Se a geração falhar, o erro é registrado e o serviço Plex continua a inicialização.
+A varredura acontece uma vez no startup e pode ser solicitada novamente pelo dashboard; não acompanha continuamente mudanças na biblioteca. As execuções são assíncronas e não concorrentes. Uma falha por biblioteca é registrada sem interromper as outras bibliotecas nem o watcher Plex.
 
 ## 6. Formato de saída
 
@@ -167,10 +168,10 @@ Os testes unitários devem usar respostas HTTP simuladas; nenhum teste automatiz
 
 ## 11. Configuração de implantação
 
-- Compose local recebe os caminhos host por `ANIME_LIBRARY_PATH` e `SERIES_LIBRARY_PATH` no `.env`; origens adicionais requerem mounts separados.
-- No ZimaOS, os caminhos host são configurados nos bind mounts em `docker-compose.zimaos.yml`.
-- `ANIME_MEDIA_DIRS` e `SERIES_MEDIA_DIRS` listam os destinos internos dos mounts separados por vírgulas. Novas raízes requerem um destino interno exclusivo e sua inclusão na lista correspondente.
-- `/config/markers.json` e `/config/metadata-cache.json` são persistidos pelo volume de configuração.
+- Compose local recebe `MEDIA_ROOT_HOST` e `WEB_HOST_PORT` no `.env`; o container monta a raiz em `/media-root:ro`.
+- No ZimaOS, configure `MEDIA_ROOT_HOST`, `WEB_HOST_PORT`, `PLEX_URL` e `PLEX_TOKEN` antes de importar o Compose.
+- A seleção de bibliotecas Anime e Séries ocorre depois do primeiro login, pela interface; a lista é gravada em `/config/libraries.json`.
+- `/config/markers.json`, `/config/metadata-cache.json`, credenciais administrativas e o último relatório são persistidos pelo volume de configuração.
 - `AUTO_GENERATE_ANIME_MARKERS` está habilitada nos arquivos Compose fornecidos e desabilitada por padrão fora deles.
 
 ## 12. Referências

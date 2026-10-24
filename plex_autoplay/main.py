@@ -5,19 +5,28 @@ import json
 import logging
 import signal
 import sys
+import threading
 import time
 from pathlib import Path
 from typing import Callable, Optional
 
+from waitress import create_server
+
 from plex_autoplay.application.playback_service import PlaybackService
+from plex_autoplay.application.dashboard_scan_service import DashboardScanService
+from plex_autoplay.application.manual_marker_service import ManualMarkerService
 from plex_autoplay.config import config
 from plex_autoplay.infrastructure.markers.json_repository import JsonMarkerRepository
 from plex_autoplay.infrastructure.media.directory_monitor import (
     build_preview_for_root,
     merge_markers_file,
 )
+from plex_autoplay.infrastructure.media.library_repository import LibraryRepository
+from plex_autoplay.infrastructure.media.scan_report_repository import ScanReportRepository
+from plex_autoplay.application.scan_coordinator import ScanCoordinator
 from plex_autoplay.infrastructure.plex.client import PlexManager
 from plex_autoplay.infrastructure.plex.session_watcher import SessionWatcher
+from plex_autoplay.infrastructure.web.app import create_app
 
 
 def setup_logging(log_level: str) -> None:
@@ -252,19 +261,65 @@ def main(argv: list[str] | None = None) -> int:
     if config.allowed_client_ids:
         logger.info(" - Dispositivos Permitidos: %s", ", ".join(config.allowed_client_ids))
 
-    _run_startup_anime_marker_generation(logger)
-
     plex_manager = PlexManager(url=config.plex_url, token=config.plex_token)
     marker_repository = JsonMarkerRepository(
         markers_file_path=config.custom_markers_file,
         default_intro_skip_seconds=config.default_intro_skip_seconds,
     )
+    web_server = None
+    media_root = Path(config.media_root).expanduser()
+    if media_root.is_dir():
+        try:
+            library_repository = LibraryRepository(
+                media_root,
+                Path(config.config_dir) / "libraries.json",
+            )
+            report_repository = ScanReportRepository(Path(config.config_dir) / "scan-report.json")
+            scan_service = DashboardScanService(
+                libraries=library_repository,
+                markers=marker_repository,
+                markers_file=config.custom_markers_file,
+                cache_file=config.anime_markers_cache_file,
+                cache_ttl_seconds=config.anime_markers_cache_ttl_hours * 60 * 60,
+                auto_generate_anime_markers=config.auto_generate_anime_markers,
+            )
+            scan_coordinator = ScanCoordinator(scan_service.scan, report_repository)
+            dashboard_app = create_app(
+                library_repository,
+                config.config_dir,
+                cookie_secure=config.dashboard_cookie_secure,
+                scan_coordinator=scan_coordinator,
+                manual_marker_service=ManualMarkerService(config.custom_markers_file),
+                marker_reload=marker_repository.load_custom_markers,
+            )
+            web_server = create_server(dashboard_app, host="0.0.0.0", port=config.dashboard_port)
+            threading.Thread(target=web_server.run, name="plex-autoplay-dashboard", daemon=True).start()
+            if not scan_coordinator.start():
+                logger.warning("A varredura anterior já está ativa; não foi criada outra execução de startup.")
+            logger.info("Dashboard web iniciado na porta %d.", config.dashboard_port)
+        except (OSError, RuntimeError, ValueError) as error:
+            logger.exception("Dashboard não pôde ser iniciado; o watcher Plex continuará: %s", error)
+    else:
+        logger.error(
+            "Dashboard não iniciado: raiz de mídia %s ausente ou inválida. Monte MEDIA_ROOT e configure as bibliotecas.",
+            media_root,
+        )
+        if config.auto_generate_anime_markers:
+            threading.Thread(
+                target=_run_startup_anime_marker_generation,
+                args=(logger,),
+                name="plex-autoplay-legacy-anime-scan",
+                daemon=True,
+            ).start()
+
     playback_service = PlaybackService(plex_manager, marker_repository, config)
     watcher = SessionWatcher(plex_manager, playback_service, config)
 
     def shutdown_handler(signum: int, _frame: object) -> None:
         logger.info("Sinal recebido (%s). Finalizando serviço graciosamente...", signum)
         watcher.stop()
+        if web_server is not None:
+            web_server.close()
         sys.exit(0)
 
     signal.signal(signal.SIGINT, shutdown_handler)

@@ -6,6 +6,13 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 
+ENV CONFIG_DIR=/config \
+    MEDIA_ROOT=/media-root \
+    WEB_PORT=8080
+
+VOLUME ["/config"]
+EXPOSE 8080
+
 # Instala curl para healthcheck se necessário
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \

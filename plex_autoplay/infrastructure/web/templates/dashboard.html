@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="csrf-token" content="{{ csrf_token() }}">
+  <title>Bibliotecas · Plex Autoplay</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='dashboard.css') }}">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <a class="brand" href="{{ url_for('dashboard') }}"><span class="brand-mark">PA</span><span>Plex Autoplay</span></a>
+      <nav aria-label="Navegação principal">
+        <a class="nav-link active" href="#overview"><span class="nav-icon">▦</span> Visão geral</a>
+        <a class="nav-link" href="#libraries"><span class="nav-icon">▤</span> Bibliotecas</a>
+        <a class="nav-link" href="#activity"><span class="nav-icon">◷</span> Atividade</a>
+      </nav>
+      <div class="sidebar-footer">
+        <span class="connection-dot"></span>
+        <span>Serviço conectado</span>
+      </div>
+    </aside>
+
+    <main class="main-content" id="overview">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">CONFIGURAÇÃO DO PLEX</p>
+          <h1>Plex Autoplay</h1>
+        </div>
+        <div class="topbar-actions">
+          <span class="user-label">{{ session.get("admin", "Administrador") }}</span>
+          <form method="post" action="{{ url_for('logout') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button class="button button-quiet" type="submit">Sair</button>
+          </form>
+        </div>
+      </header>
+
+      <section class="welcome-row">
+        <div>
+          <h2>Visão geral</h2>
+          <p class="muted">Monitore episódios e cobertura dos marcadores nas bibliotecas do seu Plex.</p>
+        </div>
+        <button class="button button-primary" id="scan-button" type="button">⟳ <span>Executar varredura</span></button>
+      </section>
+
+      <div class="status-banner status-{{ snapshot.status }}" id="scan-status" data-completed-at="{{ snapshot.completed_at or '' }}" role="status">
+        <span class="status-indicator"></span>
+        <span id="status-message">
+          {% if snapshot.status == "idle" %}Nenhuma varredura registrada.{% elif snapshot.status == "queued" %}Varredura na fila.{% elif snapshot.status == "running" %}Varredura em andamento.{% elif snapshot.status == "failed" %}A última varredura falhou: {{ snapshot.error }}{% else %}Última varredura concluída{% if snapshot.completed_at %} em {{ snapshot.completed_at }}{% endif %}.{% endif %}
+        </span>
+      </div>
+
+      <section class="stats-grid" aria-label="Resumo da cobertura">
+        <article class="stat-card"><span class="stat-label">Episódios</span><strong id="total-episodes">{{ totals.episodes }}</strong><span class="stat-caption">inventariados</span></article>
+        <article class="stat-card"><span class="stat-label">Com intro</span><strong id="intro-episodes">{{ totals.intros }}</strong><span class="stat-caption">marcadores disponíveis</span></article>
+        <article class="stat-card"><span class="stat-label">Com créditos</span><strong id="credits-episodes">{{ totals.credits }}</strong><span class="stat-caption">marcadores disponíveis</span></article>
+        <article class="stat-card"><span class="stat-label">Pendentes</span><strong id="missing-episodes">{{ totals.missing }}</strong><span class="stat-caption">campos de marcador ausentes</span></article>
+      </section>
+
+      <section class="content-section" id="libraries">
+        <div class="section-heading">
+          <div><p class="eyebrow">ACERVO</p><h2>Bibliotecas</h2></div>
+          <span class="section-count">{{ libraries|length }}</span>
+        </div>
+        {% if not libraries %}
+          <div class="empty-state">
+            <div class="empty-icon">▤</div>
+            <h3>Nenhuma biblioteca cadastrada</h3>
+            <p>Adicione uma biblioteca para começar a inventariar séries e episódios.</p>
+            <a class="button button-secondary" href="#library-manager">Gerenciar bibliotecas</a>
+          </div>
+        {% else %}
+          <div class="library-list">
+            {% for library in libraries %}
+              <article class="library-card">
+                <details open>
+                  <summary class="library-summary">
+                    <span class="library-symbol">▤</span>
+                    <span class="library-title-wrap"><strong>{{ library.name }}</strong><small>{{ library.path }}</small></span>
+                    <span class="type-pill type-{{ library.kind }}">{{ "Anime" if library.kind == "anime" else "Série" }}</span>
+                    <span class="library-count">{{ library.episode_count }} episódios</span>
+                    <span class="chevron">⌄</span>
+                  </summary>
+                  <div class="library-content">
+                    {% if library.series_groups %}
+                      <div class="series-list">
+                        {% for series in library.series_groups %}
+                          <details class="series-details" open>
+                            <summary><strong>{{ series.title }}</strong><span>{{ series.seasons|length }} temporada(s)</span><span class="chevron">⌄</span></summary>
+                            {% for season in series.seasons %}
+                              <div class="season-group">
+                                <h4>Temporada {{ season.number }}</h4>
+                                <div class="episode-table">
+                                  <div class="episode-row episode-header"><span>Episódio</span><span>Arquivo</span><span>Intro</span><span>Créditos</span></div>
+                                  {% for episode in season.episodes %}
+                                    <div class="episode-item">
+                                      <div class="episode-row">
+                                        <span class="episode-number">E{{ "%02d"|format(episode.episode) }}</span>
+                                        <span class="episode-series" title="{{ episode.path }}">{{ episode.path.rsplit("/", 1)[-1] }}</span>
+                                        <span class="marker-state {{ 'is-present' if episode.intro.start_ms is not none and episode.intro.end_ms is not none else 'is-missing' }}">{{ "Disponível" if episode.intro.start_ms is not none and episode.intro.end_ms is not none else "Ausente" }}</span>
+                                        <span class="marker-state {{ 'is-present' if episode.credits_ms is not none else 'is-missing' }}">{{ "Disponível" if episode.credits_ms is not none else "Ausente" }}</span>
+                                      </div>
+                                      <details class="marker-editor">
+                                        <summary>Editar marcadores</summary>
+                                        <form class="marker-form" data-series="{{ episode.series }}" data-season="{{ episode.season }}" data-episode="{{ episode.episode }}">
+                                          <label>Início da intro (segundos)<input name="start" type="number" min="0" step="any" value="{{ '%.3f'|format(episode.intro.start_ms / 1000) if episode.intro.start_ms is not none else '' }}"></label>
+                                          <label>Fim da intro (segundos)<input name="end" type="number" min="0" step="any" value="{{ '%.3f'|format(episode.intro.end_ms / 1000) if episode.intro.end_ms is not none else '' }}"></label>
+                                          <label>Créditos (segundos)<input name="credits" type="number" min="0" step="any" value="{{ '%.3f'|format(episode.credits_ms / 1000) if episode.credits_ms is not none else '' }}"></label>
+                                          <div class="marker-form-actions">
+                                            <button class="button button-primary" type="submit">Salvar marcadores</button>
+                                            <button class="button button-secondary remove-markers" type="button">Remover selecionados</button>
+                                          </div>
+                                          <fieldset class="marker-removal-fields">
+                                            <legend>Remover campos</legend>
+                                            <label><input type="checkbox" value="start"> Início</label>
+                                            <label><input type="checkbox" value="end"> Fim</label>
+                                            <label><input type="checkbox" value="credits"> Créditos</label>
+                                          </fieldset>
+                                          <p class="marker-feedback" role="status" aria-live="polite"></p>
+                                        </form>
+                                      </details>
+                                    </div>
+                                  {% endfor %}
+                                </div>
+                              </div>
+                            {% endfor %}
+                          </details>
+                        {% endfor %}
+                      </div>
+                    {% else %}
+                      <p class="muted empty-inline">Nenhum episódio reconhecido nesta biblioteca.</p>
+                    {% endif %}
+                    {% if library.ambiguities or library.errors or library.pending %}
+                      <div class="issue-list" id="activity">
+                        {% for issue in library.ambiguities %}<p class="issue issue-warning"><strong>Ambiguidade</strong> {{ issue }}</p>{% endfor %}
+                        {% for issue in library.pending %}<p class="issue issue-warning"><strong>Pendente</strong> {{ issue.reason or issue }}</p>{% endfor %}
+                        {% for issue in library.errors %}<p class="issue issue-error"><strong>Erro</strong> {{ issue }}</p>{% endfor %}
+                      </div>
+                    {% endif %}
+                  </div>
+                </details>
+              </article>
+            {% endfor %}
+          </div>
+        {% endif %}
+      </section>
+
+      <section class="content-section" id="library-manager">
+        <div class="section-heading"><div><p class="eyebrow">CONFIGURAÇÃO</p><h2>Gerenciar bibliotecas</h2></div></div>
+        <div class="manager-card">
+          <p>Escolha subpastas disponíveis sob a raiz de mídia montada. A interface permite cadastrar múltiplas bibliotecas, inclusive várias bibliotecas de Séries.</p>
+          <a class="button button-secondary" href="{{ url_for('library_manager') }}">Adicionar ou remover bibliotecas</a>
+        </div>
+      </section>
+    </main>
+  </div>
+  <script src="{{ url_for('static', filename='dashboard.js') }}" defer></script>
+</body>
+</html>

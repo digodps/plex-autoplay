@@ -2,6 +2,7 @@
 
 import json
 import logging
+import math
 from pathlib import Path
 from typing import Any, Dict, Optional, Tuple
 
@@ -72,6 +73,42 @@ class JsonMarkerRepository:
         if show_data:
             return self._find_episode_credits(show_data, season_num, ep_num)
         return None
+
+    def get_custom_marker_values(self, episode: Any) -> Dict[str, float]:
+        """Return explicit custom marker fields in seconds for an episode."""
+        show_title = getattr(episode, "grandparentTitle", "") or getattr(episode, "showTitle", "")
+        season_num = getattr(episode, "seasonNumber", None) or getattr(episode, "parentIndex", None)
+        ep_num = getattr(episode, "episodeNumber", None) or getattr(episode, "index", None)
+        show_data = self._find_show_data(show_title)
+        if not show_data:
+            return {}
+
+        values: Dict[str, float] = {}
+        default_entry = show_data.get("default")
+        if isinstance(default_entry, dict):
+            values.update(self._validated_marker_values(default_entry))
+        if season_num is not None and ep_num is not None:
+            season_key = f"season_{season_num}"
+            season_data = show_data.get(season_key)
+            if isinstance(season_data, dict):
+                episode_data = season_data.get(str(ep_num))
+                if isinstance(episode_data, dict):
+                    values.update(self._validated_marker_values(episode_data))
+        return values
+
+    @staticmethod
+    def _validated_marker_values(data: Dict[str, Any]) -> Dict[str, float]:
+        values: Dict[str, float] = {}
+        for key, value in data.items():
+            if key not in {"start", "end", "credits"}:
+                continue
+            if isinstance(value, bool) or not isinstance(value, (int, float)):
+                raise ValueError(f"Marcador customizado '{key}' deve ser numérico.")
+            numeric_value = float(value)
+            if not math.isfinite(numeric_value) or numeric_value < 0:
+                raise ValueError(f"Marcador customizado '{key}' deve ser finito e não negativo.")
+            values[key] = numeric_value
+        return values
 
     def _get_native_intro(self, episode: Any) -> Optional[Tuple[int, int]]:
         if not hasattr(episode, "markers"):

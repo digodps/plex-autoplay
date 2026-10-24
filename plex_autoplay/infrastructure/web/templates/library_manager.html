@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="csrf-token" content="{{ csrf_token() }}">
+  <title>Gerenciar bibliotecas · Plex Autoplay</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='dashboard.css') }}">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <a class="brand" href="{{ url_for('dashboard') }}"><span class="brand-mark">PA</span><span>Plex Autoplay</span></a>
+      <nav aria-label="Navegação principal">
+        <a class="nav-link" href="{{ url_for('dashboard') }}"><span class="nav-icon">▦</span> Visão geral</a>
+        <a class="nav-link active" href="{{ url_for('library_manager') }}"><span class="nav-icon">▤</span> Bibliotecas</a>
+      </nav>
+      <div class="sidebar-footer"><span class="connection-dot"></span><span>Serviço conectado</span></div>
+    </aside>
+
+    <main class="main-content manager-page">
+      <header class="topbar">
+        <div><p class="eyebrow">CONFIGURAÇÃO</p><h1>Gerenciar bibliotecas</h1></div>
+        <div class="topbar-actions">
+          <a class="button button-secondary" href="{{ url_for('dashboard') }}">Voltar ao painel</a>
+          <form method="post" action="{{ url_for('logout') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button class="button button-quiet" type="submit">Sair</button>
+          </form>
+        </div>
+      </header>
+
+      <section class="content-section">
+        <div class="section-heading"><div><p class="eyebrow">NOVA BIBLIOTECA</p><h2>Escolher pasta</h2></div></div>
+        <div class="manager-card">
+          <p>Selecione uma pasta sob a raiz de mídia montada. O serviço só terá acesso de leitura a esses arquivos.</p>
+          <div class="directory-controls">
+            <label class="directory-label" for="directory-select">Pasta disponível</label>
+            <div class="directory-browser">
+              <select id="directory-select" aria-label="Pasta disponível"></select>
+              <button class="button button-secondary" id="open-directory" type="button">Abrir pasta</button>
+              <button class="button button-secondary" id="parent-directory" type="button">Pasta anterior</button>
+            </div>
+            <p class="directory-location">Local atual: <strong id="directory-location">Raiz de mídia</strong></p>
+            <form id="library-form" class="library-form">
+              <label for="library-kind">Classificação</label>
+              <select id="library-kind" name="kind">
+                <option value="series">Série</option>
+                <option value="anime">Anime</option>
+              </select>
+              <button class="button button-primary" type="submit" id="add-library" disabled>Adicionar pasta como biblioteca</button>
+            </form>
+          </div>
+          <p class="manager-feedback" id="manager-feedback" role="status" aria-live="polite"></p>
+        </div>
+      </section>
+
+      <section class="content-section">
+        <div class="section-heading"><div><p class="eyebrow">CONFIGURADAS</p><h2>Bibliotecas cadastradas</h2></div></div>
+        <div class="manager-card">
+          <div id="configured-libraries" class="configured-libraries" aria-live="polite"></div>
+          <p class="manager-feedback" id="library-list-feedback" role="status" aria-live="polite"></p>
+        </div>
+      </section>
+    </main>
+  </div>
+  <script src="{{ url_for('static', filename='dashboard.js') }}" defer></script>
+</body>
+</html>

@@ -127,6 +127,20 @@ class TestAnimeMarkersMerge(unittest.TestCase):
             data = json.loads(target.read_text(encoding="utf-8"))
             self.assertEqual(data["Example"]["season_1"]["1"], {"start": 2.5, "end": 20.0, "credits": 30.0})
 
+    def test_merge_matches_series_titles_without_case_sensitive_duplication(self):
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            target = Path(tmp_dir) / "markers.json"
+            target.write_text(
+                json.dumps({"example": {"season_1": {"1": {"start": 3.0}}}}),
+                encoding="utf-8",
+            )
+
+            merge_markers_file(target, {"Example": {"season_1": {"1": {"start": 30.0, "end": 40.0}}}})
+
+            data = json.loads(target.read_text(encoding="utf-8"))
+            self.assertEqual(list(data), ["example"])
+            self.assertEqual(data["example"]["season_1"]["1"], {"start": 3.0, "end": 40.0})
+
 
 class TestPublicApisAndCache(unittest.TestCase):
     def test_ambiguous_jikan_candidates_are_not_selected_automatically(self):

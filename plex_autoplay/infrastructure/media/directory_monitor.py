@@ -642,7 +642,17 @@ def merge_markers_file(
     for show_title, show_data in new_series.items():
         if not isinstance(show_data, dict):
             continue
-        existing_show = existing.setdefault(show_title, {})
+        matching_titles = [
+            title
+            for title, value in existing.items()
+            if isinstance(title, str)
+            and title.strip().casefold() == show_title.strip().casefold()
+            and isinstance(value, dict)
+        ]
+        if len(matching_titles) > 1:
+            raise RuntimeError(f"Mais de uma chave de série corresponde a '{show_title}'.")
+        show_key = matching_titles[0] if matching_titles else show_title
+        existing_show = existing.setdefault(show_key, {})
         for season_key, episodes in show_data.items():
             if not isinstance(episodes, dict):
                 continue

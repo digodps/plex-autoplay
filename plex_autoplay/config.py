@@ -50,6 +50,10 @@ class Settings:
         default_factory=lambda: _str_to_list(os.getenv("SERIES_MEDIA_DIRS", ""))
         or [os.getenv("SERIES_MEDIA_DIR", "/media/series")]
     )
+    media_root: str = os.getenv("MEDIA_ROOT", "/media-root")
+    config_dir: str = os.getenv("CONFIG_DIR", "/config")
+    dashboard_port: int = int(os.getenv("WEB_PORT", "8080"))
+    dashboard_cookie_secure: bool = _str_to_bool(os.getenv("DASHBOARD_COOKIE_SECURE", "false"))
     anime_markers_cache_file: str = os.getenv(
         "ANIME_MARKERS_CACHE_FILE",
         "/config/metadata-cache.json",
@@ -70,6 +74,8 @@ class Settings:
             raise ValueError("POLL_INTERVAL_SECONDS deve ser de pelo menos 1 segundo.")
         if self.anime_markers_cache_ttl_hours < 0:
             raise ValueError("ANIME_MARKERS_CACHE_TTL_HOURS não pode ser negativo.")
+        if not 1 <= self.dashboard_port <= 65535:
+            raise ValueError("WEB_PORT deve estar entre 1 e 65535.")
 
 
 config = Settings()
