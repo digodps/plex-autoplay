@@ -1,0 +1,301 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="csrf-token" content="{{ csrf_token() }}">
+  <title>{{ library.title }} · Plex Autoplay</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='dashboard.css') }}">
+  <style>
+    /* Use full width like dashboard */
+    .main-content { max-width: none; padding: 1.5rem; }
+
+    /* Grid for series cards – max 2 per row */
+    .card-grid {
+      display: grid;
+      gap: 1.5rem;
+      grid-template-columns: 1fr;               /* mobile */
+    }
+    @media (min-width: 900px) {
+      .card-grid { grid-template-columns: repeat(2, 1fr); }  /* desktop – max 2 per line */
+    }
+
+    /* Series card – reuse .card layout */
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.75rem 1rem;
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .series-thumb {
+      width: 48px;
+      height: 72px;
+      object-fit: cover;
+      border-radius: 4px;
+      flex-shrink: 0;
+      background: var(--bg);
+    }
+
+    .card-header h3 {
+      margin: 0;
+      font-size: 1.05rem;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      color: var(--muted);
+    }
+
+    .card-body {
+      flex: 1;
+      padding: 0.5rem 1rem 1rem;
+      overflow-y: auto;
+      max-height: 70vh;
+    }
+
+    .episodes-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      font-size: 0.9rem;
+    }
+
+    .episode-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      align-items: center;
+      padding: 0.4rem 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .episode-row:last-child { border-bottom: none; }
+
+    .ep-num {
+      font-weight: 600;
+      min-width: 2.8rem;
+      color: var(--muted);
+    }
+
+    .ep-title {
+      flex: 1 1 30%;
+      min-width: 120px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      color: var(--muted);
+    }
+
+    .marker-inputs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.35rem;
+      align-items: center;
+    }
+
+    .marker-inputs label {
+      display: flex;
+      flex-direction: column;
+      font-size: 0.7rem;
+      line-height: 1.1;
+      color: var(--muted);
+    }
+
+    .marker-inputs input {
+      width: 88px;
+      padding: 4px 8px;
+      font-size: 0.85rem;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      background: var(--bg);
+      color: var(--fg);
+    }
+
+    .save-btn {
+      margin-left: auto;
+      padding: 0.35rem 0.8rem;
+      font-size: 0.8rem;
+      white-space: nowrap;
+    }
+
+    .marker-inputs input:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px var(--accent-alpha);
+    }
+
+    .library-header {
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+      margin-bottom: 1.5rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .library-thumb {
+      width: 120px;
+      height: 180px;
+      object-fit: cover;
+      border-radius: 8px;
+      background: var(--bg);
+      flex-shrink: 0;
+    }
+
+    .library-info h1 {
+      margin: 0 0 0.5rem;
+      font-size: 1.75rem;
+    }
+
+    .library-meta {
+      display: flex;
+      gap: 1.5rem;
+      font-size: 0.9rem;
+      color: var(--muted);
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 3rem;
+      color: var(--muted);
+    }
+
+    .empty-icon {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    {% set active_page = 'library' %}
+    {% set active_library = library.key %}
+    {% include 'partials/sidebar.html' %}
+
+    <main class="main-content" id="library-view">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">BIBLIOTECA</p>
+          <h1>{{ library.title }}</h1>
+        </div>
+        <div class="topbar-actions">
+          <span class="user-label">{{ session.get("admin", "Administrador") }}</span>
+          <form method="post" action="{{ url_for('logout') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button class="button button-quiet" type="submit">Sair</button>
+          </form>
+        </div>
+      </header>
+
+      <div class="library-header">
+        {% if library.thumb_url %}
+          <img class="library-thumb" src="{{ library.thumb_url }}" alt="{{ library.title }}">
+        {% else %}
+          <div class="library-thumb" style="display:flex;align-items:center;justify-content:center;color:var(--muted);">Sem imagem</div>
+        {% endif %}
+        <div class="library-info">
+          <h1>{{ library.title }}</h1>
+          <div class="library-meta">
+            <span>Tipo: Série</span>
+            <span>Seção: {{ library.key }}</span>
+          </div>
+        </div>
+      </div>
+
+      <section class="content-section">
+        <div class="section-heading"><div><p class="eyebrow">SÉRIES</p><h2>Conteúdo da biblioteca</h2></div></div>
+        
+        <div class="card-grid" id="series-grid">
+          {% if series %}
+            {% for ser in series %}
+              <article class="card" data-series="{{ ser.title }}">
+                <header class="card-header">
+                  {% if ser.poster %}
+                    <img class="series-thumb" src="{{ ser.poster }}" alt="{{ ser.title }}">
+                  {% endif %}
+                  <h3 class="series-title">{{ ser.title }}</h3>
+                </header>
+                <div class="card-body">
+                  <ul class="episodes-list">
+                    {% for season in ser.seasons %}
+                      {% for ep in season.episodes %}
+                        <li class="episode-row" data-rating="{{ ep.rating_key }}">
+                          <span class="ep-num">E{{ '%02d'|format(ep.episode) }}</span>
+                          <span class="ep-title" title="{{ ep.title }}">{{ ep.title }}</span>
+                          <div class="marker-inputs">
+                            <label>Intro ini<input type="number" class="mk-intro-start" value="{{ ep.intro.start_ms if ep.intro else '' }}" placeholder="ms"></label>
+                            <label>Intro fim<input type="number" class="mk-intro-end" value="{{ ep.intro.end_ms if ep.intro else '' }}" placeholder="ms"></label>
+                            <label>Cred ini<input type="number" class="mk-cred-start" value="{{ ep.credits if ep.credits is not none else '' }}" placeholder="ms"></label>
+                            <label>Cred fim<input type="number" class="mk-cred-end" value="" placeholder="ms"></label>
+                            <button class="button button-primary save-btn" data-rating="{{ ep.rating_key }}">Salvar</button>
+                          </div>
+                        </li>
+                      {% endfor %}
+                    {% endfor %}
+                  </ul>
+                </div>
+              </article>
+            {% endfor %}
+          {% else %}
+            <div class="empty-state">
+              <div class="empty-icon">📺</div>
+              <h3>Nenhuma série encontrada nesta biblioteca</h3>
+              <p>Execute uma varredura para descobrir episódios.</p>
+            </div>
+          {% endif %}
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const csrf = document.querySelector('meta[name="csrf-token"]').content;
+    const sectionKey = '{{ library.key }}';
+
+    // attach save listeners
+    document.querySelectorAll('.save-btn').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const row = btn.closest('.episode-row');
+        const rk = btn.dataset.rating;
+        const introStart = parseInt(row.querySelector('.mk-intro-start').value) || 0;
+        const introEnd   = parseInt(row.querySelector('.mk-intro-end').value)   || 0;
+        const credStart  = parseInt(row.querySelector('.mk-cred-start').value)  || 0;
+        const credEnd    = parseInt(row.querySelector('.mk-cred-end').value)    || 0;
+
+        await saveMarker({rating_key:rk, kind:'intro', start_ms:introStart, end_ms:introEnd});
+        if (credStart || credEnd) {
+          await saveMarker({rating_key:rk, kind:'credits', start_ms:credStart, end_ms:credEnd});
+        }
+        btn.textContent = '✔';
+        setTimeout(()=>btn.textContent='Salvar', 1000);
+      });
+    });
+
+    async function saveMarker(body) {
+      const resp = await fetch('/api/sync/marker', {
+        method: 'POST',
+        headers: { 'Content-Type':'application/json', 'X-CSRF-Token': csrf },
+        body: JSON.stringify(body)
+      });
+      if (!resp.ok) {
+        const j = await resp.json();
+        alert('Erro ao salvar: ' + (j.error||'desconhecido'));
+      }
+    }
+  });
+  </script>
+  <script src="{{ url_for('static', filename='dashboard.js') }}" defer></script>
+</body>
+</html>

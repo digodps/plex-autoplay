@@ -30,6 +30,8 @@ button, input, select { font: inherit; }
 .nav-link.active, .nav-link:hover { color: var(--text); background: #272831; }
 .nav-link.active { box-shadow: inset 3px 0 var(--accent); }
 .nav-icon { width: 17px; color: #babac4; font-size: 18px; text-align: center; }
+.nav-divider { margin: 8px 8px; border: 0; border-top: 1px solid var(--border); }
+.nav-section-label { margin: 4px 12px; font-size: 10px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
 .sidebar-footer { display: flex; align-items: center; gap: 9px; margin-top: auto; padding: 13px 10px; color: var(--muted); font-size: 12px; }
 .connection-dot, .status-indicator { width: 8px; height: 8px; flex: 0 0 auto; border-radius: 50%; background: var(--green); }
 .main-content { width: min(1440px, 100%); margin-left: 238px; padding: 32px clamp(22px, 4vw, 58px) 64px; }

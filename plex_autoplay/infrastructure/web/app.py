@@ -408,7 +408,18 @@ def create_app(
         masked = cfg.copy()
         token = masked.get("plex_token", "")
         masked["plex_token"] = token[:4] + "****" + token[-4:] if len(token) > 8 else "****"
-        return render_template("config.html", config=masked, raw_config=cfg)
+        # fetch Plex libraries for sidebar
+        plex_libs = []
+        plex_url = cfg.get("plex_url")
+        plex_token = cfg.get("plex_token")
+        if plex_url and plex_token:
+            try:
+                manager = PlexManager(plex_url, plex_token)
+                plex_libs = manager.list_library_sections()
+            except Exception:
+                app.logger.exception("Falha ao obter bibliotecas do Plex para config")
+                plex_libs = []
+        return render_template("config.html", config=masked, raw_config=cfg, plex_libraries=plex_libs)
 
     @app.post("/config")
     @authenticated
@@ -519,6 +530,64 @@ def create_app(
             plex_libraries=plex_libs,
             sync_status=sync_status,
         )
+
+    @app.get("/library/<section_key>")
+    @authenticated
+    def library_view(section_key: str) -> Any:
+        """View a single library's series with markers."""
+        cfg = config_store.load()
+        plex_url = cfg.get("plex_url")
+        plex_token = cfg.get("plex_token")
+        if not plex_url or not plex_token:
+            return render_template("library_view.html", library=None, series=[], error="Plex não configurado", plex_libraries=[])
+
+        manager = PlexManager(plex_url, plex_token)
+        
+        # Get library info
+        plex_libs = manager.list_library_sections()
+        library = next((lib for lib in plex_libs if lib.get("key") == section_key), None)
+        if not library:
+            return render_template("library_view.html", library=None, series=[], error="Biblioteca não encontrada", plex_libraries=plex_libs)
+
+        # Get series tree (reuse the sync_library_tree logic)
+        cache_key = f"plex:sync_tree:{section_key}"
+        cached = redis_client.get(cache_key)
+        if cached:
+            tree_data = json.loads(cached)
+        else:
+            episodes = manager.list_episodes_with_markers(section_key)
+            from collections import defaultdict
+            series_map = defaultdict(lambda: defaultdict(list))
+            for ep in episodes:
+                series_title = ep.get("series_title") or "Desconhecido"
+                season_num = ep.get("season") or 0
+                series_map[series_title][season_num].append({
+                    "rating_key": ep["rating_key"],
+                    "episode": ep["episode"],
+                    "title": ep["title"],
+                    "thumb": ep.get("thumb_url"),
+                    "intro": ep.get("intro"),
+                    "credits": ep.get("credits_ms"),
+                })
+            tree = []
+            for s_title, seasons in series_map.items():
+                season_list = []
+                for s_num in sorted(seasons):
+                    season_list.append({
+                        "season": s_num,
+                        "episodes": sorted(seasons[s_num], key=lambda e: e["episode"])
+                    })
+                # Get poster from first episode of first season
+                first_ep = seasons[sorted(seasons.keys())[0]][0] if seasons else None
+                tree.append({
+                    "title": s_title, 
+                    "seasons": season_list,
+                    "poster": first_ep.get("thumb") if first_ep else None
+                })
+            tree_data = {"section_key": section_key, "series": tree}
+            redis_client.setex(cache_key, 300, json.dumps(tree_data))
+        
+        return render_template("library_view.html", library=library, series=tree_data.get("series", []), plex_libraries=plex_libs)
 
     
 
