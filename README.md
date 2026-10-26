@@ -97,7 +97,7 @@ SETUP_TOKEN=meu-token-super-seguro-123
 | `PLEX_AUTOPLAY_CUSTOM_JSON_PATH` | Caminho do `custom.json` do PlexAutoSkip (opcional) | `/config/plexautoskip/custom.json` |
 | `PLEX_AUTOPLAY_CONFIG_DIR` | Diretório de config do PlexAutoSkip (opcional) | `/config/plexautoskip` |
 
-> **Configurações do PlexAutoSkip** (geradas automaticamente no `config.ini` via `start_autoskip.sh`):  
+> **Configurações do PlexAutoSkip** (geradas automaticamente no `config.ini` via `start_autoskip.sh`):
 > `unwatched = False`, `first-episode-series = Always`, `start = 0` (ver `start_autoskip.sh` para detalhes).
 
 Todas as variáveis podem ser alteradas **pela UI** (⚙ Configuração) – o arquivo `config/app-config.json` é atualizado automaticamente e tem prioridade sobre o `.env`.
@@ -157,7 +157,51 @@ Todas as variáveis podem ser alteradas **pela UI** (⚙ Configuração) – o a
 
 ---
 
-## 🛠  Desenvolvimento / Testes locais
+## 🧑‍💻  Configuração do Ambiente de Desenvolvimento
+
+Para contribuir com código, use o script automatizado que cria virtualenv, instala dependências, ferramentas de lint/teste e hooks de pre-commit:
+
+```bash
+# 1️⃣  Clone o repo
+git clone https://github.com/seu-usuario/plex-autoplay.git
+cd plex-autoplay
+
+# 2️⃣  Rode o setup único (cria .venv/, instala ruff, pre-commit, pytest, mypy, etc.)
+./setup-dev.sh
+
+# 3️⃣  Ative o virtualenv em novos terminais
+source .venv/bin/activate
+```
+
+O script `setup-dev.sh` faz tudo automaticamente:
+- ✅ Verifica Python ≥ 3.12
+- ✅ Cria/ativa virtualenv em `.venv/`
+- ✅ Instala dependências do `requirements.txt`
+- ✅ Instala ferramentas: **ruff, pre-commit, pytest, pytest-cov, mypy**
+- ✅ Configura **pre-commit hooks** (rodam `ruff check --fix`, `ruff format`, validações YAML/JSON/TOML antes de cada commit)
+- ✅ Roda lint inicial e testes unitários
+
+### Comandos do dia a dia
+
+```bash
+source .venv/bin/activate          # Ativar venv (obrigatório em cada terminal)
+
+ruff check . --fix                 # Corrigir lint automaticamente
+ruff format .                      # Formatar código (estilo consistente)
+pytest -q                          # Rodar testes rápidos (7 testes)
+pytest -q -k "nome_do_teste"       # Rodar teste específico
+mypy plex_autoplay                 # Type-check (opcional)
+
+./start.sh                         # Build + up containers (Docker)
+./logs.sh                          # Ver logs dos containers
+pre-commit run --all-files         # Rodar todos os hooks manualmente
+```
+
+> **Importante:** O hook de `pre-commit` roda automaticamente no `git commit`. Se houver erro de lint/formatação, o commit é bloqueado até corrigir. Isso garante que o CI nunca falhe por estilo de código.
+
+---
+
+## 🛠  Desenvolvimento / Testes locais (Docker)
 
 ```bash
 # Subir stack em modo dev (logs no terminal)
@@ -166,7 +210,7 @@ docker compose up --build
 # Rodar testes (pytest) dentro do container
 docker compose run --rm plex-autoplay pytest -q
 
-# Lint / type‑check
+# Lint / type‑check dentro do container
 docker compose run --rm plex-autoplay ruff check .
 docker compose run --rm plex-autoplay mypy plex_autoplay
 ```
@@ -272,5 +316,5 @@ MIT – veja `LICENSE`.
 
 ---
 
-> **Feito com ❤️ para a comunidade Plex.**  
+> **Feito com ❤️ para a comunidade Plex.**
 > *Gerencie seus marcadores, relaxe e aproveite seus episódios sem interrupções.* 🎬✨
