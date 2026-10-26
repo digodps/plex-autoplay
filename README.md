@@ -8,11 +8,11 @@
 | Funcionalidade | Como funciona agora |
 |----------------|---------------------|
 | **Descoberta de bibliotecas** | Consulta `GET /library/sections` no Plex e apresenta *cards* com capa, título e tipo (Série / Filme). |
-| **Geração de marcadores** | Para cada episódio, roda a detecção (silêncio, logo, AniDB…) e grava **markers nativos** (`intro` / `credits`) via `Episode.addMarker`. |
+| **Geração de marcadores** | Para cada episódio, roda a detecção (silêncio, logo, AniDB…) e grava marcadores no arquivo **custom.json** (formato PlexAutoSkip). O **PlexAutoSkip** lê esse arquivo e envia comandos de *seek* aos players compatíveis. |
 | **Execução contínua** | *Polling* configurável (padrão 5 min) **ou** *webhook* `library.new / library.updated` para processamento quase em tempo real. |
-| **Reprodução** | O cliente Plex (Web, iOS, Android, TV, etc.) já exibe os botões **“Pular intro” / “Pular créditos”** – nenhum código extra no player é necessário. |
+| **Reprodução** | Players compatíveis (Desktop, Android TV, Apple TV) exibem skip automático via PlexAutoSkip. **iOS e Web NÃO funcionam** (protocolo Companion descontinuado). |
 | **Interface Web** | Dashboard único (autenticação + CSRF) para: <br>• Configurar `PLEX_URL` / `PLEX_TOKEN` <br>• Ajustar comportamento do Autoplay <br>• Disparar/acompanhar varreduras com **botão “Cancelar”** que interrompe o job quase instantaneamente <br>• Log em tempo real dentro do card de progresso (expandível com ▼/▶) <br>• Visualizar bibliotecas do Plex como cards |
-| **Infraestrutura** | Um único container Docker que roda **app (Flask + Waitress/Cheroot) + Redis** via **supervisord** – sem dependências externas. |
+| **Infraestrutura** | Um único container Docker que roda **app (Flask + Waitress/Cheroot) + Redis + PlexAutoSkip** via **supervisord** – sem dependências externas. |
 
 ---  
 
@@ -102,6 +102,9 @@ SETUP_TOKEN=meu-token-super-seguro-123
 | `DASHBOARD_TLS_HOSTS` | Hosts para certificado auto‑assinado | `localhost,plex-autoplay,host.docker.internal` |
 | `LOG_LEVEL` | Nível de log (`DEBUG`, `INFO`, `WARN`, `ERROR`) | `INFO` |
 
+> **Configurações do PlexAutoSkip** (geradas automaticamente no `config.ini` via `start_autoskip.sh`):  
+> `unwatched = False`, `first-episode-series = Always`, `start = 0` (ver `start_autoskip.sh` para detalhes).
+
 Todas as variáveis podem ser alteradas **pela UI** (⚙ Configuração) – o arquivo `config/app-config.json` é atualizado automaticamente e tem prioridade sobre o `.env`.
 
 ---  
@@ -112,13 +115,15 @@ Todas as variáveis podem ser alteradas **pela UI** (⚙ Configuração) – o a
 +---------------------------+
 |  supervisord (PID 1)      |
 |  ├─ redis-server :6379    |
-|  └─ python -m plex_autoplay (Flask + Waitress/Cheroot) |
+|  ├─ python -m plex_autoplay (Flask + Waitress/Cheroot) |
+|  └─ python /opt/plexautoskip/main.py (PlexAutoSkip) |
 +---------------------------+
 ```
 
-* `supervisord.conf` garante restart automático de ambos.  
+* `supervisord.conf` garante restart automático dos três processos.  
 * `REDIS_URL` já vem pronto – o worker RQ consome jobs de varredura (`process_episode`).  
-* Nenhum volume de mídia é necessário; o container só monta o **named volume** `plex-autoplay-config:/config` (persistência de `app-config.json`, chaves de sessão, certificado TLS).
+* **PlexAutoSkip** roda embutido, lendo `/config/plexautoskip/custom.json` e servindo WebSocket na porta 8081.  
+* Nenhum volume de mídia é necessário; o container só monta o **named volume** `plex-autoplay-config:/config` (persistência de `app-config.json`, `custom.json`, certificado TLS, chaves de sessão).
 
 ---  
 
@@ -131,9 +136,12 @@ Todas as variáveis podem ser alteradas **pela UI** (⚙ Configuração) – o a
 | `GET`  | `/api/plex/scan/<job_id>` | Status do job (`queued|running|completed|failed|cancelled`, processed, skipped, errors). |
 | `POST` | `/api/plex/scan/<job_id>/cancel` | Solicita cancelamento do job em execução; o worker interrompe quase imediatamente. |
 | `POST` | `/plex/webhook` | Recebe webhook `library.new / library.updated` do Plex (valida `X-Plex-Signature` com `WEBHOOK_SECRET`). |
+| `GET`  | `/api/sync/library/<section_key>/tree` | Retorna árvore de séries/episódios com marcadores mesclados (Plex + custom.json). |
+| `POST` | `/api/sync/marker` | Salva/atualiza marcador (`{rating_key, kind, start_ms, end_ms, section_key}`) no custom.json. |
 | `GET`  | `/api/status` | Status do último job (inclui `job_id` quando há job ativo) + métricas de CPU/Mem/Rede. |
 | `GET`  | `/config` / `POST /config` | UI de configuração (também expõe JSON via `GET /api/config` se necessário). |
 | `GET`  | `/libraries` | Página “Bibliotecas” – renderiza cards do Plex + botão “Escanear”. |
+| `GET`  | `/library/<section_key>` | Visualização de biblioteca com séries, episódios e edição de marcadores. |
 | `GET`  | `/` | Dashboard – visão geral + último job. |
 
 > Todas as rotas mutantes exigem sessão de admin + token CSRF (`X-CSRF-Token` header ou campo `csrf_token`).
@@ -143,14 +151,14 @@ Todas as variáveis podem ser alteradas **pela UI** (⚙ Configuração) – o a
 ## 🔄  Fluxo de varredura (polling + webhook)
 
 1. **Polling** (cron interno a cada `SCAN_INTERVAL_MINUTES`):  
-   `PlexLibraryScanner.scan_section(section_key)` → para cada episódio sem markers → `MarkerGenerator.generate(file_path)` → `PlexManager.add_marker`.  
+   `PlexLibraryScanner.scan_section(section_key)` → para cada episódio sem marcadores → `MarkerGenerator.generate(file_path)` → salva marcadores no **custom.json** (formato PlexAutoSkip).  
 2. **Webhook** (opcional, near‑real‑time):  
    Plex POSTa em `/plex/webhook` → valida HMAC → extrai `ratingKey` → enfileira `process_episode(ratingKey)` no worker RQ.  
 3. **Cancelamento**:  
    UI exibe botão **“Cancelar”** enquanto o job está `running`; ao clicar envia `POST /api/plex/scan/<job_id>/cancel` → o worker recebe sinal (`threading.Event`) e interrompe o loop de episódios imediatamente.  
 4. **Logs em tempo real**:  
    O painel de progresso inclui uma área de log expansível (▼/▶) que recebe linhas via **Server‑Sent Events** (`/api/plex/scan/<job_id>/log/stream`).  
-5. **Resultado**: markers `intro` / `credits` gravados no Plex → clientes mostram botões nativos.
+5. **Resultado**: marcadores `intro` / `credits` gravados no **custom.json** → **PlexAutoSkip** lê o arquivo e envia comandos de *seek* aos players compatíveis.
 
 ---  
 
