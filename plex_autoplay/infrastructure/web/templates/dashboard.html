@@ -9,18 +9,8 @@
 </head>
 <body>
   <div class="app-shell">
-    <aside class="sidebar">
-      <a class="brand" href="{{ url_for('dashboard') }}"><span class="brand-mark">PA</span><span>Plex Autoplay</span></a>
-      <nav aria-label="Navegação principal">
-        <a class="nav-link active" href="#overview"><span class="nav-icon">▦</span> Visão geral</a>
-        <a class="nav-link" href="#libraries"><span class="nav-icon">▤</span> Bibliotecas</a>
-        <a class="nav-link" href="#activity"><span class="nav-icon">◷</span> Atividade</a>
-      </nav>
-      <div class="sidebar-footer">
-        <span class="connection-dot"></span>
-        <span>Serviço conectado</span>
-      </div>
-    </aside>
+    {% set active_page = 'dashboard' %}
+    {% include 'partials/sidebar.html' %}
 
     <main class="main-content" id="overview">
       <header class="topbar">
@@ -42,14 +32,13 @@
           <h2>Visão geral</h2>
           <p class="muted">Monitore episódios e cobertura dos marcadores nas bibliotecas do seu Plex.</p>
         </div>
-        <button class="button button-primary" id="scan-button" type="button">⟳ <span>Executar varredura</span></button>
+        <div style="margin-left:auto;">
+          <button id="scan-button" class="button button-primary" type="button" data-show-keys='{{ show_keys|tojson }}'>Escanear todas</button>
+        </div>
       </section>
 
-      <div class="status-banner status-{{ snapshot.status }}" id="scan-status" data-completed-at="{{ snapshot.completed_at or '' }}" role="status">
-        <span class="status-indicator"></span>
-        <span id="status-message">
-          {% if snapshot.status == "idle" %}Nenhuma varredura registrada.{% elif snapshot.status == "queued" %}Varredura na fila.{% elif snapshot.status == "running" %}Varredura em andamento.{% elif snapshot.status == "failed" %}A última varredura falhou: {{ snapshot.error }}{% else %}Última varredura concluída{% if snapshot.completed_at %} em {{ snapshot.completed_at }}{% endif %}.{% endif %}
-        </span>
+      <div id="scan-status" class="status-banner status-idle" aria-live="polite">
+        <span id="status-message">Nenhuma varredura registrada.</span>
       </div>
 
       <section class="stats-grid" aria-label="Resumo da cobertura">
@@ -58,88 +47,7 @@
         <article class="stat-card"><span class="stat-label">Com créditos</span><strong id="credits-episodes">{{ totals.credits }}</strong><span class="stat-caption">marcadores disponíveis</span></article>
         <article class="stat-card"><span class="stat-label">Pendentes</span><strong id="missing-episodes">{{ totals.missing }}</strong><span class="stat-caption">campos de marcador ausentes</span></article>
       </section>
-
-      <section class="content-section" id="libraries">
-        <div class="section-heading">
-          <div><p class="eyebrow">ACERVO</p><h2>Bibliotecas</h2></div>
-          <span class="section-count">{{ libraries|length }}</span>
-        </div>
-        {% if not libraries %}
-          <div class="empty-state">
-            <div class="empty-icon">▤</div>
-            <h3>Nenhuma biblioteca cadastrada</h3>
-            <p>Adicione uma biblioteca para começar a inventariar séries e episódios.</p>
-            <a class="button button-secondary" href="#library-manager">Gerenciar bibliotecas</a>
-          </div>
-        {% else %}
-          <div class="library-list">
-            {% for library in libraries %}
-              <article class="library-card">
-                <details open>
-                  <summary class="library-summary">
-                    <span class="library-symbol">▤</span>
-                    <span class="library-title-wrap"><strong>{{ library.name }}</strong><small>{{ library.path }}</small></span>
-                    <span class="type-pill type-{{ library.kind }}">{{ "Anime" if library.kind == "anime" else "Série" }}</span>
-                    <span class="library-count">{{ library.episode_count }} episódios</span>
-                    <span class="chevron">⌄</span>
-                  </summary>
-                  <div class="library-content">
-                    {% if library.series_groups %}
-                      <div class="series-list">
-                        {% for series in library.series_groups %}
-                          <details class="series-details" open>
-                            <summary><strong>{{ series.title }}</strong><span>{{ series.seasons|length }} temporada(s)</span><span class="chevron">⌄</span></summary>
-                            {% for season in series.seasons %}
-                              <div class="season-group">
-                                <h4>Temporada {{ season.number }}</h4>
-                                <div class="episode-table">
-                                  <div class="episode-row episode-header"><span>Episódio</span><span>Arquivo</span><span>Intro</span><span>Créditos</span></div>
-                                  {% for episode in season.episodes %}
-                                    <div class="episode-item">
-                                      <div class="episode-row">
-                                        <span class="episode-number">E{{ "%02d"|format(episode.episode) }}</span>
-                                        <span class="episode-series" title="{{ episode.path }}">{{ episode.path.rsplit("/", 1)[-1] }}</span>
-                                        <span class="marker-state {{ 'is-present' if episode.intro.start_ms is not none and episode.intro.end_ms is not none else 'is-missing' }}">{{ "Disponível" if episode.intro.start_ms is not none and episode.intro.end_ms is not none else "Ausente" }}</span>
-                                        <span class="marker-state {{ 'is-present' if episode.credits_ms is not none else 'is-missing' }}">{{ "Disponível" if episode.credits_ms is not none else "Ausente" }}</span>
-                                      </div>
-                                      <details class="marker-editor">
-                                        <summary>Editar marcadores</summary>
-                                        <form class="marker-form" data-series="{{ episode.series }}" data-season="{{ episode.season }}" data-episode="{{ episode.episode }}">
-                                          <label>Início da intro (segundos)<input name="start" type="number" min="0" step="any" value="{{ '%.3f'|format(episode.intro.start_ms / 1000) if episode.intro.start_ms is not none else '' }}"></label>
-                                          <label>Fim da intro (segundos)<input name="end" type="number" min="0" step="any" value="{{ '%.3f'|format(episode.intro.end_ms / 1000) if episode.intro.end_ms is not none else '' }}"></label>
-                                          <label>Créditos (segundos)<input name="credits" type="number" min="0" step="any" value="{{ '%.3f'|format(episode.credits_ms / 1000) if episode.credits_ms is not none else '' }}"></label>
-                                          <div class="marker-form-actions">
-                                            <button class="button button-primary" type="submit">Salvar marcadores</button>
-                                            <button class="button button-secondary remove-markers" type="button">Remover selecionados</button>
-                                          </div>
-                                          <fieldset class="marker-removal-fields">
-                                            <legend>Remover campos</legend>
-                                            <label><input type="checkbox" value="start"> Início</label>
-                                            <label><input type="checkbox" value="end"> Fim</label>
-                                            <label><input type="checkbox" value="credits"> Créditos</label>
-                                          </fieldset>
-                                          <p class="marker-feedback" role="status" aria-live="polite"></p>
-                                        </form>
-                                      </details>
-                                    </div>
-                                  {% endfor %}
-                                </div>
-                              </div>
-                            {% endfor %}
-                          </details>
-                        {% endfor %}
-                      </div>
-                    {% else %}
-                      <p class="muted empty-inline">Nenhum episódio reconhecido nesta biblioteca.</p>
-                    {% endif %}
-                  </div>
-                </details>
-              </article>
-            {% endfor %}
-          </div>
-        {% endif %}
-      </section>
-
+      
       <section class="content-section" id="activity">
         <div class="section-heading"><div><p class="eyebrow">VARREDURA</p><h2>Atividade</h2></div></div>
         {% set progress = snapshot.progress or {} %}
@@ -150,7 +58,16 @@
             <p id="activity-detail" class="muted"></p>
             <progress id="activity-progress-bar" aria-label="Progresso da varredura"></progress>
           </div>
+          <!-- Log da varredura global (inside the progress panel) -->
+          <div id="global-sync-log" class="scan-log" style="margin-top:1rem; display:none; width:100%; max-width:100%; box-sizing:border-box; overflow:hidden;">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.25rem; width:100%; box-sizing:border-box;">
+              <span style="font-weight:600;">Log da varredura</span>
+              <button id="toggle-log" type="button" class="button button-quiet" aria-label="Alternar log" style="font-size:1rem;line-height:1;">▼</button>
+            </div>
+            <pre id="activity-log" style="max-height:200px;overflow:auto;background:var(--bg);padding:0.5rem;font-size:0.75rem;color:var(--muted); width:100%; max-width:100%; box-sizing:border-box; white-space:pre-wrap; word-break:break-word;"></pre>
+          </div>
         </div>
+
         <div class="resource-panels">
           <section class="resource-panel" aria-labelledby="container-resources-heading">
             <div class="resource-panel-heading">
@@ -160,12 +77,12 @@
             <div class="resource-grid resource-grid-two">
               <article class="stat-card resource-card">
                 <span class="stat-label">CPU</span>
-                <strong id="service-cpu">Calculando...</strong>
+                <strong id="service-cpu">Indisponível</strong>
                 <span class="stat-caption">uso do processo, por núcleo</span>
               </article>
               <article class="stat-card resource-card">
                 <span class="stat-label">Memória</span>
-                <strong id="service-memory">Calculando...</strong>
+                <strong id="service-memory">Indisponível</strong>
                 <span class="stat-caption">memória residente (RSS)</span>
               </article>
             </div>
@@ -199,42 +116,329 @@
             </div>
           </section>
         </div>
-        <div class="activity-log-wrap">
-          <h3>Eventos recentes</h3>
-          <ol class="activity-log" id="activity-events" aria-live="polite">
-            {% for event in progress.get("events", []) %}
-              <li><time>{{ event.at }}</time><span>{{ event.message }}</span></li>
-            {% endfor %}
-          </ol>
-        </div>
-        {% set activity = namespace(has_items=false) %}
-        {% for library in libraries %}
-          {% if library.ambiguities or library.errors or library.pending %}
-            {% set activity.has_items = true %}
-            <div class="activity-group">
-              <h3>{{ library.name }}</h3>
-              <div class="issue-list">
-                {% for issue in library.ambiguities %}<p class="issue issue-warning"><strong>Ambiguidade</strong> {{ issue }}</p>{% endfor %}
-                {% for issue in library.pending %}<p class="issue issue-warning"><strong>Pendente</strong> {{ issue.reason or issue }}</p>{% endfor %}
-                {% for issue in library.errors %}<p class="issue issue-error"><strong>Erro</strong> {{ issue }}</p>{% endfor %}
-              </div>
-            </div>
-          {% endif %}
-        {% endfor %}
-        {% if not activity.has_items %}
-          <p class="muted" id="activity-empty">Nenhuma pendência ou erro registrado na última varredura.</p>
-        {% endif %}
-      </section>
-
-      <section class="content-section" id="library-manager">
-        <div class="section-heading"><div><p class="eyebrow">CONFIGURAÇÃO</p><h2>Gerenciar bibliotecas</h2></div></div>
-        <div class="manager-card">
-          <p>Escolha subpastas disponíveis sob a raiz de mídia montada. A interface permite cadastrar múltiplas bibliotecas, inclusive várias bibliotecas de Séries.</p>
-          <a class="button button-secondary" href="{{ url_for('library_manager') }}">Adicionar ou remover bibliotecas</a>
-        </div>
-      </section>
+      </section>      
     </main>
   </div>
+
+  <!-- Generic Modal -->
+  <div id="generic-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="generic-modal-title">
+    <div class="modal-backdrop"></div>
+    <div class="modal-content">
+      <header class="modal-header">
+        <h3 id="generic-modal-title">Título</h3>
+        <div style="display:flex;gap:0.5rem;align-items:center;">
+          <button type="button" class="modal-close" aria-label="Fechar">&times;</button>
+        </div>
+      </header>
+      <div class="modal-body">
+        <p id="generic-modal-message" class="muted"></p>
+        <progress id="generic-modal-progress" class="modal-progress hidden" max="100" value="0"></progress>
+        <p id="generic-modal-detail" class="muted"></p>
+      </div>
+      <footer class="modal-footer">
+        <button type="button" class="button button-secondary modal-close-btn">Fechar</button>
+      </footer>
+    </div>
+  </div>
+
+  <script>
+    // Generic modal controller
+    const Modal = (function() {
+      const modal = document.getElementById('generic-modal');
+      const titleEl = document.getElementById('generic-modal-title');
+      const msgEl = document.getElementById('generic-modal-message');
+      const progEl = document.getElementById('generic-modal-progress');
+      const detailEl = document.getElementById('generic-modal-detail');
+      const closeBtns = modal.querySelectorAll('.modal-close, .modal-close-btn, .modal-backdrop');
+
+      function close() { modal.classList.add('hidden'); }
+      closeBtns.forEach(b => b.addEventListener('click', close));
+
+      // public API
+      return {
+        open({ title = '', message = '', showProgress = false, detail = '', onClose = null }) {
+          titleEl.textContent = title;
+          msgEl.textContent = message;
+          detailEl.textContent = detail;
+          progEl.value = 0;
+          progEl.classList.toggle('hidden', !showProgress);
+          modal.classList.remove('hidden');
+          // store onClose
+          modal._onClose = onClose;
+        },
+        update({ message, progress, detail }) {
+          if (message !== undefined) msgEl.textContent = message;
+          if (progress !== undefined) { progEl.value = progress; progEl.classList.remove('hidden'); }
+          if (detail !== undefined) detailEl.textContent = detail;
+        },
+        close() { close(); if (modal._onClose) modal._onClose(); }
+      };
+    })();
+
+    // Render library details into modal body
+    function renderLibraryDetails(sectionKey, libraryTitle) {
+      const detailEl = document.getElementById('generic-modal-detail');
+      detailEl.innerHTML = '<p class="muted">Carregando detalhes…</p>';
+      const baseUrl = '{{ url_for("library_episodes", section_key="__SECTION__") }}';
+      const url = baseUrl.replace('__SECTION__', encodeURIComponent(sectionKey));
+      fetch(url, {
+        headers: { 'X-CSRF-Token': '{{ csrf_token() }}' }
+      })
+      .then(r => r.json())
+      .then(data => {
+        if (data.error) {
+          detailEl.innerHTML = `<p class="muted" style="color:var(--red);">${data.error}</p>`;
+          return;
+        }
+        if (!data.series || data.series.length === 0) {
+          detailEl.innerHTML = '<p class="muted">Nenhum episódio encontrado.</p>';
+          return;
+        }
+        // Build a card grid using the existing .card style
+        let html = '<div class="card-grid" style="margin-top:0.5rem;">';
+        data.series.forEach(series => {
+          html += `<article class="card">`;
+          // card header with poster and title
+          html += `<div class="card-header" style="display:flex;align-items:center;gap:1rem;padding:1rem;background:var(--bg);border-bottom:1px solid var(--border);">`;
+          if (series.poster) {
+            html += `<img src="${series.poster}" alt="${series.title}" style="width:80px;height:120px;object-fit:cover;border-radius:4px;flex-shrink:0;">`;
+          }
+          html += `<div style="flex:1;"><h3 style="margin:0;font-size:1rem;">${series.title}</h3></div>`;
+          html += `</div>`;
+          // card body with seasons/episodes
+          html += `<div class="card-body" style="padding:1rem;max-height:60vh;overflow-y:auto;">`;
+          series.seasons.forEach(season => {
+            html += `<details style="margin-bottom:0.8rem;">`;
+            html += `<summary style="cursor:pointer;font-weight:600;margin-bottom:0.4rem;">Temporada ${season.season} (${season.episodes.length} eps)</summary>`;
+            html += `<ul style="list-style:none;padding:0;margin:0;font-size:0.85rem;line-height:1.6;">`;
+            season.episodes.forEach(ep => {
+              const introIcon = ep.has_intro ? '✅' : '❌';
+              const credIcon = ep.has_credits ? '✅' : '❌';
+              html += `<li style="margin:0.2rem 0;">E${String(ep.episode).padStart(2,'0')} – Intro ${introIcon} / Créditos ${credIcon}</li>`;
+            });
+            html += `</ul></details>`;
+          });
+          html += `</div></article>`;
+        });
+        html += `</div>`;
+        detailEl.innerHTML = html;
+      })
+      .catch(err => {
+        detailEl.innerHTML = `<p class="muted" style="color:var(--red);">Erro ao carregar: ${err.message}</p>`;
+      });
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+      // Scan button handler - per card progress
+      document.querySelectorAll('.scan-lib-btn').forEach(btn => {
+        btn.addEventListener('click', async function(e) {
+          e.stopPropagation(); // prevent card click
+          const sectionKey = this.dataset.sectionKey;
+          const card = this.closest('.card');
+          const progressEl = card.querySelector('.card-progress');
+          const semaphoreEl = card.querySelector('.semaphore');
+          const scanBtn = this; // keep reference
+
+          // reset UI
+          progressEl.value = 0;
+          progressEl.classList.remove('hidden');
+          scanBtn.disabled = true;
+          card.dataset.scanStatus = 'running';
+          if (semaphoreEl) semaphoreEl.dataset.status = 'running';
+
+          try {
+            const resp = await fetch('{{ url_for("start_plex_scan") }}', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-Token': '{{ csrf_token() }}'
+              },
+              body: JSON.stringify({section_key: sectionKey})
+            });
+            const data = await resp.json();
+            if (!resp.ok) {
+              throw new Error(data.error || 'Erro ao iniciar varredura');
+            }
+            const jobId = data.job_id;
+            const total = data.total || 0;
+            // store job id on card for log modal
+            card.dataset.jobId = jobId;
+
+            async function poll() {
+              const statusResp = await fetch('{{ url_for("scan_job_status", job_id="") }}' + jobId, {
+                headers: { 'X-CSRF-Token': '{{ csrf_token() }}' }
+              });
+              const status = await statusResp.json();
+
+              const processed = status.processed || 0;
+              const pct = total ? Math.min(100, Math.round((processed / total) * 100)) : 0;
+              progressEl.value = pct;
+
+              if (status.status === 'running' || status.status === 'queued') {
+                setTimeout(poll, 1000);
+              } else if (status.status === 'completed') {
+                progressEl.value = 100;
+                progressEl.classList.add('hidden');
+                scanBtn.disabled = false;
+                card.dataset.scanStatus = 'completed';
+                if (semaphoreEl) semaphoreEl.dataset.status = 'success';
+              } else if (status.status === 'failed') {
+                progressEl.classList.add('hidden');
+                scanBtn.disabled = false;
+                card.dataset.scanStatus = 'failed';
+                if (semaphoreEl) semaphoreEl.dataset.status = 'error';
+              }
+            }
+            poll();
+          } catch (err) {
+            progressEl.classList.add('hidden');
+            scanBtn.disabled = false;
+            card.dataset.scanStatus = 'failed';
+            if (semaphoreEl) semaphoreEl.dataset.status = 'error';
+            console.error(err);
+          }
+        });
+      });
+
+      // Card click -> if a scan is running for this card, open log modal; else show library details
+      document.querySelectorAll('.card').forEach(card => {
+        card.addEventListener('click', function() {
+          const sectionKey = this.dataset.sectionKey;
+          const libraryTitle = this.querySelector('h3').textContent;
+          const scanStatus = this.dataset.scanStatus;
+          const jobId = this.dataset.jobId;
+
+          if (scanStatus === 'running' && jobId) {
+            // open log modal
+            openScanLogModal(jobId, libraryTitle);
+          } else {
+            // normal library details modal
+            Modal.open({
+              title: libraryTitle,
+              message: '',
+              showProgress: false,
+              detail: '',
+              onClose: () => {}
+            });
+            renderLibraryDetails(sectionKey, libraryTitle);
+          }
+        });
+      });
+    // Helper to stream a job's log into the global activity log <pre>
+    async function streamActivityLog(jobId) {
+      const logEl = document.getElementById('activity-log');
+      if (!logEl) return;
+      const evtSource = new EventSource(
+        '/api/plex/scan/' + encodeURIComponent(jobId) + '/log/stream'
+      );
+      evtSource.onmessage = (e) => {
+        logEl.textContent += (logEl.textContent ? '\n' : '') + e.data + '\n';
+        logEl.scrollTop = logEl.scrollHeight;
+      };
+      evtSource.addEventListener('close', () => { evtSource.close(); });
+      evtSource.onerror = () => { evtSource.close(); };
+    }
+
+    // Scan all button handler
+    const scanAllBtn = document.getElementById('scan-all-btn');
+    if (scanAllBtn) {
+      scanAllBtn.addEventListener('click', async function() {
+        const keys = JSON.parse(this.dataset.showKeys || '[]');
+        if (!keys.length) {
+          alert('Nenhuma biblioteca de série configurada.');
+          return;
+        }
+        this.disabled = true;
+        this.textContent = 'Escaneando...';
+        for (const sectionKey of keys) {
+          try {
+            const resp = await fetch('{{ url_for("start_plex_scan") }}', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-Token': '{{ csrf_token() }}'
+              },
+              body: JSON.stringify({section_key: sectionKey})
+            });
+            const data = await resp.json();
+            if (!resp.ok) {
+              console.error('Erro ao iniciar varredura para', sectionKey, data.error);
+            } else {
+              console.log('Varredura iniciada para', sectionKey, 'job', data.job_id);
+              // stream this job's log to the global activity log
+              await streamActivityLog(data.job_id);
+            }
+          } catch (e) {
+            console.error('Erro ao iniciar varredura para', sectionKey, e);
+          }
+          // small delay to avoid hammering
+          await new Promise(r => setTimeout(r, 500));
+        }
+        this.disabled = false;
+        this.textContent = 'Escanear todas';
+      });
+    }
+    });
+
+    // ---- Stats grid auto‑update from aggregated Plex stats ----
+    async function refreshStats() {
+      try {
+        const resp = await fetch('/api/plex/stats', {
+          headers: { 'X-CSRF-Token': '{{ csrf_token() }}' }
+        });
+        if (!resp.ok) return;
+        const data = await resp.json();
+        document.getElementById('total-episodes').textContent = data.total_episodes ?? 0;
+        document.getElementById('intro-episodes').textContent = data.intro_episodes ?? 0;
+        document.getElementById('credits-episodes').textContent = data.credits_episodes ?? 0;
+        document.getElementById('missing-episodes').textContent = data.missing_episodes ?? 0;
+      } catch (e) {
+        console.warn('Could not refresh stats', e);
+      }
+    }
+    // initial load and then every 30 s
+    refreshStats();
+    setInterval(refreshStats, 30000);
+
+    // Open a modal showing live logs for a scan job (SSE)
+    async function openScanLogModal(jobId, title) {
+      const detailEl = document.getElementById('generic-modal-detail');
+
+      const evtSource = new EventSource(
+        '/api/plex/scan/' + encodeURIComponent(jobId) + '/log/stream'
+      );
+
+      // Open modal first, then inject <pre> so Modal.open doesn't clear it
+      Modal.open({
+        title: `Logs da varredura – ${title}`,
+        message: '',
+        showProgress: false,
+        detail: '',
+        onClose: () => {
+          evtSource.close();
+        }
+      });
+
+      // Now safe to replace detail with <pre>
+      detailEl.innerHTML = '<pre id="scan-log-pre" style="white-space:pre-wrap;font:inherit;margin:0;"></pre>';
+      const preEl = document.getElementById('scan-log-pre');
+
+      evtSource.onmessage = (e) => {
+        // each log line arrives as data: <line>
+        preEl.textContent += (preEl.textContent ? '\n' : '') + e.data + '\n';
+        preEl.scrollTop = preEl.scrollHeight;
+      };
+
+      evtSource.addEventListener('close', () => {
+        evtSource.close();
+      });
+
+      evtSource.onerror = () => {
+        // connection closed or error; clean up
+        evtSource.close();
+      };
+    }
+  </script>
   <script src="{{ url_for('static', filename='dashboard.js') }}" defer></script>
 </body>
 </html>

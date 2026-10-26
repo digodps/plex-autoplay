@@ -1,6 +1,9 @@
 (() => {
   const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || "";
   const scanButton = document.querySelector("#scan-button");
+  let currentJobId = null;
+  // start disabled until we know the status
+  if (scanButton) scanButton.disabled = true;
   const statusBanner = document.querySelector("#scan-status");
   const statusMessage = document.querySelector("#status-message");
   const activityProgress = document.querySelector("#activity-progress");
@@ -96,7 +99,7 @@
     } else {
       serviceCpu.textContent = Number.isFinite(resources.cpu_percent)
         ? `${resources.cpu_percent.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}%`
-        : "Calculando...";
+        : "Indisponível";
       serviceMemory.textContent = Number.isFinite(resources.memory_bytes)
         ? `${(resources.memory_bytes / (1024 * 1024)).toLocaleString("pt-BR", { maximumFractionDigits: 1 })} MiB`
         : "Indisponível";
@@ -138,6 +141,7 @@
       running: "Varredura em andamento.",
       completed: `Última varredura concluída${snapshot.completed_at ? ` em ${snapshot.completed_at}` : ""}.`,
       failed: `A última varredura falhou: ${snapshot.error || "erro não informado."}`,
+      cancelled: "Varredura cancelada pelo usuário."
     };
     if (!Object.hasOwn(labels, snapshot.status)) {
       throw new Error(`Estado de varredura desconhecido: ${snapshot.status}`);
@@ -145,11 +149,49 @@
     statusBanner.className = `status-banner status-${snapshot.status}`;
     statusMessage.textContent = labels[snapshot.status];
     renderActivity(snapshot);
+    // Customize activity message for running state
+    if (activityMessage) {
+      if (snapshot.status === "running") {
+        activityMessage.textContent = "Processando...";
+      } else if (snapshot.status === "queued") {
+        activityMessage.textContent = "Varredura na fila.";
+      }
+    }
     if (scanButton) {
-      const active = snapshot.status === "queued" || snapshot.status === "running";
-      scanButton.disabled = active;
-      scanButton.setAttribute("aria-busy", String(active));
-      scanButton.querySelector("span").textContent = active ? "Varredura em andamento" : "Executar varredura";
+      const span = scanButton.querySelector("span");
+      let label = "";
+      if (snapshot.status === "running") {
+        scanButton.disabled = false;
+        scanButton.setAttribute("aria-busy", "true");
+        label = "Cancelar";
+      } else if (snapshot.status === "queued") {
+        scanButton.disabled = true;
+        scanButton.setAttribute("aria-busy", "true");
+        label = "Iniciando...";
+      } else {
+        // idle, completed, failed, cancelled
+        scanButton.disabled = false;
+        scanButton.setAttribute("aria-busy", "false");
+        label = "Escanear todas";
+      }
+      if (span) {
+        span.textContent = label;
+      } else {
+        scanButton.textContent = label;
+      }
+    }
+    // Show/hide log container based on processing state
+    const logContainer = document.getElementById("global-sync-log");
+    if (logContainer) {
+      if (snapshot.status === "running" || snapshot.status === "queued") {
+        logContainer.style.display = "block";
+      } else {
+        logContainer.style.display = "none";
+      }
+    }
+    // close log stream when job finishes or cancelled
+    if (snapshot.status === "completed" || snapshot.status === "failed" || snapshot.status === "cancelled") {
+      closeLogStream();
     }
     if (
       snapshot.status === "completed"
@@ -167,10 +209,20 @@
     if (!statusBanner || polling) return;
     polling = true;
     try {
-      setStatus(await requestJson("/api/status"));
+      const snapshot = await requestJson("/api/status");
+      setStatus(snapshot);
+      // manage currentJobId and log stream based on job state
+      if (snapshot.job_id && (snapshot.status === "running" || snapshot.status === "queued")) {
+        if (currentJobId !== snapshot.job_id) {
+          currentJobId = snapshot.job_id;
+          openLogStream(currentJobId);
+        }
+      } else if (snapshot.status === "idle") {
+        currentJobId = null;
+      }
     } catch (error) {
-      statusBanner.className = "status-banner status-failed";
-      statusMessage.textContent = `Não foi possível atualizar o estado: ${error.message}`;
+      if (statusBanner) statusBanner.className = "status-banner status-failed";
+      if (statusMessage) statusMessage.textContent = `Não foi possível atualizar o estado: ${error.message}`;
     } finally {
       polling = false;
     }
@@ -178,16 +230,42 @@
 
   if (scanButton) {
     scanButton.addEventListener("click", async () => {
+      const span = scanButton.querySelector("span");
+      const btnText = span ? span.textContent : scanButton.textContent;
+
+      // Cancel current job
+      if (btnText === "Cancelar" && currentJobId) {
+        try {
+          await requestJson(`/api/plex/scan/${encodeURIComponent(currentJobId)}/cancel`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "X-CSRF-Token": csrfToken }
+          });
+        } catch (e) {
+          console.error("Cancel request failed", e);
+        }
+        // UI will be updated by polling (setStatus)
+        return;
+      }
+
+      // Start new scan
+      if (btnText !== "Escanear todas") return; // ignore if not idle
+      const showKeys = JSON.parse(scanButton.dataset.showKeys || "[]");
+      if (!showKeys.length) return;
       scanButton.disabled = true;
+      if (span) span.textContent = "Iniciando...";
       try {
-        const snapshot = await requestJson("/api/scan", {
+        const resp = await requestJson("/api/plex/scan", {
           method: "POST",
-          headers: { "X-CSRF-Token": csrfToken },
+          headers: { "Content-Type": "application/json", "X-CSRF-Token": csrfToken },
+          body: JSON.stringify({ section_key: showKeys[0] })
         });
-        setStatus(snapshot);
+        currentJobId = resp.job_id;
+        openLogStream(currentJobId);
+        // status polling will update button text
       } catch (error) {
         statusMessage.textContent = error.message;
-        await refreshStatus();
+        scanButton.disabled = false;
+        if (span) span.textContent = "Escanear todas";
       }
     });
   }
@@ -195,6 +273,52 @@
   if (statusBanner) {
     window.setInterval(refreshStatus, 3000);
     refreshStatus();
+  }
+
+  // Scan log streaming via SSE
+  const activityLog = document.querySelector("#activity-log");
+  let logEventSource = null;
+
+  function openLogStream(jobId) {
+    if (!activityLog) return;
+    if (logEventSource) {
+      logEventSource.close();
+    }
+    // clear previous log
+    activityLog.textContent = "";
+    logEventSource = new EventSource(`/api/plex/scan/${encodeURIComponent(jobId)}/log/stream`, { withCredentials: true });
+    logEventSource.onmessage = (e) => {
+      activityLog.textContent += (activityLog.textContent ? "\n" : "") + e.data;
+      activityLog.scrollTop = activityLog.scrollHeight;
+    };
+    logEventSource.addEventListener("close", () => {
+      logEventSource.close();
+      logEventSource = null;
+    });
+    logEventSource.onerror = () => {
+      logEventSource.close();
+      logEventSource = null;
+    };
+  }
+
+  function closeLogStream() {
+    if (logEventSource) {
+      logEventSource.close();
+      logEventSource = null;
+    }
+  }
+
+  // Toggle log visibility
+  const toggleLogBtn = document.getElementById("toggle-log");
+  const activityLogEl = document.getElementById("activity-log");
+  if (toggleLogBtn && activityLogEl) {
+    let logVisible = true;
+    toggleLogBtn.addEventListener("click", () => {
+      logVisible = !logVisible;
+      activityLogEl.style.display = logVisible ? "block" : "none";
+      toggleLogBtn.textContent = logVisible ? "▼" : "▶";
+      toggleLogBtn.setAttribute("aria-label", logVisible ? "Fechar log" : "Abrir log");
+    });
   }
 
   for (const form of document.querySelectorAll(".marker-form")) {
