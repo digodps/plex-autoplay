@@ -9,31 +9,22 @@ services:
         published: "8080"
         target: 8080
     environment:
-      PLEX_URL: "http://192.168.1.100:32400"
-      PLEX_TOKEN: "COLOQUE_SEU_TOKEN_PLEX"
+      PLEX_URL: "${PLEX_URL:-http://192.168.1.100:32400}"
+      PLEX_TOKEN: "${PLEX_TOKEN:-COLOQUE_SEU_TOKEN_PLEX}"
       AUTO_SKIP_INTRO: "true"
       AUTO_NEXT_EPISODE: "false"
       NEXT_EPISODE_THRESHOLD_SECONDS: "15"
       POLL_INTERVAL_SECONDS: "2"
-      CUSTOM_MARKERS_FILE: /config/markers.json
       DEFAULT_INTRO_SKIP_SECONDS: "0"
-      AUTO_GENERATE_ANIME_MARKERS: "true"
-      MEDIA_ROOT: /media-root
       WEB_PORT: "8080"
-      DASHBOARD_COOKIE_SECURE: "true"
-      DASHBOARD_HTTPS: "true"
-      DASHBOARD_TLS_HOSTS: "localhost,plex-autoplay,host.docker.internal"
-      ANIME_MARKERS_CACHE_FILE: /config/metadata-cache.json
-      ANIME_MARKERS_CACHE_TTL_HOURS: "168"
+      DASHBOARD_COOKIE_SECURE: "${DASHBOARD_COOKIE_SECURE:-false}"
+      DASHBOARD_HTTPS: "${DASHBOARD_HTTPS:-false}"
+      DASHBOARD_TLS_HOSTS: "${DASHBOARD_TLS_HOSTS:-localhost,plex-autoplay,host.docker.internal}"
       LOG_LEVEL: INFO
     volumes:
       - type: bind
         source: /DATA/AppData/plex-autoplay
         target: /config
-      - type: bind
-        source: /media/Storage/Media
-        target: /media-root
-        read_only: true
 
 x-casaos:
   author: self

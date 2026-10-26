@@ -1,24 +1,32 @@
 services:
   plex-autoplay:
-    build: .
+    build:
+      context: .
+      args:
+        PLEX_TOKEN: "${PLEX_TOKEN:-}"
+        PLEX_URL: "${PLEX_URL:-http://host.docker.internal:32400}"
     container_name: plex-autoplay
     restart: unless-stopped
+    security_opt:
+      - "label=disable"
     ports:
       - "${WEB_HOST_PORT:-8080}:8080"
+      - "8081:8081"
     extra_hosts:
       - "host.docker.internal:host-gateway"
     env_file:
       - .env
     environment:
       PLEX_URL: "${PLEX_URL:-http://host.docker.internal:32400}"
-      CUSTOM_MARKERS_FILE: /config/markers.json
-      AUTO_GENERATE_ANIME_MARKERS: "${AUTO_GENERATE_ANIME_MARKERS:-true}"
-      MEDIA_ROOT: /media-root
+      PLEX_TOKEN: "${PLEX_TOKEN:-}"
       WEB_PORT: "8080"
-      DASHBOARD_COOKIE_SECURE: "${DASHBOARD_COOKIE_SECURE:-true}"
-      DASHBOARD_HTTPS: "${DASHBOARD_HTTPS:-true}"
+      DASHBOARD_COOKIE_SECURE: "${DASHBOARD_COOKIE_SECURE:-false}"
+      DASHBOARD_HTTPS: "${DASHBOARD_HTTPS:-false}"
       DASHBOARD_TLS_HOSTS: "${DASHBOARD_TLS_HOSTS:-localhost,plex-autoplay,host.docker.internal}"
-      ANIME_MARKERS_CACHE_FILE: /config/metadata-cache.json
+      REDIS_URL: "${REDIS_URL:-redis://127.0.0.1:6379/0}"
     volumes:
-      - ./config:/config
-      - "${MEDIA_ROOT_HOST:?Defina MEDIA_ROOT_HOST no arquivo .env}:/media-root:ro"
+      - plex-autoplay-config:/config
+      - "${MEDIA_ROOT_HOST:-./media}:/Media:z"
+
+volumes:
+  plex-autoplay-config:
