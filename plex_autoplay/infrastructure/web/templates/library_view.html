@@ -217,43 +217,7 @@
         <div class="section-heading"><div><p class="eyebrow">SÉRIES</p><h2>Conteúdo da biblioteca</h2></div></div>
         
         <div class="card-grid" id="series-grid">
-          {% if series %}
-            {% for ser in series %}
-              <article class="card" data-series="{{ ser.title }}">
-                <header class="card-header">
-                  {% if ser.poster %}
-                    <img class="series-thumb" src="{{ ser.poster }}" alt="{{ ser.title }}">
-                  {% endif %}
-                  <h3 class="series-title">{{ ser.title }}</h3>
-                </header>
-                <div class="card-body">
-                  <ul class="episodes-list">
-                    {% for season in ser.seasons %}
-                      {% for ep in season.episodes %}
-                        <li class="episode-row" data-rating="{{ ep.rating_key }}">
-                          <span class="ep-num">E{{ '%02d'|format(ep.episode) }}</span>
-                          <span class="ep-title" title="{{ ep.title }}">{{ ep.title }}</span>
-                          <div class="marker-inputs">
-                            <label>Intro ini<input type="number" class="mk-intro-start" value="{{ ep.intro.start_ms if ep.intro else '' }}" placeholder="ms"></label>
-                            <label>Intro fim<input type="number" class="mk-intro-end" value="{{ ep.intro.end_ms if ep.intro else '' }}" placeholder="ms"></label>
-                            <label>Cred ini<input type="number" class="mk-cred-start" value="{{ ep.credits if ep.credits is not none else '' }}" placeholder="ms"></label>
-                            <label>Cred fim<input type="number" class="mk-cred-end" value="" placeholder="ms"></label>
-                            <button class="button button-primary save-btn" data-rating="{{ ep.rating_key }}">Salvar</button>
-                          </div>
-                        </li>
-                      {% endfor %}
-                    {% endfor %}
-                  </ul>
-                </div>
-              </article>
-            {% endfor %}
-          {% else %}
-            <div class="empty-state">
-              <div class="empty-icon">📺</div>
-              <h3>Nenhuma série encontrada nesta biblioteca</h3>
-              <p>Execute uma varredura para descobrir episódios.</p>
-            </div>
-          {% endif %}
+          <div class="muted" style="grid-column: 1 / -1; text-align:center; padding:2rem;">Carregando séries…</div>
         </div>
       </section>
     </main>
@@ -263,25 +227,84 @@
   document.addEventListener('DOMContentLoaded', () => {
     const csrf = document.querySelector('meta[name="csrf-token"]').content;
     const sectionKey = '{{ library.key }}';
+    const container = document.getElementById('series-grid');
 
-    // attach save listeners
-    document.querySelectorAll('.save-btn').forEach(btn => {
-      btn.addEventListener('click', async () => {
-        const row = btn.closest('.episode-row');
-        const rk = btn.dataset.rating;
-        const introStart = parseInt(row.querySelector('.mk-intro-start').value) || 0;
-        const introEnd   = parseInt(row.querySelector('.mk-intro-end').value)   || 0;
-        const credStart  = parseInt(row.querySelector('.mk-cred-start').value)  || 0;
-        const credEnd    = parseInt(row.querySelector('.mk-cred-end').value)    || 0;
+    async function loadSeries() {
+      try {
+        const resp = await fetch(`/api/sync/library/${encodeURIComponent(sectionKey)}/tree`, {
+          headers: { 'X-CSRF-Token': csrf }
+        });
+        const data = await resp.json();
+        renderSeries(data.series, container);
+      } catch (e) {
+        container.innerHTML = `<p class="muted" style="color:var(--red); grid-column:1/-1; text-align:center;">Erro ao carregar: ${e}</p>`;
+      }
+    }
 
-        await saveMarker({rating_key:rk, kind:'intro', start_ms:introStart, end_ms:introEnd});
-        if (credStart || credEnd) {
-          await saveMarker({rating_key:rk, kind:'credits', start_ms:credStart, end_ms:credEnd});
-        }
-        btn.textContent = '✔';
-        setTimeout(()=>btn.textContent='Salvar', 1000);
+    function renderSeries(series, container) {
+      if (!series || series.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state" style="grid-column:1/-1;">
+            <div class="empty-icon">📺</div>
+            <h3>Nenhuma série encontrada nesta biblioteca</h3>
+            <p>Execute uma varredura para descobrir episódios.</p>
+          </div>`;
+        return;
+      }
+      let html = '';
+      series.forEach(ser => {
+        const poster = ser.seasons[0]?.episodes[0]?.thumb || '';
+        html += `
+          <article class="card" data-series="${ser.title}">
+            <header class="card-header">
+              ${poster ? `<img class="series-thumb" src="${poster}" alt="${ser.title}">` : ''}
+              <h3 class="series-title">${ser.title}</h3>
+            </header>
+            <div class="card-body">
+              <ul class="episodes-list">`;
+        ser.seasons.forEach(season => {
+          season.episodes.forEach(ep => {
+            const intro = ep.intro || {start_ms:'', end_ms:''};
+            const cred = ep.credits !== null ? ep.credits : '';
+            html += `
+              <li class="episode-row" data-rating="${ep.rating_key}">
+                <span class="ep-num">E${String(ep.episode).padStart(2,'0')}</span>
+                <span class="ep-title" title="${ep.title}">${ep.title}</span>
+                <div class="marker-inputs">
+                  <label>Intro ini<input type="number" class="mk-intro-start" value="${intro.start_ms||''}" placeholder="ms"></label>
+                  <label>Intro fim<input type="number" class="mk-intro-end" value="${intro.end_ms||''}" placeholder="ms"></label>
+                  <label>Cred ini<input type="number" class="mk-cred-start" value="${cred||''}" placeholder="ms"></label>
+                  <label>Cred fim<input type="number" class="mk-cred-end" value="" placeholder="ms"></label>
+                  <button class="button button-primary save-btn" data-rating="${ep.rating_key}">Salvar</button>
+                </div>
+              </li>`;
+        });
+        });
+        html += `</ul></div></article>`;
       });
-    });
+      container.innerHTML = html;
+      attachSaveListeners(container);
+    }
+
+    function attachSaveListeners(container) {
+      container.querySelectorAll('.save-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const row = btn.closest('.episode-row');
+          const rk = btn.dataset.rating;
+          const introStart = parseInt(row.querySelector('.mk-intro-start').value) || 0;
+          const introEnd   = parseInt(row.querySelector('.mk-intro-end').value)   || 0;
+          const credStart  = parseInt(row.querySelector('.mk-cred-start').value)  || 0;
+          const credEnd    = parseInt(row.querySelector('.mk-cred-end').value)    || 0;
+
+          await saveMarker({rating_key:rk, kind:'intro', start_ms:introStart, end_ms:introEnd});
+          if (credStart || credEnd) {
+            await saveMarker({rating_key:rk, kind:'credits', start_ms:credStart, end_ms:credEnd});
+          }
+          btn.textContent = '✔';
+          setTimeout(()=>btn.textContent='Salvar', 1000);
+        });
+      });
+    }
 
     async function saveMarker(body) {
       const resp = await fetch('/api/sync/marker', {
@@ -294,6 +317,9 @@
         alert('Erro ao salvar: ' + (j.error||'desconhecido'));
       }
     }
+
+    // initial load
+    loadSeries();
   });
   </script>
   <script src="{{ url_for('static', filename='dashboard.js') }}" defer></script>
