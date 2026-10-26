@@ -7,9 +7,9 @@ import math
 import os
 import tempfile
 import threading
-from collections.abc import Iterable
+from collections.abc import Iterable, Mapping
 from pathlib import Path
-from typing import ClassVar
+from typing import Any, ClassVar
 
 
 class MarkerConflictError(ValueError):
@@ -60,11 +60,11 @@ class ManualMarkerService:
         series_title: str,
         season: int,
         episode: int,
-        values: dict[str, object],
+        values: Mapping[str, object],
         *,
         confirm_replace: bool = False,
     ) -> dict[str, float]:
-        normalized = self._validate_values(values)
+        normalized = self._validate_values(dict(values))
         if not normalized:
             raise ValueError("Informe pelo menos um marcador para salvar.")
         self._validate_location(series_title, season, episode)
@@ -149,7 +149,7 @@ class ManualMarkerService:
                 if key in self.VALID_FIELDS
             }
 
-    def _read(self) -> dict[str, object]:
+    def _read(self) -> dict[str, dict[str, Any]]:
         if not self.markers_file.exists():
             return {}
         try:
@@ -163,10 +163,10 @@ class ManualMarkerService:
             raise TypeError(
                 f"Formato inválido em {self.markers_file}: esperado um objeto JSON."
             )
-        return data
+        return data  # type: ignore[return-value]
 
     @staticmethod
-    def _find_series_key(data: dict[str, object], title: str) -> str | None:
+    def _find_series_key(data: dict[str, dict[str, Any]], title: str) -> str | None:
         matches = [
             key
             for key, value in data.items()
@@ -195,8 +195,10 @@ class ManualMarkerService:
             raise ValueError("Série, temporada e episódio inválidos.")
 
     @classmethod
-    def _validate_values(cls, values: dict[str, object]) -> dict[str, float]:
-        if not isinstance(values, dict) or not set(values).issubset(cls.VALID_FIELDS):
+    def _validate_values(cls, values: Mapping[str, object]) -> dict[str, float]:
+        if not isinstance(values, Mapping) or not set(values).issubset(
+            cls.VALID_FIELDS
+        ):
             raise ValueError("Campos de marcador inválidos.")
         normalized = {}
         for key, value in values.items():
@@ -212,7 +214,7 @@ class ManualMarkerService:
             raise ValueError("O início da intro não pode ser posterior ao fim.")
         return normalized
 
-    def _write(self, data: dict[str, object]) -> None:
+    def _write(self, data: dict[str, dict[str, Any]]) -> None:
         self.markers_file.parent.mkdir(parents=True, exist_ok=True)
         existing_mode = (
             self.markers_file.stat().st_mode & 0o777

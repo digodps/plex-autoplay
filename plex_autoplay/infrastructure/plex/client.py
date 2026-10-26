@@ -67,7 +67,7 @@ class PlexManager:
         search_sections = preferred_sections + [
             section for section in sections if section not in preferred_sections
         ]
-        matching_shows = []
+        matching_shows: list[Any] = []
         for section in search_sections:
             shows = section.search(title=show_title, libtype="show")
             matching_shows.extend(

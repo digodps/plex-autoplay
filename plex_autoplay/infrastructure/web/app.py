@@ -227,6 +227,43 @@ class AdminStore:
                 except OSError:
                     pass
 
+    def create(self, username: str, password: str, setup_token: str) -> None:
+        """Create initial admin credentials (used by /setup endpoint)."""
+        if not self._env_user and not self._env_pass:
+            # Only allow file-based creation if no env vars are set
+            if self.credentials_path.is_file():
+                raise SetupTokenError("Credenciais administrativas já existem.")
+            if not setup_token:
+                raise SetupTokenError("Token de configuração ausente.")
+            stored_token_path = self.config_dir / "dashboard-setup-token"
+            if not stored_token_path.is_file():
+                raise SetupTokenError("Token de configuração inválido ou expirado.")
+            stored_token = stored_token_path.read_text(encoding="ascii").strip()
+            if not hmac.compare_digest(stored_token, setup_token):
+                raise SetupTokenError("Token de configuração inválido.")
+            # Hash password
+            salt = secrets.token_bytes(16)
+            iterations = self.PASSWORD_HASH_ITERATIONS
+            password_hash = hashlib.pbkdf2_hmac(
+                "sha256", password.encode("utf-8"), salt, iterations
+            )
+            payload = {
+                "username": username,
+                "salt": salt.hex(),
+                "iterations": iterations,
+                "password_hash": password_hash.hex(),
+            }
+            self._write_atomic(
+                self.credentials_path, json.dumps(payload).encode("utf-8")
+            )
+            # Invalidate setup token after use
+            try:
+                stored_token_path.unlink()
+            except OSError:
+                pass
+        else:
+            raise SetupTokenError("Credenciais gerenciadas via variáveis de ambiente.")
+
 
 class LoginLimiter:
     def __init__(self):
@@ -551,12 +588,16 @@ def create_app(
                 plex_libs = []
         # per-section sync status
         with _section_status_lock:
-            sync_status = {
-                lib.get("key"): _section_status.get(lib.get("key"), "idle")
+            sync_status: dict[str, str] = {
+                (lib.get("key") or ""): _section_status.get(
+                    lib.get("key") or "", "idle"
+                )
                 for lib in plex_libs
             }
         # collect show library keys for "scan all"
-        show_keys = [lib.get("key") for lib in plex_libs if lib.get("type") == "show"]
+        show_keys = [
+            (lib.get("key") or "") for lib in plex_libs if lib.get("type") == "show"
+        ]
         totals = {"episodes": 0, "intros": 0, "credits": 0, "missing": 0}
         return render_template(
             "dashboard.html",
@@ -591,7 +632,7 @@ def create_app(
     @authenticated
     def sync_page() -> Any:
         # fetch Plex libraries for sync page (only show type)
-        plex_libs = []
+        plex_libs: list[dict[str, Any]] = []
         cfg = config_store.load()
         plex_url = cfg.get("plex_url")
         plex_token = cfg.get("plex_token")
@@ -604,8 +645,10 @@ def create_app(
                 plex_libs = []
         # per-section sync status
         with _section_status_lock:
-            sync_status = {
-                lib.get("key"): _section_status.get(lib.get("key"), "idle")
+            sync_status: dict[str, str] = {
+                (lib.get("key") or ""): _section_status.get(
+                    lib.get("key") or "", "idle"
+                )
                 for lib in plex_libs
             }
         return render_template(
@@ -676,7 +719,9 @@ def create_app(
 
         from collections import defaultdict
 
-        series_map = defaultdict(lambda: defaultdict(list))
+        series_map: defaultdict[str, defaultdict[int, list[dict[str, Any]]]] = (
+            defaultdict(lambda: defaultdict(list))
+        )
         merged_count = 0
         for ep in episodes:
             rk = str(ep["rating_key"])
@@ -867,9 +912,13 @@ def create_app(
                 values = payload.get("values")
                 if not isinstance(values, dict):
                     raise ValueError("Informe os valores de marcadores em um objeto.")
-                series = payload.get("series", "")
-                season = payload.get("season")
-                episode = payload.get("episode")
+                series = str(payload.get("series", ""))
+                season_raw = payload.get("season")
+                episode_raw = payload.get("episode")
+                if not isinstance(season_raw, int) or not isinstance(episode_raw, int):
+                    raise ValueError("Temporada e episódio devem ser inteiros.")
+                season = season_raw
+                episode = episode_raw
                 result = manual_marker_service.update(
                     series,
                     season,
@@ -883,9 +932,13 @@ def create_app(
                 isinstance(field, str) for field in fields
             ):
                 raise ValueError("Informe os campos a remover como uma lista.")
-            series = payload.get("series", "")
-            season = payload.get("season")
-            episode = payload.get("episode")
+            series = str(payload.get("series", ""))
+            season_raw = payload.get("season")
+            episode_raw = payload.get("episode")
+            if not isinstance(season_raw, int) or not isinstance(episode_raw, int):
+                raise TypeError("Temporada e episódio devem ser inteiros.")
+            season = season_raw
+            episode = episode_raw
             result = manual_marker_service.remove_fields(
                 series,
                 season,
@@ -912,7 +965,7 @@ def create_app(
 
     def _run_scan_job(job_id: str, section_key: str, plex_url: str, plex_token: str):
         # Prepare per-job log queue for SSE streaming
-        log_q = queue.Queue()
+        log_q: queue.Queue[str] = queue.Queue()
 
         class _QueueLogHandler(logging.Handler):
             def __init__(self, q):
@@ -1210,7 +1263,9 @@ def create_app(
 
         from collections import defaultdict
 
-        series_map = defaultdict(lambda: defaultdict(list))
+        series_map: defaultdict[str, defaultdict[int, list[dict[str, Any]]]] = (
+            defaultdict(lambda: defaultdict(list))
+        )
         merged_count = 0
         for ep in episodes:
             rk = str(ep["rating_key"])
@@ -1451,7 +1506,10 @@ def create_app(
         for lib in sections:
             if lib.get("type") != "show":
                 continue
-            sec_key = lib.get("key")
+            sec_key_raw = lib.get("key")
+            if not isinstance(sec_key_raw, str):
+                continue
+            sec_key = sec_key_raw
             # try cache first
             cache_key = f"plex:episodes:{sec_key}"
             cached = redis_client.get(cache_key)
@@ -1527,17 +1585,21 @@ def create_app(
 
         # Extract ratingKeys from library.new / library.updated
         rating_keys = []
-        event = payload.get("event") if isinstance(payload, dict) else None
-        if event in ("library.new", "library.updated"):
-            metadata = payload.get("Metadata") or {}
-            rk = metadata.get("ratingKey")
-            if rk:
-                rating_keys.append(str(rk))
-        # If multiple items (unlikely), also check 'items'
-        for item in payload.get("items", []) if isinstance(payload, dict) else []:
-            rk = item.get("ratingKey")
-            if rk:
-                rating_keys.append(str(rk))
+        if isinstance(payload, dict):
+            event = payload.get("event")
+            if event in ("library.new", "library.updated"):
+                metadata = payload.get("Metadata") or {}
+                rk = metadata.get("ratingKey")
+                if rk:
+                    rating_keys.append(str(rk))
+            # If multiple items (unlikely), also check 'items'
+            items = payload.get("items")
+            if isinstance(items, list):
+                for item in items:
+                    if isinstance(item, dict):
+                        rk = item.get("ratingKey")
+                        if rk:
+                            rating_keys.append(str(rk))
 
         if not rating_keys:
             return "", 200

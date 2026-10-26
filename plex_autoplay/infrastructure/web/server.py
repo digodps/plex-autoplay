@@ -7,7 +7,7 @@ from typing import Any
 
 from cheroot.ssl.builtin import BuiltinSSLAdapter
 from cheroot.wsgi import Server as CherootServer
-from waitress import create_server
+from waitress import create_server  # type: ignore[attr-defined]
 
 from plex_autoplay.infrastructure.web.tls import ensure_self_signed_certificate
 
