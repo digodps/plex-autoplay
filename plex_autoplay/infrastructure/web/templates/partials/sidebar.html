@@ -1,0 +1,12 @@
+<aside class="sidebar">
+  <a class="brand" href="{{ url_for('dashboard') }}"><span class="brand-mark">PA</span><span>Plex Autoplay</span></a>
+  <nav aria-label="Navegação principal">
+    <a class="nav-link {% if active_page == 'dashboard' %}active{% endif %}" href="{{ url_for('dashboard') }}"><span class="nav-icon">▦</span> Visão geral</a>
+    <a class="nav-link {% if active_page == 'config' %}active{% endif %}" href="{{ url_for('config_page') }}"><span class="nav-icon">⚙</span> Configuração</a>
+    <a class="nav-link {% if active_page == 'sync' %}active{% endif %}" href="/sync"><span class="nav-icon">▤</span> Bibliotecas</a>
+  </nav>
+  <div class="sidebar-footer">
+    <span class="connection-dot"></span>
+    <span>Serviço conectado</span>
+  </div>
+</aside>

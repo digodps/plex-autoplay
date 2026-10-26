@@ -26,6 +26,9 @@
       <input id="username" name="username" autocomplete="username" required>
       <label for="password">Senha</label>
       <input id="password" name="password" type="password" autocomplete="{{ 'new-password' if setup else 'current-password' }}" minlength="{{ 8 if setup else 1 }}" required>
+      {% if error %}
+        <p class="field-error" style="color:var(--red);font-size:0.8rem;margin-top:-0.5rem;margin-bottom:0.5rem;">{{ error }}</p>
+      {% endif %}
       {% if setup %}<p class="field-hint">Use uma senha com pelo menos 8 caracteres.</p>{% endif %}
       <button class="button button-primary button-wide" type="submit">{{ "Criar administrador" if setup else "Entrar" }}</button>
     </form>

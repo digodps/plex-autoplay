@@ -9,14 +9,8 @@
 </head>
 <body>
   <div class="app-shell">
-    <aside class="sidebar">
-      <a class="brand" href="{{ url_for('dashboard') }}"><span class="brand-mark">PA</span><span>Plex Autoplay</span></a>
-      <nav aria-label="Navegação principal">
-        <a class="nav-link" href="{{ url_for('dashboard') }}"><span class="nav-icon">▦</span> Visão geral</a>
-        <a class="nav-link active" href="{{ url_for('library_manager') }}"><span class="nav-icon">▤</span> Bibliotecas</a>
-      </nav>
-      <div class="sidebar-footer"><span class="connection-dot"></span><span>Serviço conectado</span></div>
-    </aside>
+    {% set active_page = 'sync' %}
+    {% include 'partials/sidebar.html' %}
 
     <main class="main-content manager-page">
       <header class="topbar">
@@ -61,6 +55,34 @@
           <div id="configured-libraries" class="configured-libraries" aria-live="polite"></div>
           <p class="manager-feedback" id="library-list-feedback" role="status" aria-live="polite"></p>
         </div>
+      </section>
+
+      <section class="content-section">
+        <div class="section-heading"><div><p class="eyebrow">PLEX</p><h2>Bibliotecas do Plex</h2></div></div>
+        {% if plex_libraries %}
+          <div class="card-grid" aria-live="polite">
+            {% for lib in plex_libraries %}
+              <article class="card">
+                {% if lib.thumb_url %}
+                  <img src="{{ lib.thumb_url }}" alt="{{ lib.title }}" style="width:100%;border-radius:6px 6px 0 0;object-fit:cover;height:140px;background:#222;">
+                {% else %}
+                  <div style="height:140px;background:#222;border-radius:6px 6px 0 0;display:flex;align-items:center;justify-content:center;color:#888;">Sem imagem</div>
+                {% endif %}
+                <div style="padding:0.8rem;">
+                  <h3 style="margin:0 0 0.3rem;">{{ lib.title }}</h3>
+                  <span style="font-size:0.85rem;color:var(--muted);">
+                    {% if lib.type == 'show' %}Série
+                    {% elif lib.type == 'movie' %}Filme
+                    {% else %}{{ lib.type }}
+                    {% endif %}
+                  </span>
+                </div>
+              </article>
+            {% endfor %}
+          </div>
+        {% else %}
+          <p class="manager-feedback">Nenhuma biblioteca encontrada no Plex ou credenciais não configuradas.</p>
+        {% endif %}
       </section>
     </main>
   </div>
