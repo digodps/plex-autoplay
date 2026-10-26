@@ -288,7 +288,7 @@
         method: 'POST',
         headers: { 'Content-Type':'application/json', 'X-CSRF-Token': csrf },
         credentials: 'same-origin',
-        body: JSON.stringify(body)
+        body: JSON.stringify({...body, section_key: sectionKey})
       });
       if (!resp.ok) {
         const j = await resp.json();
