@@ -1,20 +1,22 @@
 # Plex‑Autoplay  <img src="https://img.shields.io/badge/Plex%20Autoplay-100%25%20Free-%23E5A00D?style=for-the-badge&logo=plex" alt="Plex Autoplay badge">
 
-> **Automatiza “Pular introdução” e “Próximo episódio” diretamente na API do Plex** – sem watchers de sistema de arquivos, sem `markers.json` locais, 100 % orientado à API oficial do Plex Media Server.
+> **Dashboard web para gerenciar marcadores de intro/créditos no Plex via API oficial** – gera `custom.json` para o **PlexAutoSkip** (embutido) que envia comandos de *seek* aos players compatíveis.
 
----  
+---
 
 ## 🎯  Visão geral
-| Funcionalidade | Como funciona agora |
-|----------------|---------------------|
-| **Descoberta de bibliotecas** | Consulta `GET /library/sections` no Plex e apresenta *cards* com capa, título e tipo (Série / Filme). |
-| **Geração de marcadores** | Para cada episódio, roda a detecção (silêncio, logo, AniDB…) e grava marcadores no arquivo **custom.json** (formato PlexAutoSkip). O **PlexAutoSkip** lê esse arquivo e envia comandos de *seek* aos players compatíveis. |
-| **Execução contínua** | *Polling* configurável (padrão 5 min) **ou** *webhook* `library.new / library.updated` para processamento quase em tempo real. |
-| **Reprodução** | Players compatíveis (Desktop, Android TV, Apple TV) exibem skip automático via PlexAutoSkip. **iOS e Web NÃO funcionam** (protocolo Companion descontinuado). |
-| **Interface Web** | Dashboard único (autenticação + CSRF) para: <br>• Configurar `PLEX_URL` / `PLEX_TOKEN` <br>• Ajustar comportamento do Autoplay <br>• Disparar/acompanhar varreduras com **botão “Cancelar”** que interrompe o job quase instantaneamente <br>• Log em tempo real dentro do card de progresso (expandível com ▼/▶) <br>• Visualizar bibliotecas do Plex como cards |
-| **Infraestrutura** | Um único container Docker que roda **app (Flask + Waitress/Cheroot) + Redis + PlexAutoSkip** via **supervisord** – sem dependências externas. |
+| Funcionalidade | Status |
+|----------------|--------|
+| **Descoberta de bibliotecas** | ✅ Consulta `GET /library/sections` no Plex e apresenta cards com capa, título e tipo. |
+| **Geração de marcadores** | ✅ Scanner manual via UI: roda detecção (ffprobe silence/logo) e grava marcadores no **custom.json** (formato PlexAutoSkip). |
+| **Edição manual de marcadores** | ✅ UI para criar/editar/remover marcadores de intro e créditos por episódio. |
+| **PlexAutoSkip embutido** | ✅ Lê `custom.json` e serve WebSocket na porta 8081 para players compatíveis. |
+| **Interface Web** | ✅ Dashboard único (auth + CSRF): config Plex, bibliotecas, scan manual, logs tempo real. |
+| **Infraestrutura** | ✅ Container único (supervisord): Flask + Redis + PlexAutoSkip. |
 
----  
+> ⚠️ **Auto-skip/auto-next server-side NÃO está implementado** (código removido). O skip funciona apenas via **PlexAutoSkip** nos players compatíveis.
+
+---
 
 ## 📦  Requisitos
 | Item | Versão mínima |
@@ -22,9 +24,9 @@
 | Docker Engine | 24.x |
 | Docker Compose (plugin) | 2.x |
 | Plex Media Server | ≥ 1.22 (API de *markers* nativa) |
-| Conta Plex com **Owner / Admin** (para gerar token com permissão de escrita de markers) | – |
+| Conta Plex com **Owner / Admin** | – |
 
----  
+---
 
 ## 🚀  Início rápido (TL;DR)
 
@@ -33,41 +35,40 @@
 git clone https://github.com/seu-usuario/plex-autoplay.git
 cd plex-autoplay
 
-# 2️⃣  Crie o arquivo .env com suas credenciais (veja “Obtendo o token do Plex”)
+# 2️⃣  Crie o arquivo .env com suas credenciais
 cp .env.example .env
 # edite .env → PLEX_URL=...  PLEX_TOKEN=...  SETUP_TOKEN=seu-token-secreto
 
-# 3️⃣  Build + up  (redis sobe junto via supervisord)
+# 3️⃣  Build + up
 ./start.sh          # ou: docker compose build && docker compose up -d
 
 # 4️⃣  Acesse o dashboard
 # HTTP  : http://localhost:8080
 # HTTPS : https://localhost:8080   (certificado auto‑assinado – aceite o aviso)
 
-# 5️⃣  Crie o usuário admin – o token de *setup* já é o valor de SETUP_TOKEN
-#    → Em ⚙ Configuração → salve URL/Token do Plex
-#    → Em ▤ Bibliotecas → veja os cards das bibliotecas do Plex
-#    → POST /api/plex/scan { "section_key":"1" } → job_id
-#    → GET  /api/plex/scan/<job_id> → quando status=completed, marcadores já estão no Plex
+# 5️⃣  Crie o usuário admin → Em ⚙ Configuração → salve URL/Token do Plex
+#     → Em ▤ Bibliotecas → veja os cards das bibliotecas do Plex
+#     → POST /api/plex/scan { "section_key":"1" } → job_id
+#     → GET  /api/plex/scan/<job_id> → quando status=completed, marcadores já estão no custom.json
 ```
 
----  
+---
 
 ## 🔑  Obtendo o **Plex Token** (Owner / Admin)
 
-1. Abra o **Plex Web App** em um navegador.  
-2. Faça login com a conta **Owner** do servidor (ou uma conta *Admin* convidada).  
-3. Vá em **Configurações → Conta → Token de autenticação** (ou acesse diretamente `https://plex.tv/claim`).  
-4. Copie o token (`XXXXXXXXXXXXXXXXXXXX`).  
-5. Cole no arquivo `.env` na variável `PLEX_TOKEN`.  
+1. Abra o **Plex Web App** em um navegador.
+2. Faça login com a conta **Owner** do servidor (ou uma conta *Admin* convidada).
+3. Vá em **Configurações → Conta → Token de autenticação** (ou acesse `https://plex.tv/claim`).
+4. Copie o token (`XXXXXXXXXXXXXXXXXXXX`).
+5. Cole no arquivo `.env` na variável `PLEX_TOKEN`.
 
 > **Importante:** o token **precisa ter permissão de escrita** (`addMarker` / `removeMarker`). Tokens de contas *restritas* (Home, Managed Users) **não funcionam**.
 
----  
+---
 
 ## 🛡  Primeiro acesso – token pré‑definido (`SETUP_TOKEN`)
 
-Por padrão o sistema gera um token aleatório e o grava em `config/dashboard-setup-token`.  
+Por padrão o sistema gera um token aleatório e o grava em `config/dashboard-setup-token`.
 Para ambientes automatizados (CI/CD, Portainer, Ansible, etc.) você pode **definir o token antes de subir o container**:
 
 ```dotenv
@@ -75,10 +76,10 @@ Para ambientes automatizados (CI/CD, Portainer, Ansible, etc.) você pode **defi
 SETUP_TOKEN=meu-token-super-seguro-123
 ```
 
-* Com `SETUP_TOKEN` presente, a tela **“Criar administrador”** já aceita esse valor – não é necessário copiar do log.  
+* Com `SETUP_TOKEN` presente, a tela **“Criar administrador”** já aceita esse valor.
 * Se a variável **não** estiver definida, o comportamento antigo (geração automática + arquivo) permanece.
 
----  
+---
 
 ## ⚙️  Configuração (via UI ou `.env`)
 
@@ -87,11 +88,6 @@ SETUP_TOKEN=meu-token-super-seguro-123
 | `PLEX_URL` | URL base do PMS (ex.: `http://192.168.1.50:32400`) | `http://localhost:32400` |
 | `PLEX_TOKEN` | Token admin (obrigatório) | – |
 | `SETUP_TOKEN` | Token de *primeiro acesso* (opcional) | *gerado automaticamente* |
-| `AUTO_SKIP_INTRO` | Pular intro automaticamente | `true` |
-| `AUTO_NEXT_EPISODE` | Avançar para próximo episódio automaticamente | `true` |
-| `NEXT_EPISODE_THRESHOLD_SECONDS` | Segundos antes do fim para disparar “próximo” | `15` |
-| `ACTION_DELAY_SECONDS` | Segundos de espera antes de executar a ação (pular/avançar) | `5` |
-| `POLL_INTERVAL_SECONDS` | Intervalo de *polling* de sessões ativas | `2` |
 | `WEBHOOK_SECRET` | Segredo HMAC para validar `X-Plex-Signature` (opcional) | vazio |
 | `WEB_PORT` | Porta do dashboard (interno) | `8080` |
 | `DASHBOARD_HTTPS` | Ativar HTTPS auto‑assinado | `true` |
@@ -106,7 +102,7 @@ SETUP_TOKEN=meu-token-super-seguro-123
 
 Todas as variáveis podem ser alteradas **pela UI** (⚙ Configuração) – o arquivo `config/app-config.json` é atualizado automaticamente e tem prioridade sobre o `.env`.
 
----  
+---
 
 ## 🐳  Docker – detalhes do container único
 
@@ -119,12 +115,12 @@ Todas as variáveis podem ser alteradas **pela UI** (⚙ Configuração) – o a
 +---------------------------+
 ```
 
-* `supervisord.conf` garante restart automático dos três processos.  
-* `REDIS_URL` já vem pronto – o worker RQ consome jobs de varredura (`process_episode`).  
-* **PlexAutoSkip** roda embutido, lendo `/config/plexautoskip/custom.json` e servindo WebSocket na porta 8081.  
+* `supervisord.conf` garante restart automático dos três processos.
+* **Redis** roda mas **não é usado** pelo código da aplicação atualmente (mantido para futuras filas).
+* **PlexAutoSkip** roda embutido, lendo `/config/plexautoskip/custom.json` e servindo WebSocket na porta 8081.
 * Nenhum volume de mídia é necessário; o container só monta o **named volume** `plex-autoplay-config:/config` (persistência de `app-config.json`, `custom.json`, certificado TLS, chaves de sessão).
 
----  
+---
 
 ## 📚  Endpoints da API (autenticados – CSRF)
 
@@ -134,32 +130,32 @@ Todas as variáveis podem ser alteradas **pela UI** (⚙ Configuração) – o a
 | `POST` | `/api/plex/scan` | Inicia varredura completa de uma seção (`{ "section_key": "1" }`). Retorna `job_id`. |
 | `GET`  | `/api/plex/scan/<job_id>` | Status do job (`queued|running|completed|failed|cancelled`, processed, skipped, errors). |
 | `POST` | `/api/plex/scan/<job_id>/cancel` | Solicita cancelamento do job em execução; o worker interrompe quase imediatamente. |
-| `POST` | `/plex/webhook` | Recebe webhook `library.new / library.updated` do Plex (valida `X-Plex-Signature` com `WEBHOOK_SECRET`). |
+| `POST` | `/plex/webhook` | Recebe webhook `library.new / library.updated` do Plex (valida `X-Plex-Signature` com `WEBHOOK_SECRET`). **Atualmente apenas loga o evento.** |
 | `GET`  | `/api/sync/library/<section_key>/tree` | Retorna árvore de séries/episódios com marcadores mesclados (Plex + custom.json). |
 | `POST` | `/api/sync/marker` | Salva/atualiza marcador (`{rating_key, kind, start_ms, end_ms, section_key}`) no custom.json. |
-| `GET`  | `/api/status` | Status do último job (inclui `job_id` quando há job ativo) + métricas de CPU/Mem/Rede. |
-| `GET`  | `/config` / `POST /config` | UI de configuração (também expõe JSON via `GET /api/config` se necessário). |
+| `GET`  | `/api/status` | Status do último job + métricas de CPU/Mem/Rede. |
+| `GET`  | `/config` / `POST /config` | UI de configuração. |
 | `GET`  | `/libraries` | Página “Bibliotecas” – renderiza cards do Plex + botão “Escanear”. |
 | `GET`  | `/library/<section_key>` | Visualização de biblioteca com séries, episódios e edição de marcadores. |
 | `GET`  | `/` | Dashboard – visão geral + último job. |
 
 > Todas as rotas mutantes exigem sessão de admin + token CSRF (`X-CSRF-Token` header ou campo `csrf_token`).
 
----  
+---
 
-## 🔄  Fluxo de varredura (polling + webhook)
+## 🔄  Fluxo de varredura (manual via UI)
 
-1. **Polling** (cron interno a cada `SCAN_INTERVAL_MINUTES`):  
-   `PlexLibraryScanner.scan_section(section_key)` → para cada episódio sem marcadores → `MarkerGenerator.generate(file_path)` → salva marcadores no **custom.json** (formato PlexAutoSkip).  
-2. **Webhook** (opcional, near‑real‑time):  
-   Plex POSTa em `/plex/webhook` → valida HMAC → extrai `ratingKey` → enfileira `process_episode(ratingKey)` no worker RQ.  
-3. **Cancelamento**:  
-   UI exibe botão **“Cancelar”** enquanto o job está `running`; ao clicar envia `POST /api/plex/scan/<job_id>/cancel` → o worker recebe sinal (`threading.Event`) e interrompe o loop de episódios imediatamente.  
-4. **Logs em tempo real**:  
-   O painel de progresso inclui uma área de log expansível (▼/▶) que recebe linhas via **Server‑Sent Events** (`/api/plex/scan/<job_id>/log/stream`).  
-5. **Resultado**: marcadores `intro` / `credits` gravados no **custom.json** → **PlexAutoSkip** lê o arquivo e envia comandos de *seek* aos players compatíveis.
+1. Usuário clica **“Escanear”** em uma biblioteca no dashboard.
+2. `POST /api/plex/scan { "section_key": "1" }` → cria job assíncrono.
+3. `PlexLibraryScanner.scan_section(section_key)`:
+   - Lista episódios via `PlexManager.list_episodes()`
+   - Para cada episódio sem marcadores nativos: roda `MarkerGenerator.generate(file_path)` (ffprobe)
+   - Salva marcadores no **custom.json** (formato PlexAutoSkip).
+4. UI exibe progresso em tempo real via **Server‑Sent Events** (`/api/plex/scan/<job_id>/log/stream`).
+5. Botão **“Cancelar”** interrompe o job quase instantaneamente.
+6. **PlexAutoSkip** lê o `custom.json` atualizado e envia comandos de *seek* aos players compatíveis.
 
----  
+---
 
 ## 🛠  Desenvolvimento / Testes locais
 
@@ -175,20 +171,20 @@ docker compose run --rm plex-autoplay ruff check .
 docker compose run --rm plex-autoplay mypy plex_autoplay
 ```
 
-*O código de detecção de marcadores (`marker_generator.py`) ainda é um *stub* – implemente a lógica real (ffprobe `silencedetect`, logo detection, AniDB, etc.) e rode o helper CLI:*
+*O código de detecção de marcadores (`marker_generator.py`) é um *stub* – implemente a lógica real (ffprobe `silencedetect`, logo detection, AniDB, etc.) e rode o helper CLI:*
 
 ```bash
 docker compose exec plex-autoplay python -m plex_autoplay.application.marker_generator /media/serie/ep01.mkv
 ```
 
----  
+---
 
 ## 📂  Estrutura de pastas (resumo)
 
 ```
 plex-autoplay/
 ├── Dockerfile                # python + redis + supervisor
-├── supervisord.conf          # sobe redis + app
+├── supervisord.conf          # sobe redis + app + plexautoskip
 ├── docker-compose.yml        # stack único (named volume)
 ├── start.sh / stop.sh / logs.sh
 ├── .env.example
@@ -197,41 +193,35 @@ plex-autoplay/
 │   ├── config.py            # Settings (dataclass)
 │   ├── main.py              # entrypoint – apenas dashboard
 │   ├── infrastructure/
+│   │   ├── paths.py         # Paths do PlexAutoSkip (env overrides)
 │   │   ├── plex/client.py   # PlexManager (list_sections, list_episodes, add_marker…)
+│   │   ├── markers/
+│   │   │   └── json_repository.py  # Leitura custom.json + marcadores nativos do Plex
 │   │   └── web/             # Flask app, rotas, templates, static
 │   └── application/
-│       ├── plex_library_scanner.py
-│       └── marker_generator.py
-└── tests/                    # pytest suite
+│       ├── manual_marker_service.py  # CRUD de marcadores manuais (UI)
+│       ├── plex_library_scanner.py   # Scanner Plex → custom.json
+│       └── marker_generator.py       # Detecção via ffprobe (stub)
+└── tests/                    # pytest suite (config, PlexManager, metrics)
 ```
 
----  
-
-## 📖  Documentação adicional
-
-| Arquivo | Conteúdo |
-|---------|----------|
-| `CONTRIBUTING.md` | Guia de contribuição, estilo de código, CI. |
-| `openspec/changes/plex-api-markers-integration/` | Spec completa (proposal, design, tasks, spec). |
-| `docs/specs/` | Especificações legadas (mantidas para histórico). |
-
----  
+---
 
 ## 🛡  Segurança
 
-* **HTTPS** auto‑assinado por padrão (`DASHBOARD_HTTPS=true`). Em produção, substitua os certificados em `config/` por um certificado válido (Let’s Encrypt, etc.) e defina `DASHBOARD_COOKIE_SECURE=true`.  
-* **CSRF** em todas as rotas `POST/PUT/DELETE`.  
-* **Webhook** protegido por HMAC (`WEBHOOK_SECRET`).  
-* Token Plex **nunca** escrito nos logs (mascarado na UI).  
+* **HTTPS** auto‑assinado por padrão (`DASHBOARD_HTTPS=true`). Em produção, substitua os certificados em `config/` por um certificado válido (Let’s Encrypt, etc.) e defina `DASHBOARD_COOKIE_SECURE=true`.
+* **CSRF** em todas as rotas `POST/PUT/DELETE`.
+* **Webhook** protegido por HMAC (`WEBHOOK_SECRET`).
+* Token Plex **nunca** escrito nos logs (mascarado na UI).
 * Container roda como root apenas para permitir que `supervisord` inicie o Redis como `appuser`; o código da aplicação roda com privilégios mínimos.
 
----  
+---
 
 ## 📈  Observabilidade
 
-* Logs estruturados (`JSON`‑ready) – `LOG_LEVEL` controla verbosidade.  
-* Métricas de processo expostas em `/api/status` (CPU, RAM, rede, disco).  
-* Métricas Prometheus opcionais (descomente `prometheus_client` no `requirements.txt` e adicione endpoint `/metrics`).
+* Logs estruturados (`JSON`‑ready) – `LOG_LEVEL` controla verbosidade.
+* Métricas de processo expostas em `/api/status` (CPU, RAM, rede, disco).
+* Métricas Prometheus opcionais (adicione `prometheus_client` no `requirements.txt` e endpoint `/metrics`).
 
 ---
 
@@ -241,34 +231,30 @@ plex-autoplay/
 
 ### Por que não funciona
 
-O PlexAutoSkip depende do protocolo **Plex Companion** para enviar comandos de *seek* (pular intro/créditos) diretamente ao player. A partir de 2023, a Plex **descontinuou oficialmente** o protocolo Companion:
+O PlexAutoSkip depende do protocolo **Plex Companion** para enviar comandos de *seek* diretamente ao player. A partir de 2023, a Plex **descontinuou oficialmente** o protocolo Companion:
 
-- O app **iOS** redesenhado não expõe mais o endpoint de controle remoto local (`/player/playback/seekTo` na porta 32500).
+- O app **iOS** redesenhado não expõe mais o endpoint de controle remoto local.
 - O **Plex Web App** no navegador também não expõe mais essa API.
-- A Plex confirmou oficialmente que o protocolo Companion foi descontinuado e não há planos de restaurá-lo.
-
-> **Posição oficial do Plex:** *"O protocolo Companion foi descontinuado. Use AirPlay (iOS) ou casting para controlar a reprodução."*
+- A Plex confirmou oficialmente que o protocolo Companion foi descontinuado.
 
 ### Clientes que **FUNCIONAM** com PlexAutoSkip
 
-| Cliente | Status | Observação |
-|---------|--------|------------|
-| **Plex Desktop App** (Windows/Mac/Linux) | ✅ Funciona | Expõe player local na porta 32500 |
-| **Plex para Android TV / Google TV** | ✅ Funciona | Porta 32500 acessível |
-| **Plex para Apple TV** | ✅ Funciona | Funciona via Companion |
-| **Plex Home Theater** (legado) | ✅ Funciona | Cliente legado completo |
-| **Plex para Android (Mobile)** | ⚠️ Parcial | Funciona em alguns dispositivos/versões |
-| **Plex para iOS (iPhone/iPad)** | ❌ Não funciona | Protocolo Companion removido |
-| **Plex Web App** (navegador) | ❌ Não funciona | Sem API de controle local |
+| Cliente | Status |
+|---------|--------|
+| **Plex Desktop App** (Windows/Mac/Linux) | ✅ Funciona |
+| **Plex para Android TV / Google TV** | ✅ Funciona |
+| **Plex para Apple TV** | ✅ Funciona |
+| **Plex Home Theater** (legado) | ✅ Funciona |
+| **Plex para Android (Mobile)** | ⚠️ Parcial |
+| **Plex para iOS (iPhone/iPad)** | ❌ Não funciona |
+| **Plex Web App** (navegador) | ❌ Não funciona |
 
 ### Alternativas para usuários iOS/Web
 
-1. **Use o app Plex Desktop** (Windows/Mac/Linux) para assistir – o skip automático funcionará.
-2. **Use AirPlay** do iOS para Apple TV / receptor compatível – o controle passa a ser feito pelo Apple TV.
-3. **Use Chromecast / Google Cast** do navegador/Android para TV/Chromecast.
+1. **Use o app Plex Desktop** – o skip automático funcionará.
+2. **Use AirPlay** do iOS para Apple TV.
+3. **Use Chromecast / Google Cast** do navegador/Android para TV.
 4. **Plex Desktop App** no mesmo servidor – funciona como player controlável.
-
-> **Não há configuração no app iOS/Web atual que reative o protocolo legado.** A remoção é definitiva por decisão da Plex.
 
 ---
 
@@ -276,150 +262,15 @@ O PlexAutoSkip depende do protocolo **Plex Companion** para enviar comandos de *
 
 MIT – veja `LICENSE`.
 
----  
+---
 
 ## 🤝  Suporte / Comunidade
 
-* **Issues** → GitHub Issues (bugs, feature requests).  
-* **Discussões** → GitHub Discussions.  
+* **Issues** → GitHub Issues (bugs, feature requests).
+* **Discussões** → GitHub Discussions.
 * **Discord** → (link opcional) para ajuda rápida.
 
 ---
 
-## ⚙️  CI/CD – GitHub Actions (`.github/workflows/ci.yml`)
-
-```yaml
-name: CI / CD
-
-on:
-  push:
-    branches: [main, develop]
-  pull_request:
-    branches: [main]
-
-env:
-  REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}
-
-jobs:
-  # --------------------------------------------------------------
-  # 1️⃣  Lint, type‑check & unit tests
-  # --------------------------------------------------------------
-  test:
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-          cache: "pip"
-
-      - name: Install deps
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-          pip install ruff mypy pytest pytest-cov
-
-      - name: Lint (ruff)
-        run: ruff check .
-
-      - name: Type‑check (mypy)
-        run: mypy plex_autoplay
-
-      - name: Unit tests (pytest)
-        run: pytest -q --cov=plex_autoplay --cov-report=term-missing
-
-  # --------------------------------------------------------------
-  # 2️⃣  Build & push Docker image (only on tags / main)
-  # --------------------------------------------------------------
-  docker:
-    needs: test
-    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/'))
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write   # needed for GHCR
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Log in to GHCR
-        uses: docker/login-action@v3
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Extract metadata (tags, labels)
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-          tags: |
-            type=ref,event=branch
-            type=ref,event=pr
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=raw,value=latest,enable={{is_default_branch}}
-
-      - name: Build & push
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-  # --------------------------------------------------------------
-  # 3️⃣  Deploy (example – render, k8s, Portainer, etc.)
-  # --------------------------------------------------------------
-  # deploy:
-  #   needs: docker
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: Deploy to …
-  #       run: |
-  #         echo "Add your deploy step here (helm, kubectl, docker compose on remote, etc.)"
-```
-
-**O que o workflow faz**
-
-| Stage | O que executa |
-|-------|----------------|
-| **test** | `ruff`, `mypy`, `pytest` (cobertura) – falha rápido se algo quebrar. |
-| **docker** | Build multi‑arch (via Buildx) e push para **GHCR** (`ghcr.io/<owner>/plex-autoplay`) somente em `main` ou tags (`v0.4.0`). Usa cache de camadas do GitHub Actions para builds rápidos. |
-| **deploy** *(comentado)* | Ponto de extensão – você pode chamar `helm upgrade`, `kubectl apply`, `docker compose` remoto via SSH, etc. |
-
-> **Segredos necessários** (Settings → Secrets → Actions)  
-> * `GITHUB_TOKEN` – já existe automaticamente.  
-> * Se você for fazer push para outro registry (Docker Hub, AWS ECR, etc.) adicione `DOCKERHUB_USERNAME / DOCKERHUB_TOKEN` e troque o step *Log in to GHCR*.
-
----  
-
-## 📦  Como usar a imagem publicada
-
-```bash
-docker pull ghcr.io/seu-usuario/plex-autoplay:latest   # ou v0.4.0
-docker run -d \
-  --name plex-autoplay \
-  -p 8080:8080 \
-  -v plex-autoplay-config:/config \
-  -e PLEX_URL=http://seu-plex:32400 \
-  -e PLEX_TOKEN=xxxxxxxxxxxxxxxxxxxx \
-  -e SETUP_TOKEN=meu-token-seguro \
-  ghcr.io/seu-usuario/plex-autoplay:latest
-```
-
----  
-
 > **Feito com ❤️ para a comunidade Plex.**  
-> *Automatize, relaxe e aproveite seus episódios sem interrupções.* 🎬✨
+> *Gerencie seus marcadores, relaxe e aproveite seus episódios sem interrupções.* 🎬✨
