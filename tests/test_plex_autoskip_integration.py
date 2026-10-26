@@ -25,6 +25,11 @@ class TestPlexAutoSkipIntegration(unittest.TestCase):
     """End-to-end tests for PlexAutoSkip integration."""
 
     def setUp(self):
+        # Patch redis_client to avoid needing a real Redis server
+        self.redis_patcher = patch('plex_autoplay.infrastructure.web.app.redis_client')
+        self.mock_redis = self.redis_patcher.start()
+        self.mock_redis.delete.return_value = None
+
         self.temp_dir = tempfile.TemporaryDirectory()
         base = Path(self.temp_dir.name)
 
@@ -35,6 +40,10 @@ class TestPlexAutoSkipIntegration(unittest.TestCase):
         # Set environment variables to use our test directory
         os.environ["PLEX_AUTOPLAY_CUSTOM_JSON_PATH"] = str(self.plexautoskip_dir / "custom.json")
         os.environ["PLEX_AUTOPLAY_CONFIG_DIR"] = str(self.plexautoskip_dir)
+
+    def tearDown(self):
+        self.redis_patcher.stop()
+        self.temp_dir.cleanup()
 
         # Create minimal custom.json with PlexAutoSkip format
         self.custom_json_path = self.plexautoskip_dir / "custom.json"
