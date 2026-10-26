@@ -62,10 +62,14 @@
                 <label>Tempo limite para próximo episódio (segundos)
                   <input type="number" name="next_episode_threshold_seconds" min="1" value="{{ raw_config.next_episode_threshold_seconds }}">
                 </label>
+                <label>Atraso antes da ação (segundos)
+                  <input type="number" name="action_delay_seconds" min="0" value="{{ raw_config.action_delay_seconds }}">
+                </label>
+              </div>
+              <div class="form-row">
                 <label>Intervalo de polling (segundos)
                   <input type="number" name="poll_interval_seconds" min="1" value="{{ raw_config.poll_interval_seconds }}">
                 </label>
-              </div>
               <div class="form-row">
                 <label>Segundos padrão de início de intro a pular
                   <input type="number" name="default_intro_skip_seconds" min="0" value="{{ raw_config.default_intro_skip_seconds }}">

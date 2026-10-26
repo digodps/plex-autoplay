@@ -31,6 +31,7 @@ class Settings:
     auto_skip_intro: bool = _str_to_bool(os.getenv("AUTO_SKIP_INTRO", "true"), default=True)
     auto_next_episode: bool = _str_to_bool(os.getenv("AUTO_NEXT_EPISODE", "true"), default=True)
     next_episode_threshold_seconds: int = int(os.getenv("NEXT_EPISODE_THRESHOLD_SECONDS", "15"))
+    action_delay_seconds: int = int(os.getenv("ACTION_DELAY_SECONDS", "5"))
     poll_interval_seconds: int = int(os.getenv("POLL_INTERVAL_SECONDS", "2"))
     allowed_client_ids: List[str] = field(default_factory=lambda: _str_to_list(os.getenv("ALLOWED_CLIENT_IDS", "")))
     allowed_usernames: List[str] = field(default_factory=lambda: _str_to_list(os.getenv("ALLOWED_USERNAMES", "")))

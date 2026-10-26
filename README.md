@@ -90,6 +90,7 @@ SETUP_TOKEN=meu-token-super-seguro-123
 | `AUTO_SKIP_INTRO` | Pular intro automaticamente | `true` |
 | `AUTO_NEXT_EPISODE` | Avançar para próximo episódio automaticamente | `true` |
 | `NEXT_EPISODE_THRESHOLD_SECONDS` | Segundos antes do fim para disparar “próximo” | `15` |
+| `ACTION_DELAY_SECONDS` | Segundos de espera antes de executar a ação (pular/avançar) | `5` |
 | `POLL_INTERVAL_SECONDS` | Intervalo de *polling* de sessões ativas | `2` |
 | `DEFAULT_INTRO_SKIP_SECONDS` | Segundos iniciais a pular quando não houver marker | `0` |
 | `SCAN_INTERVAL_MINUTES` | Intervalo do *polling* de varredura completa | `5` |

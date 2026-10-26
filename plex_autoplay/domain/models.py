@@ -12,3 +12,8 @@ class SessionState:
     intro_skipped: bool = False
     next_triggered: bool = False
     last_action_timestamp: float = 0.0
+    # Pending actions with delay
+    pending_skip_intro: bool = False
+    pending_skip_intro_at: float = 0.0
+    pending_next_episode: bool = False
+    pending_next_episode_at: float = 0.0

@@ -70,6 +70,7 @@ class TestController(unittest.TestCase):
             auto_skip_intro=True,
             auto_next_episode=True,
             next_episode_threshold_seconds=15,
+            action_delay_seconds=0,
         )
         self.plex_mock = MagicMock(spec=PlexManager)
         self.marker_mock = MagicMock()

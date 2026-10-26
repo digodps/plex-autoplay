@@ -77,27 +77,34 @@ class PlaybackService:
             self.states[session_key] = state
 
         player_name = getattr(getattr(session, "player", None), "title", "Player")
+        now = time.time()
+        delay = self.config.action_delay_seconds
 
-        if self.config.auto_skip_intro and not state.intro_skipped:
+        # Check and execute pending delayed actions
+        self._process_pending_actions(session, state, player_name, now)
+
+        # Skip intro logic
+        if self.config.auto_skip_intro and not state.intro_skipped and not state.pending_skip_intro:
             intro_markers = self.marker_repository.get_intro_markers(session)
             if intro_markers is not None and should_skip_intro(view_offset, intro_markers):
                 intro_start, intro_end = intro_markers
-                logger.info(
-                    "⏩ [SKIP INTRO] Abertura detectada em '%s' (%d ms até %d ms). Posição atual: %d ms.",
-                    player_name,
-                    intro_start,
-                    intro_end,
-                    view_offset,
-                )
-                player = self.plex_gateway.find_player(session)
-                if player:
-                    if self.plex_gateway.seek_player(player, intro_end):
-                        state.intro_skipped = True
-                        state.last_action_timestamp = time.time()
+                if delay > 0:
+                    state.pending_skip_intro = True
+                    state.pending_skip_intro_at = now + delay
+                    logger.info(
+                        "⏩ [SKIP INTRO] Abertura detectada em '%s' (%d ms até %d ms). "
+                        "Pulará em %ds se posição não mudar. Posição atual: %d ms.",
+                        player_name,
+                        intro_start,
+                        intro_end,
+                        delay,
+                        view_offset,
+                    )
                 else:
-                    logger.warning("Não foi possível encontrar controle remoto para o player '%s'.", player_name)
+                    self._execute_skip_intro(session, state, player_name, intro_end)
 
-        if self.config.auto_next_episode and not state.next_triggered:
+        # Auto next episode logic
+        if self.config.auto_next_episode and not state.next_triggered and not state.pending_next_episode:
             credits_start = self.marker_repository.get_credits_marker(session)
             if should_trigger_next_episode(
                 view_offset,
@@ -105,27 +112,85 @@ class PlaybackService:
                 credits_start,
                 self.config.next_episode_threshold_seconds,
             ):
-                logger.info(
-                    "⏭️ [AUTO NEXT] Final do episódio detectado em '%s' (Restando: %.1fs).",
-                    player_name,
-                    (duration - view_offset) / 1000.0,
+                if delay > 0:
+                    state.pending_next_episode = True
+                    state.pending_next_episode_at = now + delay
+                    logger.info(
+                        "⏭️ [AUTO NEXT] Final do episódio detectado em '%s' (Restando: %.1fs). "
+                        "Avançará em %ds se posição não mudar.",
+                        player_name,
+                        (duration - view_offset) / 1000.0,
+                        delay,
+                    )
+                else:
+                    self._execute_next_episode(session, state, player_name)
+
+    def _process_pending_actions(self, session: Any, state: SessionState, player_name: str, now: float) -> None:
+        """Check and execute any pending delayed actions whose time has come."""
+        # Pending skip intro
+        if state.pending_skip_intro and now >= state.pending_skip_intro_at:
+            state.pending_skip_intro = False
+            # Re-verify condition before executing
+            intro_markers = self.marker_repository.get_intro_markers(session)
+            view_offset = getattr(session, "viewOffset", None)
+            if intro_markers is not None and view_offset is not None and should_skip_intro(view_offset, intro_markers):
+                self._execute_skip_intro(session, state, player_name, intro_markers[1])
+            else:
+                logger.info("⏩ [SKIP INTRO] Cancelado em '%s': condição não mais válida.", player_name)
+
+        # Pending next episode
+        if state.pending_next_episode and now >= state.pending_next_episode_at:
+            state.pending_next_episode = False
+            # Re-verify condition before executing
+            view_offset = getattr(session, "viewOffset", None)
+            duration = getattr(session, "duration", None)
+            credits_start = self.marker_repository.get_credits_marker(session)
+            if (
+                view_offset is not None
+                and duration is not None
+                and should_trigger_next_episode(
+                    view_offset,
+                    duration,
+                    credits_start,
+                    self.config.next_episode_threshold_seconds,
                 )
-                next_episode = self.plex_gateway.get_next_episode(session)
-                if next_episode:
-                    player = self.plex_gateway.find_player(session)
-                    if player:
-                        logger.info(
-                            "Iniciando próximo episódio automaticamente no '%s': S%02dE%02d - %s",
-                            player_name,
-                            next_episode.seasonNumber,
-                            next_episode.episodeNumber,
-                            next_episode.title,
-                        )
-                        if self.plex_gateway.play_media(player, next_episode):
-                            state.next_triggered = True
-                            state.last_action_timestamp = time.time()
-                    else:
-                        logger.warning("Não foi possível controlar o player '%s' para avançar.", player_name)
+            ):
+                self._execute_next_episode(session, state, player_name)
+            else:
+                logger.info("⏭️ [AUTO NEXT] Cancelado em '%s': condição não mais válida.", player_name)
+
+    def _execute_skip_intro(self, session: Any, state: SessionState, player_name: str, intro_end: int) -> None:
+        player = self.plex_gateway.find_player(session)
+        if player:
+            if self.plex_gateway.seek_player(player, intro_end):
+                state.intro_skipped = True
+                state.last_action_timestamp = time.time()
+                logger.info("⏩ [SKIP INTRO] Executado em '%s' para %d ms.", player_name, intro_end)
+            else:
+                logger.warning("Falha ao executar seek no player '%s'.", player_name)
+        else:
+            logger.warning("Não foi possível encontrar controle remoto para o player '%s'.", player_name)
+
+    def _execute_next_episode(self, session: Any, state: SessionState, player_name: str) -> None:
+        next_episode = self.plex_gateway.get_next_episode(session)
+        if next_episode:
+            player = self.plex_gateway.find_player(session)
+            if player:
+                logger.info(
+                    "Iniciando próximo episódio automaticamente no '%s': S%02dE%02d - %s",
+                    player_name,
+                    next_episode.seasonNumber,
+                    next_episode.episodeNumber,
+                    next_episode.title,
+                )
+                if self.plex_gateway.play_media(player, next_episode):
+                    state.next_triggered = True
+                    state.last_action_timestamp = time.time()
+                    logger.info("⏭️ [AUTO NEXT] Executado em '%s'.", player_name)
+                else:
+                    logger.warning("Falha ao iniciar próximo episódio no player '%s'.", player_name)
+            else:
+                logger.warning("Não foi possível controlar o player '%s' para avançar.", player_name)
 
     def clean_stale_sessions(self, active_session_keys: Set[str]) -> None:
         stale_keys = [key for key in self.states if key not in active_session_keys]

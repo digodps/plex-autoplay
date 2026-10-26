@@ -42,6 +42,39 @@ MAX_LOGIN_ATTEMPTS = 5
 logger = logging.getLogger("plex-autoplay.dashboard")
 
 
+def get_custom_json_path() -> pathlib.Path:
+    """Get the path to the PlexAutoSkip custom.json file.
+    Can be overridden via PLEX_AUTOPLAY_CUSTOM_JSON_PATH environment variable.
+    """
+    custom_path = os.getenv("PLEX_AUTOPLAY_CUSTOM_JSON_PATH")
+    if custom_path:
+        return pathlib.Path(custom_path)
+    return pathlib.Path("/config/plexautoskip/custom.json")
+
+
+def get_custom_config_path() -> pathlib.Path:
+    """Get the path to the PlexAutoSkip config.ini file."""
+    custom_path = os.getenv("PLEX_AUTOPLAY_CONFIG_DIR")
+    if custom_path:
+        return pathlib.Path(custom_path) / "config.ini"
+    return pathlib.Path("/config/plexautoskip/config.ini")
+
+
+def get_plexautoskip_dir() -> pathlib.Path:
+    """Get the PlexAutoSkip directory path."""
+    custom_path = os.getenv("PLEX_AUTOPLAY_CONFIG_DIR")
+    if custom_path:
+        return pathlib.Path(custom_path)
+    return pathlib.Path("/config/plexautoskip")
+
+
+PASSWORD_HASH_ITERATIONS = 600_000
+SESSION_LIFETIME_SECONDS = 12 * 60 * 60
+LOGIN_WINDOW_SECONDS = 5 * 60
+MAX_LOGIN_ATTEMPTS = 5
+logger = logging.getLogger("plex-autoplay.dashboard")
+
+
 class SetupTokenError(ValueError):
     """Raised when the one-time dashboard bootstrap token is missing or invalid."""
 
@@ -56,6 +89,7 @@ class ConfigStore:
         "auto_skip_intro",
         "auto_next_episode",
         "next_episode_threshold_seconds",
+        "action_delay_seconds",
         "poll_interval_seconds",
         "allowed_client_ids",
         "allowed_usernames",
@@ -441,6 +475,7 @@ def create_app(
             "auto_skip_intro": form.get("auto_skip_intro") == "on",
             "auto_next_episode": form.get("auto_next_episode") == "on",
             "next_episode_threshold_seconds": int(form.get("next_episode_threshold_seconds", 15)),
+            "action_delay_seconds": int(form.get("action_delay_seconds", 5)),
             "poll_interval_seconds": int(form.get("poll_interval_seconds", 2)),
             "allowed_client_ids": [x.strip() for x in form.get("allowed_client_ids", "").split(",") if x.strip()],
             "allowed_usernames": [x.strip() for x in form.get("allowed_usernames", "").split(",") if x.strip()],

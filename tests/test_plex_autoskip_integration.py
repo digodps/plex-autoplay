@@ -27,13 +27,31 @@ class TestPlexAutoSkipIntegration(unittest.TestCase):
         self.temp_dir = tempfile.TemporaryDirectory()
         base = Path(self.temp_dir.name)
 
-        # Create config directory structure
-        self.config_dir = base / "config"
-        self.plexautoskip_dir = self.config_dir / "plexautoskip"
+        # Create config directory structure at the absolute path that the code expects
+        self.plexautoskip_dir = Path("/config/plexautoskip")
         self.plexautoskip_dir.mkdir(parents=True, exist_ok=True)
+        self.custom_json_path = self.plexautoskip_dir / "custom.json"
 
         # Create minimal custom.json with PlexAutoSkip format
-        self.custom_json_path = self.plexautoskip_dir / "custom.json"
+        initial_custom = {
+            "markers": {
+                "4987": [
+                    {"start": 0, "end": 180000, "type": "intro"},
+                    {"start": 1467893, "end": 1470058, "type": "credits"}
+                ],
+                "5103": [
+                    {"start": 1467953, "end": 1470058, "type": "credits"}
+                ]
+            },
+            "offsets": {},
+            "tags": {},
+            "mode": {},
+            "allowed": {"clients": [], "users": [], "keys": [], "skip-next": []},
+            "blocked": {"clients": [], "users": [], "keys": [], "skip-next": []},
+            "clients": {},
+            "mode": {}
+        }
+        self.custom_json_path = Path("/config/plexautoskip/custom.json")
         initial_custom = {
             "markers": {
                 "4987": [
@@ -55,7 +73,7 @@ class TestPlexAutoSkipIntegration(unittest.TestCase):
         self.custom_json_path.write_text(json.dumps(initial_custom, indent=2), encoding="utf-8")
 
         # Create config.ini for PlexAutoSkip
-        self.config_ini = self.plexautoskip_dir / "config.ini"
+        self.config_ini = Path("/config/plexautoskip/config.ini")
         config_ini_content = """[PlexServer]
 plex_url = http://192.168.18.3:32400
 plex_token = test_token
@@ -111,7 +129,15 @@ tags = intro
 low = 0
 high = 100
 """
+        self.config_ini = Path("/config/plexautoskip/config.ini")
         self.config_ini.write_text(config_ini_content, encoding="utf-8")
+
+        # Ensure the plexautoskip directory exists for the app to write custom.json.tmp
+        Path("/config/plexautoskip").mkdir(parents=True, exist_ok=True)
+
+        # Create config directory for the main app
+        self.config_dir = Path("/tmp/test_config")
+        self.config_dir.mkdir(parents=True, exist_ok=True)
 
         # Create app with test config
         self.app = create_app(
@@ -120,22 +146,6 @@ high = 100
         )
         self.app.config["TESTING"] = True
         self.client = self.app.test_client()
-
-    def tearDown(self):
-        self.temp_dir.cleanup()
-
-    def _get_csrf_token(self):
-        """Helper to get CSRF token from session."""
-        with self.client.session_transaction() as session:
-            return session["_csrf_token"]
-
-    def _login(self):
-        """Helper to login as admin."""
-        # The test setup uses a different auth mechanism
-        # For our tests, we'll mock the authentication
-        with self.client.session_transaction() as session:
-            session["admin"] = "admin"
-            session["_csrf_token"] = "test-csrf-token"
 
     def test_custom_json_has_correct_structure(self):
         """Test that custom.json has the correct PlexAutoSkip format."""
@@ -376,8 +386,9 @@ class TestPlexLibraryScannerIntegration(unittest.TestCase):
         mock_manager.list_episodes.assert_called_once_with("4")
         self.assertEqual(result.processed, 1)
 
+    @patch("plex_autoplay.application.plex_library_scanner.generate_with_xml")
     @patch("plex_autoplay.infrastructure.plex.client.PlexManager")
-    def test_scan_library_merges_custom_intro_marker(self, mock_plex_manager_class):
+    def test_scan_library_merges_custom_intro_marker(self, mock_plex_manager_class, mock_generate):
         """Test that custom.json intro marker is merged with Plex data."""
         mock_manager = MagicMock()
         mock_plex_manager_class.return_value = mock_manager
@@ -396,7 +407,10 @@ class TestPlexLibraryScannerIntegration(unittest.TestCase):
             }
         ]
 
-        scanner = PlexLibraryScanner(mock_manager)
+        # Mock generate_with_xml to return intro marker
+        mock_generate.return_value = ({"intro": {"start_ms": 0, "end_ms": 180000}}, None)
+
+        scanner = PlexLibraryScanner(MagicMock())
         result = scanner.scan_section("4")
 
         # The scanner should process the episode
