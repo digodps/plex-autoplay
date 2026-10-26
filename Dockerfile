@@ -21,8 +21,16 @@ WORKDIR /app
 COPY --chown=appuser:appuser requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
+# ---------- install PlexAutoSkip from source ----------
+RUN git clone https://github.com/mdhiggins/PlexAutoSkip.git /opt/plexautoskip \
+    && pip install --no-cache-dir -r /opt/plexautoskip/setup/requirements.txt
+
+# ---------- copy startup script ----------
+COPY --chown=appuser:appuser start_autoskip.sh /app/start_autoskip.sh
+
 # ---------- application code ----------
 COPY --chown=appuser:appuser . .
+RUN chmod +x /app/start_autoskip.sh
 
 # ---------- supervisord config ----------
 COPY --chown=appuser:appuser supervisord.conf /etc/supervisor/conf.d/supervisord.conf

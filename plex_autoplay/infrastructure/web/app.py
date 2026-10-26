@@ -555,14 +555,14 @@ def create_app(
         episodes = manager.list_episodes_with_markers(section_key)
         app.logger.info(f"[library_view] Got {len(episodes)} episodes from Plex for section {section_key}")
 
-        # Load custom.json (manual markers from UI)
+        # Load custom.json (manual markers from UI) - PlexAutoSkip list format
         CUSTOM_JSON_PATH = pathlib.Path("/config/plexautoskip/custom.json")
         custom_data = {}
         if CUSTOM_JSON_PATH.is_file():
             try:
                 custom_data = json.loads(CUSTOM_JSON_PATH.read_text(encoding="utf-8"))
-                app.logger.info(f"[library_view] Loaded custom.json with {len(custom_data)} entries")
-                for i, (k, v) in enumerate(custom_data.items()):
+                app.logger.info(f"[library_view] Loaded custom.json with {len(custom_data.get('markers', {}))} marker entries")
+                for i, (k, v) in enumerate(custom_data.get("markers", {}).items()):
                     if i < 3:
                         app.logger.info(f"[library_view] custom.json entry: {k} -> {v}")
             except Exception as e:
@@ -576,10 +576,25 @@ def create_app(
         merged_count = 0
         for ep in episodes:
             rk = str(ep["rating_key"])
-            custom_entry = custom_data.get(rk, {})
-            # Merge Plex markers with custom.json markers
-            intro = ep.get("intro") or custom_entry.get("intro")
-            raw_credits = ep.get("credits_ms") or custom_entry.get("credits")
+            custom_entry = custom_data.get("markers", {}).get(rk, [])
+            # Merge Plex markers with custom.json markers (list format)
+            intro = ep.get("intro")
+            raw_credits = ep.get("credits_ms")
+            
+            # Extract custom markers from list format
+            custom_intro = None
+            custom_credits = None
+            if isinstance(custom_entry, list):
+                for marker in custom_entry:
+                    if marker.get("type") == "intro":
+                        custom_intro = {"start": marker.get("start"), "end": marker.get("end")}
+                    elif marker.get("type") == "credits":
+                        custom_credits = {"start": marker.get("start"), "end": marker.get("end")}
+            
+            # Merge: custom.json takes precedence over Plex markers
+            intro = custom_intro or ep.get("intro")
+            raw_credits = custom_credits or ep.get("credits_ms")
+            
             # Normalize credits to dict with start_ms/end_ms (support both naming conventions)
             if isinstance(raw_credits, dict):
                 credits_start = raw_credits.get("start_ms") or raw_credits.get("start")
@@ -591,7 +606,16 @@ def create_app(
             if custom_entry:
                 merged_count += 1
                 if merged_count <= 3:
-                    app.logger.info(f"[library_view] Merged episode {rk}: intro={intro}, credits_start={credits_start}, credits_end={credits_end} (plex_intro={ep.get('intro')}, custom_intro={custom_entry.get('intro')}, plex_credits={ep.get('credits_ms')}, custom_credits={custom_entry.get('credits')})")
+                    # Extract intro/credits from list for logging
+                    log_intro = None
+                    log_credits = None
+                    if isinstance(custom_entry, list):
+                        for m in custom_entry:
+                            if m.get("type") == "intro":
+                                log_intro = {"start": m.get("start"), "end": m.get("end")}
+                            elif m.get("type") == "credits":
+                                log_credits = {"start": m.get("start"), "end": m.get("end")}
+                    app.logger.info(f"[library_view] Merged episode {rk}: intro={intro}, credits_start={credits_start}, credits_end={credits_end} (plex_intro={ep.get('intro')}, custom_intro={log_intro}, plex_credits={ep.get('credits_ms')}, custom_credits={log_credits})")
             
             series_title = ep.get("series_title") or "Desconhecido"
             season_num = ep.get("season") or 0
@@ -1018,15 +1042,15 @@ def create_app(
         episodes = manager.list_episodes_with_markers(section_key)
         app.logger.info(f"[sync_tree] Got {len(episodes)} episodes from Plex for section {section_key}")
 
-        # Load custom.json (manual markers from UI)
+        # Load custom.json (manual markers from UI) - PlexAutoSkip list format
         CUSTOM_JSON_PATH = pathlib.Path("/config/plexautoskip/custom.json")
         custom_data = {}
         if CUSTOM_JSON_PATH.is_file():
             try:
                 custom_data = json.loads(CUSTOM_JSON_PATH.read_text(encoding="utf-8"))
-                app.logger.info(f"[sync_tree] Loaded custom.json with {len(custom_data)} entries")
+                app.logger.info(f"[sync_tree] Loaded custom.json with {len(custom_data.get('markers', {}))} marker entries")
                 # Log first few entries for debugging
-                for i, (k, v) in enumerate(custom_data.items()):
+                for i, (k, v) in enumerate(custom_data.get("markers", {}).items()):
                     if i < 3:
                         app.logger.info(f"[sync_tree] custom.json entry: {k} -> {v}")
             except Exception as e:
@@ -1040,10 +1064,25 @@ def create_app(
         merged_count = 0
         for ep in episodes:
             rk = str(ep["rating_key"])
-            custom_entry = custom_data.get(rk, {})
-            # Merge Plex markers with custom.json markers
-            intro = ep.get("intro") or custom_entry.get("intro")
-            raw_credits = ep.get("credits_ms") or custom_entry.get("credits")
+            custom_entry = custom_data.get("markers", {}).get(rk, [])
+            # Merge Plex markers with custom.json markers (list format)
+            intro = ep.get("intro")
+            raw_credits = ep.get("credits_ms")
+            
+            # Extract custom markers from list format
+            custom_intro = None
+            custom_credits = None
+            if isinstance(custom_entry, list):
+                for marker in custom_entry:
+                    if marker.get("type") == "intro":
+                        custom_intro = {"start": marker.get("start"), "end": marker.get("end")}
+                    elif marker.get("type") == "credits":
+                        custom_credits = {"start": marker.get("start"), "end": marker.get("end")}
+            
+            # Merge: custom.json takes precedence over Plex markers
+            intro = custom_intro or ep.get("intro")
+            raw_credits = custom_credits or ep.get("credits_ms")
+            
             # Normalize credits to dict with start_ms/end_ms (support both naming conventions)
             if isinstance(raw_credits, dict):
                 credits_start = raw_credits.get("start_ms") or raw_credits.get("start")
@@ -1056,7 +1095,16 @@ def create_app(
             if custom_entry:
                 merged_count += 1
                 if merged_count <= 3:
-                    app.logger.info(f"[sync_tree] Merged episode {rk}: intro={intro}, credits_start={credits_start}, credits_end={credits_end} (plex_intro={ep.get('intro')}, custom_intro={custom_entry.get('intro')}, plex_credits={ep.get('credits_ms')}, custom_credits={custom_entry.get('credits')})")
+                    # Extract intro/credits from list for logging
+                    log_intro = None
+                    log_credits = None
+                    if isinstance(custom_entry, list):
+                        for m in custom_entry:
+                            if m.get("type") == "intro":
+                                log_intro = {"start": m.get("start"), "end": m.get("end")}
+                            elif m.get("type") == "credits":
+                                log_credits = {"start": m.get("start"), "end": m.get("end")}
+                    app.logger.info(f"[sync_tree] Merged episode {rk}: intro={intro}, credits_start={credits_start}, credits_end={credits_end} (plex_intro={ep.get('intro')}, custom_intro={log_intro}, plex_credits={ep.get('credits_ms')}, custom_credits={log_credits})")
             
             series_title = ep.get("series_title") or "Desconhecido"
             season_num = ep.get("season") or 0
@@ -1107,18 +1155,59 @@ def create_app(
         if kind not in ("intro", "credits"):
             return jsonify(error="kind deve ser 'intro' ou 'credits'"), 400
 
-        # write to custom.json (shared with PlexAutoSkip)
+        # write to custom.json (shared with PlexAutoSkip) - PlexAutoSkip expects list format
         CUSTOM_JSON = pathlib.Path("/config/plexautoskip/custom.json")
         with _CUSTOM_LOCK:
-            data_json = {}
+            data_json = {"markers": {}, "offsets": {}, "tags": {}, "mode": {}, "allowed": {"clients": [], "users": [], "keys": [], "skip-next": []}, "blocked": {"clients": [], "users": [], "keys": [], "skip-next": []}, "clients": {}, "mode": {}}
             if CUSTOM_JSON.is_file():
                 try:
                     data_json = json.loads(CUSTOM_JSON.read_text(encoding="utf-8"))
                 except json.JSONDecodeError:
-                    data_json = {}
-            entry = data_json.get(rk, {})
-            entry[kind] = {"start_ms": start, "end_ms": end}
-            data_json[rk] = entry
+                    pass  # keep defaults
+            
+            # Ensure markers key exists with list format
+            markers = data_json.get("markers", {})
+            if not isinstance(markers, dict):
+                markers = {}
+            
+            # Convert existing entry to list format if needed
+            marker_list = markers.get(rk, [])
+            if isinstance(marker_list, dict):
+                # Convert old dict format to list
+                new_list = []
+                if "intro" in marker_list and isinstance(marker_list["intro"], dict):
+                    intro = marker_list["intro"]
+                    start = intro.get("start", intro.get("start_ms", 0))
+                    end = intro.get("end", intro.get("end_ms", 0))
+                    if start is not None and end is not None:
+                        marker_list = [{"start": int(start), "end": int(end), "type": "intro"}]
+                elif "credits" in marker_list and isinstance(marker_list["credits"], dict):
+                    credits = marker_list["credits"]
+                    start = credits.get("start", credits.get("start_ms", 0))
+                    end = credits.get("end", credits.get("end_ms", 0))
+                    if start is not None and end is not None:
+                        marker_list = [{"start": int(start), "end": int(end), "type": "credits"}]
+                else:
+                    marker_list = []
+            
+            # Update or add the marker
+            # Remove existing marker of same type
+            marker_list = [m for m in marker_list if m.get("type") != kind]
+            # Add new marker
+            marker_list.append({"start": int(start), "end": int(end), "type": kind})
+            
+            markers[rk] = marker_list
+            
+            # Build complete data structure
+            data_json["markers"] = markers
+            data_json["offsets"] = data_json.get("offsets", {})
+            data_json["tags"] = data_json.get("tags", {})
+            data_json["mode"] = data_json.get("mode", {})
+            data_json["allowed"] = data_json.get("allowed", {"clients": [], "users": [], "keys": [], "skip-next": []})
+            data_json["blocked"] = data_json.get("blocked", {"clients": [], "users": [], "keys": [], "skip-next": []})
+            data_json["clients"] = data_json.get("clients", {})
+            data_json["mode"] = data_json.get("mode", {})
+            
             tmp = CUSTOM_JSON.with_suffix(".tmp")
             tmp.write_text(json.dumps(data_json, ensure_ascii=False, indent=2), encoding="utf-8")
             tmp.replace(CUSTOM_JSON)
@@ -1146,7 +1235,7 @@ def create_app(
         manager = PlexManager(plex_url, plex_token)
         sections = manager.list_library_sections()
 
-        # Load custom.json (PlexAutoSkip markers)
+        # Load custom.json (PlexAutoSkip markers) - list format
         CUSTOM_JSON_PATH = Path("/config/plexautoskip/custom.json")
         custom_data = {}
         if CUSTOM_JSON_PATH.is_file():
@@ -1179,9 +1268,16 @@ def create_app(
             for ep in episodes:
                 total_eps += 1
                 rk = str(ep.get("rating_key"))
-                custom_entry = custom_data.get(rk, {})
-                has_intro = (ep.get("intro") is not None) or ("intro" in custom_entry)
-                has_credits = (ep.get("credits_ms") is not None) or ("credits" in custom_entry)
+                custom_entry = custom_data.get("markers", {}).get(rk, [])
+                # Check for intro/credits in list format
+                has_intro = ep.get("intro") is not None
+                has_credits = ep.get("credits_ms") is not None
+                if isinstance(custom_entry, list):
+                    for marker in custom_entry:
+                        if marker.get("type") == "intro":
+                            has_intro = True
+                        elif marker.get("type") == "credits":
+                            has_credits = True
                 if has_intro:
                     intro_cnt += 1
                 if has_credits:
