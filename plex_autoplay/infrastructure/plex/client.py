@@ -180,3 +180,108 @@ class PlexManager:
         except Exception as error:
             logger.error("Erro ao calcular próximo episódio: %s", error)
         return None
+
+    def list_library_sections(self) -> List[dict]:
+        """Return a list of library sections with title, type, thumb_url."""
+        server = self.get_server()
+        result = []
+        for section in server.library.sections():
+            thumb = getattr(section, "thumb", None)
+            thumb_url = f"{self.url}{thumb}?X-Plex-Token={self.token}" if thumb else None
+            result.append({
+                "key": section.key,
+                "title": section.title,
+                "type": section.type,
+                "thumb": thumb,
+                "thumb_url": thumb_url,
+            })
+        return result
+
+    def list_episodes(self, section_key: str) -> List[dict]:
+        """Return simplified episode list for a library section."""
+        server = self.get_server()
+        section = server.library.sectionByID(int(section_key))
+        eps = section.searchEpisodes()
+        out = []
+        for ep in eps:
+            file_path = None
+            if ep.media:
+                part = ep.media[0].parts[0]
+                file_path = part.file
+            thumb = f"{self.url}{ep.thumb}?X-Plex-Token={self.token}" if ep.thumb else None
+            out.append({
+                "rating_key": ep.ratingKey,
+                "title": ep.title,
+                "season": ep.seasonNumber,
+                "episode": ep.episodeNumber,
+                "file_path": file_path,
+                "thumb_url": thumb,
+            })
+        return out
+
+    def list_episodes_with_markers(self, section_key: str) -> List[dict]:
+        """Return episodes with marker info (intro/credits) and series title."""
+        server = self.get_server()
+        section = server.library.sectionByID(int(section_key))
+        eps = section.searchEpisodes()
+        out = []
+        for ep in eps:
+            # marker check
+            has_intro = any(m.type == "intro" for m in ep.markers)
+            has_credits = any(m.type == "credits" for m in ep.markers)
+            # series title
+            try:
+                show = ep.show()
+                series_title = show.title
+            except Exception:
+                series_title = ""
+            file_path = None
+            if ep.media:
+                part = ep.media[0].parts[0]
+                file_path = part.file
+            thumb = f"{self.url}{ep.thumb}?X-Plex-Token={self.token}" if ep.thumb else None
+            out.append({
+                "rating_key": ep.ratingKey,
+                "title": ep.title,
+                "season": ep.seasonNumber,
+                "episode": ep.episodeNumber,
+                "series_title": series_title,
+                "has_intro": has_intro,
+                "has_credits": has_credits,
+                "file_path": file_path,
+                "thumb_url": thumb,
+            })
+        return out
+
+    def get_episode(self, rating_key: str) -> Any:
+        server = self.get_server()
+        # rating_key is numeric ID; fetchItem expects a full path
+        return server.fetchItem(f"/library/metadata/{rating_key}")
+
+    def add_marker(self, episode: Any, mtype: str, start_ms: int, end_ms: int) -> None:
+        """Add or update a marker on the episode via the raw Plex REST API.
+        This bypasses the need for a fully-loaded Episode object."""
+        rating_key = getattr(episode, "ratingKey", None) or getattr(episode, "rating_key", None)
+        if not rating_key:
+            raise ValueError("Episode object has no ratingKey")
+
+        # Plex endpoint: PUT /library/metadata/<ratingKey>/markers
+        # Expected form fields: type (intro|credits), start (ms), end (ms)
+        url_path = f"/library/metadata/{rating_key}/markers"
+        payload = {
+            "type": mtype,          # "intro" or "credits"
+            "start": start_ms,
+            "end": end_ms,
+        }
+
+        server = self.get_server()
+        full_url = server.url(url_path)
+        headers = server._headers()
+        # Plex uses PUT to create/update markers
+        resp = server._session.put(full_url, data=payload, headers=headers)
+        resp.raise_for_status()
+
+    def remove_marker(self, episode: Any, mtype: str) -> None:
+        for m in list(episode.markers):
+            if m.type == mtype:
+                episode.removeMarker(m)

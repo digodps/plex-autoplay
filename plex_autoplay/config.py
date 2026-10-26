@@ -34,23 +34,7 @@ class Settings:
     poll_interval_seconds: int = int(os.getenv("POLL_INTERVAL_SECONDS", "2"))
     allowed_client_ids: List[str] = field(default_factory=lambda: _str_to_list(os.getenv("ALLOWED_CLIENT_IDS", "")))
     allowed_usernames: List[str] = field(default_factory=lambda: _str_to_list(os.getenv("ALLOWED_USERNAMES", "")))
-    custom_markers_file: str = os.getenv("CUSTOM_MARKERS_FILE", "markers.json")
     default_intro_skip_seconds: int = int(os.getenv("DEFAULT_INTRO_SKIP_SECONDS", "0"))
-    auto_generate_anime_markers: bool = _str_to_bool(
-        os.getenv("AUTO_GENERATE_ANIME_MARKERS", "false"),
-        default=False,
-    )
-    anime_media_dir: str = os.getenv("ANIME_MEDIA_DIR", "/media/anime")
-    anime_media_dirs: List[str] = field(
-        default_factory=lambda: _str_to_list(os.getenv("ANIME_MEDIA_DIRS", ""))
-        or [os.getenv("ANIME_MEDIA_DIR", "/media/anime")]
-    )
-    series_media_dir: str = os.getenv("SERIES_MEDIA_DIR", "/media/series")
-    series_media_dirs: List[str] = field(
-        default_factory=lambda: _str_to_list(os.getenv("SERIES_MEDIA_DIRS", ""))
-        or [os.getenv("SERIES_MEDIA_DIR", "/media/series")]
-    )
-    media_root: str = os.getenv("MEDIA_ROOT", "/media-root")
     config_dir: str = os.getenv("CONFIG_DIR", "/config")
     dashboard_port: int = int(os.getenv("WEB_PORT", "8080"))
     dashboard_cookie_secure: bool = _str_to_bool(os.getenv("DASHBOARD_COOKIE_SECURE", "true"), default=True)
@@ -60,12 +44,13 @@ class Settings:
             os.getenv("DASHBOARD_TLS_HOSTS", "localhost,plex-autoplay,host.docker.internal")
         )
     )
-    anime_markers_cache_file: str = os.getenv(
-        "ANIME_MARKERS_CACHE_FILE",
-        "/config/metadata-cache.json",
-    )
-    anime_markers_cache_ttl_hours: int = int(os.getenv("ANIME_MARKERS_CACHE_TTL_HOURS", "168"))
     log_level: str = os.getenv("LOG_LEVEL", "INFO").upper()
+    # New Plex‑centric settings
+    scan_interval_minutes: int = int(os.getenv("SCAN_INTERVAL_MINUTES", "5"))
+    webhook_secret: str = os.getenv("WEBHOOK_SECRET", "")
+    worker_backend: str = os.getenv("WORKER_BACKEND", "rq")  # "sync" or "rq"
+    redis_url: str = os.getenv("REDIS_URL", "redis://127.0.0.1:6379/0")
+    enable_fs_watcher: bool = _str_to_bool(os.getenv("ENABLE_FS_WATCHER", "false"), default=False)
 
     def validate(self) -> None:
         if not self.plex_url:
@@ -78,8 +63,6 @@ class Settings:
             raise ValueError("NEXT_EPISODE_THRESHOLD_SECONDS deve ser de pelo menos 1 segundo.")
         if self.poll_interval_seconds < 1:
             raise ValueError("POLL_INTERVAL_SECONDS deve ser de pelo menos 1 segundo.")
-        if self.anime_markers_cache_ttl_hours < 0:
-            raise ValueError("ANIME_MARKERS_CACHE_TTL_HOURS não pode ser negativo.")
         if not 1 <= self.dashboard_port <= 65535:
             raise ValueError("WEB_PORT deve estar entre 1 e 65535.")
 
