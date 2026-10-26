@@ -6,12 +6,11 @@
     
     {% if plex_libraries %}
     <hr class="nav-divider">
-    <span class="nav-section-label">Bibliotecas</span>
     {% for lib in plex_libraries %}
       {% if lib.type == 'show' %}
         <a class="nav-link {% if active_library == lib.key %}active{% endif %}" 
            href="{{ url_for('library_view', section_key=lib.key) }}">
-          <span class="nav-icon">☐</span>
+          <span class="nav-icon">▤</span>
           {{ lib.title }}
         </a>
       {% endif %}
