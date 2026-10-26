@@ -10,6 +10,7 @@ import hmac
 import json
 import logging
 import os
+import pathlib
 import queue
 import redis
 from pathlib import Path
@@ -549,43 +550,53 @@ def create_app(
         if not library:
             return render_template("library_view.html", library=None, series=[], error="Biblioteca não encontrada", plex_libraries=plex_libs, section_key=section_key)
 
-        # Get series tree (reuse the sync_library_tree logic)
-        cache_key = f"plex:sync_tree:{section_key}"
-        cached = redis_client.get(cache_key)
-        if cached:
-            tree_data = json.loads(cached)
-        else:
-            episodes = manager.list_episodes_with_markers(section_key)
-            from collections import defaultdict
-            series_map = defaultdict(lambda: defaultdict(list))
-            for ep in episodes:
-                series_title = ep.get("series_title") or "Desconhecido"
-                season_num = ep.get("season") or 0
-                series_map[series_title][season_num].append({
-                    "rating_key": ep["rating_key"],
-                    "episode": ep["episode"],
-                    "title": ep["title"],
-                    "thumb": ep.get("thumb_url"),
-                    "intro": ep.get("intro"),
-                    "credits": ep.get("credits_ms"),
+        # Get series tree (reuse the sync_library_tree logic) without cache
+        episodes = manager.list_episodes_with_markers(section_key)
+
+        # Load custom.json (manual markers from UI)
+        CUSTOM_JSON_PATH = pathlib.Path("/config/plexautoskip/custom.json")
+        custom_data = {}
+        if CUSTOM_JSON_PATH.is_file():
+            try:
+                custom_data = json.loads(CUSTOM_JSON_PATH.read_text(encoding="utf-8"))
+            except Exception:
+                custom_data = {}
+
+        from collections import defaultdict
+        series_map = defaultdict(lambda: defaultdict(list))
+        for ep in episodes:
+            rk = str(ep["rating_key"])
+            custom_entry = custom_data.get(rk, {})
+            # Merge Plex markers with custom.json markers
+            intro = ep.get("intro") or custom_entry.get("intro")
+            credits = ep.get("credits_ms") or custom_entry.get("credits")
+
+            series_title = ep.get("series_title") or "Desconhecido"
+            season_num = ep.get("season") or 0
+            series_map[series_title][season_num].append({
+                "rating_key": ep["rating_key"],
+                "episode": ep["episode"],
+                "title": ep["title"],
+                "thumb": ep.get("thumb_url"),
+                "intro": intro,
+                "credits": credits,
+            })
+        tree = []
+        for s_title, seasons in series_map.items():
+            season_list = []
+            for s_num in sorted(seasons):
+                season_list.append({
+                    "season": s_num,
+                    "episodes": sorted(seasons[s_num], key=lambda e: e["episode"])
                 })
-            tree = []
-            for s_title, seasons in series_map.items():
-                season_list = []
-                for s_num in sorted(seasons):
-                    season_list.append({
-                        "season": s_num,
-                        "episodes": sorted(seasons[s_num], key=lambda e: e["episode"])
-                    })
-                # Get poster from first episode of first season
-                first_ep = seasons[sorted(seasons.keys())[0]][0] if seasons else None
-                tree.append({
-                    "title": s_title, 
-                    "seasons": season_list,
-                    "poster": first_ep.get("thumb") if first_ep else None
-                })
-            tree_data = {"section_key": section_key, "series": tree}
-            redis_client.setex(cache_key, 300, json.dumps(tree_data))
+            # Get poster from first episode of first season
+            first_ep = seasons[sorted(seasons.keys())[0]][0] if seasons else None
+            tree.append({
+                "title": s_title,
+                "seasons": season_list,
+                "poster": first_ep.get("thumb") if first_ep else None
+            })
+        tree_data = {"section_key": section_key, "series": tree}
         
         return render_template("library_view.html", library=library, series=tree_data.get("series", []), plex_libraries=plex_libs, section_key=section_key)
 
@@ -977,9 +988,24 @@ def create_app(
         manager = PlexManager(plex_url, plex_token)
         episodes = manager.list_episodes_with_markers(section_key)
 
+        # Load custom.json (manual markers from UI)
+        CUSTOM_JSON_PATH = pathlib.Path("/config/plexautoskip/custom.json")
+        custom_data = {}
+        if CUSTOM_JSON_PATH.is_file():
+            try:
+                custom_data = json.loads(CUSTOM_JSON_PATH.read_text(encoding="utf-8"))
+            except Exception:
+                custom_data = {}
+
         from collections import defaultdict
         series_map = defaultdict(lambda: defaultdict(list))
         for ep in episodes:
+            rk = str(ep["rating_key"])
+            custom_entry = custom_data.get(rk, {})
+            # Merge Plex markers with custom.json markers
+            intro = ep.get("intro") or custom_entry.get("intro")
+            credits = ep.get("credits_ms") or custom_entry.get("credits")
+            
             series_title = ep.get("series_title") or "Desconhecido"
             season_num = ep.get("season") or 0
             series_map[series_title][season_num].append({
@@ -987,8 +1013,8 @@ def create_app(
                 "episode": ep["episode"],
                 "title": ep["title"],
                 "thumb": ep.get("thumb_url"),
-                "intro": ep.get("intro"),
-                "credits": ep.get("credits_ms"),
+                "intro": intro,
+                "credits": credits,
             })
 
         tree = []
@@ -1003,7 +1029,7 @@ def create_app(
 
         payload = {"section_key": section_key, "series": tree}
         redis_client.setex(cache_key, 300, json.dumps(payload))
-        return jsonify(payload), 200, {"X-Cache": "MISS"}
+        return jsonify(payload), 200
 
     @app.post("/api/sync/marker")
     @authenticated
@@ -1015,6 +1041,7 @@ def create_app(
 
         rk = str(data["rating_key"])
         kind = data["kind"]
+        section_key = data.get("section_key")
         try:
             start = int(data["start_ms"])
             end = int(data["end_ms"])
@@ -1039,6 +1066,14 @@ def create_app(
             tmp = CUSTOM_JSON.with_suffix(".tmp")
             tmp.write_text(json.dumps(data_json, ensure_ascii=False, indent=2), encoding="utf-8")
             tmp.replace(CUSTOM_JSON)
+
+        # Invalidate library tree cache if section_key provided
+        if section_key:
+            cache_key = f"plex:sync_tree:{section_key}"
+            redis_client.delete(cache_key)
+            # Also invalidate episodes cache
+            ep_cache_key = f"plex:episodes:{section_key}"
+            redis_client.delete(ep_cache_key)
 
         return jsonify(ok=True)
 

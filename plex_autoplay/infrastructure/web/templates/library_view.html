@@ -135,15 +135,6 @@
       box-shadow: 0 0 0 2px var(--accent-alpha);
     }
 
-    .library-header {
-      display: flex;
-      align-items: center;
-      gap: 1.5rem;
-      margin-bottom: 1.5rem;
-      padding-bottom: 1rem;
-      border-bottom: 1px solid var(--border);
-    }
-
     .library-thumb {
       width: 120px;
       height: 180px;
@@ -197,21 +188,6 @@
           </form>
         </div>
       </header>
-
-      <div class="library-header">
-        {% if library.thumb_url %}
-          <img class="library-thumb" src="{{ library.thumb_url }}" alt="{{ library.title }}">
-        {% else %}
-          <div class="library-thumb" style="display:flex;align-items:center;justify-content:center;color:var(--muted);">Sem imagem</div>
-        {% endif %}
-        <div class="library-info">
-          <h1>{{ library.title }}</h1>
-          <div class="library-meta">
-            <span>Tipo: Série</span>
-            <span>Seção: {{ library.key }}</span>
-          </div>
-        </div>
-      </div>
 
       <section class="content-section">
         <div class="section-heading"><div><p class="eyebrow">SÉRIES</p><h2>Conteúdo da biblioteca</h2></div></div>
