@@ -5,10 +5,11 @@ from __future__ import annotations
 import json
 import math
 import os
-from pathlib import Path
 import tempfile
 import threading
-from typing import Dict, Iterable, Optional
+from collections.abc import Iterable
+from pathlib import Path
+from typing import ClassVar
 
 
 class MarkerConflictError(ValueError):
@@ -16,13 +17,13 @@ class MarkerConflictError(ValueError):
 
 
 class ManualMarkerService:
-    VALID_FIELDS = {"start", "end", "credits"}
-    _write_lock = threading.RLock()
+    VALID_FIELDS: ClassVar[set[str]] = {"start", "end", "credits"}
+    _write_lock: ClassVar[threading.RLock] = threading.RLock()
 
     def __init__(self, markers_file: str | Path):
         self.markers_file = Path(markers_file).expanduser()
 
-    def get_values(self, series_title: str, season: int, episode: int) -> Dict[str, float]:
+    def get_values(self, series_title: str, season: int, episode: int) -> dict[str, float]:
         self._validate_location(series_title, season, episode)
         with self._write_lock:
             data = self._read()
@@ -30,7 +31,7 @@ class ManualMarkerService:
             if series_key is None:
                 return {}
             show_data = data[series_key]
-            values: Dict[str, float] = {}
+            values: dict[str, float] = {}
             default_entry = show_data.get("default")
             if isinstance(default_entry, dict):
                 defaults = {key: value for key, value in default_entry.items() if key in self.VALID_FIELDS}
@@ -49,10 +50,10 @@ class ManualMarkerService:
         series_title: str,
         season: int,
         episode: int,
-        values: Dict[str, object],
+        values: dict[str, object],
         *,
         confirm_replace: bool = False,
-    ) -> Dict[str, float]:
+    ) -> dict[str, float]:
         normalized = self._validate_values(values)
         if not normalized:
             raise ValueError("Informe pelo menos um marcador para salvar.")
@@ -66,11 +67,11 @@ class ManualMarkerService:
                 data[series_key] = {}
             season_data = data[series_key].setdefault(f"season_{season}", {})
             if not isinstance(season_data, dict):
-                raise ValueError(f"Estrutura de marcadores inválida para {series_key}, temporada {season}.")
+                raise TypeError(f"Estrutura de marcadores inválida para {series_key}, temporada {season}.")
             episode_key = str(episode)
             episode_data = season_data.setdefault(episode_key, {})
             if not isinstance(episode_data, dict):
-                raise ValueError(f"Estrutura de marcadores inválida para {series_key}, episódio {episode}.")
+                raise TypeError(f"Estrutura de marcadores inválida para {series_key}, episódio {episode}.")
             current_values = {
                 key: value for key, value in episode_data.items() if key in self.VALID_FIELDS
             }
@@ -98,7 +99,7 @@ class ManualMarkerService:
         season: int,
         episode: int,
         fields: Iterable[str],
-    ) -> Dict[str, float]:
+    ) -> dict[str, float]:
         selected = set(fields)
         if not selected or not selected.issubset(self.VALID_FIELDS):
             raise ValueError("Selecione um ou mais campos válidos: start, end ou credits.")
@@ -110,11 +111,11 @@ class ManualMarkerService:
                 raise ValueError(f"Série não encontrada: {series_title}")
             season_data = data.get(series_key, {}).get(f"season_{season}")
             if not isinstance(season_data, dict):
-                raise ValueError("Temporada não encontrada.")
+                raise TypeError("Temporada não encontrada.")
             episode_key = str(episode)
             episode_data = season_data.get(episode_key)
             if not isinstance(episode_data, dict):
-                raise ValueError("Episódio não encontrado.")
+                raise TypeError("Episódio não encontrado.")
             for field in selected:
                 episode_data.pop(field, None)
             if not episode_data:
@@ -122,7 +123,7 @@ class ManualMarkerService:
             self._write(data)
             return {key: float(value) for key, value in episode_data.items() if key in self.VALID_FIELDS}
 
-    def _read(self) -> Dict[str, object]:
+    def _read(self) -> dict[str, object]:
         if not self.markers_file.exists():
             return {}
         try:
@@ -131,11 +132,11 @@ class ManualMarkerService:
         except (OSError, json.JSONDecodeError) as error:
             raise ValueError(f"Não foi possível ler {self.markers_file}: {error}") from error
         if not isinstance(data, dict):
-            raise ValueError(f"Formato inválido em {self.markers_file}: esperado um objeto JSON.")
+            raise TypeError(f"Formato inválido em {self.markers_file}: esperado um objeto JSON.")
         return data
 
     @staticmethod
-    def _find_series_key(data: Dict[str, object], title: str) -> Optional[str]:
+    def _find_series_key(data: dict[str, object], title: str) -> str | None:
         matches = [
             key
             for key, value in data.items()
@@ -162,13 +163,13 @@ class ManualMarkerService:
             raise ValueError("Série, temporada e episódio inválidos.")
 
     @classmethod
-    def _validate_values(cls, values: Dict[str, object]) -> Dict[str, float]:
+    def _validate_values(cls, values: dict[str, object]) -> dict[str, float]:
         if not isinstance(values, dict) or not set(values).issubset(cls.VALID_FIELDS):
             raise ValueError("Campos de marcador inválidos.")
         normalized = {}
         for key, value in values.items():
             if isinstance(value, bool) or not isinstance(value, (int, float)):
-                raise ValueError(f"O marcador '{key}' deve ser numérico.")
+                raise TypeError(f"O marcador '{key}' deve ser numérico.")
             numeric_value = float(value)
             if not math.isfinite(numeric_value) or numeric_value < 0:
                 raise ValueError(f"O marcador '{key}' deve ser finito e não negativo.")
@@ -179,10 +180,10 @@ class ManualMarkerService:
             raise ValueError("O início da intro não pode ser posterior ao fim.")
         return normalized
 
-    def _write(self, data: Dict[str, object]) -> None:
+    def _write(self, data: dict[str, object]) -> None:
         self.markers_file.parent.mkdir(parents=True, exist_ok=True)
         existing_mode = self.markers_file.stat().st_mode & 0o777 if self.markers_file.exists() else 0o600
-        temporary_path: Optional[Path] = None
+        temporary_path: Path | None = None
         try:
             with tempfile.NamedTemporaryFile(
                 mode="w",

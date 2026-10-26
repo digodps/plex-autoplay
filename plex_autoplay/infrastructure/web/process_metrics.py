@@ -6,7 +6,7 @@ import os
 import threading
 import time
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any
 
 
 class ProcessMetricsSampler:
@@ -14,12 +14,12 @@ class ProcessMetricsSampler:
         self._lock = threading.Lock()
         self._last_wall_time = time.monotonic()
         self._last_cpu_time = time.process_time()
-        self._last_cpu_percent: Optional[float] = None
-        self._last_network_sample: Optional[tuple[float, int, int]] = None
-        self._download_bytes_per_second: Optional[float] = None
-        self._upload_bytes_per_second: Optional[float] = None
+        self._last_cpu_percent: float | None = None
+        self._last_network_sample: tuple[float, int, int] | None = None
+        self._download_bytes_per_second: float | None = None
+        self._upload_bytes_per_second: float | None = None
 
-    def sample(self) -> Dict[str, Any]:
+    def sample(self) -> dict[str, Any]:
         with self._lock:
             wall_time = time.monotonic()
             cpu_time = time.process_time()

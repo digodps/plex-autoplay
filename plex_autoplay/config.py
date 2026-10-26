@@ -2,7 +2,6 @@
 
 import os
 from dataclasses import dataclass, field
-from typing import List
 
 try:
     from dotenv import load_dotenv
@@ -18,7 +17,7 @@ def _str_to_bool(val: str, default: bool = False) -> bool:
     return str(val).strip().lower() in ("true", "1", "yes", "on", "sim", "s")
 
 
-def _str_to_list(val: str) -> List[str]:
+def _str_to_list(val: str) -> list[str]:
     if not val:
         return []
     return [item.strip() for item in val.split(",") if item.strip()]
@@ -33,13 +32,13 @@ class Settings:
     next_episode_threshold_seconds: int = int(os.getenv("NEXT_EPISODE_THRESHOLD_SECONDS", "15"))
     action_delay_seconds: int = int(os.getenv("ACTION_DELAY_SECONDS", "5"))
     poll_interval_seconds: int = int(os.getenv("POLL_INTERVAL_SECONDS", "2"))
-    allowed_client_ids: List[str] = field(default_factory=lambda: _str_to_list(os.getenv("ALLOWED_CLIENT_IDS", "")))
-    allowed_usernames: List[str] = field(default_factory=lambda: _str_to_list(os.getenv("ALLOWED_USERNAMES", "")))
+    allowed_client_ids: list[str] = field(default_factory=lambda: _str_to_list(os.getenv("ALLOWED_CLIENT_IDS", "")))
+    allowed_usernames: list[str] = field(default_factory=lambda: _str_to_list(os.getenv("ALLOWED_USERNAMES", "")))
     config_dir: str = os.getenv("CONFIG_DIR", "/config")
     dashboard_port: int = int(os.getenv("WEB_PORT", "8080"))
     dashboard_cookie_secure: bool = _str_to_bool(os.getenv("DASHBOARD_COOKIE_SECURE", "true"), default=True)
     dashboard_https: bool = _str_to_bool(os.getenv("DASHBOARD_HTTPS", "true"), default=True)
-    dashboard_tls_hosts: List[str] = field(
+    dashboard_tls_hosts: list[str] = field(
         default_factory=lambda: _str_to_list(
             os.getenv("DASHBOARD_TLS_HOSTS", "localhost,plex-autoplay,host.docker.internal")
         )

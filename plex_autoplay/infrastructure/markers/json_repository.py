@@ -4,7 +4,7 @@ import json
 import logging
 import math
 from pathlib import Path
-from typing import Any, Dict, Optional, Tuple
+from typing import Any
 
 try:
     import yaml
@@ -20,7 +20,7 @@ class JsonMarkerRepository:
     def __init__(self, markers_file_path: str = "markers.json", default_intro_skip_seconds: int = 0):
         self.markers_file_path = markers_file_path
         self.default_intro_skip_seconds = default_intro_skip_seconds
-        self.custom_markers: Dict[str, Any] = {}
+        self.custom_markers: dict[str, Any] = {}
         self.load_custom_markers()
 
     def load_custom_markers(self) -> None:
@@ -37,11 +37,11 @@ class JsonMarkerRepository:
                 else:
                     self.custom_markers = json.load(marker_file) or {}
             logger.info("Marcadores customizados carregados com sucesso de %s", path)
-        except Exception as error:
+        except (OSError, json.JSONDecodeError, yaml.YAMLError) as error:
             logger.warning("Erro ao ler arquivo de marcadores %s: %s", path, error)
             self.custom_markers = {}
 
-    def get_intro_markers(self, episode: Any) -> Optional[Tuple[int, int]]:
+    def get_intro_markers(self, episode: Any) -> tuple[int, int] | None:
         native_marker = self._get_native_intro(episode)
         if native_marker:
             return native_marker
@@ -55,14 +55,14 @@ class JsonMarkerRepository:
 
         return None
 
-    def get_credits_marker(self, episode: Any) -> Optional[int]:
+    def get_credits_marker(self, episode: Any) -> int | None:
         if hasattr(episode, "markers"):
             try:
                 for marker in episode.markers:
                     marker_type = getattr(marker, "type", "").lower()
                     if marker_type in ("credits", "outro"):
                         return int(marker.start)
-            except Exception:
+            except (AttributeError, ValueError, TypeError):
                 pass
 
         show_title = getattr(episode, "grandparentTitle", "") or getattr(episode, "showTitle", "")
@@ -74,7 +74,7 @@ class JsonMarkerRepository:
             return self._find_episode_credits(show_data, season_num, ep_num)
         return None
 
-    def get_custom_marker_values(self, episode: Any) -> Dict[str, float]:
+    def get_custom_marker_values(self, episode: Any) -> dict[str, float]:
         """Return explicit custom marker fields in seconds for an episode."""
         show_title = getattr(episode, "grandparentTitle", "") or getattr(episode, "showTitle", "")
         season_num = getattr(episode, "seasonNumber", None) or getattr(episode, "parentIndex", None)
@@ -83,7 +83,7 @@ class JsonMarkerRepository:
         if not show_data:
             return {}
 
-        values: Dict[str, float] = {}
+        values: dict[str, float] = {}
         default_entry = show_data.get("default")
         if isinstance(default_entry, dict):
             values.update(self._validated_marker_values(default_entry))
@@ -97,20 +97,20 @@ class JsonMarkerRepository:
         return values
 
     @staticmethod
-    def _validated_marker_values(data: Dict[str, Any]) -> Dict[str, float]:
-        values: Dict[str, float] = {}
+    def _validated_marker_values(data: dict[str, Any]) -> dict[str, float]:
+        values: dict[str, float] = {}
         for key, value in data.items():
             if key not in {"start", "end", "credits"}:
                 continue
             if isinstance(value, bool) or not isinstance(value, (int, float)):
-                raise ValueError(f"Marcador customizado '{key}' deve ser numérico.")
+                raise TypeError(f"Marcador customizado '{key}' deve ser numérico.")
             numeric_value = float(value)
             if not math.isfinite(numeric_value) or numeric_value < 0:
                 raise ValueError(f"Marcador customizado '{key}' deve ser finito e não negativo.")
             values[key] = numeric_value
         return values
 
-    def _get_native_intro(self, episode: Any) -> Optional[Tuple[int, int]]:
+    def _get_native_intro(self, episode: Any) -> tuple[int, int] | None:
         if not hasattr(episode, "markers"):
             return None
 
@@ -119,12 +119,12 @@ class JsonMarkerRepository:
                 marker_type = getattr(marker, "type", "").lower()
                 if marker_type in ("intro", "intro_marker"):
                     return (int(marker.start), int(marker.end))
-        except Exception as error:
+        except (AttributeError, ValueError, TypeError) as error:
             logger.debug("Falha ao inspecionar marcadores nativos: %s", error)
 
         return None
 
-    def _find_show_data(self, show_title: str) -> Optional[Dict[str, Any]]:
+    def _find_show_data(self, show_title: str) -> dict[str, Any] | None:
         if not show_title or not self.custom_markers:
             return None
 
@@ -157,10 +157,10 @@ class JsonMarkerRepository:
 
     def _find_episode_credits(
         self,
-        show_data: Dict[str, Any],
+        show_data: dict[str, Any],
         season_num: Any,
         ep_num: Any,
-    ) -> Optional[int]:
+    ) -> int | None:
         if season_num is not None and ep_num is not None:
             season_key = f"season_{season_num}"
             if season_key in show_data and isinstance(show_data[season_key], dict):
@@ -173,7 +173,7 @@ class JsonMarkerRepository:
             return int(default_entry["credits"] * 1000)
         return None
 
-    def _get_custom_intro(self, episode: Any) -> Optional[Tuple[int, int]]:
+    def _get_custom_intro(self, episode: Any) -> tuple[int, int] | None:
         show_title = getattr(episode, "grandparentTitle", "") or getattr(episode, "showTitle", "")
         season_num = getattr(episode, "seasonNumber", None) or getattr(episode, "parentIndex", None)
         ep_num = getattr(episode, "episodeNumber", None) or getattr(episode, "index", None)

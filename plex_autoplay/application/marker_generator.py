@@ -3,23 +3,22 @@ and (optionally) emit a Plex‑compatible side‑car XML (Local Media Assets).""
 
 from __future__ import annotations
 
-import re
-import subprocess
 import json
 import logging
+import re
+import subprocess
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass
-from typing import Dict, Optional, List, Tuple
 
 logger = logging.getLogger("plex-autoplay.marker_generator")
 
 
 @dataclass
 class MarkerResult:
-    intro_start: Optional[int] = None   # ms
-    intro_end: Optional[int] = None
-    credits_start: Optional[int] = None
-    credits_end: Optional[int] = None
+    intro_start: int | None = None   # ms
+    intro_end: int | None = None
+    credits_start: int | None = None
+    credits_end: int | None = None
 
 
 def _run_ffprobe(file_path: str) -> dict:
@@ -55,7 +54,7 @@ def _get_duration(file_path: str) -> float:
     return 0.0
 
 
-def _detect_silence_intervals(file_path: str, start_sec: float, duration_sec: float) -> List[Tuple[float, float]]:
+def _detect_silence_intervals(file_path: str, start_sec: float, duration_sec: float) -> list[tuple[float, float]]:
     """
     Run ffmpeg silencedetect on a slice of the file.
     Returns list of (silence_start, silence_end) in seconds (relative to file start).
@@ -77,7 +76,7 @@ def _detect_silence_intervals(file_path: str, start_sec: float, duration_sec: fl
         "-",
     ]
     try:
-        proc = subprocess.run(cmd, capture_output=True, text=True, timeout=120)
+        proc = subprocess.run(cmd, check=False, capture_output=True, text=True, timeout=120)
     except Exception:
         logger.exception("silence detection failed for %s", file_path)
         return []
@@ -138,7 +137,7 @@ def generate_markers(file_path: str) -> MarkerResult:
             credits_end = e
             break
 
-    def ms(v: Optional[float]) -> Optional[int]:
+    def ms(v: float | None) -> int | None:
         return int(v * 1000) if v is not None else None
 
     return MarkerResult(
@@ -180,7 +179,7 @@ def _build_plex_xml(res: MarkerResult, media_filename: str) -> str:
     return ET.tostring(media_el, encoding="unicode", xml_declaration=True)
 
 
-def generate(file_path: str) -> Dict[str, Dict[str, int]]:
+def generate(file_path: str) -> dict[str, dict[str, int]]:
     """Backwards‑compatible helper – still returns the plain dict used by older callers."""
     res = generate_markers(file_path)
     out = {}
@@ -191,7 +190,7 @@ def generate(file_path: str) -> Dict[str, Dict[str, int]]:
     return out
 
 
-def generate_with_xml(file_path: str) -> tuple[Dict[str, Dict[str, int]], str]:
+def generate_with_xml(file_path: str) -> tuple[dict[str, dict[str, int]], str]:
     """
     New public API used by the scanner.
     Returns a tuple (marker_dict, xml_string) where xml_string is ready to be written as

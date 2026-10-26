@@ -29,7 +29,7 @@ def main(argv: list[str] | None = None) -> int:
 
     try:
         config.validate()
-    except Exception as error:
+    except ValueError as error:
         logger.error("Configuração inválida: %s", error)
         sys.exit(1)
 

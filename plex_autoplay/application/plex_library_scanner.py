@@ -4,15 +4,12 @@ from __future__ import annotations
 
 import json
 import logging
-import os
-import pathlib
 import threading
 from dataclasses import dataclass, field
-from typing import List, Optional
 
-from plex_autoplay.infrastructure.plex.client import PlexManager
 from plex_autoplay.application.marker_generator import generate_with_xml
 from plex_autoplay.infrastructure.paths import get_custom_json_path
+from plex_autoplay.infrastructure.plex.client import PlexManager
 
 logger = logging.getLogger("plex-autoplay.scanner")
 
@@ -24,14 +21,14 @@ CUSTOM_JSON_PATH = get_custom_json_path()
 class EpisodeResult:
     rating_key: str
     status: str  # created, updated, skipped, error
-    error: Optional[str] = None
+    error: str | None = None
 
 
 @dataclass
 class ScanResult:
     processed: int = 0
     skipped: int = 0
-    errors: List[dict] = field(default_factory=list)
+    errors: list[dict] = field(default_factory=list)
 
 
 class PlexLibraryScanner:

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # --------------------------------------------------------------
-# start.sh  –  build + up  (plex‑autoplay + embedded Redis)
+# start.sh  –  lint + build + up  (plex‑autoplay + embedded Redis)
 # --------------------------------------------------------------
 set -euo pipefail
 
@@ -13,6 +13,9 @@ if [[ -f .env ]]; then
   source .env
   set +a
 fi
+
+echo "🔍  Running lint (ruff)…"
+docker compose run --rm plex-autoplay ruff check .
 
 echo "🔧  Building image (only first run or after code changes)…"
 docker compose build

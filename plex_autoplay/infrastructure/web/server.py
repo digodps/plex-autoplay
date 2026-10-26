@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any, List
+from typing import Any
 
 from cheroot.ssl.builtin import BuiltinSSLAdapter
 from cheroot.wsgi import Server as CherootServer
@@ -37,7 +37,7 @@ def create_dashboard_server(
     *,
     https_enabled: bool,
     config_dir: str | Path,
-    tls_hosts: List[str],
+    tls_hosts: list[str],
 ) -> DashboardServer:
     if https_enabled:
         certificate, private_key = ensure_self_signed_certificate(config_dir, tls_hosts)

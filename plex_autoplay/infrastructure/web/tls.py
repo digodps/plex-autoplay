@@ -4,18 +4,16 @@ from __future__ import annotations
 
 import ipaddress
 import os
-from pathlib import Path
 import re
 import shutil
 import subprocess
 import tempfile
-from typing import List, Tuple
-
+from pathlib import Path
 
 _DNS_LABEL_RE = re.compile(r"^[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?$")
 
 
-def _certificate_subject_alt_names(hosts: List[str]) -> Tuple[List[str], str]:
+def _certificate_subject_alt_names(hosts: list[str]) -> tuple[list[str], str]:
     normalized_hosts = []
     subject_alt_names = []
     for value in hosts:
@@ -42,7 +40,7 @@ def _certificate_subject_alt_names(hosts: List[str]) -> Tuple[List[str], str]:
     return subject_alt_names, normalized_hosts[0]
 
 
-def ensure_self_signed_certificate(config_dir: str | Path, hosts: List[str]) -> Tuple[Path, Path]:
+def ensure_self_signed_certificate(config_dir: str | Path, hosts: list[str]) -> tuple[Path, Path]:
     config_path = Path(config_dir)
     config_path.mkdir(parents=True, exist_ok=True)
     certificate_path = config_path / "dashboard-tls.crt"

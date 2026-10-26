@@ -16,9 +16,7 @@ from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 from plex_autoplay.application.plex_library_scanner import PlexLibraryScanner
-from plex_autoplay.infrastructure.plex.client import PlexManager
 from plex_autoplay.infrastructure.web.app import create_app
-from plex_autoplay.config import config as app_config
 
 
 class TestPlexAutoSkipIntegration(unittest.TestCase):
@@ -31,7 +29,7 @@ class TestPlexAutoSkipIntegration(unittest.TestCase):
         self.mock_redis.delete.return_value = None
 
         self.temp_dir = tempfile.TemporaryDirectory()
-        base = Path(self.temp_dir.name)
+        Path(self.temp_dir.name)
 
         # Create a temporary directory for PlexAutoSkip config
         self.plexautoskip_dir = Path(self.temp_dir.name) / "plexautoskip"
@@ -40,10 +38,6 @@ class TestPlexAutoSkipIntegration(unittest.TestCase):
         # Set environment variables to use our test directory
         os.environ["PLEX_AUTOPLAY_CUSTOM_JSON_PATH"] = str(self.plexautoskip_dir / "custom.json")
         os.environ["PLEX_AUTOPLAY_CONFIG_DIR"] = str(self.plexautoskip_dir)
-
-    def tearDown(self):
-        self.redis_patcher.stop()
-        self.temp_dir.cleanup()
 
         # Create minimal custom.json with PlexAutoSkip format
         self.custom_json_path = self.plexautoskip_dir / "custom.json"
@@ -62,8 +56,7 @@ class TestPlexAutoSkipIntegration(unittest.TestCase):
             "mode": {},
             "allowed": {"clients": [], "users": [], "keys": [], "skip-next": []},
             "blocked": {"clients": [], "users": [], "keys": [], "skip-next": []},
-            "clients": {},
-            "mode": {}
+            "clients": {}
         }
         self.custom_json_path = self.plexautoskip_dir / "custom.json"
         initial_custom = {
@@ -81,8 +74,7 @@ class TestPlexAutoSkipIntegration(unittest.TestCase):
             "mode": {},
             "allowed": {"clients": [], "users": [], "keys": [], "skip-next": []},
             "blocked": {"clients": [], "users": [], "keys": [], "skip-next": []},
-            "clients": {},
-            "mode": {}
+            "clients": {}
         }
         self.custom_json_path.write_text(json.dumps(initial_custom, indent=2), encoding="utf-8")
 
@@ -158,6 +150,10 @@ high = 100
         self.app.config["TESTING"] = True
         self.client = self.app.test_client()
 
+    def tearDown(self):
+        self.redis_patcher.stop()
+        self.temp_dir.cleanup()
+
     def _login(self):
         """Helper to login as admin."""
         with self.client.session_transaction() as session:
@@ -188,7 +184,7 @@ high = 100
         self.assertEqual(credits["end"], 1470058)
 
         # Verify all markers have required fields
-        for rk, markers in data["markers"].items():
+        for markers in data["markers"].values():
             for marker in markers:
                 self.assertIn("start", marker)
                 self.assertIn("end", marker)
@@ -201,7 +197,6 @@ high = 100
     def test_api_sync_marker_saves_in_list_format(self):
         """Test that POST /api/sync/marker saves in PlexAutoSkip list format."""
         self._login()
-        csrf = "test-csrf-token"
 
         # Save a new intro marker
         response = self.client.post(
@@ -319,8 +314,7 @@ high = 100
             data = json.load(f)
 
         # Required top-level keys
-        required_keys = {"markers", "offsets", "tags", "mode", "allowed", "blocked", "clients"}
-        self.assertEqual(set(data.keys()), set(["markers", "offsets", "tags", "mode", "allowed", "blocked", "clients"]))
+        self.assertEqual(set(data.keys()), {"markers", "offsets", "tags", "mode", "allowed", "blocked", "clients"})
 
         # Markers must be dict of ratingKey -> list
         self.assertIsInstance(data["markers"], dict)
@@ -375,13 +369,26 @@ high = 100
 class TestPlexLibraryScannerIntegration(unittest.TestCase):
     """Tests for PlexLibraryScanner with PlexAutoSkip integration."""
 
+    @patch("plex_autoplay.application.plex_library_scanner.CUSTOM_JSON_PATH", Path("/tmp/test_custom.json"))
     @patch("plex_autoplay.infrastructure.plex.client.PlexManager")
     def test_scan_library_merges_custom_json_markers(self, mock_plex_manager_class):
         """Test that scanner merges Plex markers with custom.json markers."""
         mock_manager = MagicMock()
-        mock_plex_manager_class.return_value = mock_manager
-
-        # Mock Plex episodes (uses list_episodes, not list_episodes_with_markers)
+        
+        # Mock the server object and its fetchItem method
+        mock_server = MagicMock()
+        mock_episode = MagicMock()
+        mock_episode.markers = []  # No existing markers
+        mock_episode.media = [MagicMock()]
+        mock_episode.media[0].parts = [MagicMock()]
+        mock_episode.media[0].parts[0].file = "/path/to/file.mkv"
+        mock_episode.grandparentTitle = "Aoashi"
+        mock_episode.parentIndex = 2
+        mock_episode.index = 2
+        mock_episode.title = "Episode 2"
+        mock_server.fetchItem.return_value = mock_episode
+        
+        mock_manager.get_server.return_value = mock_server
         mock_manager.list_episodes.return_value = [
             {
                 "rating_key": "4987",
@@ -395,14 +402,20 @@ class TestPlexLibraryScannerIntegration(unittest.TestCase):
             }
         ]
 
-        # Create scanner with mocked manager
-        scanner = PlexLibraryScanner(mock_manager)
-        result = scanner.scan_section("4")
+        # Mock generate_with_xml to return empty markers (no markers detected)
+        with patch("plex_autoplay.application.plex_library_scanner.generate_with_xml") as mock_generate:
+            mock_generate.return_value = ({}, None)
 
-        # Verify scanner was called
-        mock_manager.list_episodes.assert_called_once_with("4")
-        self.assertEqual(result.processed, 1)
+            # Create scanner with mocked manager
+            scanner = PlexLibraryScanner(mock_manager)
+            result = scanner.scan_section("4")
 
+            # Verify scanner was called - episode should be skipped when no markers detected
+            mock_manager.list_episodes.assert_called_once_with("4")
+            self.assertEqual(result.skipped, 1)
+            self.assertEqual(result.processed, 0)
+
+    @patch("plex_autoplay.application.plex_library_scanner.CUSTOM_JSON_PATH", Path("/tmp/test_custom.json"))
     @patch("plex_autoplay.application.plex_library_scanner.generate_with_xml")
     @patch("plex_autoplay.infrastructure.plex.client.PlexManager")
     def test_scan_library_merges_custom_intro_marker(self, mock_plex_manager_class, mock_generate):
@@ -427,7 +440,7 @@ class TestPlexLibraryScannerIntegration(unittest.TestCase):
         # Mock generate_with_xml to return intro marker
         mock_generate.return_value = ({"intro": {"start_ms": 0, "end_ms": 180000}}, None)
 
-        scanner = PlexLibraryScanner(MagicMock())
+        scanner = PlexLibraryScanner(mock_manager)
         result = scanner.scan_section("4")
 
         # The scanner should process the episode

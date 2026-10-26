@@ -1,7 +1,9 @@
 """Plex server connection, session access, and remote player control."""
 
 import logging
-from typing import Any, List, Optional
+from typing import Any
+
+import requests
 
 try:
     from plexapi.client import PlexClient
@@ -21,7 +23,7 @@ class PlexManager:
     def __init__(self, url: str, token: str):
         self.url = url.rstrip("/")
         self.token = token
-        self.server: Optional[Any] = None
+        self.server: Any | None = None
 
     def connect(self) -> Any:
         logger.info("Conectando ao Plex Media Server em: %s", self.url)
@@ -43,14 +45,14 @@ class PlexManager:
             return self.connect()
         return self.server
 
-    def get_active_sessions(self) -> List[Any]:
+    def get_active_sessions(self) -> list[Any]:
         try:
             return self.get_server().sessions()
-        except Exception as error:
+        except (requests.RequestException, OSError) as error:
             logger.warning("Erro ao consultar sessões ativas: %s", error)
             return []
 
-    def list_show_episodes(self, library_name: str, show_title: str) -> List[Any]:
+    def list_show_episodes(self, library_name: str, show_title: str) -> list[Any]:
         sections = [
             section
             for section in self.get_server().library.sections()
@@ -82,7 +84,7 @@ class PlexManager:
             return []
         return matching_shows[0].episodes()
 
-    def find_player(self, session: Any) -> Optional[Any]:
+    def find_player(self, session: Any) -> Any | None:
         for attr in ("player", "client"):
             player = getattr(session, attr, None)
             if player and isinstance(player, PlexClient):
@@ -99,7 +101,7 @@ class PlexManager:
                     return client
                 if target_name and client.title.lower() == str(target_name).lower():
                     return client
-        except Exception as error:
+        except (requests.RequestException, OSError) as error:
             logger.debug("Erro ao varrer lista de clients(): %s", error)
 
         if session_player and hasattr(session_player, "seekTo"):
@@ -115,7 +117,7 @@ class PlexManager:
                 return True
             logger.warning("Player '%s' não possui o método seekTo.", player_name)
             return False
-        except Exception as error:
+        except (requests.RequestException, OSError, AttributeError) as error:
             logger.error("Falha ao enviar comando seekTo para '%s': %s", player_name, error)
             return False
 
@@ -129,11 +131,11 @@ class PlexManager:
                 return True
             logger.warning("Player '%s' não possui o método playMedia.", player_name)
             return False
-        except Exception as error:
+        except (requests.RequestException, OSError, AttributeError) as error:
             logger.error("Falha ao enviar playMedia para '%s': %s", player_name, error)
             return False
 
-    def get_next_episode(self, current_episode: Any) -> Optional[Any]:
+    def get_next_episode(self, current_episode: Any) -> Any | None:
         if not isinstance(current_episode, Episode):
             logger.debug("Mídia atual não é um episódio de série (Tipo: %s)", type(current_episode))
             return None
@@ -177,11 +179,11 @@ class PlexManager:
                         next_episode.title,
                     )
                     return next_episode
-        except Exception as error:
+        except (requests.RequestException, OSError, AttributeError) as error:
             logger.error("Erro ao calcular próximo episódio: %s", error)
         return None
 
-    def list_library_sections(self) -> List[dict]:
+    def list_library_sections(self) -> list[dict]:
         """Return a list of library sections with title, type, thumb_url."""
         server = self.get_server()
         result = []
@@ -197,7 +199,7 @@ class PlexManager:
             })
         return result
 
-    def list_episodes(self, section_key: str) -> List[dict]:
+    def list_episodes(self, section_key: str) -> list[dict]:
         """Return simplified episode list for a library section."""
         server = self.get_server()
         section = server.library.sectionByID(int(section_key))
@@ -219,7 +221,7 @@ class PlexManager:
             })
         return out
 
-    def list_episodes_with_markers(self, section_key: str) -> List[dict]:
+    def list_episodes_with_markers(self, section_key: str) -> list[dict]:
         """Return episodes with marker info (intro/credits) and series title."""
         server = self.get_server()
         section = server.library.sectionByID(int(section_key))
@@ -233,7 +235,7 @@ class PlexManager:
             try:
                 show = ep.show()
                 series_title = show.title
-            except Exception:
+            except (requests.RequestException, OSError, AttributeError):
                 series_title = ""
             file_path = None
             if ep.media:

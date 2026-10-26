@@ -2,38 +2,49 @@
 
 from __future__ import annotations
 
-from collections import defaultdict, deque
-import copy
-from functools import wraps
 import hashlib
 import hmac
 import json
 import logging
 import os
-import pathlib
 import queue
-import redis
-from pathlib import Path
 import secrets
-import tempfile
+from collections import defaultdict, deque
+from functools import wraps
+from pathlib import Path
+
+import redis
 
 redis_client = redis.from_url(os.getenv("REDIS_URL", "redis://127.0.0.1:6379/0"), decode_responses=True)
 import threading
 import time
-from typing import Any, Callable, Deque, Dict, Optional
-
-from flask import Flask, jsonify, redirect, render_template, request, session, url_for, Response, stream_with_context
-
-from plex_autoplay.application.manual_marker_service import ManualMarkerService, MarkerConflictError
-from plex_autoplay.infrastructure.web.process_metrics import ProcessMetricsSampler
-from plex_autoplay.infrastructure.plex.client import PlexManager
-from plex_autoplay.application.plex_library_scanner import PlexLibraryScanner, ScanResult
-from plex_autoplay.config import config as app_config
-import threading
 import uuid
-import hmac
-import hashlib
+from collections.abc import Callable
+from typing import Any
 
+from flask import (
+    Flask,
+    Response,
+    jsonify,
+    redirect,
+    render_template,
+    request,
+    session,
+    stream_with_context,
+    url_for,
+)
+
+from plex_autoplay.application.manual_marker_service import (
+    ManualMarkerService,
+    MarkerConflictError,
+)
+from plex_autoplay.application.plex_library_scanner import (
+    PlexLibraryScanner,
+    ScanResult,
+)
+from plex_autoplay.config import config as app_config
+from plex_autoplay.infrastructure.plex.client import PlexManager
+from plex_autoplay.infrastructure.web.process_metrics import ProcessMetricsSampler
 
 PASSWORD_HASH_ITERATIONS = 600_000
 SESSION_LIFETIME_SECONDS = 12 * 60 * 60
@@ -41,10 +52,10 @@ LOGIN_WINDOW_SECONDS = 5 * 60
 MAX_LOGIN_ATTEMPTS = 5
 logger = logging.getLogger("plex-autoplay.dashboard")
 
+from typing import ClassVar
+
 from plex_autoplay.infrastructure.paths import (
     get_custom_json_path,
-    get_custom_config_path,
-    get_plexautoskip_dir,
 )
 
 
@@ -56,7 +67,7 @@ class ConfigStore:
     """Persist application configuration (Plex URL, token, autoplay options) as JSON."""
 
     # Keys that we manage; order matches Settings attributes
-    KEYS = [
+    KEYS: ClassVar[list[str]] = [
         "plex_url",
         "plex_token",
         "auto_skip_intro",
@@ -169,7 +180,7 @@ class AdminStore:
         try:
             with self.credentials_path.open("r", encoding="utf-8") as f:
                 payload = json.load(f)
-        except Exception:
+        except (OSError, json.JSONDecodeError):
             return False
 
         stored_username = payload.get("username")
@@ -202,10 +213,10 @@ class AdminStore:
 
 class LoginLimiter:
     def __init__(self):
-        self._attempts: Dict[str, Deque[float]] = defaultdict(deque)
+        self._attempts: dict[str, deque[float]] = defaultdict(deque)
         self._lock = threading.Lock()
 
-    def allowed(self, identity: str, now: Optional[float] = None) -> bool:
+    def allowed(self, identity: str, now: float | None = None) -> bool:
         current = time.monotonic() if now is None else now
         with self._lock:
             attempts = self._attempts[identity]
@@ -213,7 +224,7 @@ class LoginLimiter:
                 attempts.popleft()
             return len(attempts) < MAX_LOGIN_ATTEMPTS
 
-    def record_failure(self, identity: str, now: Optional[float] = None) -> None:
+    def record_failure(self, identity: str, now: float | None = None) -> None:
         current = time.monotonic() if now is None else now
         with self._lock:
             attempts = self._attempts[identity]
@@ -227,12 +238,12 @@ class LoginLimiter:
 
 
 def _update_report_markers(
-    report: Dict[str, Any],
+    report: dict[str, Any],
     series_title: str,
     season: int,
     episode_number: int,
-    values: Dict[str, float],
-) -> Optional[Dict[str, Any]]:
+    values: dict[str, float],
+) -> dict[str, Any] | None:
     changed = False
     libraries = report.get("libraries")
     if not isinstance(libraries, list):
@@ -302,8 +313,8 @@ def create_app(
     config_dir: str | Path,
     *,
     cookie_secure: bool = True,
-    manual_marker_service: Optional[ManualMarkerService] = None,
-    marker_reload: Optional[Callable[[], None]] = None,
+    manual_marker_service: ManualMarkerService | None = None,
+    marker_reload: Callable[[], None] | None = None,
 ) -> Flask:
     app = Flask(__name__)
     admin_store = AdminStore(config_dir)
@@ -328,7 +339,7 @@ def create_app(
         return token
 
     @app.before_request
-    def validate_csrf() -> Optional[Any]:
+    def validate_csrf() -> Any | None:
         if request.method not in {"POST", "PUT", "PATCH", "DELETE"}:
             return None
         expected = session.get("_csrf_token")
@@ -351,7 +362,7 @@ def create_app(
         return wrapped
 
     @app.context_processor
-    def inject_csrf_token() -> Dict[str, Callable[[], str]]:
+    def inject_csrf_token() -> dict[str, Callable[[], str]]:
         return {"csrf_token": csrf_token}
 
     @app.get("/setup")
@@ -575,7 +586,7 @@ def create_app(
                 for i, (k, v) in enumerate(custom_data.get("markers", {}).items()):
                     if i < 3:
                         app.logger.info(f"[library_view] custom.json entry: {k} -> {v}")
-            except Exception as e:
+            except (OSError, json.JSONDecodeError) as e:
                 app.logger.error(f"[library_view] Failed to load custom.json: {e}")
                 custom_data = {}
         else:
@@ -650,7 +661,7 @@ def create_app(
                     "episodes": sorted(seasons[s_num], key=lambda e: e["episode"])
                 })
             # Get poster from first episode of first season
-            first_ep = seasons[sorted(seasons.keys())[0]][0] if seasons else None
+            first_ep = seasons[min(seasons.keys())][0] if seasons else None
             tree.append({
                 "title": s_title,
                 "seasons": season_list,
@@ -719,7 +730,7 @@ def create_app(
             return jsonify(error="Corpo JSON inválido."), 400
 
         def response_with_refreshed_report(
-            result: Dict[str, float],
+            result: dict[str, float],
             series: str,
             season: int,
             episode: int,
@@ -727,28 +738,14 @@ def create_app(
             try:
                 if marker_reload is not None:
                     marker_reload()
-                effective_values = manual_marker_service.get_values(series, season, episode)
-                panel_updated = (
-                    scan_coordinator.update_result(
-                        lambda report: _update_report_markers(
-                            report,
-                            series,
-                            season,
-                            episode,
-                            effective_values,
-                        )
-                    )
-                    if scan_coordinator is not None
-                    else False
-                )
             except (OSError, RuntimeError, TypeError, ValueError) as error:
-                app.logger.exception("O marcador foi salvo, mas o relatório do painel não pôde ser atualizado.")
+                app.logger.exception("O marcador foi salvo, mas a recarga falhou.")
                 return jsonify(
-                    error=f"O marcador foi salvo, mas o relatório do painel não pôde ser atualizado: {error}",
+                    error=f"O marcador foi salvo, mas a recarga falhou: {error}",
                     report_update_failed=True,
                     markers=result,
                 ), 500
-            return jsonify(markers=result, panel_updated=panel_updated)
+            return jsonify(markers=result)
 
         try:
             if request.method == "PUT":
@@ -785,15 +782,15 @@ def create_app(
             return jsonify(error=str(error)), 400
 
     # ---- Plex library scan jobs (simple in-memory) ----
-    _scan_jobs: Dict[str, Dict[str, Any]] = {}
+    _scan_jobs: dict[str, dict[str, Any]] = {}
     _scan_jobs_lock = threading.Lock()
     # Per-section sync status: 'idle' | 'running' | 'success' | 'error'
-    _section_status: Dict[str, str] = {}
+    _section_status: dict[str, str] = {}
     _section_status_lock = threading.Lock()
     # Lock for custom.json writes
     _CUSTOM_LOCK = threading.Lock()
     # Cancel events per job
-    _cancel_events: Dict[str, threading.Event] = {}
+    _cancel_events: dict[str, threading.Event] = {}
     _cancel_events_lock = threading.Lock()
 
     def _run_scan_job(job_id: str, section_key: str, plex_url: str, plex_token: str):
@@ -807,7 +804,7 @@ def create_app(
             def emit(self, record):
                 try:
                     self.q.put(self.format(record))
-                except Exception:
+                except queue.Full:
                     pass
         handler = _QueueLogHandler(log_q)
         handler.setLevel(logging.INFO)
@@ -1063,7 +1060,7 @@ def create_app(
                 for i, (k, v) in enumerate(custom_data.get("markers", {}).items()):
                     if i < 3:
                         app.logger.info(f"[sync_tree] custom.json entry: {k} -> {v}")
-            except Exception as e:
+            except (OSError, json.JSONDecodeError) as e:
                 app.logger.error(f"[sync_tree] Failed to load custom.json: {e}")
                 custom_data = {}
         else:
@@ -1165,10 +1162,16 @@ def create_app(
         if kind not in ("intro", "credits"):
             return jsonify(error="kind deve ser 'intro' ou 'credits'"), 400
 
+        if start < 0 or end < 0:
+            return jsonify(error="start_ms e end_ms devem ser não-negativos"), 400
+
+        if start >= end:
+            return jsonify(error="start_ms deve ser menor que end_ms"), 400
+
         # write to custom.json (shared with PlexAutoSkip) - PlexAutoSkip expects list format
         CUSTOM_JSON = get_custom_json_path()
         with _CUSTOM_LOCK:
-            data_json = {"markers": {}, "offsets": {}, "tags": {}, "mode": {}, "allowed": {"clients": [], "users": [], "keys": [], "skip-next": []}, "blocked": {"clients": [], "users": [], "keys": [], "skip-next": []}, "clients": {}, "mode": {}}
+            data_json = {"markers": {}, "offsets": {}, "tags": {}, "mode": {}, "allowed": {"clients": [], "users": [], "keys": [], "skip-next": []}, "blocked": {"clients": [], "users": [], "keys": [], "skip-next": []}, "clients": {}}
             if CUSTOM_JSON.is_file():
                 try:
                     data_json = json.loads(CUSTOM_JSON.read_text(encoding="utf-8"))
@@ -1184,7 +1187,6 @@ def create_app(
             marker_list = markers.get(rk, [])
             if isinstance(marker_list, dict):
                 # Convert old dict format to list
-                new_list = []
                 if "intro" in marker_list and isinstance(marker_list["intro"], dict):
                     intro = marker_list["intro"]
                     start = intro.get("start", intro.get("start_ms", 0))
@@ -1251,7 +1253,7 @@ def create_app(
         if CUSTOM_JSON_PATH.is_file():
             try:
                 custom_data = json.loads(CUSTOM_JSON_PATH.read_text(encoding="utf-8"))
-            except Exception:
+            except (OSError, json.JSONDecodeError):
                 custom_data = {}
 
         total_eps = 0
@@ -1325,7 +1327,7 @@ def create_app(
             import json as _json
             try:
                 payload = _json.loads(payload)
-            except Exception:
+            except _json.JSONDecodeError:
                 pass
 
         # Extract ratingKeys from library.new / library.updated
