@@ -551,7 +551,9 @@ def create_app(
             return render_template("library_view.html", library=None, series=[], error="Biblioteca não encontrada", plex_libraries=plex_libs, section_key=section_key)
 
         # Get series tree (reuse the sync_library_tree logic) without cache
+        app.logger.info(f"[library_view] Fetching episodes for section {section_key}")
         episodes = manager.list_episodes_with_markers(section_key)
+        app.logger.info(f"[library_view] Got {len(episodes)} episodes from Plex for section {section_key}")
 
         # Load custom.json (manual markers from UI)
         CUSTOM_JSON_PATH = pathlib.Path("/config/plexautoskip/custom.json")
@@ -559,18 +561,38 @@ def create_app(
         if CUSTOM_JSON_PATH.is_file():
             try:
                 custom_data = json.loads(CUSTOM_JSON_PATH.read_text(encoding="utf-8"))
-            except Exception:
+                app.logger.info(f"[library_view] Loaded custom.json with {len(custom_data)} entries")
+                for i, (k, v) in enumerate(custom_data.items()):
+                    if i < 3:
+                        app.logger.info(f"[library_view] custom.json entry: {k} -> {v}")
+            except Exception as e:
+                app.logger.error(f"[library_view] Failed to load custom.json: {e}")
                 custom_data = {}
+        else:
+            app.logger.warning(f"[library_view] custom.json not found at {CUSTOM_JSON_PATH}")
 
         from collections import defaultdict
         series_map = defaultdict(lambda: defaultdict(list))
+        merged_count = 0
         for ep in episodes:
             rk = str(ep["rating_key"])
             custom_entry = custom_data.get(rk, {})
             # Merge Plex markers with custom.json markers
             intro = ep.get("intro") or custom_entry.get("intro")
-            credits = ep.get("credits_ms") or custom_entry.get("credits")
-
+            raw_credits = ep.get("credits_ms") or custom_entry.get("credits")
+            # Normalize credits to dict with start_ms/end_ms (support both naming conventions)
+            if isinstance(raw_credits, dict):
+                credits_start = raw_credits.get("start_ms") or raw_credits.get("start")
+                credits_end = raw_credits.get("end_ms") or raw_credits.get("end")
+            else:
+                credits_start = raw_credits
+                credits_end = None
+            
+            if custom_entry:
+                merged_count += 1
+                if merged_count <= 3:
+                    app.logger.info(f"[library_view] Merged episode {rk}: intro={intro}, credits_start={credits_start}, credits_end={credits_end} (plex_intro={ep.get('intro')}, custom_intro={custom_entry.get('intro')}, plex_credits={ep.get('credits_ms')}, custom_credits={custom_entry.get('credits')})")
+            
             series_title = ep.get("series_title") or "Desconhecido"
             season_num = ep.get("season") or 0
             series_map[series_title][season_num].append({
@@ -579,8 +601,12 @@ def create_app(
                 "title": ep["title"],
                 "thumb": ep.get("thumb_url"),
                 "intro": intro,
-                "credits": credits,
+                "credits_start": credits_start,
+                "credits_end": credits_end,
             })
+
+        app.logger.info(f"[library_view] Merged {merged_count} episodes with custom.json data out of {len(episodes)} total episodes")
+
         tree = []
         for s_title, seasons in series_map.items():
             season_list = []
@@ -598,6 +624,7 @@ def create_app(
             })
         tree_data = {"section_key": section_key, "series": tree}
         
+        app.logger.info(f"[library_view] Prepared {len(tree)} series for template")
         return render_template("library_view.html", library=library, series=tree_data.get("series", []), plex_libraries=plex_libs, section_key=section_key)
 
     
@@ -983,10 +1010,13 @@ def create_app(
         cache_key = f"plex:sync_tree:{section_key}"
         cached = redis_client.get(cache_key)
         if cached:
+            app.logger.info(f"[sync_tree] Cache HIT for section {section_key}")
             return jsonify(json.loads(cached)), 200, {"X-Cache": "HIT"}
 
+        app.logger.info(f"[sync_tree] Cache MISS for section {section_key}, fetching from Plex")
         manager = PlexManager(plex_url, plex_token)
         episodes = manager.list_episodes_with_markers(section_key)
+        app.logger.info(f"[sync_tree] Got {len(episodes)} episodes from Plex for section {section_key}")
 
         # Load custom.json (manual markers from UI)
         CUSTOM_JSON_PATH = pathlib.Path("/config/plexautoskip/custom.json")
@@ -994,17 +1024,39 @@ def create_app(
         if CUSTOM_JSON_PATH.is_file():
             try:
                 custom_data = json.loads(CUSTOM_JSON_PATH.read_text(encoding="utf-8"))
-            except Exception:
+                app.logger.info(f"[sync_tree] Loaded custom.json with {len(custom_data)} entries")
+                # Log first few entries for debugging
+                for i, (k, v) in enumerate(custom_data.items()):
+                    if i < 3:
+                        app.logger.info(f"[sync_tree] custom.json entry: {k} -> {v}")
+            except Exception as e:
+                app.logger.error(f"[sync_tree] Failed to load custom.json: {e}")
                 custom_data = {}
+        else:
+            app.logger.warning(f"[sync_tree] custom.json not found at {CUSTOM_JSON_PATH}")
 
         from collections import defaultdict
         series_map = defaultdict(lambda: defaultdict(list))
+        merged_count = 0
         for ep in episodes:
             rk = str(ep["rating_key"])
             custom_entry = custom_data.get(rk, {})
             # Merge Plex markers with custom.json markers
             intro = ep.get("intro") or custom_entry.get("intro")
-            credits = ep.get("credits_ms") or custom_entry.get("credits")
+            raw_credits = ep.get("credits_ms") or custom_entry.get("credits")
+            # Normalize credits to dict with start_ms/end_ms (support both naming conventions)
+            if isinstance(raw_credits, dict):
+                credits_start = raw_credits.get("start_ms") or raw_credits.get("start")
+                credits_end = raw_credits.get("end_ms") or raw_credits.get("end")
+            else:
+                credits_start = raw_credits
+                credits_end = None
+            
+            # Log merged data for debugging
+            if custom_entry:
+                merged_count += 1
+                if merged_count <= 3:
+                    app.logger.info(f"[sync_tree] Merged episode {rk}: intro={intro}, credits_start={credits_start}, credits_end={credits_end} (plex_intro={ep.get('intro')}, custom_intro={custom_entry.get('intro')}, plex_credits={ep.get('credits_ms')}, custom_credits={custom_entry.get('credits')})")
             
             series_title = ep.get("series_title") or "Desconhecido"
             season_num = ep.get("season") or 0
@@ -1014,8 +1066,11 @@ def create_app(
                 "title": ep["title"],
                 "thumb": ep.get("thumb_url"),
                 "intro": intro,
-                "credits": credits,
+                "credits_start": credits_start,
+                "credits_end": credits_end,
             })
+
+        app.logger.info(f"[sync_tree] Merged {merged_count} episodes with custom.json data out of {len(episodes)} total episodes")
 
         tree = []
         for s_title, seasons in series_map.items():
@@ -1029,6 +1084,7 @@ def create_app(
 
         payload = {"section_key": section_key, "series": tree}
         redis_client.setex(cache_key, 300, json.dumps(payload))
+        app.logger.info(f"[sync_tree] Stored {len(tree)} series in cache for section {section_key}")
         return jsonify(payload), 200
 
     @app.post("/api/sync/marker")

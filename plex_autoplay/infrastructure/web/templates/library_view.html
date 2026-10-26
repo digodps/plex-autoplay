@@ -242,7 +242,8 @@
         ser.seasons.forEach(season => {
           season.episodes.forEach(ep => {
             const intro = ep.intro || {start_ms:'', end_ms:''};
-            const cred = ep.credits !== null ? ep.credits : '';
+            const credStart = ep.credits_start !== undefined ? ep.credits_start : '';
+            const credEnd = ep.credits_end !== undefined ? ep.credits_end : '';
             html += `
               <li class="episode-row" data-rating="${ep.rating_key}">
                 <span class="ep-num">E${String(ep.episode).padStart(2,'0')}</span>
@@ -250,8 +251,8 @@
                 <div class="marker-inputs">
                   <label>Intro ini<input type="number" class="mk-intro-start" value="${intro.start_ms||''}" placeholder="ms"></label>
                   <label>Intro fim<input type="number" class="mk-intro-end" value="${intro.end_ms||''}" placeholder="ms"></label>
-                  <label>Cred ini<input type="number" class="mk-cred-start" value="${cred||''}" placeholder="ms"></label>
-                  <label>Cred fim<input type="number" class="mk-cred-end" value="" placeholder="ms"></label>
+                  <label>Cred ini<input type="number" class="mk-cred-start" value="${credStart||''}" placeholder="ms"></label>
+                  <label>Cred fim<input type="number" class="mk-cred-end" value="${credEnd||''}" placeholder="ms"></label>
                   <button class="button button-primary save-btn" data-rating="${ep.rating_key}">Salvar</button>
                 </div>
               </li>`;
