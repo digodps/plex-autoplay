@@ -11,6 +11,13 @@ repos:
         args: [--check]
         types_or: [python]
 
+  - repo: https://github.com/rhysd/actionlint
+    rev: v1.7.7
+    hooks:
+      - id: actionlint
+        name: GitHub Actions workflow lint
+        files: \.github/workflows/.*\.(yml|yaml)$
+
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v5.0.0
     hooks:
