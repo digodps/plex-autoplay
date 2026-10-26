@@ -226,7 +226,44 @@ plex-autoplay/
 * Métricas de processo expostas em `/api/status` (CPU, RAM, rede, disco).  
 * Métricas Prometheus opcionais (descomente `prometheus_client` no `requirements.txt` e adicione endpoint `/metrics`).
 
----  
+---
+
+## ⚠️  Limitações conhecidas – iOS / Web
+
+> **Importante:** O PlexAutoSkip **não funciona** para controle remoto via **app iOS do Plex** nem via **Plex Web App** no navegador.
+
+### Por que não funciona
+
+O PlexAutoSkip depende do protocolo **Plex Companion** para enviar comandos de *seek* (pular intro/créditos) diretamente ao player. A partir de 2023, a Plex **descontinuou oficialmente** o protocolo Companion:
+
+- O app **iOS** redesenhado não expõe mais o endpoint de controle remoto local (`/player/playback/seekTo` na porta 32500).
+- O **Plex Web App** no navegador também não expõe mais essa API.
+- A Plex confirmou oficialmente que o protocolo Companion foi descontinuado e não há planos de restaurá-lo.
+
+> **Posição oficial do Plex:** *"O protocolo Companion foi descontinuado. Use AirPlay (iOS) ou casting para controlar a reprodução."*
+
+### Clientes que **FUNCIONAM** com PlexAutoSkip
+
+| Cliente | Status | Observação |
+|---------|--------|------------|
+| **Plex Desktop App** (Windows/Mac/Linux) | ✅ Funciona | Expõe player local na porta 32500 |
+| **Plex para Android TV / Google TV** | ✅ Funciona | Porta 32500 acessível |
+| **Plex para Apple TV** | ✅ Funciona | Funciona via Companion |
+| **Plex Home Theater** (legado) | ✅ Funciona | Cliente legado completo |
+| **Plex para Android (Mobile)** | ⚠️ Parcial | Funciona em alguns dispositivos/versões |
+| **Plex para iOS (iPhone/iPad)** | ❌ Não funciona | Protocolo Companion removido |
+| **Plex Web App** (navegador) | ❌ Não funciona | Sem API de controle local |
+
+### Alternativas para usuários iOS/Web
+
+1. **Use o app Plex Desktop** (Windows/Mac/Linux) para assistir – o skip automático funcionará.
+2. **Use AirPlay** do iOS para Apple TV / receptor compatível – o controle passa a ser feito pelo Apple TV.
+3. **Use Chromecast / Google Cast** do navegador/Android para TV/Chromecast.
+4. **Plex Desktop App** no mesmo servidor – funciona como player controlável.
+
+> **Não há configuração no app iOS/Web atual que reative o protocolo legado.** A remoção é definitiva por decisão da Plex.
+
+---
 
 ## 📄  Licença
 
