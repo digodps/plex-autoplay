@@ -97,7 +97,7 @@ class TestMarkerGenerator(unittest.TestCase):
         # Silence at 30s-33s (3s silence) within first 5 min
         mock_silence.side_effect = [
             [(30.0, 33.0)],  # intro window
-            [],              # credits window (last 10%)
+            [],  # credits window (last 10%)
         ]
         res = generate_markers("/fake/video.mkv")
         self.assertIsNotNone(res.intro_start)
@@ -113,8 +113,8 @@ class TestMarkerGenerator(unittest.TestCase):
         mock_duration.return_value = 3600.0
         # Silence at 3300s-3305s (5s silence) in last 10%
         mock_silence.side_effect = [
-            [],                    # intro window
-            [(3300.0, 3305.0)],   # credits window
+            [],  # intro window
+            [(3300.0, 3305.0)],  # credits window
         ]
         res = generate_markers("/fake/video.mkv")
         self.assertIsNone(res.intro_start)
@@ -157,8 +157,10 @@ class TestMarkerGenerator(unittest.TestCase):
     def test_generate_returns_dict_format(self, mock_gen_markers):
         """Test generate() returns legacy dict format."""
         mock_gen_markers.return_value = MarkerResult(
-            intro_start=10000, intro_end=20000,
-            credits_start=3500000, credits_end=3600000,
+            intro_start=10000,
+            intro_end=20000,
+            credits_start=3500000,
+            credits_end=3600000,
         )
         result = generate("/fake/video.mkv")
         self.assertIn("intro", result)
@@ -172,8 +174,10 @@ class TestMarkerGenerator(unittest.TestCase):
     def test_generate_with_xml_returns_tuple(self, mock_gen_markers):
         """Test generate_with_xml returns (dict, xml_string) tuple."""
         mock_gen_markers.return_value = MarkerResult(
-            intro_start=10000, intro_end=20000,
-            credits_start=3500000, credits_end=3600000,
+            intro_start=10000,
+            intro_end=20000,
+            credits_start=3500000,
+            credits_end=3600000,
         )
         marker_dict, xml_str = generate_with_xml("/path/to/video.mkv")
         self.assertIsInstance(marker_dict, dict)
@@ -186,8 +190,10 @@ class TestMarkerGenerator(unittest.TestCase):
     def test_build_plex_xml_structure(self):
         """Test _build_plex_xml produces valid Plex-compatible XML."""
         res = MarkerResult(
-            intro_start=10000, intro_end=20000,
-            credits_start=3500000, credits_end=3600000,
+            intro_start=10000,
+            intro_end=20000,
+            credits_start=3500000,
+            credits_end=3600000,
         )
         xml = _build_plex_xml(res, "episode.mkv")
         self.assertIn("<Media>", xml)

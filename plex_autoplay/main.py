@@ -53,7 +53,9 @@ def main(argv: list[str] | None = None) -> int:
         tls_hosts=config.dashboard_tls_hosts,
     )
 
-    threading.Thread(target=web_server.run, name="plex-autoplay-dashboard", daemon=True).start()
+    threading.Thread(
+        target=web_server.run, name="plex-autoplay-dashboard", daemon=True
+    ).start()
     protocol = "HTTPS" if config.dashboard_https else "HTTP"
     logger.info("Dashboard %s iniciado na porta %d.", protocol, config.dashboard_port)
 
@@ -62,6 +64,7 @@ def main(argv: list[str] | None = None) -> int:
     try:
         while True:
             import time
+
             time.sleep(1)
     except KeyboardInterrupt:
         logger.info("Encerrando...")

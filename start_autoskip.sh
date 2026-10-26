@@ -31,10 +31,10 @@ log_level = INFO
 custom_file = ${CONFIG_DIR}/custom.json
 
 [Plex.tv]
-username = 
-password = 
+username =
+password =
 token = ${TOKEN}
-servername = 
+servername =
 
 [Server]
 address = ${ADDRESS}
@@ -48,20 +48,20 @@ ignore-certs = False
 mode = skip
 tags = intro, commercial, advertisement, credits
 types = movie, episode
-ignored-libraries = 
+ignored-libraries =
 last-chapter = 0.0
 unwatched = False
 first-episode-series = Always
 first-episode-season = Always
-first-safe-tags = 
+first-safe-tags =
 last-episode-series = Watched
 last-episode-season = Always
-last-safe-tags = 
+last-safe-tags =
 next = False
 
 [Binge]
 ignore-skip-for = 0
-safe-tags = 
+safe-tags =
 same-show-only = False
 skip-next-max = 0
 

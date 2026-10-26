@@ -24,7 +24,7 @@ class TestPlexAutoSkipIntegration(unittest.TestCase):
 
     def setUp(self):
         # Patch redis_client to avoid needing a real Redis server
-        self.redis_patcher = patch('plex_autoplay.infrastructure.web.app.redis_client')
+        self.redis_patcher = patch("plex_autoplay.infrastructure.web.app.redis_client")
         self.mock_redis = self.redis_patcher.start()
         self.mock_redis.delete.return_value = None
 
@@ -36,7 +36,9 @@ class TestPlexAutoSkipIntegration(unittest.TestCase):
         self.plexautoskip_dir.mkdir(parents=True, exist_ok=True)
 
         # Set environment variables to use our test directory
-        os.environ["PLEX_AUTOPLAY_CUSTOM_JSON_PATH"] = str(self.plexautoskip_dir / "custom.json")
+        os.environ["PLEX_AUTOPLAY_CUSTOM_JSON_PATH"] = str(
+            self.plexautoskip_dir / "custom.json"
+        )
         os.environ["PLEX_AUTOPLAY_CONFIG_DIR"] = str(self.plexautoskip_dir)
 
         # Create minimal custom.json with PlexAutoSkip format
@@ -45,38 +47,36 @@ class TestPlexAutoSkipIntegration(unittest.TestCase):
             "markers": {
                 "4987": [
                     {"start": 0, "end": 180000, "type": "intro"},
-                    {"start": 1467893, "end": 1470058, "type": "credits"}
+                    {"start": 1467893, "end": 1470058, "type": "credits"},
                 ],
-                "5103": [
-                    {"start": 1467953, "end": 1470058, "type": "credits"}
-                ]
+                "5103": [{"start": 1467953, "end": 1470058, "type": "credits"}],
             },
             "offsets": {},
             "tags": {},
             "mode": {},
             "allowed": {"clients": [], "users": [], "keys": [], "skip-next": []},
             "blocked": {"clients": [], "users": [], "keys": [], "skip-next": []},
-            "clients": {}
+            "clients": {},
         }
         self.custom_json_path = self.plexautoskip_dir / "custom.json"
         initial_custom = {
             "markers": {
                 "4987": [
                     {"start": 0, "end": 180000, "type": "intro"},
-                    {"start": 1467893, "end": 1470058, "type": "credits"}
+                    {"start": 1467893, "end": 1470058, "type": "credits"},
                 ],
-                "5103": [
-                    {"start": 1467953, "end": 1470058, "type": "credits"}
-                ]
+                "5103": [{"start": 1467953, "end": 1470058, "type": "credits"}],
             },
             "offsets": {},
             "tags": {},
             "mode": {},
             "allowed": {"clients": [], "users": [], "keys": [], "skip-next": []},
             "blocked": {"clients": [], "users": [], "keys": [], "skip-next": []},
-            "clients": {}
+            "clients": {},
         }
-        self.custom_json_path.write_text(json.dumps(initial_custom, indent=2), encoding="utf-8")
+        self.custom_json_path.write_text(
+            json.dumps(initial_custom, indent=2), encoding="utf-8"
+        )
 
         # Create config.ini for PlexAutoSkip
         self.config_ini = self.plexautoskip_dir / "config.ini"
@@ -91,10 +91,10 @@ log_level = INFO
 custom_file = /config/plexautoskip/custom.json
 
 [Plex.tv]
-username = 
-password = 
+username =
+password =
 token = test_token
-servername = 
+servername =
 
 [Server]
 address = 192.168.18.3
@@ -108,20 +108,20 @@ ignore-certs = False
 mode = skip
 tags = intro, commercial, advertisement, credits
 types = movie, episode
-ignored-libraries = 
+ignored-libraries =
 last-chapter = 0.0
 unwatched = False
 first-episode-series = Always
 first-episode-season = Always
-first-safe-tags = 
+first-safe-tags =
 last-episode-series = Watched
 last-episode-season = Always
-last-safe-tags = 
+last-safe-tags =
 next = False
 
 [Binge]
 ignore-skip-for = 0
-safe-tags = 
+safe-tags =
 same-show-only = False
 skip-next-max = 0
 
@@ -143,10 +143,7 @@ high = 100
         self.config_dir.mkdir(parents=True, exist_ok=True)
 
         # Create app with test config
-        self.app = create_app(
-            config_dir=str(self.config_dir),
-            cookie_secure=False
-        )
+        self.app = create_app(config_dir=str(self.config_dir), cookie_secure=False)
         self.app.config["TESTING"] = True
         self.client = self.app.test_client()
 
@@ -206,9 +203,12 @@ high = 100
                 "kind": "intro",
                 "start_ms": 1000,
                 "end_ms": 5000,
-                "section_key": "4"
+                "section_key": "4",
             },
-            headers={"X-CSRF-Token": "test-csrf-token", "Content-Type": "application/json"}
+            headers={
+                "X-CSRF-Token": "test-csrf-token",
+                "Content-Type": "application/json",
+            },
         )
 
         self.assertEqual(response.status_code, 200)
@@ -236,15 +236,33 @@ high = 100
         # First save an intro marker
         self.client.post(
             "/api/sync/marker",
-            json={"rating_key": "9999", "kind": "intro", "start_ms": 1000, "end_ms": 5000, "section_key": "4"},
-            headers={"X-CSRF-Token": "test-csrf-token", "Content-Type": "application/json"}
+            json={
+                "rating_key": "9999",
+                "kind": "intro",
+                "start_ms": 1000,
+                "end_ms": 5000,
+                "section_key": "4",
+            },
+            headers={
+                "X-CSRF-Token": "test-csrf-token",
+                "Content-Type": "application/json",
+            },
         )
 
         # Update the same marker
         self.client.post(
             "/api/sync/marker",
-            json={"rating_key": "9999", "kind": "intro", "start_ms": 2000, "end_ms": 6000, "section_key": "4"},
-            headers={"X-CSRF-Token": "test-csrf-token", "Content-Type": "application/json"}
+            json={
+                "rating_key": "9999",
+                "kind": "intro",
+                "start_ms": 2000,
+                "end_ms": 6000,
+                "section_key": "4",
+            },
+            headers={
+                "X-CSRF-Token": "test-csrf-token",
+                "Content-Type": "application/json",
+            },
         )
 
         # Verify only one intro marker exists with updated values
@@ -264,8 +282,17 @@ high = 100
         # Save a marker with section_key
         response = self.client.post(
             "/api/sync/marker",
-            json={"rating_key": "9999", "kind": "intro", "start_ms": 1000, "end_ms": 5000, "section_key": "4"},
-            headers={"X-CSRF-Token": "test-csrf-token", "Content-Type": "application/json"}
+            json={
+                "rating_key": "9999",
+                "kind": "intro",
+                "start_ms": 1000,
+                "end_ms": 5000,
+                "section_key": "4",
+            },
+            headers={
+                "X-CSRF-Token": "test-csrf-token",
+                "Content-Type": "application/json",
+            },
         )
         self.assertEqual(response.status_code, 200)
 
@@ -281,30 +308,57 @@ high = 100
         response = self.client.post(
             "/api/sync/marker",
             json={"rating_key": "9999"},
-            headers={"X-CSRF-Token": "test-csrf-token", "Content-Type": "application/json"}
+            headers={
+                "X-CSRF-Token": "test-csrf-token",
+                "Content-Type": "application/json",
+            },
         )
         self.assertEqual(response.status_code, 400)
 
         # Invalid kind
         response = self.client.post(
             "/api/sync/marker",
-            json={"rating_key": "9999", "kind": "invalid", "start_ms": 0, "end_ms": 1000},
-            headers={"X-CSRF-Token": "test-csrf-token", "Content-Type": "application/json"}
+            json={
+                "rating_key": "9999",
+                "kind": "invalid",
+                "start_ms": 0,
+                "end_ms": 1000,
+            },
+            headers={
+                "X-CSRF-Token": "test-csrf-token",
+                "Content-Type": "application/json",
+            },
         )
         self.assertEqual(response.status_code, 400)
 
         # Invalid start/end
         response = self.client.post(
             "/api/sync/marker",
-            json={"rating_key": "9999", "kind": "intro", "start_ms": -1, "end_ms": 1000},
-            headers={"X-CSRF-Token": "test-csrf-token", "Content-Type": "application/json"}
+            json={
+                "rating_key": "9999",
+                "kind": "intro",
+                "start_ms": -1,
+                "end_ms": 1000,
+            },
+            headers={
+                "X-CSRF-Token": "test-csrf-token",
+                "Content-Type": "application/json",
+            },
         )
         self.assertEqual(response.status_code, 400)
 
         response = self.client.post(
             "/api/sync/marker",
-            json={"rating_key": "9999", "kind": "intro", "start_ms": 1000, "end_ms": 500},
-            headers={"X-CSRF-Token": "test-csrf-token", "Content-Type": "application/json"}
+            json={
+                "rating_key": "9999",
+                "kind": "intro",
+                "start_ms": 1000,
+                "end_ms": 500,
+            },
+            headers={
+                "X-CSRF-Token": "test-csrf-token",
+                "Content-Type": "application/json",
+            },
         )
         self.assertEqual(response.status_code, 400)
 
@@ -314,7 +368,10 @@ high = 100
             data = json.load(f)
 
         # Required top-level keys
-        self.assertEqual(set(data.keys()), {"markers", "offsets", "tags", "mode", "allowed", "blocked", "clients"})
+        self.assertEqual(
+            set(data.keys()),
+            {"markers", "offsets", "tags", "mode", "allowed", "blocked", "clients"},
+        )
 
         # Markers must be dict of ratingKey -> list
         self.assertIsInstance(data["markers"], dict)
@@ -345,15 +402,33 @@ high = 100
         # Save marker for episode 9999
         self.client.post(
             "/api/sync/marker",
-            json={"rating_key": "9999", "kind": "intro", "start_ms": 1000, "end_ms": 5000, "section_key": "4"},
-            headers={"X-CSRF-Token": "test-csrf-token", "Content-Type": "application/json"}
+            json={
+                "rating_key": "9999",
+                "kind": "intro",
+                "start_ms": 1000,
+                "end_ms": 5000,
+                "section_key": "4",
+            },
+            headers={
+                "X-CSRF-Token": "test-csrf-token",
+                "Content-Type": "application/json",
+            },
         )
 
         # Save marker for another episode
         self.client.post(
             "/api/sync/marker",
-            json={"rating_key": "8888", "kind": "credits", "start_ms": 100000, "end_ms": 200000, "section_key": "4"},
-            headers={"X-CSRF-Token": "test-csrf-token", "Content-Type": "application/json"}
+            json={
+                "rating_key": "8888",
+                "kind": "credits",
+                "start_ms": 100000,
+                "end_ms": 200000,
+                "section_key": "4",
+            },
+            headers={
+                "X-CSRF-Token": "test-csrf-token",
+                "Content-Type": "application/json",
+            },
         )
 
         # Verify both exist
@@ -369,12 +444,15 @@ high = 100
 class TestPlexLibraryScannerIntegration(unittest.TestCase):
     """Tests for PlexLibraryScanner with PlexAutoSkip integration."""
 
-    @patch("plex_autoplay.application.plex_library_scanner.CUSTOM_JSON_PATH", Path("/tmp/test_custom.json"))
+    @patch(
+        "plex_autoplay.application.plex_library_scanner.CUSTOM_JSON_PATH",
+        Path("/tmp/test_custom.json"),
+    )
     @patch("plex_autoplay.infrastructure.plex.client.PlexManager")
     def test_scan_library_merges_custom_json_markers(self, mock_plex_manager_class):
         """Test that scanner merges Plex markers with custom.json markers."""
         mock_manager = MagicMock()
-        
+
         # Mock the server object and its fetchItem method
         mock_server = MagicMock()
         mock_episode = MagicMock()
@@ -387,7 +465,7 @@ class TestPlexLibraryScannerIntegration(unittest.TestCase):
         mock_episode.index = 2
         mock_episode.title = "Episode 2"
         mock_server.fetchItem.return_value = mock_episode
-        
+
         mock_manager.get_server.return_value = mock_server
         mock_manager.list_episodes.return_value = [
             {
@@ -403,7 +481,9 @@ class TestPlexLibraryScannerIntegration(unittest.TestCase):
         ]
 
         # Mock generate_with_xml to return empty markers (no markers detected)
-        with patch("plex_autoplay.application.plex_library_scanner.generate_with_xml") as mock_generate:
+        with patch(
+            "plex_autoplay.application.plex_library_scanner.generate_with_xml"
+        ) as mock_generate:
             mock_generate.return_value = ({}, None)
 
             # Create scanner with mocked manager
@@ -415,10 +495,15 @@ class TestPlexLibraryScannerIntegration(unittest.TestCase):
             self.assertEqual(result.skipped, 1)
             self.assertEqual(result.processed, 0)
 
-    @patch("plex_autoplay.application.plex_library_scanner.CUSTOM_JSON_PATH", Path("/tmp/test_custom.json"))
+    @patch(
+        "plex_autoplay.application.plex_library_scanner.CUSTOM_JSON_PATH",
+        Path("/tmp/test_custom.json"),
+    )
     @patch("plex_autoplay.application.plex_library_scanner.generate_with_xml")
     @patch("plex_autoplay.infrastructure.plex.client.PlexManager")
-    def test_scan_library_merges_custom_intro_marker(self, mock_plex_manager_class, mock_generate):
+    def test_scan_library_merges_custom_intro_marker(
+        self, mock_plex_manager_class, mock_generate
+    ):
         """Test that custom.json intro marker is merged with Plex data."""
         mock_manager = MagicMock()
         mock_plex_manager_class.return_value = mock_manager
@@ -438,7 +523,10 @@ class TestPlexLibraryScannerIntegration(unittest.TestCase):
         ]
 
         # Mock generate_with_xml to return intro marker
-        mock_generate.return_value = ({"intro": {"start_ms": 0, "end_ms": 180000}}, None)
+        mock_generate.return_value = (
+            {"intro": {"start_ms": 0, "end_ms": 180000}},
+            None,
+        )
 
         scanner = PlexLibraryScanner(mock_manager)
         result = scanner.scan_section("4")

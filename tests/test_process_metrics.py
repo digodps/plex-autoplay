@@ -15,7 +15,9 @@ class TestProcessMetricsSampler(unittest.TestCase):
         )
 
         with patch.object(Path, "read_text", return_value=network_stats):
-            received, sent, interface_count = ProcessMetricsSampler._read_network_counters()
+            received, sent, interface_count = (
+                ProcessMetricsSampler._read_network_counters()
+            )
 
         self.assertEqual((received, sent, interface_count), (3000, 4000, 1))
 
@@ -24,8 +26,15 @@ class TestProcessMetricsSampler(unittest.TestCase):
         sampler._last_wall_time = 0
         sampler._last_cpu_time = 0
         with (
-            patch("plex_autoplay.infrastructure.web.process_metrics.time.monotonic", side_effect=[0.5, 2.5]),
-            patch.object(sampler, "_read_network_counters", side_effect=[(1000, 2000, 1), (2000, 2500, 1)]),
+            patch(
+                "plex_autoplay.infrastructure.web.process_metrics.time.monotonic",
+                side_effect=[0.5, 2.5],
+            ),
+            patch.object(
+                sampler,
+                "_read_network_counters",
+                side_effect=[(1000, 2000, 1), (2000, 2500, 1)],
+            ),
         ):
             first_sample = sampler.sample()
             second_sample = sampler.sample()

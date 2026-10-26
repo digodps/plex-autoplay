@@ -46,7 +46,9 @@ class TestPlexManager(unittest.TestCase):
         result = manager.list_show_episodes("Series", "Example Show")
 
         self.assertIs(result, episodes)
-        preferred_section.search.assert_called_once_with(title="Example Show", libtype="show")
+        preferred_section.search.assert_called_once_with(
+            title="Example Show", libtype="show"
+        )
         other_section.search.assert_not_called()
 
     def test_show_episode_lookup_ignores_ambiguous_titles_outside_library(self):

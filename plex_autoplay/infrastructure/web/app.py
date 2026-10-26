@@ -15,7 +15,9 @@ from pathlib import Path
 
 import redis
 
-redis_client = redis.from_url(os.getenv("REDIS_URL", "redis://127.0.0.1:6379/0"), decode_responses=True)
+redis_client = redis.from_url(
+    os.getenv("REDIS_URL", "redis://127.0.0.1:6379/0"), decode_responses=True
+)
 import threading
 import time
 import uuid
@@ -100,7 +102,9 @@ class ConfigStore:
                     data.update(saved)
                     return data
                 except Exception:
-                    logger.exception("Falha ao ler configuração; usando padrões do ambiente.")
+                    logger.exception(
+                        "Falha ao ler configuração; usando padrões do ambiente."
+                    )
             return data
 
     def save(self, data: dict) -> None:
@@ -109,7 +113,9 @@ class ConfigStore:
         self.config_dir.mkdir(parents=True, exist_ok=True)
         tmp = self.path.with_suffix(".tmp")
         try:
-            tmp.write_text(json.dumps(merged, ensure_ascii=False, indent=2), encoding="utf-8")
+            tmp.write_text(
+                json.dumps(merged, ensure_ascii=False, indent=2), encoding="utf-8"
+            )
             os.chmod(tmp, 0o600)
             os.replace(tmp, self.path)
         finally:
@@ -151,10 +157,16 @@ class AdminStore:
     def session_secret(self) -> str:
         self.config_dir.mkdir(parents=True, exist_ok=True)
         try:
-            return (self.config_dir / "dashboard-session.key").read_text(encoding="ascii").strip()
+            return (
+                (self.config_dir / "dashboard-session.key")
+                .read_text(encoding="ascii")
+                .strip()
+            )
         except (FileNotFoundError, PermissionError, OSError):
             secret = secrets.token_hex(32)
-            self._write_atomic(self.config_dir / "dashboard-session.key", secret.encode("ascii"))
+            self._write_atomic(
+                self.config_dir / "dashboard-session.key", secret.encode("ascii")
+            )
             return secret
 
     def setup_token(self) -> str:
@@ -171,8 +183,9 @@ class AdminStore:
     def verify(self, username: str, password: str) -> bool:
         # 1️⃣  ENV‑var credentials (preferred)
         if self._env_user and self._env_pass:
-            return hmac.compare_digest(self._env_user, username) and \
-                   hmac.compare_digest(self._env_pass, password)
+            return hmac.compare_digest(
+                self._env_user, username
+            ) and hmac.compare_digest(self._env_pass, password)
 
         # 2️⃣  Legacy JSON file (kept for backward compatibility)
         if not self.credentials_path.is_file():
@@ -184,7 +197,9 @@ class AdminStore:
             return False
 
         stored_username = payload.get("username")
-        if not isinstance(stored_username, str) or not hmac.compare_digest(stored_username, username):
+        if not isinstance(stored_username, str) or not hmac.compare_digest(
+            stored_username, username
+        ):
             return False
 
         salt = bytes.fromhex(payload["salt"])
@@ -192,7 +207,9 @@ class AdminStore:
         if not isinstance(iterations, int) or iterations < 100_000:
             return False
         expected_hash = bytes.fromhex(payload["password_hash"])
-        candidate_hash = hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"), salt, iterations)
+        candidate_hash = hashlib.pbkdf2_hmac(
+            "sha256", password.encode("utf-8"), salt, iterations
+        )
         return hmac.compare_digest(candidate_hash, expected_hash)
 
     # --------------------------------------------------------------------
@@ -259,7 +276,8 @@ def _update_report_markers(
             if (
                 not isinstance(episode, dict)
                 or not isinstance(episode.get("series"), str)
-                or episode["series"].strip().casefold() != series_title.strip().casefold()
+                or episode["series"].strip().casefold()
+                != series_title.strip().casefold()
                 or episode.get("season") != season
                 or episode.get("episode") != episode_number
             ):
@@ -268,7 +286,9 @@ def _update_report_markers(
                 "start_ms": int(values["start"] * 1000) if "start" in values else None,
                 "end_ms": int(values["end"] * 1000) if "end" in values else None,
             }
-            episode["credits_ms"] = int(values["credits"] * 1000) if "credits" in values else None
+            episode["credits_ms"] = (
+                int(values["credits"] * 1000) if "credits" in values else None
+            )
             library_changed = True
             changed = True
         if library_changed:
@@ -280,7 +300,8 @@ def _update_report_markers(
                 for item in episodes
             )
             library["with_credits"] = sum(
-                isinstance(item, dict) and item.get("credits_ms") is not None for item in episodes
+                isinstance(item, dict) and item.get("credits_ms") is not None
+                for item in episodes
             )
             missing = []
             for item in episodes:
@@ -344,8 +365,10 @@ def create_app(
             return None
         expected = session.get("_csrf_token")
         provided = request.headers.get("X-CSRF-Token") or request.form.get("csrf_token")
-        if not isinstance(expected, str) or not isinstance(provided, str) or not hmac.compare_digest(
-            expected, provided
+        if (
+            not isinstance(expected, str)
+            or not isinstance(provided, str)
+            or not hmac.compare_digest(expected, provided)
         ):
             return jsonify(error="Token CSRF inválido ou ausente."), 400
         return None
@@ -404,14 +427,22 @@ def create_app(
             return redirect(url_for("setup"))
         identity = request.remote_addr or "unknown"
         if not limiter.allowed(identity):
-            return render_template("auth.html", title="Entrar", setup=False,
-                                   error="Muitas tentativas. Aguarde antes de tentar novamente."), 429
+            return render_template(
+                "auth.html",
+                title="Entrar",
+                setup=False,
+                error="Muitas tentativas. Aguarde antes de tentar novamente.",
+            ), 429
         username = request.form.get("username", "")
         password = request.form.get("password", "")
         if not admin_store.verify(username, password):
             limiter.record_failure(identity)
-            return render_template("auth.html", title="Entrar", setup=False,
-                                   error="Usuário ou senha inválidos."), 401
+            return render_template(
+                "auth.html",
+                title="Entrar",
+                setup=False,
+                error="Usuário ou senha inválidos.",
+            ), 401
         limiter.clear(identity)
         session.clear()
         session["admin"] = username
@@ -432,7 +463,9 @@ def create_app(
         # Mask token for display
         masked = cfg.copy()
         token = masked.get("plex_token", "")
-        masked["plex_token"] = token[:4] + "****" + token[-4:] if len(token) > 8 else "****"
+        masked["plex_token"] = (
+            token[:4] + "****" + token[-4:] if len(token) > 8 else "****"
+        )
         # fetch Plex libraries for sidebar
         plex_libs = []
         plex_url = cfg.get("plex_url")
@@ -444,7 +477,9 @@ def create_app(
             except Exception:
                 app.logger.exception("Falha ao obter bibliotecas do Plex para config")
                 plex_libs = []
-        return render_template("config.html", config=masked, raw_config=cfg, plex_libraries=plex_libs)
+        return render_template(
+            "config.html", config=masked, raw_config=cfg, plex_libraries=plex_libs
+        )
 
     @app.post("/config")
     @authenticated
@@ -455,18 +490,30 @@ def create_app(
             "plex_token": form.get("plex_token", ""),
             "auto_skip_intro": form.get("auto_skip_intro") == "on",
             "auto_next_episode": form.get("auto_next_episode") == "on",
-            "next_episode_threshold_seconds": int(form.get("next_episode_threshold_seconds", 15)),
+            "next_episode_threshold_seconds": int(
+                form.get("next_episode_threshold_seconds", 15)
+            ),
             "action_delay_seconds": int(form.get("action_delay_seconds", 5)),
             "poll_interval_seconds": int(form.get("poll_interval_seconds", 2)),
-            "allowed_client_ids": [x.strip() for x in form.get("allowed_client_ids", "").split(",") if x.strip()],
-            "allowed_usernames": [x.strip() for x in form.get("allowed_usernames", "").split(",") if x.strip()],
+            "allowed_client_ids": [
+                x.strip()
+                for x in form.get("allowed_client_ids", "").split(",")
+                if x.strip()
+            ],
+            "allowed_usernames": [
+                x.strip()
+                for x in form.get("allowed_usernames", "").split(",")
+                if x.strip()
+            ],
             "webhook_secret": form.get("webhook_secret", ""),
         }
         try:
             config_store.save(data)
         except Exception as error:
             logger.exception("Falha ao salvar configuração")
-            return jsonify(error=f"Não foi possível salvar a configuração: {error}"), 500
+            return jsonify(
+                error=f"Não foi possível salvar a configuração: {error}"
+            ), 500
         return redirect(url_for("config_page"))
 
     @app.get("/")
@@ -476,13 +523,17 @@ def create_app(
         latest_job = None
         with _scan_jobs_lock:
             if _scan_jobs:
-                latest_job = max(_scan_jobs.values(), key=lambda j: j.get("section_key", ""))
+                latest_job = max(
+                    _scan_jobs.values(), key=lambda j: j.get("section_key", "")
+                )
         snapshot = {
             "status": latest_job.get("status", "idle") if latest_job else "idle",
             "started_at": None,
             "completed_at": None,
             "result": None,
-            "error": latest_job.get("error") if latest_job and latest_job.get("status") == "failed" else None,
+            "error": latest_job.get("error")
+            if latest_job and latest_job.get("status") == "failed"
+            else None,
         }
         # fetch Plex libraries for cards
         plex_libs = []
@@ -494,11 +545,16 @@ def create_app(
                 manager = PlexManager(plex_url, plex_token)
                 plex_libs = manager.list_library_sections()
             except Exception:
-                app.logger.exception("Falha ao obter bibliotecas do Plex para dashboard")
+                app.logger.exception(
+                    "Falha ao obter bibliotecas do Plex para dashboard"
+                )
                 plex_libs = []
         # per-section sync status
         with _section_status_lock:
-            sync_status = {lib.get("key"): _section_status.get(lib.get("key"), "idle") for lib in plex_libs}
+            sync_status = {
+                lib.get("key"): _section_status.get(lib.get("key"), "idle")
+                for lib in plex_libs
+            }
         # collect show library keys for "scan all"
         show_keys = [lib.get("key") for lib in plex_libs if lib.get("type") == "show"]
         totals = {"episodes": 0, "intros": 0, "credits": 0, "missing": 0}
@@ -525,7 +581,9 @@ def create_app(
                 manager = PlexManager(plex_url, plex_token)
                 plex_libs = manager.list_library_sections()
             except Exception:
-                app.logger.exception("Falha ao obter bibliotecas do Plex para library_manager")
+                app.logger.exception(
+                    "Falha ao obter bibliotecas do Plex para library_manager"
+                )
                 plex_libs = []
         return render_template("library_manager.html", plex_libraries=plex_libs)
 
@@ -546,7 +604,10 @@ def create_app(
                 plex_libs = []
         # per-section sync status
         with _section_status_lock:
-            sync_status = {lib.get("key"): _section_status.get(lib.get("key"), "idle") for lib in plex_libs}
+            sync_status = {
+                lib.get("key"): _section_status.get(lib.get("key"), "idle")
+                for lib in plex_libs
+            }
         return render_template(
             "sync.html",
             plex_libraries=plex_libs,
@@ -561,20 +622,37 @@ def create_app(
         plex_url = cfg.get("plex_url")
         plex_token = cfg.get("plex_token")
         if not plex_url or not plex_token:
-            return render_template("library_view.html", library=None, series=[], error="Plex não configurado", plex_libraries=[])
+            return render_template(
+                "library_view.html",
+                library=None,
+                series=[],
+                error="Plex não configurado",
+                plex_libraries=[],
+            )
 
         manager = PlexManager(plex_url, plex_token)
-        
+
         # Get library info
         plex_libs = manager.list_library_sections()
-        library = next((lib for lib in plex_libs if str(lib.get("key")) == str(section_key)), None)
+        library = next(
+            (lib for lib in plex_libs if str(lib.get("key")) == str(section_key)), None
+        )
         if not library:
-            return render_template("library_view.html", library=None, series=[], error="Biblioteca não encontrada", plex_libraries=plex_libs, section_key=section_key)
+            return render_template(
+                "library_view.html",
+                library=None,
+                series=[],
+                error="Biblioteca não encontrada",
+                plex_libraries=plex_libs,
+                section_key=section_key,
+            )
 
         # Get series tree (reuse the sync_library_tree logic) without cache
         app.logger.info(f"[library_view] Fetching episodes for section {section_key}")
         episodes = manager.list_episodes_with_markers(section_key)
-        app.logger.info(f"[library_view] Got {len(episodes)} episodes from Plex for section {section_key}")
+        app.logger.info(
+            f"[library_view] Got {len(episodes)} episodes from Plex for section {section_key}"
+        )
 
         # Load custom.json (manual markers from UI) - PlexAutoSkip list format
         CUSTOM_JSON_PATH = get_custom_json_path()
@@ -582,7 +660,9 @@ def create_app(
         if CUSTOM_JSON_PATH.is_file():
             try:
                 custom_data = json.loads(CUSTOM_JSON_PATH.read_text(encoding="utf-8"))
-                app.logger.info(f"[library_view] Loaded custom.json with {len(custom_data.get('markers', {}))} marker entries")
+                app.logger.info(
+                    f"[library_view] Loaded custom.json with {len(custom_data.get('markers', {}))} marker entries"
+                )
                 for i, (k, v) in enumerate(custom_data.get("markers", {}).items()):
                     if i < 3:
                         app.logger.info(f"[library_view] custom.json entry: {k} -> {v}")
@@ -590,9 +670,12 @@ def create_app(
                 app.logger.error(f"[library_view] Failed to load custom.json: {e}")
                 custom_data = {}
         else:
-            app.logger.warning(f"[library_view] custom.json not found at {CUSTOM_JSON_PATH}")
+            app.logger.warning(
+                f"[library_view] custom.json not found at {CUSTOM_JSON_PATH}"
+            )
 
         from collections import defaultdict
+
         series_map = defaultdict(lambda: defaultdict(list))
         merged_count = 0
         for ep in episodes:
@@ -601,21 +684,27 @@ def create_app(
             # Merge Plex markers with custom.json markers (list format)
             intro = ep.get("intro")
             raw_credits = ep.get("credits_ms")
-            
+
             # Extract custom markers from list format
             custom_intro = None
             custom_credits = None
             if isinstance(custom_entry, list):
                 for marker in custom_entry:
                     if marker.get("type") == "intro":
-                        custom_intro = {"start": marker.get("start"), "end": marker.get("end")}
+                        custom_intro = {
+                            "start": marker.get("start"),
+                            "end": marker.get("end"),
+                        }
                     elif marker.get("type") == "credits":
-                        custom_credits = {"start": marker.get("start"), "end": marker.get("end")}
-            
+                        custom_credits = {
+                            "start": marker.get("start"),
+                            "end": marker.get("end"),
+                        }
+
             # Merge: custom.json takes precedence over Plex markers
             intro = custom_intro or ep.get("intro")
             raw_credits = custom_credits or ep.get("credits_ms")
-            
+
             # Normalize credits to dict with start_ms/end_ms (support both naming conventions)
             if isinstance(raw_credits, dict):
                 credits_start = raw_credits.get("start_ms") or raw_credits.get("start")
@@ -623,7 +712,7 @@ def create_app(
             else:
                 credits_start = raw_credits
                 credits_end = None
-            
+
             if custom_entry:
                 merged_count += 1
                 if merged_count <= 3:
@@ -633,46 +722,66 @@ def create_app(
                     if isinstance(custom_entry, list):
                         for m in custom_entry:
                             if m.get("type") == "intro":
-                                log_intro = {"start": m.get("start"), "end": m.get("end")}
+                                log_intro = {
+                                    "start": m.get("start"),
+                                    "end": m.get("end"),
+                                }
                             elif m.get("type") == "credits":
-                                log_credits = {"start": m.get("start"), "end": m.get("end")}
-                    app.logger.info(f"[library_view] Merged episode {rk}: intro={intro}, credits_start={credits_start}, credits_end={credits_end} (plex_intro={ep.get('intro')}, custom_intro={log_intro}, plex_credits={ep.get('credits_ms')}, custom_credits={log_credits})")
-            
+                                log_credits = {
+                                    "start": m.get("start"),
+                                    "end": m.get("end"),
+                                }
+                    app.logger.info(
+                        f"[library_view] Merged episode {rk}: intro={intro}, credits_start={credits_start}, credits_end={credits_end} (plex_intro={ep.get('intro')}, custom_intro={log_intro}, plex_credits={ep.get('credits_ms')}, custom_credits={log_credits})"
+                    )
+
             series_title = ep.get("series_title") or "Desconhecido"
             season_num = ep.get("season") or 0
-            series_map[series_title][season_num].append({
-                "rating_key": ep["rating_key"],
-                "episode": ep["episode"],
-                "title": ep["title"],
-                "thumb": ep.get("thumb_url"),
-                "intro": intro,
-                "credits_start": credits_start,
-                "credits_end": credits_end,
-            })
+            series_map[series_title][season_num].append(
+                {
+                    "rating_key": ep["rating_key"],
+                    "episode": ep["episode"],
+                    "title": ep["title"],
+                    "thumb": ep.get("thumb_url"),
+                    "intro": intro,
+                    "credits_start": credits_start,
+                    "credits_end": credits_end,
+                }
+            )
 
-        app.logger.info(f"[library_view] Merged {merged_count} episodes with custom.json data out of {len(episodes)} total episodes")
+        app.logger.info(
+            f"[library_view] Merged {merged_count} episodes with custom.json data out of {len(episodes)} total episodes"
+        )
 
         tree = []
         for s_title, seasons in series_map.items():
             season_list = []
             for s_num in sorted(seasons):
-                season_list.append({
-                    "season": s_num,
-                    "episodes": sorted(seasons[s_num], key=lambda e: e["episode"])
-                })
+                season_list.append(
+                    {
+                        "season": s_num,
+                        "episodes": sorted(seasons[s_num], key=lambda e: e["episode"]),
+                    }
+                )
             # Get poster from first episode of first season
             first_ep = seasons[min(seasons.keys())][0] if seasons else None
-            tree.append({
-                "title": s_title,
-                "seasons": season_list,
-                "poster": first_ep.get("thumb") if first_ep else None
-            })
+            tree.append(
+                {
+                    "title": s_title,
+                    "seasons": season_list,
+                    "poster": first_ep.get("thumb") if first_ep else None,
+                }
+            )
         tree_data = {"section_key": section_key, "series": tree}
-        
-        app.logger.info(f"[library_view] Prepared {len(tree)} series for template")
-        return render_template("library_view.html", library=library, series=tree_data.get("series", []), plex_libraries=plex_libs, section_key=section_key)
 
-    
+        app.logger.info(f"[library_view] Prepared {len(tree)} series for template")
+        return render_template(
+            "library_view.html",
+            library=library,
+            series=tree_data.get("series", []),
+            plex_libraries=plex_libs,
+            section_key=section_key,
+        )
 
     @app.get("/api/status")
     @authenticated
@@ -683,14 +792,18 @@ def create_app(
         with _scan_jobs_lock:
             if _scan_jobs:
                 # find job with max created_at
-                latest_job_id = max(_scan_jobs.keys(), key=lambda k: _scan_jobs[k].get("created_at", 0))
+                latest_job_id = max(
+                    _scan_jobs.keys(), key=lambda k: _scan_jobs[k].get("created_at", 0)
+                )
                 latest_job = _scan_jobs[latest_job_id]
         payload = {
             "status": latest_job.get("status", "idle") if latest_job else "idle",
             "started_at": None,
             "completed_at": None,
             "result": None,
-            "error": latest_job.get("error") if latest_job and latest_job.get("status") == "failed" else None,
+            "error": latest_job.get("error")
+            if latest_job and latest_job.get("status") == "failed"
+            else None,
         }
         if latest_job_id:
             payload["job_id"] = latest_job_id
@@ -708,7 +821,9 @@ def create_app(
         latest_job = None
         with _scan_jobs_lock:
             if _scan_jobs:
-                latest_job = max(_scan_jobs.values(), key=lambda j: j.get("created_at", 0))
+                latest_job = max(
+                    _scan_jobs.values(), key=lambda j: j.get("created_at", 0)
+                )
         if not latest_job:
             return jsonify(logs=[])
         logs = latest_job.get("logs", [])
@@ -764,7 +879,9 @@ def create_app(
                 )
                 return response_with_refreshed_report(result, series, season, episode)
             fields = payload.get("fields")
-            if not isinstance(fields, list) or not all(isinstance(field, str) for field in fields):
+            if not isinstance(fields, list) or not all(
+                isinstance(field, str) for field in fields
+            ):
                 raise ValueError("Informe os campos a remover como uma lista.")
             series = payload.get("series", "")
             season = payload.get("season")
@@ -796,16 +913,21 @@ def create_app(
     def _run_scan_job(job_id: str, section_key: str, plex_url: str, plex_token: str):
         # Prepare per-job log queue for SSE streaming
         log_q = queue.Queue()
+
         class _QueueLogHandler(logging.Handler):
             def __init__(self, q):
                 super().__init__()
                 self.q = q
-                self.setFormatter(logging.Formatter('%(asctime)s %(levelname)s %(name)s: %(message)s'))
+                self.setFormatter(
+                    logging.Formatter("%(asctime)s %(levelname)s %(name)s: %(message)s")
+                )
+
             def emit(self, record):
                 try:
                     self.q.put(self.format(record))
                 except queue.Full:
                     pass
+
         handler = _QueueLogHandler(log_q)
         handler.setLevel(logging.INFO)
         scan_logger = logging.getLogger("plex-autoplay.scanner")
@@ -834,12 +956,14 @@ def create_app(
                 if _scan_jobs[job_id].get("cancel_requested") or cancel_event.is_set():
                     _scan_jobs[job_id]["status"] = "cancelled"
                     return
-                _scan_jobs[job_id].update({
-                    "status": "completed",
-                    "processed": result.processed,
-                    "skipped": result.skipped,
-                    "errors": result.errors,
-                })
+                _scan_jobs[job_id].update(
+                    {
+                        "status": "completed",
+                        "processed": result.processed,
+                        "skipped": result.skipped,
+                        "errors": result.errors,
+                    }
+                )
             with _section_status_lock:
                 _section_status[section_key] = "success"
         except Exception as exc:
@@ -891,7 +1015,11 @@ def create_app(
         # set per-section status to running
         with _section_status_lock:
             _section_status[section_key] = "running"
-        thread = threading.Thread(target=_run_scan_job, args=(job_id, section_key, plex_url, plex_token), daemon=True)
+        thread = threading.Thread(
+            target=_run_scan_job,
+            args=(job_id, section_key, plex_url, plex_token),
+            daemon=True,
+        )
         thread.start()
         return jsonify(job_id=job_id, status="queued", total=total, processed=0), 202
 
@@ -903,15 +1031,17 @@ def create_app(
         if not job:
             return jsonify(error="Job não encontrado."), 404
         # Return serializable fields only
-        return jsonify({
-            "job_id": job_id,
-            "status": job.get("status"),
-            "section_key": job.get("section_key"),
-            "total": job.get("total"),
-            "processed": job.get("processed"),
-            "skipped": job.get("skipped"),
-            "errors": job.get("errors"),
-        })
+        return jsonify(
+            {
+                "job_id": job_id,
+                "status": job.get("status"),
+                "section_key": job.get("section_key"),
+                "total": job.get("total"),
+                "processed": job.get("processed"),
+                "skipped": job.get("skipped"),
+                "errors": job.get("errors"),
+            }
+        )
 
     @app.get("/api/plex/scan/<job_id>/log")
     @authenticated
@@ -950,11 +1080,15 @@ def create_app(
         log_q = job.get("log_queue")
         # If job already finished, send buffered logs then close
         if log_q is None:
+
             def generate_finished():
                 for line in job.get("logs", []):
                     yield f"data: {line}\n\n"
                 yield "event: close\ndata: done\n\n"
-            return Response(stream_with_context(generate_finished()), mimetype="text/event-stream")
+
+            return Response(
+                stream_with_context(generate_finished()), mimetype="text/event-stream"
+            )
 
         def generate_live():
             # send any lines already queued
@@ -977,7 +1111,9 @@ def create_app(
                     # heartbeat to keep connection alive
                     yield ": heartbeat\n\n"
 
-        return Response(stream_with_context(generate_live()), mimetype="text/event-stream")
+        return Response(
+            stream_with_context(generate_live()), mimetype="text/event-stream"
+        )
 
     @app.get("/api/plex/library/<section_key>/episodes")
     @authenticated
@@ -999,6 +1135,7 @@ def create_app(
             episodes = manager.list_episodes_with_markers(section_key)
             # group by series_title
             from collections import defaultdict
+
             grouped = defaultdict(list)
             for ep in episodes:
                 grouped[ep["series_title"] or "Desconhecido"].append(ep)
@@ -1009,17 +1146,14 @@ def create_app(
                     seasons_map[ep["season"]].append(ep)
                 season_list = []
                 for season_num in sorted(seasons_map.keys()):
-                    season_list.append({
-                        "season": season_num,
-                        "episodes": seasons_map[season_num]
-                    })
+                    season_list.append(
+                        {"season": season_num, "episodes": seasons_map[season_num]}
+                    )
                 # use first episode thumb as series poster
                 poster = eps[0]["thumb_url"] if eps else None
-                series_list.append({
-                    "title": series_title,
-                    "poster": poster,
-                    "seasons": season_list
-                })
+                series_list.append(
+                    {"title": series_title, "poster": poster, "seasons": season_list}
+                )
             payload = {"series": series_list}
             # store in redis with TTL 300 seconds (5 min)
             redis_client.setex(cache_key, 300, json.dumps(payload))
@@ -1044,10 +1178,14 @@ def create_app(
             app.logger.info(f"[sync_tree] Cache HIT for section {section_key}")
             return jsonify(json.loads(cached)), 200, {"X-Cache": "HIT"}
 
-        app.logger.info(f"[sync_tree] Cache MISS for section {section_key}, fetching from Plex")
+        app.logger.info(
+            f"[sync_tree] Cache MISS for section {section_key}, fetching from Plex"
+        )
         manager = PlexManager(plex_url, plex_token)
         episodes = manager.list_episodes_with_markers(section_key)
-        app.logger.info(f"[sync_tree] Got {len(episodes)} episodes from Plex for section {section_key}")
+        app.logger.info(
+            f"[sync_tree] Got {len(episodes)} episodes from Plex for section {section_key}"
+        )
 
         # Load custom.json (manual markers from UI) - PlexAutoSkip list format
         CUSTOM_JSON_PATH = get_custom_json_path()
@@ -1055,7 +1193,9 @@ def create_app(
         if CUSTOM_JSON_PATH.is_file():
             try:
                 custom_data = json.loads(CUSTOM_JSON_PATH.read_text(encoding="utf-8"))
-                app.logger.info(f"[sync_tree] Loaded custom.json with {len(custom_data.get('markers', {}))} marker entries")
+                app.logger.info(
+                    f"[sync_tree] Loaded custom.json with {len(custom_data.get('markers', {}))} marker entries"
+                )
                 # Log first few entries for debugging
                 for i, (k, v) in enumerate(custom_data.get("markers", {}).items()):
                     if i < 3:
@@ -1064,9 +1204,12 @@ def create_app(
                 app.logger.error(f"[sync_tree] Failed to load custom.json: {e}")
                 custom_data = {}
         else:
-            app.logger.warning(f"[sync_tree] custom.json not found at {CUSTOM_JSON_PATH}")
+            app.logger.warning(
+                f"[sync_tree] custom.json not found at {CUSTOM_JSON_PATH}"
+            )
 
         from collections import defaultdict
+
         series_map = defaultdict(lambda: defaultdict(list))
         merged_count = 0
         for ep in episodes:
@@ -1075,21 +1218,27 @@ def create_app(
             # Merge Plex markers with custom.json markers (list format)
             intro = ep.get("intro")
             raw_credits = ep.get("credits_ms")
-            
+
             # Extract custom markers from list format
             custom_intro = None
             custom_credits = None
             if isinstance(custom_entry, list):
                 for marker in custom_entry:
                     if marker.get("type") == "intro":
-                        custom_intro = {"start": marker.get("start"), "end": marker.get("end")}
+                        custom_intro = {
+                            "start": marker.get("start"),
+                            "end": marker.get("end"),
+                        }
                     elif marker.get("type") == "credits":
-                        custom_credits = {"start": marker.get("start"), "end": marker.get("end")}
-            
+                        custom_credits = {
+                            "start": marker.get("start"),
+                            "end": marker.get("end"),
+                        }
+
             # Merge: custom.json takes precedence over Plex markers
             intro = custom_intro or ep.get("intro")
             raw_credits = custom_credits or ep.get("credits_ms")
-            
+
             # Normalize credits to dict with start_ms/end_ms (support both naming conventions)
             if isinstance(raw_credits, dict):
                 credits_start = raw_credits.get("start_ms") or raw_credits.get("start")
@@ -1097,7 +1246,7 @@ def create_app(
             else:
                 credits_start = raw_credits
                 credits_end = None
-            
+
             # Log merged data for debugging
             if custom_entry:
                 merged_count += 1
@@ -1108,38 +1257,54 @@ def create_app(
                     if isinstance(custom_entry, list):
                         for m in custom_entry:
                             if m.get("type") == "intro":
-                                log_intro = {"start": m.get("start"), "end": m.get("end")}
+                                log_intro = {
+                                    "start": m.get("start"),
+                                    "end": m.get("end"),
+                                }
                             elif m.get("type") == "credits":
-                                log_credits = {"start": m.get("start"), "end": m.get("end")}
-                    app.logger.info(f"[sync_tree] Merged episode {rk}: intro={intro}, credits_start={credits_start}, credits_end={credits_end} (plex_intro={ep.get('intro')}, custom_intro={log_intro}, plex_credits={ep.get('credits_ms')}, custom_credits={log_credits})")
-            
+                                log_credits = {
+                                    "start": m.get("start"),
+                                    "end": m.get("end"),
+                                }
+                    app.logger.info(
+                        f"[sync_tree] Merged episode {rk}: intro={intro}, credits_start={credits_start}, credits_end={credits_end} (plex_intro={ep.get('intro')}, custom_intro={log_intro}, plex_credits={ep.get('credits_ms')}, custom_credits={log_credits})"
+                    )
+
             series_title = ep.get("series_title") or "Desconhecido"
             season_num = ep.get("season") or 0
-            series_map[series_title][season_num].append({
-                "rating_key": ep["rating_key"],
-                "episode": ep["episode"],
-                "title": ep["title"],
-                "thumb": ep.get("thumb_url"),
-                "intro": intro,
-                "credits_start": credits_start,
-                "credits_end": credits_end,
-            })
+            series_map[series_title][season_num].append(
+                {
+                    "rating_key": ep["rating_key"],
+                    "episode": ep["episode"],
+                    "title": ep["title"],
+                    "thumb": ep.get("thumb_url"),
+                    "intro": intro,
+                    "credits_start": credits_start,
+                    "credits_end": credits_end,
+                }
+            )
 
-        app.logger.info(f"[sync_tree] Merged {merged_count} episodes with custom.json data out of {len(episodes)} total episodes")
+        app.logger.info(
+            f"[sync_tree] Merged {merged_count} episodes with custom.json data out of {len(episodes)} total episodes"
+        )
 
         tree = []
         for s_title, seasons in series_map.items():
             season_list = []
             for s_num in sorted(seasons):
-                season_list.append({
-                    "season": s_num,
-                    "episodes": sorted(seasons[s_num], key=lambda e: e["episode"])
-                })
+                season_list.append(
+                    {
+                        "season": s_num,
+                        "episodes": sorted(seasons[s_num], key=lambda e: e["episode"]),
+                    }
+                )
             tree.append({"title": s_title, "seasons": season_list})
 
         payload = {"section_key": section_key, "series": tree}
         redis_client.setex(cache_key, 300, json.dumps(payload))
-        app.logger.info(f"[sync_tree] Stored {len(tree)} series in cache for section {section_key}")
+        app.logger.info(
+            f"[sync_tree] Stored {len(tree)} series in cache for section {section_key}"
+        )
         return jsonify(payload), 200
 
     @app.post("/api/sync/marker")
@@ -1148,7 +1313,9 @@ def create_app(
         data = request.get_json(silent=True) or {}
         required = ("rating_key", "kind", "start_ms", "end_ms")
         if not all(k in data for k in required):
-            return jsonify(error="Campos obrigatórios: rating_key, kind, start_ms, end_ms"), 400
+            return jsonify(
+                error="Campos obrigatórios: rating_key, kind, start_ms, end_ms"
+            ), 400
 
         rk = str(data["rating_key"])
         kind = data["kind"]
@@ -1171,18 +1338,26 @@ def create_app(
         # write to custom.json (shared with PlexAutoSkip) - PlexAutoSkip expects list format
         CUSTOM_JSON = get_custom_json_path()
         with _CUSTOM_LOCK:
-            data_json = {"markers": {}, "offsets": {}, "tags": {}, "mode": {}, "allowed": {"clients": [], "users": [], "keys": [], "skip-next": []}, "blocked": {"clients": [], "users": [], "keys": [], "skip-next": []}, "clients": {}}
+            data_json = {
+                "markers": {},
+                "offsets": {},
+                "tags": {},
+                "mode": {},
+                "allowed": {"clients": [], "users": [], "keys": [], "skip-next": []},
+                "blocked": {"clients": [], "users": [], "keys": [], "skip-next": []},
+                "clients": {},
+            }
             if CUSTOM_JSON.is_file():
                 try:
                     data_json = json.loads(CUSTOM_JSON.read_text(encoding="utf-8"))
                 except json.JSONDecodeError:
                     pass  # keep defaults
-            
+
             # Ensure markers key exists with list format
             markers = data_json.get("markers", {})
             if not isinstance(markers, dict):
                 markers = {}
-            
+
             # Convert existing entry to list format if needed
             marker_list = markers.get(rk, [])
             if isinstance(marker_list, dict):
@@ -1192,36 +1367,48 @@ def create_app(
                     start = intro.get("start", intro.get("start_ms", 0))
                     end = intro.get("end", intro.get("end_ms", 0))
                     if start is not None and end is not None:
-                        marker_list = [{"start": int(start), "end": int(end), "type": "intro"}]
-                elif "credits" in marker_list and isinstance(marker_list["credits"], dict):
+                        marker_list = [
+                            {"start": int(start), "end": int(end), "type": "intro"}
+                        ]
+                elif "credits" in marker_list and isinstance(
+                    marker_list["credits"], dict
+                ):
                     credits = marker_list["credits"]
                     start = credits.get("start", credits.get("start_ms", 0))
                     end = credits.get("end", credits.get("end_ms", 0))
                     if start is not None and end is not None:
-                        marker_list = [{"start": int(start), "end": int(end), "type": "credits"}]
+                        marker_list = [
+                            {"start": int(start), "end": int(end), "type": "credits"}
+                        ]
                 else:
                     marker_list = []
-            
+
             # Update or add the marker
             # Remove existing marker of same type
             marker_list = [m for m in marker_list if m.get("type") != kind]
             # Add new marker
             marker_list.append({"start": int(start), "end": int(end), "type": kind})
-            
+
             markers[rk] = marker_list
-            
+
             # Build complete data structure
             data_json["markers"] = markers
             data_json["offsets"] = data_json.get("offsets", {})
             data_json["tags"] = data_json.get("tags", {})
             data_json["mode"] = data_json.get("mode", {})
-            data_json["allowed"] = data_json.get("allowed", {"clients": [], "users": [], "keys": [], "skip-next": []})
-            data_json["blocked"] = data_json.get("blocked", {"clients": [], "users": [], "keys": [], "skip-next": []})
+            data_json["allowed"] = data_json.get(
+                "allowed", {"clients": [], "users": [], "keys": [], "skip-next": []}
+            )
+            data_json["blocked"] = data_json.get(
+                "blocked", {"clients": [], "users": [], "keys": [], "skip-next": []}
+            )
             data_json["clients"] = data_json.get("clients", {})
             data_json["mode"] = data_json.get("mode", {})
-            
+
             tmp = CUSTOM_JSON.with_suffix(".tmp")
-            tmp.write_text(json.dumps(data_json, ensure_ascii=False, indent=2), encoding="utf-8")
+            tmp.write_text(
+                json.dumps(data_json, ensure_ascii=False, indent=2), encoding="utf-8"
+            )
             tmp.replace(CUSTOM_JSON)
 
         # Invalidate library tree cache if section_key provided
@@ -1297,12 +1484,14 @@ def create_app(
                 if not has_intro or not has_credits:
                     missing_cnt += 1
 
-        return jsonify({
-            "total_episodes": total_eps,
-            "intro_episodes": intro_cnt,
-            "credits_episodes": credits_cnt,
-            "missing_episodes": missing_cnt,
-        })
+        return jsonify(
+            {
+                "total_episodes": total_eps,
+                "intro_episodes": intro_cnt,
+                "credits_episodes": credits_cnt,
+                "missing_episodes": missing_cnt,
+            }
+        )
 
     @app.post("/plex/webhook")
     def plex_webhook() -> Any:
@@ -1313,7 +1502,12 @@ def create_app(
             signature = request.headers.get("X-Plex-Signature", "")
             if not signature.startswith("sha256="):
                 return jsonify(error="Assinatura ausente"), 403
-            expected = "sha256=" + hmac.new(secret.encode(), request.get_data(), hashlib.sha256).hexdigest()
+            expected = (
+                "sha256="
+                + hmac.new(
+                    secret.encode(), request.get_data(), hashlib.sha256
+                ).hexdigest()
+            )
             if not hmac.compare_digest(expected, signature):
                 return jsonify(error="Assinatura inválida"), 403
 
@@ -1325,6 +1519,7 @@ def create_app(
         # Some implementations send JSON directly. Handle both.
         if isinstance(payload, str):
             import json as _json
+
             try:
                 payload = _json.loads(payload)
             except _json.JSONDecodeError:

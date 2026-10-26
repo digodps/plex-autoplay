@@ -23,7 +23,9 @@ class ManualMarkerService:
     def __init__(self, markers_file: str | Path):
         self.markers_file = Path(markers_file).expanduser()
 
-    def get_values(self, series_title: str, season: int, episode: int) -> dict[str, float]:
+    def get_values(
+        self, series_title: str, season: int, episode: int
+    ) -> dict[str, float]:
         self._validate_location(series_title, season, episode)
         with self._write_lock:
             data = self._read()
@@ -34,13 +36,21 @@ class ManualMarkerService:
             values: dict[str, float] = {}
             default_entry = show_data.get("default")
             if isinstance(default_entry, dict):
-                defaults = {key: value for key, value in default_entry.items() if key in self.VALID_FIELDS}
+                defaults = {
+                    key: value
+                    for key, value in default_entry.items()
+                    if key in self.VALID_FIELDS
+                }
                 values.update(self._validate_values(defaults))
             season_data = show_data.get(f"season_{season}")
             if isinstance(season_data, dict):
                 episode_data = season_data.get(str(episode))
                 if isinstance(episode_data, dict):
-                    custom = {key: value for key, value in episode_data.items() if key in self.VALID_FIELDS}
+                    custom = {
+                        key: value
+                        for key, value in episode_data.items()
+                        if key in self.VALID_FIELDS
+                    }
                     values.update(self._validate_values(custom))
             self._validate_values(values)
             return values
@@ -67,13 +77,19 @@ class ManualMarkerService:
                 data[series_key] = {}
             season_data = data[series_key].setdefault(f"season_{season}", {})
             if not isinstance(season_data, dict):
-                raise TypeError(f"Estrutura de marcadores inválida para {series_key}, temporada {season}.")
+                raise TypeError(
+                    f"Estrutura de marcadores inválida para {series_key}, temporada {season}."
+                )
             episode_key = str(episode)
             episode_data = season_data.setdefault(episode_key, {})
             if not isinstance(episode_data, dict):
-                raise TypeError(f"Estrutura de marcadores inválida para {series_key}, episódio {episode}.")
+                raise TypeError(
+                    f"Estrutura de marcadores inválida para {series_key}, episódio {episode}."
+                )
             current_values = {
-                key: value for key, value in episode_data.items() if key in self.VALID_FIELDS
+                key: value
+                for key, value in episode_data.items()
+                if key in self.VALID_FIELDS
             }
             self._validate_values(current_values)
 
@@ -91,7 +107,11 @@ class ManualMarkerService:
             self._validate_values(merged_values)
             episode_data.update(normalized)
             self._write(data)
-            return {key: float(value) for key, value in episode_data.items() if key in self.VALID_FIELDS}
+            return {
+                key: float(value)
+                for key, value in episode_data.items()
+                if key in self.VALID_FIELDS
+            }
 
     def remove_fields(
         self,
@@ -102,7 +122,9 @@ class ManualMarkerService:
     ) -> dict[str, float]:
         selected = set(fields)
         if not selected or not selected.issubset(self.VALID_FIELDS):
-            raise ValueError("Selecione um ou mais campos válidos: start, end ou credits.")
+            raise ValueError(
+                "Selecione um ou mais campos válidos: start, end ou credits."
+            )
         self._validate_location(series_title, season, episode)
         with self._write_lock:
             data = self._read()
@@ -121,7 +143,11 @@ class ManualMarkerService:
             if not episode_data:
                 del season_data[episode_key]
             self._write(data)
-            return {key: float(value) for key, value in episode_data.items() if key in self.VALID_FIELDS}
+            return {
+                key: float(value)
+                for key, value in episode_data.items()
+                if key in self.VALID_FIELDS
+            }
 
     def _read(self) -> dict[str, object]:
         if not self.markers_file.exists():
@@ -130,9 +156,13 @@ class ManualMarkerService:
             with self.markers_file.open("r", encoding="utf-8") as markers_file:
                 data = json.load(markers_file)
         except (OSError, json.JSONDecodeError) as error:
-            raise ValueError(f"Não foi possível ler {self.markers_file}: {error}") from error
+            raise ValueError(
+                f"Não foi possível ler {self.markers_file}: {error}"
+            ) from error
         if not isinstance(data, dict):
-            raise TypeError(f"Formato inválido em {self.markers_file}: esperado um objeto JSON.")
+            raise TypeError(
+                f"Formato inválido em {self.markers_file}: esperado um objeto JSON."
+            )
         return data
 
     @staticmethod
@@ -145,7 +175,9 @@ class ManualMarkerService:
             and isinstance(value, dict)
         ]
         if len(matches) > 1:
-            raise ValueError(f"Mais de uma série corresponde ao título '{title}'; escolha uma chave explícita.")
+            raise ValueError(
+                f"Mais de uma série corresponde ao título '{title}'; escolha uma chave explícita."
+            )
         return matches[0] if matches else None
 
     @staticmethod
@@ -182,7 +214,11 @@ class ManualMarkerService:
 
     def _write(self, data: dict[str, object]) -> None:
         self.markers_file.parent.mkdir(parents=True, exist_ok=True)
-        existing_mode = self.markers_file.stat().st_mode & 0o777 if self.markers_file.exists() else 0o600
+        existing_mode = (
+            self.markers_file.stat().st_mode & 0o777
+            if self.markers_file.exists()
+            else 0o600
+        )
         temporary_path: Path | None = None
         try:
             with tempfile.NamedTemporaryFile(

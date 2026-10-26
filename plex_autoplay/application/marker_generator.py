@@ -15,7 +15,7 @@ logger = logging.getLogger("plex-autoplay.marker_generator")
 
 @dataclass
 class MarkerResult:
-    intro_start: int | None = None   # ms
+    intro_start: int | None = None  # ms
     intro_end: int | None = None
     credits_start: int | None = None
     credits_end: int | None = None
@@ -34,7 +34,9 @@ def _run_ffprobe(file_path: str) -> dict:
         file_path,
     ]
     try:
-        result = subprocess.run(cmd, capture_output=True, text=True, check=True, timeout=30)
+        result = subprocess.run(
+            cmd, capture_output=True, text=True, check=True, timeout=30
+        )
         return json.loads(result.stdout)
     except Exception as exc:
         logger.exception("ffprobe failed for %s", file_path)
@@ -54,7 +56,9 @@ def _get_duration(file_path: str) -> float:
     return 0.0
 
 
-def _detect_silence_intervals(file_path: str, start_sec: float, duration_sec: float) -> list[tuple[float, float]]:
+def _detect_silence_intervals(
+    file_path: str, start_sec: float, duration_sec: float
+) -> list[tuple[float, float]]:
     """
     Run ffmpeg silencedetect on a slice of the file.
     Returns list of (silence_start, silence_end) in seconds (relative to file start).
@@ -76,7 +80,9 @@ def _detect_silence_intervals(file_path: str, start_sec: float, duration_sec: fl
         "-",
     ]
     try:
-        proc = subprocess.run(cmd, check=False, capture_output=True, text=True, timeout=120)
+        proc = subprocess.run(
+            cmd, check=False, capture_output=True, text=True, timeout=120
+        )
     except Exception:
         logger.exception("silence detection failed for %s", file_path)
         return []

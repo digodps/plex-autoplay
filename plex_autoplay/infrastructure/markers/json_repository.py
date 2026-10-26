@@ -17,7 +17,11 @@ logger = logging.getLogger("plex-autoplay.markers")
 class JsonMarkerRepository:
     """Loads native Plex markers and optional custom markers from disk."""
 
-    def __init__(self, markers_file_path: str = "markers.json", default_intro_skip_seconds: int = 0):
+    def __init__(
+        self,
+        markers_file_path: str = "markers.json",
+        default_intro_skip_seconds: int = 0,
+    ):
         self.markers_file_path = markers_file_path
         self.default_intro_skip_seconds = default_intro_skip_seconds
         self.custom_markers: dict[str, Any] = {}
@@ -26,7 +30,10 @@ class JsonMarkerRepository:
     def load_custom_markers(self) -> None:
         path = Path(self.markers_file_path)
         if not path.is_file():
-            logger.debug("Arquivo de marcadores customizados não encontrado: %s", self.markers_file_path)
+            logger.debug(
+                "Arquivo de marcadores customizados não encontrado: %s",
+                self.markers_file_path,
+            )
             self.custom_markers = {}
             return
 
@@ -65,9 +72,15 @@ class JsonMarkerRepository:
             except (AttributeError, ValueError, TypeError):
                 pass
 
-        show_title = getattr(episode, "grandparentTitle", "") or getattr(episode, "showTitle", "")
-        season_num = getattr(episode, "seasonNumber", None) or getattr(episode, "parentIndex", None)
-        ep_num = getattr(episode, "episodeNumber", None) or getattr(episode, "index", None)
+        show_title = getattr(episode, "grandparentTitle", "") or getattr(
+            episode, "showTitle", ""
+        )
+        season_num = getattr(episode, "seasonNumber", None) or getattr(
+            episode, "parentIndex", None
+        )
+        ep_num = getattr(episode, "episodeNumber", None) or getattr(
+            episode, "index", None
+        )
 
         show_data = self._find_show_data(show_title)
         if show_data:
@@ -76,9 +89,15 @@ class JsonMarkerRepository:
 
     def get_custom_marker_values(self, episode: Any) -> dict[str, float]:
         """Return explicit custom marker fields in seconds for an episode."""
-        show_title = getattr(episode, "grandparentTitle", "") or getattr(episode, "showTitle", "")
-        season_num = getattr(episode, "seasonNumber", None) or getattr(episode, "parentIndex", None)
-        ep_num = getattr(episode, "episodeNumber", None) or getattr(episode, "index", None)
+        show_title = getattr(episode, "grandparentTitle", "") or getattr(
+            episode, "showTitle", ""
+        )
+        season_num = getattr(episode, "seasonNumber", None) or getattr(
+            episode, "parentIndex", None
+        )
+        ep_num = getattr(episode, "episodeNumber", None) or getattr(
+            episode, "index", None
+        )
         show_data = self._find_show_data(show_title)
         if not show_data:
             return {}
@@ -106,7 +125,9 @@ class JsonMarkerRepository:
                 raise TypeError(f"Marcador customizado '{key}' deve ser numérico.")
             numeric_value = float(value)
             if not math.isfinite(numeric_value) or numeric_value < 0:
-                raise ValueError(f"Marcador customizado '{key}' deve ser finito e não negativo.")
+                raise ValueError(
+                    f"Marcador customizado '{key}' deve ser finito e não negativo."
+                )
             values[key] = numeric_value
         return values
 
@@ -132,7 +153,9 @@ class JsonMarkerRepository:
         exact_matches = [
             value
             for key, value in self.custom_markers.items()
-            if isinstance(key, str) and key.strip().casefold() == clean_title and isinstance(value, dict)
+            if isinstance(key, str)
+            and key.strip().casefold() == clean_title
+            and isinstance(value, dict)
         ]
         if exact_matches:
             return exact_matches[0]
@@ -174,9 +197,15 @@ class JsonMarkerRepository:
         return None
 
     def _get_custom_intro(self, episode: Any) -> tuple[int, int] | None:
-        show_title = getattr(episode, "grandparentTitle", "") or getattr(episode, "showTitle", "")
-        season_num = getattr(episode, "seasonNumber", None) or getattr(episode, "parentIndex", None)
-        ep_num = getattr(episode, "episodeNumber", None) or getattr(episode, "index", None)
+        show_title = getattr(episode, "grandparentTitle", "") or getattr(
+            episode, "showTitle", ""
+        )
+        season_num = getattr(episode, "seasonNumber", None) or getattr(
+            episode, "parentIndex", None
+        )
+        ep_num = getattr(episode, "episodeNumber", None) or getattr(
+            episode, "index", None
+        )
 
         show_data = self._find_show_data(show_title)
         if not show_data:
@@ -186,10 +215,24 @@ class JsonMarkerRepository:
             season_key = f"season_{season_num}"
             if season_key in show_data and isinstance(show_data[season_key], dict):
                 episode_data = show_data[season_key].get(str(ep_num))
-                if isinstance(episode_data, dict) and "start" in episode_data and "end" in episode_data:
-                    return (int(episode_data["start"] * 1000), int(episode_data["end"] * 1000))
+                if (
+                    isinstance(episode_data, dict)
+                    and "start" in episode_data
+                    and "end" in episode_data
+                ):
+                    return (
+                        int(episode_data["start"] * 1000),
+                        int(episode_data["end"] * 1000),
+                    )
 
         default_entry = show_data.get("default")
-        if isinstance(default_entry, dict) and "start" in default_entry and "end" in default_entry:
-            return (int(default_entry["start"] * 1000), int(default_entry["end"] * 1000))
+        if (
+            isinstance(default_entry, dict)
+            and "start" in default_entry
+            and "end" in default_entry
+        ):
+            return (
+                int(default_entry["start"] * 1000),
+                int(default_entry["end"] * 1000),
+            )
         return None

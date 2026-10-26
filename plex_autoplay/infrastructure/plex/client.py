@@ -61,16 +61,20 @@ class PlexManager:
         preferred_sections = [
             section
             for section in sections
-            if str(getattr(section, "title", "")).strip().casefold() == library_name.strip().casefold()
+            if str(getattr(section, "title", "")).strip().casefold()
+            == library_name.strip().casefold()
         ]
-        search_sections = preferred_sections + [section for section in sections if section not in preferred_sections]
+        search_sections = preferred_sections + [
+            section for section in sections if section not in preferred_sections
+        ]
         matching_shows = []
         for section in search_sections:
             shows = section.search(title=show_title, libtype="show")
             matching_shows.extend(
                 show
                 for show in shows
-                if str(getattr(show, "title", "")).strip().casefold() == show_title.strip().casefold()
+                if str(getattr(show, "title", "")).strip().casefold()
+                == show_title.strip().casefold()
             )
             if matching_shows and section in preferred_sections:
                 break
@@ -92,7 +96,9 @@ class PlexManager:
 
         server = self.get_server()
         session_player = getattr(session, "player", None)
-        target_name = getattr(session_player, "title", None) or getattr(session, "device", None)
+        target_name = getattr(session_player, "title", None) or getattr(
+            session, "device", None
+        )
         target_machine_id = getattr(session_player, "machineIdentifier", None)
 
         try:
@@ -110,7 +116,9 @@ class PlexManager:
 
     def seek_player(self, player: Any, offset_ms: int) -> bool:
         player_name = getattr(player, "title", "Desconhecido")
-        logger.info("Executando seekTo(%d ms) no player '%s'...", offset_ms, player_name)
+        logger.info(
+            "Executando seekTo(%d ms) no player '%s'...", offset_ms, player_name
+        )
         try:
             if hasattr(player, "seekTo"):
                 player.seekTo(offset=offset_ms, mtype="video")
@@ -118,13 +126,20 @@ class PlexManager:
             logger.warning("Player '%s' não possui o método seekTo.", player_name)
             return False
         except (requests.RequestException, OSError, AttributeError) as error:
-            logger.error("Falha ao enviar comando seekTo para '%s': %s", player_name, error)
+            logger.error(
+                "Falha ao enviar comando seekTo para '%s': %s", player_name, error
+            )
             return False
 
     def play_media(self, player: Any, media_item: Any, offset_ms: int = 0) -> bool:
         player_name = getattr(player, "title", "Desconhecido")
         media_title = getattr(media_item, "title", "Mídia")
-        logger.info("Enviando playMedia('%s', offset=%d ms) para '%s'...", media_title, offset_ms, player_name)
+        logger.info(
+            "Enviando playMedia('%s', offset=%d ms) para '%s'...",
+            media_title,
+            offset_ms,
+            player_name,
+        )
         try:
             if hasattr(player, "playMedia"):
                 player.playMedia(media_item, offset=offset_ms)
@@ -137,7 +152,10 @@ class PlexManager:
 
     def get_next_episode(self, current_episode: Any) -> Any | None:
         if not isinstance(current_episode, Episode):
-            logger.debug("Mídia atual não é um episódio de série (Tipo: %s)", type(current_episode))
+            logger.debug(
+                "Mídia atual não é um episódio de série (Tipo: %s)",
+                type(current_episode),
+            )
             return None
 
         try:
@@ -165,7 +183,11 @@ class PlexManager:
             show = current_episode.show()
             seasons = [item for item in show.seasons() if item.seasonNumber > 0]
             current_season_idx = next(
-                (index for index, item in enumerate(seasons) if item.seasonNumber == season.seasonNumber),
+                (
+                    index
+                    for index, item in enumerate(seasons)
+                    if item.seasonNumber == season.seasonNumber
+                ),
                 None,
             )
             if current_season_idx is not None and current_season_idx + 1 < len(seasons):
@@ -189,14 +211,18 @@ class PlexManager:
         result = []
         for section in server.library.sections():
             thumb = getattr(section, "thumb", None)
-            thumb_url = f"{self.url}{thumb}?X-Plex-Token={self.token}" if thumb else None
-            result.append({
-                "key": section.key,
-                "title": section.title,
-                "type": section.type,
-                "thumb": thumb,
-                "thumb_url": thumb_url,
-            })
+            thumb_url = (
+                f"{self.url}{thumb}?X-Plex-Token={self.token}" if thumb else None
+            )
+            result.append(
+                {
+                    "key": section.key,
+                    "title": section.title,
+                    "type": section.type,
+                    "thumb": thumb,
+                    "thumb_url": thumb_url,
+                }
+            )
         return result
 
     def list_episodes(self, section_key: str) -> list[dict]:
@@ -210,15 +236,19 @@ class PlexManager:
             if ep.media:
                 part = ep.media[0].parts[0]
                 file_path = part.file
-            thumb = f"{self.url}{ep.thumb}?X-Plex-Token={self.token}" if ep.thumb else None
-            out.append({
-                "rating_key": ep.ratingKey,
-                "title": ep.title,
-                "season": ep.seasonNumber,
-                "episode": ep.episodeNumber,
-                "file_path": file_path,
-                "thumb_url": thumb,
-            })
+            thumb = (
+                f"{self.url}{ep.thumb}?X-Plex-Token={self.token}" if ep.thumb else None
+            )
+            out.append(
+                {
+                    "rating_key": ep.ratingKey,
+                    "title": ep.title,
+                    "season": ep.seasonNumber,
+                    "episode": ep.episodeNumber,
+                    "file_path": file_path,
+                    "thumb_url": thumb,
+                }
+            )
         return out
 
     def list_episodes_with_markers(self, section_key: str) -> list[dict]:
@@ -241,18 +271,22 @@ class PlexManager:
             if ep.media:
                 part = ep.media[0].parts[0]
                 file_path = part.file
-            thumb = f"{self.url}{ep.thumb}?X-Plex-Token={self.token}" if ep.thumb else None
-            out.append({
-                "rating_key": ep.ratingKey,
-                "title": ep.title,
-                "season": ep.seasonNumber,
-                "episode": ep.episodeNumber,
-                "series_title": series_title,
-                "has_intro": has_intro,
-                "has_credits": has_credits,
-                "file_path": file_path,
-                "thumb_url": thumb,
-            })
+            thumb = (
+                f"{self.url}{ep.thumb}?X-Plex-Token={self.token}" if ep.thumb else None
+            )
+            out.append(
+                {
+                    "rating_key": ep.ratingKey,
+                    "title": ep.title,
+                    "season": ep.seasonNumber,
+                    "episode": ep.episodeNumber,
+                    "series_title": series_title,
+                    "has_intro": has_intro,
+                    "has_credits": has_credits,
+                    "file_path": file_path,
+                    "thumb_url": thumb,
+                }
+            )
         return out
 
     def get_episode(self, rating_key: str) -> Any:
@@ -263,7 +297,9 @@ class PlexManager:
     def add_marker(self, episode: Any, mtype: str, start_ms: int, end_ms: int) -> None:
         """Add or update a marker on the episode via the raw Plex REST API.
         This bypasses the need for a fully-loaded Episode object."""
-        rating_key = getattr(episode, "ratingKey", None) or getattr(episode, "rating_key", None)
+        rating_key = getattr(episode, "ratingKey", None) or getattr(
+            episode, "rating_key", None
+        )
         if not rating_key:
             raise ValueError("Episode object has no ratingKey")
 
@@ -271,7 +307,7 @@ class PlexManager:
         # Expected form fields: type (intro|credits), start (ms), end (ms)
         url_path = f"/library/metadata/{rating_key}/markers"
         payload = {
-            "type": mtype,          # "intro" or "credits"
+            "type": mtype,  # "intro" or "credits"
             "start": start_ms,
             "end": end_ms,
         }

@@ -26,8 +26,12 @@ def _certificate_subject_alt_names(hosts: list[str]) -> tuple[list[str], str]:
             try:
                 hostname = host.encode("idna").decode("ascii")
             except UnicodeError as error:
-                raise ValueError(f"Nome inválido para o certificado TLS: {host}") from error
-            if len(hostname) > 253 or not all(_DNS_LABEL_RE.fullmatch(label) for label in hostname.split(".")):
+                raise ValueError(
+                    f"Nome inválido para o certificado TLS: {host}"
+                ) from error
+            if len(hostname) > 253 or not all(
+                _DNS_LABEL_RE.fullmatch(label) for label in hostname.split(".")
+            ):
                 raise ValueError(f"Nome inválido para o certificado TLS: {host}")
             normalized_hosts.append(hostname)
             subject_alt_names.append(f"DNS:{hostname}")
@@ -36,11 +40,15 @@ def _certificate_subject_alt_names(hosts: list[str]) -> tuple[list[str], str]:
             subject_alt_names.append(f"IP:{address}")
 
     if not subject_alt_names:
-        raise ValueError("Configure ao menos um nome ou endereço IP em DASHBOARD_TLS_HOSTS.")
+        raise ValueError(
+            "Configure ao menos um nome ou endereço IP em DASHBOARD_TLS_HOSTS."
+        )
     return subject_alt_names, normalized_hosts[0]
 
 
-def ensure_self_signed_certificate(config_dir: str | Path, hosts: list[str]) -> tuple[Path, Path]:
+def ensure_self_signed_certificate(
+    config_dir: str | Path, hosts: list[str]
+) -> tuple[Path, Path]:
     config_path = Path(config_dir)
     config_path.mkdir(parents=True, exist_ok=True)
     certificate_path = config_path / "dashboard-tls.crt"
@@ -50,9 +58,13 @@ def ensure_self_signed_certificate(config_dir: str | Path, hosts: list[str]) -> 
 
     openssl = shutil.which("openssl")
     if openssl is None:
-        raise RuntimeError("openssl não está instalado; não é possível criar o certificado HTTPS do dashboard.")
+        raise RuntimeError(
+            "openssl não está instalado; não é possível criar o certificado HTTPS do dashboard."
+        )
     subject_alt_names, common_name = _certificate_subject_alt_names(hosts)
-    with tempfile.TemporaryDirectory(prefix=".dashboard-tls-", dir=config_path) as temporary_directory:
+    with tempfile.TemporaryDirectory(
+        prefix=".dashboard-tls-", dir=config_path
+    ) as temporary_directory:
         temporary_path = Path(temporary_directory)
         temporary_certificate = temporary_path / "dashboard-tls.crt"
         temporary_key = temporary_path / "dashboard-tls.key"

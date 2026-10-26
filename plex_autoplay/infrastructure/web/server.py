@@ -44,4 +44,6 @@ def create_dashboard_server(
         server = CherootServer((host, port), application)
         server.ssl_adapter = BuiltinSSLAdapter(str(certificate), str(private_key))
         return DashboardServer(server, tls_enabled=True)
-    return DashboardServer(create_server(application, host=host, port=port), tls_enabled=False)
+    return DashboardServer(
+        create_server(application, host=host, port=port), tls_enabled=False
+    )

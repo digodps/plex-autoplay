@@ -44,7 +44,9 @@ class PlexLibraryScanner:
                 break
             ep_res = self.process_episode(ep["rating_key"])
             if ep_res.status == "error":
-                result.errors.append({"rating_key": ep_res.rating_key, "error": ep_res.error})
+                result.errors.append(
+                    {"rating_key": ep_res.rating_key, "error": ep_res.error}
+                )
             elif ep_res.status == "skipped":
                 result.skipped += 1
             else:
@@ -57,16 +59,34 @@ class PlexLibraryScanner:
             episode = server.fetchItem(f"/library/metadata/{rating_key}")
 
             # Extract friendly identifiers
-            series_name = getattr(episode, "grandparentTitle", None) or getattr(episode, "showTitle", None) or "Unknown Series"
-            season_num = getattr(episode, "parentIndex", None) or getattr(episode, "seasonNumber", None) or "?"
-            episode_num = getattr(episode, "index", None) or getattr(episode, "episodeNumber", None) or "?"
+            series_name = (
+                getattr(episode, "grandparentTitle", None)
+                or getattr(episode, "showTitle", None)
+                or "Unknown Series"
+            )
+            season_num = (
+                getattr(episode, "parentIndex", None)
+                or getattr(episode, "seasonNumber", None)
+                or "?"
+            )
+            episode_num = (
+                getattr(episode, "index", None)
+                or getattr(episode, "episodeNumber", None)
+                or "?"
+            )
             episode_title = getattr(episode, "title", None) or "Unknown Episode"
 
             # If both markers already exist in Plex, skip (optional)
             has_intro = any(m.type == "intro" for m in episode.markers)
             has_credits = any(m.type == "credits" for m in episode.markers)
             if has_intro and has_credits:
-                logger.info("[%s] S%02sE%02s %s – already has intro & credits, skipping", series_name, season_num, episode_num, episode_title)
+                logger.info(
+                    "[%s] S%02sE%02s %s – already has intro & credits, skipping",
+                    series_name,
+                    season_num,
+                    episode_num,
+                    episode_title,
+                )
                 return EpisodeResult(rating_key, "skipped")
 
             # Locate media file
@@ -74,15 +94,34 @@ class PlexLibraryScanner:
             if episode.media:
                 file_path = episode.media[0].parts[0].file
             if not file_path:
-                logger.warning("[%s] S%02sE%02s %s – no file path available", series_name, season_num, episode_num, episode_title)
+                logger.warning(
+                    "[%s] S%02sE%02s %s – no file path available",
+                    series_name,
+                    season_num,
+                    episode_num,
+                    episode_title,
+                )
                 return EpisodeResult(rating_key, "error", "No file path available")
 
-            logger.info("[%s] S%02sE%02s %s – scanning %s", series_name, season_num, episode_num, episode_title, file_path)
+            logger.info(
+                "[%s] S%02sE%02s %s – scanning %s",
+                series_name,
+                season_num,
+                episode_num,
+                episode_title,
+                file_path,
+            )
 
             # Run detection (returns dict with ms timestamps)
             markers_dict, _ = generate_with_xml(file_path)
             if not markers_dict:
-                logger.info("[%s] S%02sE%02s %s – no markers detected", series_name, season_num, episode_num, episode_title)
+                logger.info(
+                    "[%s] S%02sE%02s %s – no markers detected",
+                    series_name,
+                    season_num,
+                    episode_num,
+                    episode_title,
+                )
                 return EpisodeResult(rating_key, "skipped")
 
             # Load existing custom.json
@@ -105,10 +144,18 @@ class PlexLibraryScanner:
                 json.dump(data, f, ensure_ascii=False, indent=2)
             tmp_path.replace(CUSTOM_JSON_PATH)
 
-            logger.info("[%s] S%02sE%02s %s – markers written (intro=%s, credits=%s)",
-                        series_name, season_num, episode_num, episode_title,
-                        "intro" in markers_dict, "credits" in markers_dict)
+            logger.info(
+                "[%s] S%02sE%02s %s – markers written (intro=%s, credits=%s)",
+                series_name,
+                season_num,
+                episode_num,
+                episode_title,
+                "intro" in markers_dict,
+                "credits" in markers_dict,
+            )
             return EpisodeResult(rating_key, "created")
         except Exception as exc:
-            logger.exception("[%s] Failed processing episode %s", series_name, rating_key)
+            logger.exception(
+                "[%s] Failed processing episode %s", series_name, rating_key
+            )
             return EpisodeResult(rating_key, "error", str(exc))

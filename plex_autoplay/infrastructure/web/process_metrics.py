@@ -34,12 +34,16 @@ class ProcessMetricsSampler:
 
             memory_fields = Path("/proc/self/statm").read_text(encoding="ascii").split()
             if len(memory_fields) < 2:
-                raise ValueError("O sistema não retornou o uso atual de memória do processo.")
+                raise ValueError(
+                    "O sistema não retornou o uso atual de memória do processo."
+                )
             resident_pages = int(memory_fields[1])
             page_size = os.sysconf("SC_PAGE_SIZE")
             received_bytes, sent_bytes, interface_count = self._read_network_counters()
             if self._last_network_sample is not None:
-                previous_time, previous_received, previous_sent = self._last_network_sample
+                previous_time, previous_received, previous_sent = (
+                    self._last_network_sample
+                )
                 network_elapsed = wall_time - previous_time
                 if network_elapsed >= 0.5:
                     if received_bytes >= previous_received:
@@ -86,7 +90,9 @@ class ProcessMetricsSampler:
                 continue
             values = counters.split()
             if len(values) < 9:
-                raise ValueError(f"Contadores de rede inválidos para a interface {interface_name}.")
+                raise ValueError(
+                    f"Contadores de rede inválidos para a interface {interface_name}."
+                )
             received_total += int(values[0])
             sent_total += int(values[8])
             interface_count += 1

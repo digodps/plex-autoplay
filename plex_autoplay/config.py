@@ -27,20 +27,36 @@ def _str_to_list(val: str) -> list[str]:
 class Settings:
     plex_url: str = os.getenv("PLEX_URL", "http://localhost:32400").rstrip("/")
     plex_token: str = os.getenv("PLEX_TOKEN", "")
-    auto_skip_intro: bool = _str_to_bool(os.getenv("AUTO_SKIP_INTRO", "true"), default=True)
-    auto_next_episode: bool = _str_to_bool(os.getenv("AUTO_NEXT_EPISODE", "true"), default=True)
-    next_episode_threshold_seconds: int = int(os.getenv("NEXT_EPISODE_THRESHOLD_SECONDS", "15"))
+    auto_skip_intro: bool = _str_to_bool(
+        os.getenv("AUTO_SKIP_INTRO", "true"), default=True
+    )
+    auto_next_episode: bool = _str_to_bool(
+        os.getenv("AUTO_NEXT_EPISODE", "true"), default=True
+    )
+    next_episode_threshold_seconds: int = int(
+        os.getenv("NEXT_EPISODE_THRESHOLD_SECONDS", "15")
+    )
     action_delay_seconds: int = int(os.getenv("ACTION_DELAY_SECONDS", "5"))
     poll_interval_seconds: int = int(os.getenv("POLL_INTERVAL_SECONDS", "2"))
-    allowed_client_ids: list[str] = field(default_factory=lambda: _str_to_list(os.getenv("ALLOWED_CLIENT_IDS", "")))
-    allowed_usernames: list[str] = field(default_factory=lambda: _str_to_list(os.getenv("ALLOWED_USERNAMES", "")))
+    allowed_client_ids: list[str] = field(
+        default_factory=lambda: _str_to_list(os.getenv("ALLOWED_CLIENT_IDS", ""))
+    )
+    allowed_usernames: list[str] = field(
+        default_factory=lambda: _str_to_list(os.getenv("ALLOWED_USERNAMES", ""))
+    )
     config_dir: str = os.getenv("CONFIG_DIR", "/config")
     dashboard_port: int = int(os.getenv("WEB_PORT", "8080"))
-    dashboard_cookie_secure: bool = _str_to_bool(os.getenv("DASHBOARD_COOKIE_SECURE", "true"), default=True)
-    dashboard_https: bool = _str_to_bool(os.getenv("DASHBOARD_HTTPS", "true"), default=True)
+    dashboard_cookie_secure: bool = _str_to_bool(
+        os.getenv("DASHBOARD_COOKIE_SECURE", "true"), default=True
+    )
+    dashboard_https: bool = _str_to_bool(
+        os.getenv("DASHBOARD_HTTPS", "true"), default=True
+    )
     dashboard_tls_hosts: list[str] = field(
         default_factory=lambda: _str_to_list(
-            os.getenv("DASHBOARD_TLS_HOSTS", "localhost,plex-autoplay,host.docker.internal")
+            os.getenv(
+                "DASHBOARD_TLS_HOSTS", "localhost,plex-autoplay,host.docker.internal"
+            )
         )
     )
     log_level: str = os.getenv("LOG_LEVEL", "INFO").upper()
@@ -55,7 +71,9 @@ class Settings:
                 "PLEX_TOKEN não configurado. Defina a variável PLEX_TOKEN no seu arquivo .env com seu token do Plex."
             )
         if self.next_episode_threshold_seconds < 1:
-            raise ValueError("NEXT_EPISODE_THRESHOLD_SECONDS deve ser de pelo menos 1 segundo.")
+            raise ValueError(
+                "NEXT_EPISODE_THRESHOLD_SECONDS deve ser de pelo menos 1 segundo."
+            )
         if self.poll_interval_seconds < 1:
             raise ValueError("POLL_INTERVAL_SECONDS deve ser de pelo menos 1 segundo.")
         if not 1 <= self.dashboard_port <= 65535:

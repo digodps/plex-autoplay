@@ -14,7 +14,9 @@ class TestProcessMetricsSamplerFull:
     @patch("plex_autoplay.infrastructure.web.process_metrics.os.sysconf")
     @patch("plex_autoplay.infrastructure.web.process_metrics.time.monotonic")
     @patch("plex_autoplay.infrastructure.web.process_metrics.time.process_time")
-    def test_sample_memory_read_error(self, mock_process_time, mock_monotonic, mock_sysconf, mock_read_text):
+    def test_sample_memory_read_error(
+        self, mock_process_time, mock_monotonic, mock_sysconf, mock_read_text
+    ):
         """Test sample handles memory read error (line 37)."""
         mock_monotonic.return_value = 100.0
         mock_process_time.return_value = 50.0
@@ -29,7 +31,9 @@ class TestProcessMetricsSamplerFull:
     @patch("plex_autoplay.infrastructure.web.process_metrics.os.sysconf")
     @patch("plex_autoplay.infrastructure.web.process_metrics.time.monotonic")
     @patch("plex_autoplay.infrastructure.web.process_metrics.time.process_time")
-    def test_sample_insufficient_memory_fields(self, mock_process_time, mock_monotonic, mock_sysconf, mock_read_text):
+    def test_sample_insufficient_memory_fields(
+        self, mock_process_time, mock_monotonic, mock_sysconf, mock_read_text
+    ):
         """Test sample handles insufficient memory fields (line 37)."""
         mock_monotonic.return_value = 100.0
         mock_process_time.return_value = 50.0
@@ -44,57 +48,71 @@ class TestProcessMetricsSamplerFull:
     @patch("plex_autoplay.infrastructure.web.process_metrics.os.sysconf")
     @patch("plex_autoplay.infrastructure.web.process_metrics.time.monotonic")
     @patch("plex_autoplay.infrastructure.web.process_metrics.time.process_time")
-    def test_sample_network_download_counter_wraparound(self, mock_process_time, mock_monotonic, mock_sysconf, mock_read_text):
+    def test_sample_network_download_counter_wraparound(
+        self, mock_process_time, mock_monotonic, mock_sysconf, mock_read_text
+    ):
         """Test sample handles network download counter wrap (line 51)."""
-        mock_monotonic.side_effect = [100.0, 101.0]  # First call for CPU, second for network
+        mock_monotonic.side_effect = [100.0, 101.0, 102.0, 103.0]  # Increasing times
         mock_process_time.return_value = 50.0
         mock_sysconf.return_value = 4096
-        # First sample (statm), second sample (net/dev)
+        # First sample (statm), second sample (net/dev), third (statm), fourth (net/dev)
         mock_read_text.side_effect = [
-            "100 50 10 10 10 10 10",  # /proc/self/statm
-            "Inter-|   Receive                                                |  Transmit\n"
-            " face |bytes    packets errs drop fifo frame compressed multicast|bytes    packets errs drop fifo colls carrier compressed\n"
-            "  eth0: 1000    100    0    0    0     0          0         0  2000    100    0    0    0     0       0          0\n",
-            "100 50 10 10 10 10 10",  # Second call statm
-            "Inter-|   Receive                                                |  Transmit\n"
-            " face |bytes    packets errs drop fifo frame compressed multicast|bytes    packets errs drop fifo colls carrier compressed\n"
-            "  eth0: 500    100    0    0    0     0          0         0  2500    100    0    0    0     0       0          0\n",  # Counter wrapped (500 < 1000)
+            "100 50 10 10 10 10 10",  # /proc/self/statm - first call
+            (
+                "Inter-|   Receive                                                |  Transmit\n"
+                " face |bytes    packets errs drop fifo frame compressed multicast|bytes    packets errs drop fifo colls carrier compressed\n"
+                "  eth0: 1000    100    0    0    0     0          0         0  2000    100    0    0    0     0       0          0\n"
+            ),  # /proc/net/dev - first call
+            "100 50 10 10 10 10 10",  # /proc/self/statm - second call
+            (
+                "Inter-|   Receive                                                |  Transmit\n"
+                " face |bytes    packets errs drop fifo frame compressed multicast|bytes    packets errs drop fifo colls carrier compressed\n"
+                "  eth0: 500    100    0    0    0     0          0         0  2500    100    0    0    0     0       0          0\n"
+            ),  # /proc/net/dev - second call (wrapped download)
         ]
 
         sampler = ProcessMetricsSampler()
         # First sample
-        result1 = sampler.sample()
+        sampler.sample()
         # Second sample - download counter wrapped
         result2 = sampler.sample()
         # Should be None due to wrap
         assert result2["network_download_bytes_per_second"] is None
-        assert result2["network_upload_bytes_per_second"] == 5000.0  # (2500-2000)/0.1 = 5000
+        # Upload: (2500-2000) / 1.0 = 500.0
+        assert result2["network_upload_bytes_per_second"] == 500.0
 
     @patch("plex_autoplay.infrastructure.web.process_metrics.Path.read_text")
     @patch("plex_autoplay.infrastructure.web.process_metrics.os.sysconf")
     @patch("plex_autoplay.infrastructure.web.process_metrics.time.monotonic")
     @patch("plex_autoplay.infrastructure.web.process_metrics.time.process_time")
-    def test_sample_network_upload_counter_wraparound(self, mock_process_time, mock_monotonic, mock_sysconf, mock_read_text):
+    def test_sample_network_upload_counter_wraparound(
+        self, mock_process_time, mock_monotonic, mock_sysconf, mock_read_text
+    ):
         """Test sample handles network upload counter wrap (line 58)."""
-        mock_monotonic.side_effect = [100.0, 101.0]
+        mock_monotonic.side_effect = [100.0, 101.0, 102.0, 103.0]  # Increasing times
         mock_process_time.return_value = 50.0
         mock_sysconf.return_value = 4096
         mock_read_text.side_effect = [
             "100 50 10 10 10 10 10",
-            "Inter-|   Receive                                                |  Transmit\n"
-            " face |bytes    packets errs drop fifo frame compressed multicast|bytes    packets errs drop fifo colls carrier compressed\n"
-            "  eth0: 1000    100    0    0    0     0          0         0  2000    100    0    0    0     0       0          0\n",
+            (
+                "Inter-|   Receive                                                |  Transmit\n"
+                " face |bytes    packets errs drop fifo frame compressed multicast|bytes    packets errs drop fifo colls carrier compressed\n"
+                "  eth0: 1000    100    0    0    0     0          0         0  2000    100    0    0    0     0       0          0\n"
+            ),
             "100 50 10 10 10 10 10",
-            "Inter-|   Receive                                                |  Transmit\n"
-            " face |bytes    packets errs drop fifo frame compressed multicast|bytes    packets errs drop fifo colls carrier compressed\n"
-            "  eth0: 1500    100    0    0    0     0          0         0  1500    100    0    0    0     0       0          0\n",  # Upload wrapped (1500 < 2000)
+            (
+                "Inter-|   Receive                                                |  Transmit\n"
+                " face |bytes    packets errs drop fifo frame compressed multicast|bytes    packets errs drop fifo colls carrier compressed\n"
+                "  eth0: 1500    100    0    0    0     0          0         0  1500    100    0    0    0     0       0          0\n"
+            ),  # Upload wrapped (1500 < 2000)
         ]
 
         sampler = ProcessMetricsSampler()
-        result1 = sampler.sample()
+        sampler.sample()
         result2 = sampler.sample()
         assert result2["network_upload_bytes_per_second"] is None
-        assert result2["network_download_bytes_per_second"] == 5000.0
+        # Download: (1500-1000) / 1.0 = 500.0
+        assert result2["network_download_bytes_per_second"] == 500.0
 
     @patch("plex_autoplay.infrastructure.web.process_metrics.Path.read_text")
     def test_read_network_counters_skips_loopback(self, mock_read_text):
