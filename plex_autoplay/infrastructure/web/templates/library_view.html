@@ -232,7 +232,8 @@
     async function loadSeries() {
       try {
         const resp = await fetch(`/api/sync/library/${encodeURIComponent(sectionKey)}/tree`, {
-          headers: { 'X-CSRF-Token': csrf }
+          headers: { 'X-CSRF-Token': csrf },
+          credentials: 'same-origin'
         });
         const data = await resp.json();
         renderSeries(data.series, container);
@@ -310,6 +311,7 @@
       const resp = await fetch('/api/sync/marker', {
         method: 'POST',
         headers: { 'Content-Type':'application/json', 'X-CSRF-Token': csrf },
+        credentials: 'same-origin',
         body: JSON.stringify(body)
       });
       if (!resp.ok) {
