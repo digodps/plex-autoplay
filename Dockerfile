@@ -38,7 +38,6 @@ COPY --chown=appuser:appuser supervisord.conf /etc/supervisor/conf.d/supervisord
 # ---------- environment ----------
 ENV PYTHONUNBUFFERED=1 \
     REDIS_URL=redis://127.0.0.1:6379/0 \
-    WORKER_BACKEND=rq \
     PLEX_TOKEN=${PLEX_TOKEN} \
     PLEX_URL=${PLEX_URL:-http://host.docker.internal:32400}
 

@@ -94,7 +94,6 @@ SETUP_TOKEN=meu-token-super-seguro-123
 | `DEFAULT_INTRO_SKIP_SECONDS` | Segundos iniciais a pular quando não houver marker | `0` |
 | `SCAN_INTERVAL_MINUTES` | Intervalo do *polling* de varredura completa | `5` |
 | `WEBHOOK_SECRET` | Segredo HMAC para validar `X-Plex-Signature` (opcional) | vazio |
-| `WORKER_BACKEND` | `sync` (thread) ou `rq` (Redis) | `rq` |
 | `REDIS_URL` | URL do Redis interno (não mude) | `redis://127.0.0.1:6379/0` |
 | `ENABLE_FS_WATCHER` | Manter watcher legado (apenas migração) | `false` |
 | `WEB_PORT` | Porta do dashboard (interno) | `8080` |
@@ -118,7 +117,7 @@ Todas as variáveis podem ser alteradas **pela UI** (⚙ Configuração) – o a
 ```
 
 * `supervisord.conf` garante restart automático de ambos.  
-* `REDIS_URL` e `WORKER_BACKEND=rq` já vêm prontos – o worker RQ consome jobs de varredura (`process_episode`).  
+* `REDIS_URL` já vem pronto – o worker RQ consome jobs de varredura (`process_episode`).  
 * Nenhum volume de mídia é necessário; o container só monta o **named volume** `plex-autoplay-config:/config` (persistência de `app-config.json`, chaves de sessão, certificado TLS).
 
 ---  
