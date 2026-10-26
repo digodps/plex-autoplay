@@ -545,9 +545,9 @@ def create_app(
         
         # Get library info
         plex_libs = manager.list_library_sections()
-        library = next((lib for lib in plex_libs if lib.get("key") == section_key), None)
+        library = next((lib for lib in plex_libs if str(lib.get("key")) == str(section_key)), None)
         if not library:
-            return render_template("library_view.html", library=None, series=[], error="Biblioteca não encontrada", plex_libraries=plex_libs)
+            return render_template("library_view.html", library=None, series=[], error="Biblioteca não encontrada", plex_libraries=plex_libs, section_key=section_key)
 
         # Get series tree (reuse the sync_library_tree logic)
         cache_key = f"plex:sync_tree:{section_key}"
@@ -587,7 +587,7 @@ def create_app(
             tree_data = {"section_key": section_key, "series": tree}
             redis_client.setex(cache_key, 300, json.dumps(tree_data))
         
-        return render_template("library_view.html", library=library, series=tree_data.get("series", []), plex_libraries=plex_libs)
+        return render_template("library_view.html", library=library, series=tree_data.get("series", []), plex_libraries=plex_libs, section_key=section_key)
 
     
 

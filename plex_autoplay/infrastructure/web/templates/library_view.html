@@ -226,7 +226,7 @@
   <script>
   document.addEventListener('DOMContentLoaded', () => {
     const csrf = document.querySelector('meta[name="csrf-token"]').content;
-    const sectionKey = '{{ library.key }}';
+    const sectionKey = '{{ section_key }}';
     const container = document.getElementById('series-grid');
 
     async function loadSeries() {
