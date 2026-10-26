@@ -70,10 +70,6 @@
                 <label>Intervalo de polling (segundos)
                   <input type="number" name="poll_interval_seconds" min="1" value="{{ raw_config.poll_interval_seconds }}">
                 </label>
-              <div class="form-row">
-                <label>Segundos padrão de início de intro a pular
-                  <input type="number" name="default_intro_skip_seconds" min="0" value="{{ raw_config.default_intro_skip_seconds }}">
-                </label>
               </div>
             </article>
 
@@ -81,16 +77,8 @@
             <article class="card">
               <h3><span class="icon">🔄</span> Varredura & Webhook</h3>
               <div class="form-row">
-                <label>Intervalo de varredura (minutos)
-                  <input type="number" name="scan_interval_minutes" min="1" value="{{ raw_config.scan_interval_minutes }}">
-                </label>
                 <label>Webhook secret (HMAC)
                   <input type="password" name="webhook_secret" value="{{ raw_config.webhook_secret }}" autocomplete="off" placeholder="Deixe vazio para desativar verificação">
-                </label>
-              </div>
-              <div class="form-row">
-                <label>Redis URL
-                  <input type="text" name="redis_url" value="{{ raw_config.redis_url }}" placeholder="redis://localhost:6379/0">
                 </label>
               </div>
             </article>

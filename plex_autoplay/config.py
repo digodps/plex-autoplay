@@ -35,7 +35,6 @@ class Settings:
     poll_interval_seconds: int = int(os.getenv("POLL_INTERVAL_SECONDS", "2"))
     allowed_client_ids: List[str] = field(default_factory=lambda: _str_to_list(os.getenv("ALLOWED_CLIENT_IDS", "")))
     allowed_usernames: List[str] = field(default_factory=lambda: _str_to_list(os.getenv("ALLOWED_USERNAMES", "")))
-    default_intro_skip_seconds: int = int(os.getenv("DEFAULT_INTRO_SKIP_SECONDS", "0"))
     config_dir: str = os.getenv("CONFIG_DIR", "/config")
     dashboard_port: int = int(os.getenv("WEB_PORT", "8080"))
     dashboard_cookie_secure: bool = _str_to_bool(os.getenv("DASHBOARD_COOKIE_SECURE", "true"), default=True)
@@ -47,9 +46,7 @@ class Settings:
     )
     log_level: str = os.getenv("LOG_LEVEL", "INFO").upper()
     # New Plex‑centric settings
-    scan_interval_minutes: int = int(os.getenv("SCAN_INTERVAL_MINUTES", "5"))
     webhook_secret: str = os.getenv("WEBHOOK_SECRET", "")
-    redis_url: str = os.getenv("REDIS_URL", "redis://127.0.0.1:6379/0")
 
     def validate(self) -> None:
         if not self.plex_url:

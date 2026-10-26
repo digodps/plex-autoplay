@@ -92,15 +92,14 @@ SETUP_TOKEN=meu-token-super-seguro-123
 | `NEXT_EPISODE_THRESHOLD_SECONDS` | Segundos antes do fim para disparar “próximo” | `15` |
 | `ACTION_DELAY_SECONDS` | Segundos de espera antes de executar a ação (pular/avançar) | `5` |
 | `POLL_INTERVAL_SECONDS` | Intervalo de *polling* de sessões ativas | `2` |
-| `DEFAULT_INTRO_SKIP_SECONDS` | Segundos iniciais a pular quando não houver marker | `0` |
-| `SCAN_INTERVAL_MINUTES` | Intervalo do *polling* de varredura completa | `5` |
 | `WEBHOOK_SECRET` | Segredo HMAC para validar `X-Plex-Signature` (opcional) | vazio |
-| `REDIS_URL` | URL do Redis interno (não mude) | `redis://127.0.0.1:6379/0` |
 | `WEB_PORT` | Porta do dashboard (interno) | `8080` |
 | `DASHBOARD_HTTPS` | Ativar HTTPS auto‑assinado | `true` |
 | `DASHBOARD_COOKIE_SECURE` | Cookie `Secure` no HTTPS | `true` |
 | `DASHBOARD_TLS_HOSTS` | Hosts para certificado auto‑assinado | `localhost,plex-autoplay,host.docker.internal` |
 | `LOG_LEVEL` | Nível de log (`DEBUG`, `INFO`, `WARN`, `ERROR`) | `INFO` |
+| `PLEX_AUTOPLAY_CUSTOM_JSON_PATH` | Caminho do `custom.json` do PlexAutoSkip (opcional) | `/config/plexautoskip/custom.json` |
+| `PLEX_AUTOPLAY_CONFIG_DIR` | Diretório de config do PlexAutoSkip (opcional) | `/config/plexautoskip` |
 
 > **Configurações do PlexAutoSkip** (geradas automaticamente no `config.ini` via `start_autoskip.sh`):  
 > `unwatched = False`, `first-episode-series = Always`, `start = 0` (ver `start_autoskip.sh` para detalhes).

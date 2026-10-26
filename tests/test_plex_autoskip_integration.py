@@ -9,6 +9,7 @@ Tests the complete flow:
 """
 
 import json
+import os
 import tempfile
 import unittest
 from pathlib import Path
@@ -27,12 +28,16 @@ class TestPlexAutoSkipIntegration(unittest.TestCase):
         self.temp_dir = tempfile.TemporaryDirectory()
         base = Path(self.temp_dir.name)
 
-        # Create config directory structure at the absolute path that the code expects
-        self.plexautoskip_dir = Path("/config/plexautoskip")
+        # Create a temporary directory for PlexAutoSkip config
+        self.plexautoskip_dir = Path(self.temp_dir.name) / "plexautoskip"
         self.plexautoskip_dir.mkdir(parents=True, exist_ok=True)
-        self.custom_json_path = self.plexautoskip_dir / "custom.json"
+
+        # Set environment variables to use our test directory
+        os.environ["PLEX_AUTOPLAY_CUSTOM_JSON_PATH"] = str(self.plexautoskip_dir / "custom.json")
+        os.environ["PLEX_AUTOPLAY_CONFIG_DIR"] = str(self.plexautoskip_dir)
 
         # Create minimal custom.json with PlexAutoSkip format
+        self.custom_json_path = self.plexautoskip_dir / "custom.json"
         initial_custom = {
             "markers": {
                 "4987": [
@@ -51,7 +56,7 @@ class TestPlexAutoSkipIntegration(unittest.TestCase):
             "clients": {},
             "mode": {}
         }
-        self.custom_json_path = Path("/config/plexautoskip/custom.json")
+        self.custom_json_path = self.plexautoskip_dir / "custom.json"
         initial_custom = {
             "markers": {
                 "4987": [
@@ -73,7 +78,7 @@ class TestPlexAutoSkipIntegration(unittest.TestCase):
         self.custom_json_path.write_text(json.dumps(initial_custom, indent=2), encoding="utf-8")
 
         # Create config.ini for PlexAutoSkip
-        self.config_ini = Path("/config/plexautoskip/config.ini")
+        self.config_ini = self.plexautoskip_dir / "config.ini"
         config_ini_content = """[PlexServer]
 plex_url = http://192.168.18.3:32400
 plex_token = test_token
@@ -129,14 +134,11 @@ tags = intro
 low = 0
 high = 100
 """
-        self.config_ini = Path("/config/plexautoskip/config.ini")
+        self.config_ini = self.plexautoskip_dir / "config.ini"
         self.config_ini.write_text(config_ini_content, encoding="utf-8")
 
-        # Ensure the plexautoskip directory exists for the app to write custom.json.tmp
-        Path("/config/plexautoskip").mkdir(parents=True, exist_ok=True)
-
         # Create config directory for the main app
-        self.config_dir = Path("/tmp/test_config")
+        self.config_dir = Path(self.temp_dir.name) / "config"
         self.config_dir.mkdir(parents=True, exist_ok=True)
 
         # Create app with test config
@@ -146,6 +148,12 @@ high = 100
         )
         self.app.config["TESTING"] = True
         self.client = self.app.test_client()
+
+    def _login(self):
+        """Helper to login as admin."""
+        with self.client.session_transaction() as session:
+            session["admin"] = "admin"
+            session["_csrf_token"] = "test-csrf-token"
 
     def test_custom_json_has_correct_structure(self):
         """Test that custom.json has the correct PlexAutoSkip format."""

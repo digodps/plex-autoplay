@@ -12,11 +12,12 @@ from typing import List, Optional
 
 from plex_autoplay.infrastructure.plex.client import PlexManager
 from plex_autoplay.application.marker_generator import generate_with_xml
+from plex_autoplay.infrastructure.paths import get_custom_json_path
 
 logger = logging.getLogger("plex-autoplay.scanner")
 
 # Path to the JSON file consumed by PlexAutoSkip (shared via /config volume)
-CUSTOM_JSON_PATH = pathlib.Path("/config/plexautoskip/custom.json")
+CUSTOM_JSON_PATH = get_custom_json_path()
 
 
 @dataclass

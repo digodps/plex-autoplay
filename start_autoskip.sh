@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-CONFIG_DIR="/config/plexautoskip"
+CONFIG_DIR="${PLEX_AUTOPLAY_CONFIG_DIR:-/config/plexautoskip}"
 CONFIG_FILE="${CONFIG_DIR}/config.ini"
 
 mkdir -p "${CONFIG_DIR}"

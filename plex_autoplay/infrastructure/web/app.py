@@ -41,38 +41,11 @@ LOGIN_WINDOW_SECONDS = 5 * 60
 MAX_LOGIN_ATTEMPTS = 5
 logger = logging.getLogger("plex-autoplay.dashboard")
 
-
-def get_custom_json_path() -> pathlib.Path:
-    """Get the path to the PlexAutoSkip custom.json file.
-    Can be overridden via PLEX_AUTOPLAY_CUSTOM_JSON_PATH environment variable.
-    """
-    custom_path = os.getenv("PLEX_AUTOPLAY_CUSTOM_JSON_PATH")
-    if custom_path:
-        return pathlib.Path(custom_path)
-    return pathlib.Path("/config/plexautoskip/custom.json")
-
-
-def get_custom_config_path() -> pathlib.Path:
-    """Get the path to the PlexAutoSkip config.ini file."""
-    custom_path = os.getenv("PLEX_AUTOPLAY_CONFIG_DIR")
-    if custom_path:
-        return pathlib.Path(custom_path) / "config.ini"
-    return pathlib.Path("/config/plexautoskip/config.ini")
-
-
-def get_plexautoskip_dir() -> pathlib.Path:
-    """Get the PlexAutoSkip directory path."""
-    custom_path = os.getenv("PLEX_AUTOPLAY_CONFIG_DIR")
-    if custom_path:
-        return pathlib.Path(custom_path)
-    return pathlib.Path("/config/plexautoskip")
-
-
-PASSWORD_HASH_ITERATIONS = 600_000
-SESSION_LIFETIME_SECONDS = 12 * 60 * 60
-LOGIN_WINDOW_SECONDS = 5 * 60
-MAX_LOGIN_ATTEMPTS = 5
-logger = logging.getLogger("plex-autoplay.dashboard")
+from plex_autoplay.infrastructure.paths import (
+    get_custom_json_path,
+    get_custom_config_path,
+    get_plexautoskip_dir,
+)
 
 
 class SetupTokenError(ValueError):
@@ -93,10 +66,7 @@ class ConfigStore:
         "poll_interval_seconds",
         "allowed_client_ids",
         "allowed_usernames",
-        "default_intro_skip_seconds",
-        "scan_interval_minutes",
         "webhook_secret",
-        "redis_url",
     ]
 
     def __init__(self, config_dir: str | Path):
@@ -479,10 +449,7 @@ def create_app(
             "poll_interval_seconds": int(form.get("poll_interval_seconds", 2)),
             "allowed_client_ids": [x.strip() for x in form.get("allowed_client_ids", "").split(",") if x.strip()],
             "allowed_usernames": [x.strip() for x in form.get("allowed_usernames", "").split(",") if x.strip()],
-            "default_intro_skip_seconds": int(form.get("default_intro_skip_seconds", 0)),
-            "scan_interval_minutes": int(form.get("scan_interval_minutes", 5)),
             "webhook_secret": form.get("webhook_secret", ""),
-            "redis_url": form.get("redis_url", "redis://127.0.0.1:6379/0"),
         }
         try:
             config_store.save(data)
@@ -599,7 +566,7 @@ def create_app(
         app.logger.info(f"[library_view] Got {len(episodes)} episodes from Plex for section {section_key}")
 
         # Load custom.json (manual markers from UI) - PlexAutoSkip list format
-        CUSTOM_JSON_PATH = pathlib.Path("/config/plexautoskip/custom.json")
+        CUSTOM_JSON_PATH = get_custom_json_path()
         custom_data = {}
         if CUSTOM_JSON_PATH.is_file():
             try:
@@ -1086,7 +1053,7 @@ def create_app(
         app.logger.info(f"[sync_tree] Got {len(episodes)} episodes from Plex for section {section_key}")
 
         # Load custom.json (manual markers from UI) - PlexAutoSkip list format
-        CUSTOM_JSON_PATH = pathlib.Path("/config/plexautoskip/custom.json")
+        CUSTOM_JSON_PATH = get_custom_json_path()
         custom_data = {}
         if CUSTOM_JSON_PATH.is_file():
             try:
@@ -1199,7 +1166,7 @@ def create_app(
             return jsonify(error="kind deve ser 'intro' ou 'credits'"), 400
 
         # write to custom.json (shared with PlexAutoSkip) - PlexAutoSkip expects list format
-        CUSTOM_JSON = pathlib.Path("/config/plexautoskip/custom.json")
+        CUSTOM_JSON = get_custom_json_path()
         with _CUSTOM_LOCK:
             data_json = {"markers": {}, "offsets": {}, "tags": {}, "mode": {}, "allowed": {"clients": [], "users": [], "keys": [], "skip-next": []}, "blocked": {"clients": [], "users": [], "keys": [], "skip-next": []}, "clients": {}, "mode": {}}
             if CUSTOM_JSON.is_file():

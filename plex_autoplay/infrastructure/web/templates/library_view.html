@@ -218,6 +218,39 @@
       }
     }
 
+    // Helper: convert milliseconds to "mm:ss" string
+    function msToMinSec(ms) {
+      if (ms === undefined || ms === null || ms === '') return '';
+      const totalSec = Math.floor(Number(ms) / 1000);
+      if (isNaN(totalSec)) return '';
+      const m = Math.floor(totalSec / 60);
+      const s = totalSec % 60;
+      return `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+    }
+
+    // Helper: parse "mm:ss" (or "m:ss") to milliseconds, returns null on failure
+    function minSecToMs(str) {
+      if (!str) return null;
+      const parts = str.split(':');
+      if (parts.length !== 2) return null;
+      const m = parseInt(parts[0], 10);
+      const s = parseInt(parts[1], 10);
+      if (isNaN(m) || isNaN(s) || s < 0 || s >= 60) return null;
+      return (m * 60 + s) * 1000;
+    }
+
+    // Simple mask for mm:ss while typing
+    function applyMinSecMask(input) {
+      input.addEventListener('input', () => {
+        let v = input.value.replace(/[^0-9]/g, '');
+        if (v.length > 4) v = v.slice(0,4);
+        if (v.length >= 3) {
+          v = v.slice(0, v.length-2) + ':' + v.slice(v.length-2);
+        }
+        input.value = v;
+      });
+    }
+
     function renderSeries(series, container) {
       if (!series || series.length === 0) {
         container.innerHTML = `
@@ -249,10 +282,10 @@
                 <span class="ep-num">E${String(ep.episode).padStart(2,'0')}</span>
                 <span class="ep-title" title="${ep.title}">${ep.title}</span>
                 <div class="marker-inputs">
-                  <label>Intro ini<input type="number" class="mk-intro-start" value="${intro.start_ms||''}" placeholder="ms"></label>
-                  <label>Intro fim<input type="number" class="mk-intro-end" value="${intro.end_ms||''}" placeholder="ms"></label>
-                  <label>Cred ini<input type="number" class="mk-cred-start" value="${credStart||''}" placeholder="ms"></label>
-                  <label>Cred fim<input type="number" class="mk-cred-end" value="${credEnd||''}" placeholder="ms"></label>
+                  <label>Intro ini<input type="text" class="mk-intro-start" value="${msToMinSec(intro.start_ms)}" placeholder="mm:ss" data-ms="${intro.start_ms||''}"></label>
+                  <label>Intro fim<input type="text" class="mk-intro-end" value="${msToMinSec(intro.end_ms)}" placeholder="mm:ss" data-ms="${intro.end_ms||''}"></label>
+                  <label>Cred ini<input type="text" class="mk-cred-start" value="${msToMinSec(credStart)}" placeholder="mm:ss" data-ms="${credStart||''}"></label>
+                  <label>Cred fim<input type="text" class="mk-cred-end" value="${msToMinSec(credEnd)}" placeholder="mm:ss" data-ms="${credEnd||''}"></label>
                   <button class="button button-primary save-btn" data-rating="${ep.rating_key}">Salvar</button>
                 </div>
               </li>`;
@@ -261,40 +294,96 @@
         html += `</ul></div></article>`;
       });
       container.innerHTML = html;
+      // Apply mask to all marker inputs
+      container.querySelectorAll('.marker-inputs input[type="text"]').forEach(applyMinSecMask);
       attachSaveListeners(container);
     }
 
     function attachSaveListeners(container) {
       container.querySelectorAll('.save-btn').forEach(btn => {
-        btn.addEventListener('click', async () => {
-          const row = btn.closest('.episode-row');
-          const rk = btn.dataset.rating;
-          const introStart = parseInt(row.querySelector('.mk-intro-start').value) || 0;
-          const introEnd   = parseInt(row.querySelector('.mk-intro-end').value)   || 0;
-          const credStart  = parseInt(row.querySelector('.mk-cred-start').value)  || 0;
-          const credEnd    = parseInt(row.querySelector('.mk-cred-end').value)    || 0;
+        // create a discreet error label below the marker inputs (same style as login page)
+        const feedback = document.createElement('p');
+        feedback.className = 'field-error';
+        feedback.style.marginTop = '0.25rem';
+        feedback.style.marginBottom = '0';
+        feedback.style.fontSize = '0.8rem';
+        feedback.style.color = 'var(--red)';
+        feedback.textContent = '';
 
-          await saveMarker({rating_key:rk, kind:'intro', start_ms:introStart, end_ms:introEnd});
-          if (credStart || credEnd) {
-            await saveMarker({rating_key:rk, kind:'credits', start_ms:credStart, end_ms:credEnd});
+        // Insert feedback after the .marker-inputs container so it appears on a new line,
+        // without moving the Save button.
+        const row = btn.closest('.episode-row');
+        const markerInputs = row.querySelector('.marker-inputs');
+        markerInputs.parentNode.insertBefore(feedback, markerInputs.nextSibling);
+
+        btn.addEventListener('click', async () => {
+          const rk = btn.dataset.rating;
+          feedback.textContent = '';
+
+          function markInvalid(input) {
+            input.style.borderColor = 'var(--red)';
+            // remove on next user input
+            const clear = () => {
+              input.style.borderColor = '';
+              input.removeEventListener('input', clear);
+            };
+            input.addEventListener('input', clear);
           }
-          btn.textContent = '✔';
-          setTimeout(()=>btn.textContent='Salvar', 1000);
+
+          function getMs(selector) {
+            const input = row.querySelector(selector);
+            const ms = minSecToMs(input.value);
+            if (ms === null && input.value !== '') {
+              feedback.textContent = `Formato inválido: "${input.value}" (use mm:ss)`;
+              markInvalid(input);
+              throw new Error('Invalid time format');
+            }
+            return ms !== null ? ms : 0;
+          }
+
+          let introStart, introEnd, credStart, credEnd;
+          try {
+            introStart = getMs('.mk-intro-start');
+            introEnd   = getMs('.mk-intro-end');
+            credStart  = getMs('.mk-cred-start');
+            credEnd    = getMs('.mk-cred-end');
+          } catch (e) {
+            return; // feedback already shown
+          }
+
+          async function doSave(body) {
+            const resp = await fetch('/api/sync/marker', {
+              method: 'POST',
+              headers: { 'Content-Type':'application/json', 'X-CSRF-Token': csrf },
+              credentials: 'same-origin',
+              body: JSON.stringify({...body, section_key: sectionKey})
+            });
+            if (!resp.ok) {
+              const j = await resp.json().catch(()=>({}));
+              throw new Error(j.error || `HTTP ${resp.status}`);
+            }
+            return resp.json();
+          }
+
+          try {
+            await doSave({rating_key:rk, kind:'intro', start_ms:introStart, end_ms:introEnd});
+            if (credStart || credEnd) {
+              await doSave({rating_key:rk, kind:'credits', start_ms:credStart, end_ms:credEnd});
+            }
+            btn.textContent = '✔';
+            feedback.textContent = '';
+            feedback.style.color = 'var(--green)';
+            feedback.textContent = 'Salvo';
+            setTimeout(()=>{
+              btn.textContent = 'Salvar';
+              feedback.textContent = '';
+              feedback.style.color = 'var(--red)';
+            }, 1500);
+          } catch (err) {
+            feedback.textContent = `Erro: ${err.message}`;
+          }
         });
       });
-    }
-
-    async function saveMarker(body) {
-      const resp = await fetch('/api/sync/marker', {
-        method: 'POST',
-        headers: { 'Content-Type':'application/json', 'X-CSRF-Token': csrf },
-        credentials: 'same-origin',
-        body: JSON.stringify({...body, section_key: sectionKey})
-      });
-      if (!resp.ok) {
-        const j = await resp.json();
-        alert('Erro ao salvar: ' + (j.error||'desconhecido'));
-      }
     }
 
     // initial load
