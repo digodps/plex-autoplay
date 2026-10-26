@@ -49,7 +49,6 @@ class Settings:
     scan_interval_minutes: int = int(os.getenv("SCAN_INTERVAL_MINUTES", "5"))
     webhook_secret: str = os.getenv("WEBHOOK_SECRET", "")
     redis_url: str = os.getenv("REDIS_URL", "redis://127.0.0.1:6379/0")
-    enable_fs_watcher: bool = _str_to_bool(os.getenv("ENABLE_FS_WATCHER", "false"), default=False)
 
     def validate(self) -> None:
         if not self.plex_url:

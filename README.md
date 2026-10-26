@@ -95,7 +95,6 @@ SETUP_TOKEN=meu-token-super-seguro-123
 | `SCAN_INTERVAL_MINUTES` | Intervalo do *polling* de varredura completa | `5` |
 | `WEBHOOK_SECRET` | Segredo HMAC para validar `X-Plex-Signature` (opcional) | vazio |
 | `REDIS_URL` | URL do Redis interno (não mude) | `redis://127.0.0.1:6379/0` |
-| `ENABLE_FS_WATCHER` | Manter watcher legado (apenas migração) | `false` |
 | `WEB_PORT` | Porta do dashboard (interno) | `8080` |
 | `DASHBOARD_HTTPS` | Ativar HTTPS auto‑assinado | `true` |
 | `DASHBOARD_COOKIE_SECURE` | Cookie `Secure` no HTTPS | `true` |

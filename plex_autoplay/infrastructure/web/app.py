@@ -63,7 +63,6 @@ class ConfigStore:
         "scan_interval_minutes",
         "webhook_secret",
         "redis_url",
-        "enable_fs_watcher",
     ]
 
     def __init__(self, config_dir: str | Path):
@@ -142,6 +141,16 @@ class AdminStore:
             secret = secrets.token_hex(32)
             self._write_atomic(self.config_dir / "dashboard-session.key", secret.encode("ascii"))
             return secret
+
+    def setup_token(self) -> str:
+        """Generate and store a one-time setup token for initial admin creation."""
+        self.config_dir.mkdir(parents=True, exist_ok=True)
+        token_path = self.config_dir / "dashboard-setup-token"
+        if token_path.exists():
+            return token_path.read_text(encoding="ascii").strip()
+        token = secrets.token_urlsafe(32)
+        self._write_atomic(token_path, token.encode("ascii"))
+        return token
 
     # --------------------------------------------------------------------
     def verify(self, username: str, password: str) -> bool:
@@ -439,7 +448,6 @@ def create_app(
             "scan_interval_minutes": int(form.get("scan_interval_minutes", 5)),
             "webhook_secret": form.get("webhook_secret", ""),
             "redis_url": form.get("redis_url", "redis://127.0.0.1:6379/0"),
-            "enable_fs_watcher": form.get("enable_fs_watcher") == "on",
         }
         try:
             config_store.save(data)

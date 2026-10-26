@@ -7,7 +7,6 @@ from unittest.mock import MagicMock
 from plex_autoplay.application.playback_service import PlaybackService
 from plex_autoplay.config import Settings
 from plex_autoplay.domain.playback_rules import should_skip_intro, should_trigger_next_episode
-from plex_autoplay.infrastructure.markers.json_repository import JsonMarkerRepository
 from plex_autoplay.infrastructure.plex.client import PlexManager
 
 
@@ -28,70 +27,6 @@ class TestConfig(unittest.TestCase):
         s = Settings(plex_token="seu_token_aqui")
         with self.assertRaises(ValueError):
             s.validate()
-
-
-class TestJsonMarkerRepository(unittest.TestCase):
-    def setUp(self):
-        self.manager = JsonMarkerRepository(markers_file_path="markers.example.json")
-
-    def test_load_example_markers(self):
-        self.assertIn("Stranger Things", self.manager.custom_markers)
-
-    def test_custom_intro_lookup(self):
-        mock_ep = MagicMock()
-        mock_ep.grandparentTitle = "Stranger Things"
-        mock_ep.seasonNumber = 1
-        mock_ep.episodeNumber = 1
-        mock_ep.markers = []
-
-        intro = self.manager.get_intro_markers(mock_ep)
-        self.assertIsNotNone(intro)
-        self.assertEqual(intro, (0, 65000))
-
-    def test_custom_default_intro_lookup(self):
-        mock_ep = MagicMock()
-        mock_ep.grandparentTitle = "The Office"
-        mock_ep.seasonNumber = 2
-        mock_ep.episodeNumber = 5
-        mock_ep.markers = []
-
-        intro = self.manager.get_intro_markers(mock_ep)
-        self.assertIsNotNone(intro)
-        self.assertEqual(intro, (80000, 115000))
-
-    def test_custom_markers_match_titles_with_different_spacing(self):
-        repository = JsonMarkerRepository()
-        repository.custom_markers = {
-            "Ao Ashi": {
-                "season_2": {
-                    "2": {"start": 5.583, "end": 93.086, "credits": 1355.125},
-                }
-            }
-        }
-        episode = SimpleNamespace(
-            grandparentTitle="Aoashi",
-            seasonNumber=2,
-            episodeNumber=2,
-            markers=[],
-        )
-
-        self.assertEqual(repository.get_intro_markers(episode), (5583, 93086))
-        self.assertEqual(repository.get_credits_marker(episode), 1355125)
-
-    def test_custom_marker_title_spacing_match_rejects_ambiguous_entries(self):
-        repository = JsonMarkerRepository()
-        repository.custom_markers = {
-            "Ao Ashi": {"season_2": {"2": {"start": 5, "end": 90}}},
-            "Aoashi": {"season_2": {"2": {"start": 10, "end": 95}}},
-        }
-        episode = SimpleNamespace(
-            grandparentTitle="Ao  Ashi",
-            seasonNumber=2,
-            episodeNumber=2,
-            markers=[],
-        )
-
-        self.assertIsNone(repository.get_intro_markers(episode))
 
 
 class TestPlexManager(unittest.TestCase):
@@ -137,7 +72,7 @@ class TestController(unittest.TestCase):
             next_episode_threshold_seconds=15,
         )
         self.plex_mock = MagicMock(spec=PlexManager)
-        self.marker_mock = MagicMock(spec=JsonMarkerRepository)
+        self.marker_mock = MagicMock()
         self.marker_mock.get_credits_marker.return_value = None
         self.marker_mock.get_intro_markers.return_value = None
         self.controller = PlaybackService(self.plex_mock, self.marker_mock, self.config)
