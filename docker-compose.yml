@@ -1,32 +1,39 @@
 services:
   plex-autoplay:
-    build:
-      context: .
-      args:
-        PLEX_TOKEN: "${PLEX_TOKEN:-}"
-        PLEX_URL: "${PLEX_URL:-http://host.docker.internal:32400}"
+    build: .
     container_name: plex-autoplay
     restart: unless-stopped
-    security_opt:
-      - "label=disable"
     ports:
-      - "${WEB_HOST_PORT:-8080}:8080"
-      - "8081:8081"
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
-    env_file:
-      - .env
-    environment:
-      PLEX_URL: "${PLEX_URL:-http://host.docker.internal:32400}"
-      PLEX_TOKEN: "${PLEX_TOKEN:-}"
-      WEB_PORT: "8080"
-      DASHBOARD_COOKIE_SECURE: "${DASHBOARD_COOKIE_SECURE:-false}"
-      DASHBOARD_HTTPS: "${DASHBOARD_HTTPS:-false}"
-      DASHBOARD_TLS_HOSTS: "${DASHBOARD_TLS_HOSTS:-localhost,plex-autoplay,host.docker.internal}"
-      REDIS_URL: "${REDIS_URL:-redis://127.0.0.1:6379/0}"
+      - "8443:443"     # HTTPS API + Vue SPA (mapeada para 8443 no host em modo rootless)
+      - "8081:8081"   # WSS PlexAutoSkip WebSocket
     volumes:
-      - plex-autoplay-config:/config
-      - "${MEDIA_ROOT_HOST:-./media}:/Media:z"
+      - plex-data:/data              # SQLite, custom.json, image-cache, app-config.json
+      - ${MEDIA_ROOT}:/media:ro     # Plex media files (read-only)
+    environment:
+      - PLEX_URL=${PLEX_URL}
+      - PLEX_TOKEN=${PLEX_TOKEN}
+      - MEDIA_ROOT=/media
+      - JWT_SECRET=${JWT_SECRET}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD}
+      - ASPNETCORE_URLS=https://+:443
+      - OTEL_EXPORTER=${OTEL_EXPORTER:-console}
+      - OTEL_ENDPOINT=${OTEL_ENDPOINT:-}
+      - OTEL_SERVICE_NAME=${OTEL_SERVICE_NAME:-plex-autoplay}
+      - CERT_PATH=${CERT_PATH}
+      - CERT_PASSWORD=${CERT_PASSWORD}
+      - CERT_BASE64=${CERT_BASE64}
+      - HTTPS_PORT=${HTTPS_PORT:-443}
+      - DISABLE_HTTP=${DISABLE_HTTP:-true}
+      - LOG_LEVEL=${LOG_LEVEL:-Information}
+      - ALLOWED_HOSTS=${ALLOWED_HOSTS:-*}
+      - SYNC_INTERVAL_MINUTES=${SYNC_INTERVAL_MINUTES:-5}
+    depends_on: []
+    networks:
+      - plex-network
 
 volumes:
-  plex-autoplay-config:
+  plex-data:
+
+networks:
+  plex-network:
+    driver: bridge

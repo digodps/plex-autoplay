@@ -1,49 +1,31 @@
-# --------------------------------------------------------------
-# Dockerfile (multi-stage not needed – single stage with supervisor)
-# --------------------------------------------------------------
-FROM python:3.12-slim AS base
+# syntax=docker/dockerfile:1
+FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS base
+WORKDIR /app
 
-# ---------- build args ----------
-ARG PLEX_TOKEN
-ARG PLEX_URL
-
-# ---------- system dependencies ----------
-RUN apt-get update && apt-get install -y --no-install-recommends \
-        ffmpeg \
-        redis-server \
-        supervisor \
-        git \
+# Install ffmpeg for marker detection and openssl for self-signed certificate generation
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends ffmpeg openssl \
     && rm -rf /var/lib/apt/lists/*
 
-# ---------- non‑root user ----------
-RUN useradd -m -u 1000 appuser
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
+WORKDIR /src
+COPY ["PlexAutoplay.slnx", "./"]
+COPY ["src/PlexAutoplay.Domain/PlexAutoplay.Domain.csproj", "src/PlexAutoplay.Domain/"]
+COPY ["src/PlexAutoplay.Application/PlexAutoplay.Application.csproj", "src/PlexAutoplay.Application/"]
+COPY ["src/PlexAutoplay.Infrastructure/PlexAutoplay.Infrastructure.csproj", "src/PlexAutoplay.Infrastructure/"]
+COPY ["src/PlexAutoplay.Web/PlexAutoplay.Web.csproj", "src/PlexAutoplay.Web/"]
+RUN dotnet restore "PlexAutoplay.slnx"
+COPY . .
+WORKDIR "/src/src/PlexAutoplay.Web"
+RUN dotnet build "PlexAutoplay.Web.csproj" -c Release -o /app/build
+
+FROM build AS publish
+RUN dotnet publish "PlexAutoplay.Web.csproj" -c Release -o /app/publish /p:UseAppHost=false
+
+FROM base AS final
 WORKDIR /app
-COPY --chown=appuser:appuser requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
-
-# ---------- install PlexAutoSkip from source ----------
-RUN git clone https://github.com/mdhiggins/PlexAutoSkip.git /opt/plexautoskip \
-    && pip install --no-cache-dir -r /opt/plexautoskip/setup/requirements.txt
-
-# ---------- copy startup script ----------
-COPY --chown=appuser:appuser start_autoskip.sh /app/start_autoskip.sh
-
-# ---------- application code ----------
-COPY --chown=appuser:appuser . .
-RUN chmod +x /app/start_autoskip.sh
-
-# ---------- supervisord config ----------
-COPY --chown=appuser:appuser supervisord.conf /etc/supervisor/conf.d/supervisord.conf
-
-# ---------- environment ----------
-ENV PYTHONUNBUFFERED=1 \
-    REDIS_URL=redis://127.0.0.1:6379/0 \
-    PLEX_TOKEN=${PLEX_TOKEN} \
-    PLEX_URL=${PLEX_URL:-http://host.docker.internal:32400}
-
-# Run as root so supervisord can spawn child processes as different users (redis as appuser, app as root)
-# USER appuser
-EXPOSE 8080
-
-# ---------- entrypoint ----------
-CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
+COPY --from=publish /app/publish .
+EXPOSE 443
+EXPOSE 8081
+ENV ASPNETCORE_URLS=https://+:443
+ENTRYPOINT ["dotnet", "PlexAutoplay.Web.dll"]
