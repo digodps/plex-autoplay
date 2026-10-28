@@ -1,0 +1,12 @@
+/var/home/diego/Documentos/Digodps/plex-autoplay/src/PlexAutoplay.Domain/bin/Debug/net10.0/PlexAutoplay.Domain.deps.json
+/var/home/diego/Documentos/Digodps/plex-autoplay/src/PlexAutoplay.Domain/bin/Debug/net10.0/PlexAutoplay.Domain.dll
+/var/home/diego/Documentos/Digodps/plex-autoplay/src/PlexAutoplay.Domain/bin/Debug/net10.0/PlexAutoplay.Domain.pdb
+/var/home/diego/Documentos/Digodps/plex-autoplay/src/PlexAutoplay.Domain/obj/Debug/net10.0/PlexAutoplay.Domain.GeneratedMSBuildEditorConfig.editorconfig
+/var/home/diego/Documentos/Digodps/plex-autoplay/src/PlexAutoplay.Domain/obj/Debug/net10.0/PlexAutoplay.Domain.AssemblyInfoInputs.cache
+/var/home/diego/Documentos/Digodps/plex-autoplay/src/PlexAutoplay.Domain/obj/Debug/net10.0/PlexAutoplay.Domain.AssemblyInfo.cs
+/var/home/diego/Documentos/Digodps/plex-autoplay/src/PlexAutoplay.Domain/obj/Debug/net10.0/PlexAutoplay.Domain.csproj.CoreCompileInputs.cache
+/var/home/diego/Documentos/Digodps/plex-autoplay/src/PlexAutoplay.Domain/obj/Debug/net10.0/PlexAutoplay.Domain.sourcelink.json
+/var/home/diego/Documentos/Digodps/plex-autoplay/src/PlexAutoplay.Domain/obj/Debug/net10.0/PlexAutoplay.Domain.dll
+/var/home/diego/Documentos/Digodps/plex-autoplay/src/PlexAutoplay.Domain/obj/Debug/net10.0/refint/PlexAutoplay.Domain.dll
+/var/home/diego/Documentos/Digodps/plex-autoplay/src/PlexAutoplay.Domain/obj/Debug/net10.0/PlexAutoplay.Domain.pdb
+/var/home/diego/Documentos/Digodps/plex-autoplay/src/PlexAutoplay.Domain/obj/Debug/net10.0/ref/PlexAutoplay.Domain.dll

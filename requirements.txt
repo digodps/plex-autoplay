@@ -1,9 +1,0 @@
-plexapi>=4.15.0
-websocket-client>=1.6.0
-python-dotenv>=1.0.0
-requests>=2.31.0
-pyyaml>=6.0.0
-Flask>=3.0.0
-cheroot>=11.0.0
-waitress>=3.0.0
-redis>=5.0.0

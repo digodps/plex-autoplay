@@ -1,0 +1,16 @@
+/var/home/diego/Documentos/Digodps/plex-autoplay/src/PlexAutoplay.Application/bin/Release/net10.0/PlexAutoplay.Application.deps.json
+/var/home/diego/Documentos/Digodps/plex-autoplay/src/PlexAutoplay.Application/bin/Release/net10.0/PlexAutoplay.Application.dll
+/var/home/diego/Documentos/Digodps/plex-autoplay/src/PlexAutoplay.Application/bin/Release/net10.0/PlexAutoplay.Application.pdb
+/var/home/diego/Documentos/Digodps/plex-autoplay/src/PlexAutoplay.Application/bin/Release/net10.0/PlexAutoplay.Domain.dll
+/var/home/diego/Documentos/Digodps/plex-autoplay/src/PlexAutoplay.Application/bin/Release/net10.0/PlexAutoplay.Domain.pdb
+/var/home/diego/Documentos/Digodps/plex-autoplay/src/PlexAutoplay.Application/obj/Release/net10.0/PlexAutoplay.Application.csproj.AssemblyReference.cache
+/var/home/diego/Documentos/Digodps/plex-autoplay/src/PlexAutoplay.Application/obj/Release/net10.0/PlexAutoplay.Application.GeneratedMSBuildEditorConfig.editorconfig
+/var/home/diego/Documentos/Digodps/plex-autoplay/src/PlexAutoplay.Application/obj/Release/net10.0/PlexAutoplay.Application.AssemblyInfoInputs.cache
+/var/home/diego/Documentos/Digodps/plex-autoplay/src/PlexAutoplay.Application/obj/Release/net10.0/PlexAutoplay.Application.AssemblyInfo.cs
+/var/home/diego/Documentos/Digodps/plex-autoplay/src/PlexAutoplay.Application/obj/Release/net10.0/PlexAutoplay.Application.csproj.CoreCompileInputs.cache
+/var/home/diego/Documentos/Digodps/plex-autoplay/src/PlexAutoplay.Application/obj/Release/net10.0/PlexAutoplay.Application.sourcelink.json
+/var/home/diego/Documentos/Digodps/plex-autoplay/src/PlexAutoplay.Application/obj/Release/net10.0/PlexAuto.7D7E0318.Up2Date
+/var/home/diego/Documentos/Digodps/plex-autoplay/src/PlexAutoplay.Application/obj/Release/net10.0/PlexAutoplay.Application.dll
+/var/home/diego/Documentos/Digodps/plex-autoplay/src/PlexAutoplay.Application/obj/Release/net10.0/refint/PlexAutoplay.Application.dll
+/var/home/diego/Documentos/Digodps/plex-autoplay/src/PlexAutoplay.Application/obj/Release/net10.0/PlexAutoplay.Application.pdb
+/var/home/diego/Documentos/Digodps/plex-autoplay/src/PlexAutoplay.Application/obj/Release/net10.0/ref/PlexAutoplay.Application.dll

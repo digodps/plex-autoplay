@@ -40,7 +40,7 @@ cp .env.example .env
 # edite .env → PLEX_URL=...  PLEX_TOKEN=...  SETUP_TOKEN=seu-token-secreto
 
 # 3️⃣  Build + up
-./start.sh          # ou: docker compose build && docker compose up -d
+./scripts/start.sh  # ou: docker compose build && docker compose up -d
 
 # 4️⃣  Acesse o dashboard
 # HTTP  : http://localhost:8080
@@ -192,8 +192,8 @@ pytest -q                          # Rodar testes rápidos (7 testes)
 pytest -q -k "nome_do_teste"       # Rodar teste específico
 mypy plex_autoplay                 # Type-check (opcional)
 
-./start.sh                         # Build + up containers (Docker)
-./logs.sh                          # Ver logs dos containers
+./scripts/start.sh                 # Build + up containers (Docker)
+./scripts/logs.sh                  # Ver logs dos containers
 pre-commit run --all-files         # Rodar todos os hooks manualmente
 ```
 
@@ -230,7 +230,7 @@ plex-autoplay/
 ├── Dockerfile                # python + redis + supervisor
 ├── supervisord.conf          # sobe redis + app + plexautoskip
 ├── docker-compose.yml        # stack único (named volume)
-├── start.sh / stop.sh / logs.sh
+├── scripts/start.sh / scripts/stop.sh / scripts/logs.sh
 ├── .env.example
 ├── config/                   # volume persistente (app-config.json, certs, session.key)
 ├── plex_autoplay/
@@ -299,6 +299,87 @@ O PlexAutoSkip depende do protocolo **Plex Companion** para enviar comandos de *
 2. **Use AirPlay** do iOS para Apple TV.
 3. **Use Chromecast / Google Cast** do navegador/Android para TV.
 4. **Plex Desktop App** no mesmo servidor – funciona como player controlável.
+
+---
+
+## 🐳 Deploy com Docker (.NET 10)
+
+### Pré-requisitos
+- Docker Engine 24.x+
+- Docker Compose 2.x+
+- Plex Media Server ≥ 1.22
+- Plex Token com permissão de escrita (Owner/Admin)
+
+### Variáveis de Ambiente Obrigatórias
+
+Crie um arquivo `.env` na raiz do projeto:
+
+```dotenv
+PLEX_URL=http://seu-plex:32400
+PLEX_TOKEN=seu_token_plex
+MEDIA_ROOT=/caminho/para/midia/do/plex
+JWT_SECRET=sua_chave_secreta_jwt
+ADMIN_PASSWORD=sua_senha_admin
+```
+
+| Variável | Descrição |
+|----------|-----------|
+| `PLEX_URL` | URL base do Plex Media Server |
+| `PLEX_TOKEN` | Token de autenticação do Plex (Owner/Admin) |
+| `MEDIA_ROOT` | Caminho absoluto do host para os arquivos de mídia do Plex (bind mount) |
+| `JWT_SECRET` | Chave secreta para assinatura de JWT |
+| `ADMIN_PASSWORD` | Senha para login no painel administrativo |
+| `SYNC_INTERVAL_MINUTES` | Intervalo de sincronização automática (padrão: 5) |
+
+### Início Rápido
+
+```bash
+# 1. Clone o repositório
+git clone https://github.com/seu-usuario/plex-autoplay.git
+cd plex-autoplay
+
+# 2. Crie o arquivo .env
+cp .env.example .env
+# Edite .env com suas credenciais Plex e caminhos
+
+# 3. Build e suba os containers
+docker compose build
+docker compose up -d
+
+# 4. Acesse o dashboard
+# http://localhost:8080
+# WebSocket (PlexAutoSkip): ws://localhost:8081
+```
+
+### Estrutura de Volumes
+
+| Volume | Caminho no Container | Descrição |
+|--------|---------------------|-----------|
+| `plex-data` | `/data` | SQLite (`app.db`), `custom.json`, cache de imagens, `app-config.json` |
+| Bind mount | `/media` | Arquivos de mídia do Plex (via `MEDIA_ROOT`) |
+
+### Endpoints da API
+
+| Método | Rota | Descrição | Auth |
+|--------|------|-----------|------|
+| `POST` | `/auth/login` | Login com senha admin, retorna JWT | Não |
+| `GET` | `/api/plex/libraries` | Lista bibliotecas de séries | Sim |
+| `POST` | `/api/plex/scan` | Inicia escaneamento de marcadores | Sim |
+| `GET` | `/api/sync/status/{jobId}` | Status do scan | Sim |
+| `GET` | `/api/sync/log/stream/{jobId}` | Progresso via SSE | Sim |
+| `POST` | `/api/sync/cancel/{jobId}` | Cancela scan em execução | Sim |
+| `GET/POST/DELETE` | `/api/markers` | CRUD de marcadores | Sim |
+| `GET` | `/api/images/{path}` | Proxy de imagens do Plex | Sim |
+| `WS` | `/ws` | WebSocket PlexAutoSkip (porta 8081) | Não |
+
+### Arquitetura
+
+- **Backend**: .NET 10 ASP.NET Core Web API
+- **Frontend**: Vue.js 3 + Vite + Pinia + Vue Router
+- **Banco**: SQLite (Dapper ORM)
+- **Detecção**: ffprobe (silence detection)
+- **Autenticação**: JWT stateless (sem expiração)
+- **Sincronização**: BackgroundService configurável via UI
 
 ---
 

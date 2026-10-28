@@ -1,0 +1,6 @@
+@PlexAutoplay.Web_HostAddress = http://localhost:5030
+
+GET {{PlexAutoplay.Web_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
