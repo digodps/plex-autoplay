@@ -25,3 +25,6 @@ htmlcov/
 *.swo
 .DS_Store
 config/*
+
+# Test artifacts (not committed)
+test-artifacts/
