@@ -21,8 +21,10 @@ public static class OpenTelemetryService
         IConfiguration configuration)
     {
         var serviceName = configuration["OTEL_SERVICE_NAME"] ?? "plex-autoplay";
+        var otelExporter = configuration["OTEL_EXPORTER"] ?? "console";
+        var otelEndpoint = configuration["OTEL_ENDPOINT"] ?? "";
 
-        services.AddOpenTelemetry()
+        var builder = services.AddOpenTelemetry()
             .ConfigureResource(resource => resource
                 .AddService(serviceName: serviceName, serviceVersion: "1.0.0")
                 .AddAttributes(new Dictionary<string, object>
@@ -39,6 +41,34 @@ public static class OpenTelemetryService
                 .AddAspNetCoreInstrumentation()
                 .AddHttpClientInstrumentation()
                 .AddMeter("PlexAutoplay"));
+
+        // Configure exporters based on OTEL_EXPORTER
+        if (otelExporter.Equals("otlp", StringComparison.OrdinalIgnoreCase) && !string.IsNullOrEmpty(otelEndpoint))
+        {
+            builder.WithTracing(tracing => tracing
+                .AddOtlpExporter(opts =>
+                {
+                    opts.Endpoint = new Uri(otelEndpoint);
+                }));
+            builder.WithMetrics(metrics => metrics
+                .AddOtlpExporter(opts =>
+                {
+                    opts.Endpoint = new Uri(otelEndpoint);
+                }));
+        }
+        else if (otelExporter.Equals("console", StringComparison.OrdinalIgnoreCase))
+        {
+            builder.WithTracing(tracing => tracing
+                .AddConsoleExporter());
+            builder.WithMetrics(metrics => metrics
+                .AddConsoleExporter());
+        }
+        else
+        {
+            // Default: Prometheus exporter for metrics
+            builder.WithMetrics(metrics => metrics
+                .AddPrometheusExporter());
+        }
 
         return services;
     }

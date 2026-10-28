@@ -29,7 +29,7 @@ O sistema SHALL exportar traces distribuídos que incluam chamadas ao Plex Media
 - **THEN** o trace distribuído inclui um span para a execução do ffprobe com duração e resultado
 
 ### Requirement: Expor métricas de tempo de resposta e taxa de erro
-O sistema SHALL expor métricas de Prometheus com contadores de requisições, duração e códigos de status HTTP por endpoint.
+O sistema SHALL expor métricas de Prometheus com contadores de requisições, duração e códigos de status HTTP por endpoint, além de contadores de erro de chamada externa e duração de scans.
 
 #### Scenario: Métrica de duração de requisição HTTP
 - **WHEN** uma requisição HTTP é processada
@@ -39,12 +39,24 @@ O sistema SHALL expor métricas de Prometheus com contadores de requisições, d
 - **WHEN** uma chamada ao Plex Media Server falha
 - **THEN** o sistema incrementa um contador de erros agrupado por serviço externo e tipo de erro
 
+#### Scenario: Métricas de scan
+- **WHEN** uma varredura de bibliotagens é executada
+- **THEN** o sistema registra contagem de scans realizados, duração média e status (sucesso/erro)
+
 ### Requirement: Exibir dashboard de métricas na aplicação
-O sistema SHALL fornecer uma página ou endpoint que exiba as principais métricas de observabilidade (tempo médio de resposta, taxa de erro, duração média de scans).
+O sistema SHALL fornecer um endpoint que exiba as principais métricas de observabilidade (tempo médio de resposta, taxa de erro, duração média de scans, métricas de processo).
 
 #### Scenario: Dashboard de métricas acessível
 - **WHEN** o usuário acessa o endpoint de métricas
 - **THEN** o sistema retorna dados de tempo médio de resposta, taxa de erro e contagem de scans realizados
+
+#### Scenario: Endpoint de métricas acessível
+- **WHEN** o usuário acessa o endpoint /metrics
+- **THEN** o sistema retorna métricas Prometheus reais (não estáticas) com tempo médio de resposta, taxa de erro e contagem de scans
+
+#### Scenario: Endpoint de status com métricas de processo
+- **WHEN** o usuário acessa GET /api/status
+- **THEN** o sistema retorna o último job executado e métricas de processo (CPU, RAM, rede, disco)
 
 ### Requirement: Correlacionar logs estruturados por correlation ID
 O sistema SHALL emitir logs em formato JSON contendo correlation ID, timestamp, nível, mensagem e contexto da requisição.

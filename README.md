@@ -48,7 +48,7 @@ cp .env.example .env
 
 # 4️⃣  Acesse o dashboard
 # HTTPS : https://localhost:8443   (certificado auto‑assinado – aceite o aviso)
-# WebSocket (PlexAutoSkip): ws://localhost:8081
+# WebSocket (PlexAutoSkip): wss://localhost:8081
 
 # 5️⃣  Crie o usuário admin → Em ⚙ Configuração → salve URL/Token do Plex
 #     → Em ▤ Bibliotecas → veja os cards das bibliotecas do Plex
@@ -93,7 +93,7 @@ cp .env.example .env
 | `OTEL_ENDPOINT` | Endpoint OTLP (apenas quando `OTEL_EXPORTER=otlp`) | vazio |
 | `OTEL_SERVICE_NAME` | Nome do serviço para identificação nos traces/métricas | plex-autoplay |
 
-Todas as variáveis podem ser alteradas **pela UI** (⚙ Configuração) – o arquivo `app-config.json` é atualizado automaticamente e tem prioridade sobre o `.env`.
+Todas as variáveis são lidas exclusivamente de variáveis de ambiente. O arquivo `app-config.json` não é usado para configuração (consulte o spec `config-env`).
 
 ---
 
@@ -248,7 +248,7 @@ plex-autoplay/
 ## 🛡  Segurança
 
 * **HTTPS** auto‑assinado por padrão (`DISABLE_HTTP=true`). Em produção, substitua os certificados por um certificado válido (Let’s Encrypt, etc.) e defina `DASHBOARD_COOKIE_SECURE=true`.
-* **CSRF** em todas as rotas `POST/PUT/DELETE`.
+* **CSRF** em todas as rotas `POST/PUT/DELETE` sob `/api/` (cabeçalho `X-CSRF-TOKEN`).
 * **Webhook** protegido por HMAC (`WEBHOOK_SECRET`).
 * Token Plex **nunca** escrito nos logs (mascarado na UI).
 * Container roda com privilégios mínimos.
