@@ -23,3 +23,7 @@
 ## 6. Novos arquivos de infraestrutura (checkpoint)
 
 - [ ] 6.1 Adicionar novos arquivos de infraestrutura (.NET solution, Vue SPA, testes e2e, scripts, openspec) — verificar: `PlexAutoplay.slnx`, `vue/`, `tests/e2e/`, `scripts/`, `openspec/`
+
+## 7. Remover placeholders Class1.cs (limpeza de template)
+
+- [x] 7.1 Remover `src/PlexAutoplay.Application/Class1.cs` e `src/PlexAutoplay.Domain/Class1.cs` — placeholders vazios gerados pelo template `dotnet new classlib`, sem referências no código — verificar: ausência dos arquivos e nenhuma referência a `Class1` em `src/`
