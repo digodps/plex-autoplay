@@ -22,11 +22,11 @@ public static class PlexEndpoints
         });
 
         app.MapPost("/api/plex/scan", async (
-            [FromServices] PlexApiClient plexClient,
+            [FromServices] IPlexApiClient plexClient,
             [FromServices] IMarkerRepository markerRepo,
             [FromServices] IMarkerDetector markerDetector,
-            [FromServices] CustomJsonWriterService customJsonWriter,
-            [FromServices] ScanJobStore scanJobs) =>
+            [FromServices] ICustomJsonWriter customJsonWriter,
+            [FromServices] IScanJobStore scanJobs) =>
         {
             var jobId = Guid.NewGuid().ToString();
             var job = new ScanJob { JobId = jobId, Status = "queued" };
@@ -78,14 +78,14 @@ public static class PlexEndpoints
                                 // Detect markers via ffprobe
                                 var detectedMarkers = markerDetector.Detect(localPath);
 
-                                var markerEntries = new List<CustomJsonWriterService.MarkerEntry>();
+                                var markerEntries = new List<ICustomJsonWriter.MarkerEntry>();
                                 foreach (var marker in detectedMarkers)
                                 {
                                     var exists = await markerRepo.ExistsAsync(episode.RatingKey, marker.Kind);
                                     if (!exists)
                                     {
-                                        await markerRepo.AddAsync(marker with { RatingKey = episode.RatingKey });
-                                        markerEntries.Add(new CustomJsonWriterService.MarkerEntry(marker.Kind, marker.StartMs, marker.EndMs));
+                                        await markerRepo.AddAsync(marker with { RatingKey = episode.RatingKey, Origin = "detected" });
+                                        markerEntries.Add(new ICustomJsonWriter.MarkerEntry(marker.Kind, marker.StartMs, marker.EndMs));
                                     }
                                 }
 

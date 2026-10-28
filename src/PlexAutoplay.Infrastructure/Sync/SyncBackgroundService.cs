@@ -17,7 +17,7 @@ public class SyncBackgroundService : BackgroundService
     private readonly IPlexApiClient _plexClient;
     private readonly IMarkerDetector _markerDetector;
     private readonly IMarkerRepository _markerRepository;
-    private readonly CustomJsonWriterService _customJsonWriter;
+    private readonly ICustomJsonWriter _customJsonWriter;
     private readonly string _mediaRoot;
     private int _intervalMinutes;
     private static readonly Meter SyncMeter = new("PlexAutoplay.Sync");
@@ -29,7 +29,7 @@ public class SyncBackgroundService : BackgroundService
         IPlexApiClient plexClient,
         IMarkerDetector markerDetector,
         IMarkerRepository markerRepository,
-        CustomJsonWriterService customJsonWriter,
+        ICustomJsonWriter customJsonWriter,
         IConfiguration configuration)
     {
         _logger = logger;
@@ -116,7 +116,7 @@ public class SyncBackgroundService : BackgroundService
                     // Detect markers via ffprobe
                     var detectedMarkers = _markerDetector.Detect(localPath);
 
-                    var markerEntries = new List<CustomJsonWriterService.MarkerEntry>();
+                    var markerEntries = new List<ICustomJsonWriter.MarkerEntry>();
                     foreach (var marker in detectedMarkers)
                     {
                         var exists = await _markerRepository.ExistsAsync(episode.RatingKey, marker.Kind);
@@ -129,7 +129,7 @@ public class SyncBackgroundService : BackgroundService
                                 StartMs = marker.StartMs,
                                 EndMs = marker.EndMs
                             });
-                            markerEntries.Add(new CustomJsonWriterService.MarkerEntry(marker.Kind, marker.StartMs, marker.EndMs));
+                            markerEntries.Add(new ICustomJsonWriter.MarkerEntry(marker.Kind, marker.StartMs, marker.EndMs));
                         }
                     }
 

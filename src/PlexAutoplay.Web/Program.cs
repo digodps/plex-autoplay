@@ -67,6 +67,7 @@ app.UseMiddleware<JwtAuthMiddleware>();
 // --- Endpoints ---
 app.MapAuthEndpoints(adminPassword);
 app.MapPlexEndpoints(mediaRoot);
+app.MapSeriesEndpoints(mediaRoot);
 app.MapSyncEndpoints();
 app.MapMarkerEndpoints();
 app.MapImageEndpoints();

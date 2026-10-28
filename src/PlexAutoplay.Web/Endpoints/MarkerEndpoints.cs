@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
 using PlexAutoplay.Domain.Ports;
-using PlexAutoplay.Infrastructure.AutoSkip;
 using System.Text.Json;
 
 namespace PlexAutoplay.Web.Endpoints;
@@ -15,16 +14,16 @@ public static class MarkerEndpoints
         app.MapGet("/api/markers", async ([FromServices] IMarkerRepository markerRepo) =>
         {
             var markers = await markerRepo.GetAllAsync();
-            return Results.Ok(markers.Select(m => new { m.RatingKey, m.Kind, m.StartMs, m.EndMs }));
+            return Results.Ok(markers.Select(m => new { m.RatingKey, m.Kind, m.StartMs, m.EndMs, m.Origin }));
         });
 
         app.MapGet("/api/markers/{ratingKey}", async (string ratingKey, [FromServices] IMarkerRepository markerRepo) =>
         {
             var markers = await markerRepo.GetByRatingKeyAsync(ratingKey);
-            return Results.Ok(markers.Select(m => new { m.RatingKey, m.Kind, m.StartMs, m.EndMs }));
+            return Results.Ok(markers.Select(m => new { m.RatingKey, m.Kind, m.StartMs, m.EndMs, m.Origin }));
         });
 
-        app.MapPost("/api/markers", async (HttpContext context, [FromServices] IMarkerRepository markerRepo, [FromServices] CustomJsonWriterService customJsonWriter) =>
+        app.MapPost("/api/markers", async (HttpContext context, [FromServices] IMarkerRepository markerRepo, [FromServices] ICustomJsonWriter customJsonWriter) =>
         {
             // Prefer query string (works with Playwright), fallback to JSON body (Vue form)
             var ratingKey = context.Request.Query["RatingKey"].FirstOrDefault() ?? "";
@@ -77,12 +76,76 @@ public static class MarkerEndpoints
                 RatingKey = ratingKey,
                 Kind = kind ?? "",
                 StartMs = startMs,
-                EndMs = endMs
+                EndMs = endMs,
+                Origin = "manual"
             };
 
             await markerRepo.AddAsync(marker);
-            customJsonWriter.UpsertMarkers(ratingKey, new[] { new CustomJsonWriterService.MarkerEntry(kind ?? "", startMs, endMs) });
-            return Results.Created($"/api/markers/{ratingKey}", new { ratingKey, kind, startMs, endMs });
+            customJsonWriter.UpsertMarkers(ratingKey, new[] { new ICustomJsonWriter.MarkerEntry(kind ?? "", startMs, endMs) });
+            return Results.Created($"/api/markers/{ratingKey}", new { ratingKey, kind, startMs, endMs, origin = "manual" });
+        });
+
+        app.MapPut("/api/markers/{ratingKey}/{kind}", async (
+            string ratingKey,
+            string kind,
+            HttpContext context,
+            [FromServices] IMarkerRepository markerRepo,
+            [FromServices] ICustomJsonWriter customJsonWriter) =>
+        {
+            long? startMs = null;
+            long? endMs = null;
+
+            // Aceita body JSON (StartMs/EndMs) e também query string (consistência com o POST)
+            if (context.Request.Query["StartMs"].FirstOrDefault() is { } qsStart && long.TryParse(qsStart, out var s0))
+                startMs = s0;
+            if (context.Request.Query["EndMs"].FirstOrDefault() is { } qsEnd && long.TryParse(qsEnd, out var e0))
+                endMs = e0;
+
+            if (startMs is null || endMs is null)
+            {
+                context.Request.EnableBuffering();
+                var body = await new StreamReader(context.Request.Body).ReadToEndAsync();
+                context.Request.Body.Position = 0;
+                try
+                {
+                    using var doc = JsonDocument.Parse(body);
+                    var root = doc.RootElement;
+                    if (startMs is null && root.TryGetProperty("StartMs", out var sm)) startMs = sm.GetInt64();
+                    if (startMs is null && root.TryGetProperty("startMs", out var sm2)) startMs = sm2.GetInt64();
+                    if (startMs is null && root.TryGetProperty("start_ms", out var sm3)) startMs = sm3.GetInt64();
+                    if (endMs is null && root.TryGetProperty("EndMs", out var em)) endMs = em.GetInt64();
+                    if (endMs is null && root.TryGetProperty("endMs", out var em2)) endMs = em2.GetInt64();
+                    if (endMs is null && root.TryGetProperty("end_ms", out var em3)) endMs = em3.GetInt64();
+                }
+                catch (JsonException)
+                {
+                    return Results.BadRequest(new { error = "Invalid JSON body" });
+                }
+            }
+
+            if (startMs is null || endMs is null)
+            {
+                return Results.BadRequest(new { error = "Missing StartMs/EndMs" });
+            }
+
+            var existing = await markerRepo.GetByRatingKeyAsync(ratingKey);
+            var current = existing.FirstOrDefault(m => string.Equals(m.Kind, kind, StringComparison.OrdinalIgnoreCase));
+            if (current is null)
+            {
+                return Results.NotFound(new { error = "Marker not found" });
+            }
+
+            await markerRepo.UpdateAsync(current with { StartMs = startMs.Value, EndMs = endMs.Value });
+
+            // Reescreve custom.json preservando os outros marcadores do mesmo ratingKey
+            var others = existing
+                .Where(m => !string.Equals(m.Kind, kind, StringComparison.OrdinalIgnoreCase))
+                .Select(m => new ICustomJsonWriter.MarkerEntry(m.Kind, m.StartMs, m.EndMs))
+                .ToList();
+            others.Add(new ICustomJsonWriter.MarkerEntry(kind, startMs.Value, endMs.Value));
+            customJsonWriter.UpsertMarkers(ratingKey, others);
+
+            return Results.Ok(new { ratingKey, kind, startMs, endMs, current.Origin });
         });
 
         app.MapDelete("/api/markers/{ratingKey}/{kind}", async (string ratingKey, string kind, [FromServices] IMarkerRepository markerRepo) =>

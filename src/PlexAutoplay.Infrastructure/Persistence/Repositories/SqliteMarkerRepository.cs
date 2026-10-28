@@ -27,8 +27,20 @@ public class SqliteMarkerRepository : IMarkerRepository
                 Kind TEXT NOT NULL,
                 StartMs INTEGER NOT NULL,
                 EndMs INTEGER NOT NULL,
+                Origin TEXT NOT NULL DEFAULT 'manual',
                 PRIMARY KEY (RatingKey, Kind)
             )").Wait();
+
+        // Migração aditiva: bancos criados antes da coluna Origin ganham a coluna com default 'manual'.
+        try
+        {
+            conn.ExecuteAsync(
+                "ALTER TABLE Markers ADD COLUMN Origin TEXT NOT NULL DEFAULT 'manual'").Wait();
+        }
+        catch
+        {
+            // Coluna já existe (ex.: "duplicate column name: Origin") — nada a fazer.
+        }
     }
 
     private DbConnection CreateConnection() => new SqliteConnection(_connectionString);
@@ -37,14 +49,14 @@ public class SqliteMarkerRepository : IMarkerRepository
     {
         using var conn = CreateConnection();
         return await conn.QueryAsync<Marker>(
-            "SELECT RatingKey, Kind, StartMs, EndMs FROM Markers");
+            "SELECT RatingKey, Kind, StartMs, EndMs, Origin FROM Markers");
     }
 
     public async Task<IEnumerable<Marker>> GetByRatingKeyAsync(string ratingKey)
     {
         using var conn = CreateConnection();
         return await conn.QueryAsync<Marker>(
-            "SELECT RatingKey, Kind, StartMs, EndMs FROM Markers WHERE RatingKey = @RatingKey",
+            "SELECT RatingKey, Kind, StartMs, EndMs, Origin FROM Markers WHERE RatingKey = @RatingKey",
             new { RatingKey = ratingKey });
     }
 
@@ -52,7 +64,7 @@ public class SqliteMarkerRepository : IMarkerRepository
     {
         using var conn = CreateConnection();
         await conn.ExecuteAsync(
-            "INSERT INTO Markers (RatingKey, Kind, StartMs, EndMs) VALUES (@RatingKey, @Kind, @StartMs, @EndMs)",
+            "INSERT INTO Markers (RatingKey, Kind, StartMs, EndMs, Origin) VALUES (@RatingKey, @Kind, @StartMs, @EndMs, @Origin)",
             marker);
     }
 

@@ -1,9 +1,13 @@
 namespace PlexAutoplay.Infrastructure.AutoSkip;
 
+using PlexAutoplay.Domain.Ports;
 using System.Text.Json;
 using System.Threading;
 
-public class CustomJsonWriterService
+/// <summary>
+/// Implementação de <see cref="ICustomJsonWriter"/> para o arquivo custom.json do PlexAutoSkip.
+/// </summary>
+public class CustomJsonWriterService : ICustomJsonWriter
 {
     private readonly string _customJsonPath;
     private static readonly SemaphoreSlim _writeLock = new(1, 1);
@@ -13,29 +17,56 @@ public class CustomJsonWriterService
         _customJsonPath = customJsonPath;
     }
 
-    public record MarkerEntry(string Kind, long StartMs, long EndMs);
+    /// <inheritdoc />
+    public IReadOnlyDictionary<string, IReadOnlyList<ICustomJsonWriter.MarkerEntry>> GetAllMarkers()
+    {
+        var markers = ReadMarkers();
+        return markers.ToDictionary(
+            kvp => kvp.Key,
+            kvp => (IReadOnlyList<ICustomJsonWriter.MarkerEntry>)kvp.Value);
+    }
 
-    /// <summary>
-    /// Reads all markers from custom.json. Returns an empty dictionary if the file does not exist or is invalid.
-    /// </summary>
-    public Dictionary<string, List<MarkerEntry>> ReadMarkers()
+    /// <inheritdoc />
+    public void UpsertMarkers(string ratingKey, IEnumerable<ICustomJsonWriter.MarkerEntry> markers)
+    {
+        var all = ReadMarkers();
+        all[ratingKey] = markers.ToList();
+        WriteMarkers(new Dictionary<string, List<ICustomJsonWriter.MarkerEntry>>(all));
+    }
+
+    /// <inheritdoc />
+    public void RemoveMarker(string ratingKey, string kind)
+    {
+        var all = ReadMarkers();
+        if (all.TryGetValue(ratingKey, out var list))
+        {
+            var filtered = list.Where(m => m.Kind != kind).ToList();
+            if (filtered.Count > 0)
+                all[ratingKey] = filtered;
+            else
+                all.Remove(ratingKey);
+            WriteMarkers(new Dictionary<string, List<ICustomJsonWriter.MarkerEntry>>(all));
+        }
+    }
+
+    private Dictionary<string, List<ICustomJsonWriter.MarkerEntry>> ReadMarkers()
     {
         try
         {
             if (!File.Exists(_customJsonPath))
-                return new();
+                return new(StringComparer.OrdinalIgnoreCase);
 
             var json = File.ReadAllText(_customJsonPath);
             using var doc = JsonDocument.Parse(json);
 
-            var markers = new Dictionary<string, List<MarkerEntry>>(StringComparer.OrdinalIgnoreCase);
+            var markers = new Dictionary<string, List<ICustomJsonWriter.MarkerEntry>>(StringComparer.OrdinalIgnoreCase);
             foreach (var property in doc.RootElement.EnumerateObject())
             {
                 var ratingKey = property.Name;
-                var entryList = new List<MarkerEntry>();
+                var entryList = new List<ICustomJsonWriter.MarkerEntry>();
                 foreach (var marker in property.Value.EnumerateArray())
                 {
-                    entryList.Add(new MarkerEntry(
+                    entryList.Add(new ICustomJsonWriter.MarkerEntry(
                         marker.GetProperty("kind").GetString() ?? "",
                         marker.GetProperty("start_ms").GetInt64(),
                         marker.GetProperty("end_ms").GetInt64()
@@ -47,14 +78,14 @@ public class CustomJsonWriterService
         }
         catch
         {
-            return new();
+            return new(StringComparer.OrdinalIgnoreCase);
         }
     }
 
     /// <summary>
     /// Atomically writes the full set of markers to custom.json in PlexAutoSkip format.
     /// </summary>
-    public void WriteMarkers(Dictionary<string, List<MarkerEntry>> markers)
+    private void WriteMarkers(Dictionary<string, List<ICustomJsonWriter.MarkerEntry>> markers)
     {
         _writeLock.Wait();
         try
@@ -91,25 +122,5 @@ public class CustomJsonWriterService
         {
             _writeLock.Release();
         }
-    }
-
-    /// <summary>
-    /// Adds or updates markers for a specific rating key, preserving existing markers for other keys.
-    /// </summary>
-    public void UpsertMarkers(string ratingKey, IEnumerable<MarkerEntry> markers)
-    {
-        var all = ReadMarkers();
-        all[ratingKey] = markers.ToList();
-        WriteMarkers(all);
-    }
-
-    /// <summary>
-    /// Removes markers for a specific rating key.
-    /// </summary>
-    public void RemoveMarkers(string ratingKey)
-    {
-        var all = ReadMarkers();
-        all.Remove(ratingKey);
-        WriteMarkers(all);
     }
 }
