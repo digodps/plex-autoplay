@@ -8,7 +8,6 @@ COPY PlexAutoplay.slnx .
 COPY src/PlexAutoplay.Domain/ ./src/PlexAutoplay.Domain/
 COPY src/PlexAutoplay.Application/ ./src/PlexAutoplay.Application/
 COPY src/PlexAutoplay.Infrastructure/ ./src/PlexAutoplay.Infrastructure/
-COPY src/PlexAutoplay.WebAPI/ ./src/PlexAutoplay.WebAPI/
 COPY src/PlexAutoplay.Web/ ./src/PlexAutoplay.Web/
 RUN dotnet restore PlexAutoplay.slnx
 RUN dotnet publish src/PlexAutoplay.Web/PlexAutoplay.Web.csproj -c Release -o /app/publish

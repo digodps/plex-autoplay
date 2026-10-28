@@ -71,7 +71,6 @@ app.MapSyncEndpoints();
 app.MapMarkerEndpoints();
 app.MapImageEndpoints();
 app.MapAutoSkipWebSocketEndpoints();
-app.MapWeatherForecastEndpoints();
 app.MapMonitoringEndpoints();
 app.MapConfigEndpoints();
 
