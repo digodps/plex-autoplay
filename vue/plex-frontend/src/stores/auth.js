@@ -1,20 +1,26 @@
-import { defineStore } from 'pinia'
+import { defineStore } from "pinia";
+import { getToken, setCookie, deleteCookie, AUTH_COOKIE } from "../api";
 
-export const useAuthStore = defineStore('auth', {
+export const useAuthStore = defineStore("auth", {
   state: () => ({
-    token: localStorage.getItem('auth_token') || '',
-    isAuthenticated: !!localStorage.getItem('auth_token')
+    token: getToken(),
   }),
+  getters: {
+    isAuthenticated: (state) => !!state.token,
+  },
   actions: {
-    login(token) {
-      this.token = token
-      this.isAuthenticated = true
-      localStorage.setItem('auth_token', token)
+    /**
+     * @param {string} token
+     * @param {boolean} keepSigned true => cookie persistente (30 dias);
+     *                             false => cookie de sessão do navegador
+     */
+    login(token, keepSigned = false) {
+      this.token = token;
+      setCookie(AUTH_COOKIE, token, keepSigned ? 30 : 0);
     },
     logout() {
-      this.token = ''
-      this.isAuthenticated = false
-      localStorage.removeItem('auth_token')
-    }
-  }
-})
+      this.token = "";
+      deleteCookie(AUTH_COOKIE);
+    },
+  },
+});

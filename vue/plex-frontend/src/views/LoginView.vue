@@ -1,38 +1,46 @@
 <script setup>
-import { useAuthStore } from '../stores/auth'
-import { useRouter } from 'vue-router'
-import { ref } from 'vue'
+import { useAuthStore } from "../stores/auth";
+import { useRoute, useRouter } from "vue-router";
+import { ref } from "vue";
+import AppIcon from "../components/AppIcon.vue";
 
-const authStore = useAuthStore()
-const router = useRouter()
-const password = ref('')
-const error = ref('')
-const loading = ref(false)
+const authStore = useAuthStore();
+const route = useRoute();
+const router = useRouter();
+const password = ref("");
+const keepSigned = ref(false);
+const error = ref("");
+const loading = ref(false);
 
 const handleLogin = async () => {
-  error.value = ''
-  loading.value = true
+  error.value = "";
+  loading.value = true;
 
   try {
-    const response = await fetch('/auth/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ password: password.value })
-    })
+    const response = await fetch("/auth/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ password: password.value }),
+    });
 
     if (response.ok) {
-      const data = await response.json()
-      authStore.login(data.token)
-      router.push('/dashboard')
+      const data = await response.json();
+      authStore.login(data.token, keepSigned.value);
+
+      // Retorna à rota original que o usuário tentou acessar antes do guard,
+      // ou vai ao dashboard quando o login foi aberto diretamente.
+      const redirect =
+        typeof route.query.redirect === "string" ? route.query.redirect : "/dashboard";
+      router.push(redirect);
     } else {
-      error.value = 'Senha inválida'
+      error.value = "Senha inválida";
     }
-  } catch (err) {
-    error.value = 'Erro ao conectar com o servidor'
+  } catch {
+    error.value = "Erro ao conectar com o servidor";
   } finally {
-    loading.value = false
+    loading.value = false;
   }
-}
+};
 </script>
 
 <template>
@@ -40,15 +48,37 @@ const handleLogin = async () => {
     <div class="login-card">
       <h1>Plex Autoplay</h1>
       <p>Painel Administrativo</p>
-      
-      <div v-if="error" class="error">{{ error }}</div>
-      
-      <div class="form-group">
-        <label>Senha</label>
-        <input type="password" v-model="password" placeholder="Digite a senha">
+
+      <div v-if="error" class="alert error" role="alert">
+        <AppIcon name="warning" size="sm" />
+        {{ error }}
       </div>
-      
-      <button :disabled="loading" @click="handleLogin">{{ loading ? 'Entrando...' : 'Entrar' }}</button>
+
+      <div class="form-group">
+        <label for="password">Senha</label>
+        <input
+          id="password"
+          v-model="password"
+          type="password"
+          placeholder="Digite a senha"
+          @keyup.enter="handleLogin"
+        />
+      </div>
+
+      <label class="keep-signed">
+        <input v-model="keepSigned" type="checkbox" />
+        <span>Manter-me conectado</span>
+      </label>
+
+      <button :disabled="loading" @click="handleLogin">
+        <AppIcon v-if="!loading" name="check" size="sm" />
+        <AppIcon v-else name="spinner" size="sm" class="spin" />
+        {{ loading ? "Entrando..." : "Entrar" }}
+      </button>
+
+      <p v-if="keepSigned" class="hint">
+        A sessão permanecerá válida por 30 dias neste dispositivo.
+      </p>
     </div>
   </div>
 </template>
@@ -58,28 +88,26 @@ const handleLogin = async () => {
   display: flex;
   justify-content: center;
   align-items: center;
-  min-height: 100vh;
-  background: #f5f5f5;
+  min-height: 100dvh;
+  background: var(--bg-sunken, #f5f5f5);
 }
 .login-card {
-  background: white;
+  background: var(--surface, white);
   padding: 2rem;
-  border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  border-radius: var(--radius-lg, 8px);
+  box-shadow: var(--shadow-2, 0 2px 10px rgba(0, 0, 0, 0.1));
   width: 100%;
   max-width: 400px;
 }
 .login-card h1 {
   margin: 0 0 0.5rem;
-  color: #e5a00d;
+  color: var(--accent, #e5a00d);
 }
 .login-card p {
   margin: 0 0 1.5rem;
-  color: #666;
+  color: var(--text-secondary, #666);
 }
-.error {
-  color: #dc2626;
-  font-size: 0.875rem;
+.alert.error {
   margin-bottom: 1rem;
 }
 .form-group {
@@ -93,22 +121,59 @@ const handleLogin = async () => {
 .form-group input {
   width: 100%;
   padding: 0.75rem;
-  border: 1px solid #ddd;
-  border-radius: 4px;
+  border: 1px solid var(--border, #ddd);
+  border-radius: var(--radius-sm, 4px);
   box-sizing: border-box;
+}
+.keep-signed {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+  color: var(--text-secondary, #666);
+  cursor: pointer;
+  user-select: none;
+}
+.keep-signed input {
+  accent-color: var(--accent, #e5a00d);
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+.hint {
+  margin: 0.75rem 0 0;
+  font-size: 0.8rem;
+  color: var(--text-tertiary, #999);
 }
 button {
   width: 100%;
   padding: 0.75rem;
-  background: #e5a00d;
-  color: white;
+  background: var(--accent, #e5a00d);
+  color: var(--accent-contrast, white);
   border: none;
-  border-radius: 4px;
+  border-radius: var(--radius-sm, 4px);
   font-size: 1rem;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-weight: 600;
+}
+button:hover:not(:disabled) {
+  background: var(--accent-hover, #f5b21e);
 }
 button:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+}
+.spin {
+  animation: rotate 0.9s linear infinite;
+}
+@keyframes rotate {
+  to {
+    transform: rotate(360deg);
+  }
 }
 </style>
