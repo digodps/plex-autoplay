@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/PlexAutoplay.Application/PlexAutoplay.Application.csproj" />
+    <Project Path="src/PlexAutoplay.Domain/PlexAutoplay.Domain.csproj" />
+    <Project Path="src/PlexAutoplay.Infrastructure/PlexAutoplay.Infrastructure.csproj" />
+    <Project Path="src/PlexAutoplay.Web/PlexAutoplay.Web.csproj" />
+  </Folder>
+</Solution>
