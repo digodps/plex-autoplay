@@ -1,12 +1,26 @@
-import { createApp } from 'vue'
-import { createPinia } from 'pinia'
-import './style.css'
-import App from './App.vue'
-import router from './router'
+import { createApp } from "vue";
+import { createPinia } from "pinia";
+import "./style.css";
+import { getToken, setCookie } from "./api";
+import App from "./App.vue";
+import router from "./router";
 
-const app = createApp(App)
+// Migração de token: sessões antigas guardavam o token em localStorage; move
+// para o cookie (persistente, pois o usuário já evitou login anteriormente) e
+// limpa o localStorage.
+(function migrateTokenStorage() {
+  const legacyToken = localStorage.getItem("auth_token");
+  if (legacyToken && !getToken()) {
+    setCookie("auth_token", legacyToken, 30);
+  }
+  if (legacyToken) {
+    localStorage.removeItem("auth_token");
+  }
+})();
 
-app.use(createPinia())
-app.use(router)
+const app = createApp(App);
 
-app.mount('#app')
+app.use(createPinia());
+app.use(router);
+
+app.mount("#app");
