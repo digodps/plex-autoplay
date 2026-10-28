@@ -6,34 +6,38 @@ Defines the behavior for discovering Plex libraries, filtering to series-only li
 ## Requirements
 
 ### Requirement: Discover Plex libraries
-The system SHALL query the Plex Media Server API to list all available library sections.
+O sistema SHALL consultar a API do Plex Media Server para listar todas as seções de biblioteca disponíveis.
 
 #### Scenario: Successful library discovery
-- **WHEN** the system calls `GET /library/sections` with a valid Plex token
-- **THEN** the system returns a list of libraries with their key, title, type, and agent
+- **WHEN** o sistema chama GET /library/sections com um token válido do Plex
+- **THEN** o sistema retorna uma lista de bibliotecas com key, title, type e agent
 
 #### Scenario: Plex server unreachable
-- **WHEN** the Plex server at `PLEX_URL` is not reachable
-- **THEN** the system returns an error indicating the Plex server is unavailable
+- **WHEN** o servidor Plex em PLEX_URL não está acessível
+- **THEN** o sistema retorna um erro indicando que o servidor Plex está indisponível
 
 ### Requirement: Filter to series libraries only
-The system SHALL include only libraries of type "show" (series) in the synchronized set.
+O sistema SHALL incluir apenas bibliotecas do tipo "show" (séries) no conjunto sincronizado.
 
 #### Scenario: Series library included
-- **WHEN** a Plex library section has `type="show"`
-- **THEN** the system includes it in the series library list
+- **WHEN** uma seção de biblioteca do Plex tem type="show"
+- **THEN** o sistema a inclui na lista de bibliotecas de séries
 
 #### Scenario: Movie library excluded
-- **WHEN** a Plex library section has `type="movie"`
-- **THEN** the system does not include it in the synchronized libraries
+- **WHEN** uma seção de biblioteca do Plex tem type="movie"
+- **THEN** o sistema não a inclui nas bibliotecas sincronizadas
 
 ### Requirement: Map episodes to local media files
-The system SHALL resolve each episode's media file path using the Plex `MediaPart.file` value and the configured `MEDIA_ROOT` bind mount.
+O sistema SHALL listar os episódios de cada biblioteca de séries e resolver o caminho do arquivo de mídia de cada episódio usando o valor MediaPart.file do Plex e a MEDIA_ROOT configurada.
+
+#### Scenario: Episode list retrieved for a series library
+- **WHEN** o sistema consulta os episódios de uma biblioteca de tipo show
+- **THEN** o sistema retorna uma lista de episódios com rating key, título, temporada, número do episódio e caminho do arquivo de mídia
 
 #### Scenario: File path resolved via MEDIA_ROOT
-- **WHEN** an episode's `MediaPart.file` is `/Volumes/Media/Series/Show/Season 1/Episode 1.mkv` and `MEDIA_ROOT=/media`
-- **THEN** the system resolves the local path as `/media/Volumes/Media/Series/Show/Season 1/Episode 1.mkv`
+- **WHEN** o MediaPart.file de um episódio é /Volumes/Media/Series/Show/Season 1/Episode 1.mkv e MEDIA_ROOT=/media
+- **THEN** o sistema resolve o caminho local como /media/Volumes/Media/Series/Show/Season 1/Episode 1.mkv
 
 #### Scenario: Media file not accessible
-- **WHEN** the resolved media file path does not exist on disk
-- **THEN** the system logs the missing file and skips marker detection for that episode
+- **WHEN** o caminho do arquivo de mídia resolvido não existe em disco
+- **THEN** o sistema loga o arquivo ausente e ignora a detecção de marcadores para aquele episódio

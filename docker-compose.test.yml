@@ -4,19 +4,24 @@ services:
       context: .
       dockerfile: Dockerfile.test-executor
     container_name: plex-autoplay-executor
+    user: root
     volumes:
-      - .:/workspace:Z
-      - ./test-artifacts:/workspace/test-artifacts:Z
+      - .:/workspace
+      - ./test-artifacts:/workspace/test-artifacts
+    security_opt:
+      - label=disable
     environment:
       - PLEX_URL=${PLEX_URL}
       - PLEX_TOKEN=${PLEX_TOKEN}
       - JWT_SECRET=${JWT_SECRET}
       - ADMIN_PASSWORD=${ADMIN_PASSWORD}
       - MEDIA_ROOT=${MEDIA_ROOT}
-      - PLAYWRIGHT_BASE_URL=https://plex-autoplay:8443
+      - PLAYWRIGHT_BASE_URL=https://plex-autoplay.dns.podman:443
       - INSIDE_EXECUTOR_CONTAINER=true
     working_dir: /workspace
-    user: "1000:1000"
+    depends_on:
+      plex-autoplay:
+        condition: service_started
     networks:
       - plex-test-network
 
@@ -25,8 +30,7 @@ services:
     container_name: plex-autoplay-test
     restart: "no"
     ports:
-      - "8443:443"
-      - "8081:8081"
+      - "8443:80"
     volumes:
       - plex-test-data:/data
       - ${MEDIA_ROOT}:/media:ro
@@ -36,7 +40,8 @@ services:
       - MEDIA_ROOT=/media
       - JWT_SECRET=${JWT_SECRET}
       - ADMIN_PASSWORD=${ADMIN_PASSWORD}
-      - ASPNETCORE_URLS=https://+:443
+      - ASPNETCORE_URLS=http://0.0.0.0:80
+      - DISABLE_HTTP=false
       - OTEL_EXPORTER=${OTEL_EXPORTER:-console}
       - OTEL_ENDPOINT=${OTEL_ENDPOINT:-}
       - OTEL_SERVICE_NAME=${OTEL_SERVICE_NAME:-plex-autoplay}
@@ -44,7 +49,6 @@ services:
       - CERT_PASSWORD=${CERT_PASSWORD}
       - CERT_BASE64=${CERT_BASE64}
       - HTTPS_PORT=${HTTPS_PORT:-443}
-      - DISABLE_HTTP=${DISABLE_HTTP:-true}
     networks:
       - plex-test-network
 
