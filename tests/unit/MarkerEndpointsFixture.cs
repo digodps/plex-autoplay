@@ -33,7 +33,7 @@ public class MarkerEndpointsFixture : IDisposable
                     services.AddRouting();
                     services.AddSingleton<IMarkerRepository>(
                         new SqliteMarkerRepository($"Data Source={DbPath}"));
-                    services.AddSingleton(new CustomJsonWriterService(CustomJsonPath));
+                    services.AddSingleton<ICustomJsonWriter>(new CustomJsonWriterService(CustomJsonPath));
                 });
                 webBuilder.Configure(app =>
                 {
