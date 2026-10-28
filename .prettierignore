@@ -1,0 +1,7 @@
+# build artifacts / gerados
+src/PlexAutoplay.Web/wwwroot/
+vue/plex-frontend/dist/
+test-results/
+playwright-report/
+test-artifacts/
+coverage/

@@ -69,6 +69,10 @@ def get_git_status_porcelain() -> list[dict[str, str]]:
         path = line[3:].strip()
         if " -> " in path:
             path = path.split(" -> ")[-1].strip()
+        # Arquivos deletados não existem mais no disco: não podem ser
+        # passados a linters (derrubariam a análise inteira).
+        if "D" in xy:
+            continue
         files.append({"status": xy, "path": path})
     return files
 
@@ -82,14 +86,42 @@ def detect_stack(file_path: str) -> Optional[str]:
     return None
 
 
+# Artefatos gerados/minificados não são código-fonte: nunca devem ser
+# lintados ou avaliados por heurísticas de Clean Code / SOLID.
+EXCLUDED_PATH_PREFIXES = (
+    "src/PlexAutoplay.Web/wwwroot/",
+    "vue/plex-frontend/dist/",
+    "node_modules/",
+    "test-results/",
+    "playwright-report/",
+    "test-artifacts/",
+    "coverage/",
+)
+
+
+def is_excluded(file_path: str) -> bool:
+    """Retorna True para artefatos de build que devem ficar fora da revisão."""
+    normalized = file_path.replace("\\", "/")
+    return any(normalized.startswith(prefix) or f"/{prefix}" in normalized for prefix in EXCLUDED_PATH_PREFIXES)
+
+
 def filter_supported_files(files: list[dict[str, str]]) -> dict[str, list[dict[str, str]]]:
     """Agrupa arquivos alterados por stack suportada."""
     grouped: dict[str, list[dict[str, str]]] = {}
     for file_info in files:
+        if is_excluded(file_info["path"]):
+            continue
         stack = detect_stack(file_info["path"])
         if stack:
             grouped.setdefault(stack, []).append(file_info)
     return grouped
+
+
+def tool_available(argv: list[str]) -> bool:
+    """Verifica se uma ferramenta está instalada (sem executar a análise)."""
+    probe = argv[:2] + ["--version"]
+    result = run_cmd(probe, check=False)
+    return result.returncode == 0
 
 
 def run_dotnet_lint(files: list[dict[str, str]]) -> list[dict]:
@@ -99,8 +131,40 @@ def run_dotnet_lint(files: list[dict[str, str]]) -> list[dict]:
     if not cs_files:
         return findings
 
-    # Verifica se dotnet-format está disponível
-    result = run_cmd(["dotnet", "format", "--verify-no-changes"] + cs_files, check=False)
+    # Verifica se dotnet-format está disponível (dotnet sempre existe quando
+    # o SDK é usado, mas o comando format pode falhar por outro motivo)
+    if not tool_available(["dotnet", "format"]):
+        findings.append({
+            "stack": "dotnet",
+            "tool": "lint",
+            "severity": "info",
+            "message": "Nenhum lint .NET configurado localmente (dotnet-format / StyleCop.Analyzers não encontrados). Instale para ativar a revisão automática.",
+            "files": cs_files,
+            "reference": "Design - Risco: Lint não configurado localmente",
+        })
+        return findings
+
+    # dotnet-format exige um workspace (solução/projeto); arquivos .cs soltos
+    # causam exceção não tratada. Localiza a solução e usa --include.
+    workspace = next(
+        (p for p in ("PlexAutoplay.slnx", "PlexAutoplay.sln") if Path(p).exists()),
+        next((str(p) for p in Path(".").glob("*/*.csproj")), None),
+    )
+    if workspace is None:
+        findings.append({
+            "stack": "dotnet",
+            "tool": "lint",
+            "severity": "info",
+            "message": "Nenhuma solução/projeto .NET encontrado para dotnet-format.",
+            "files": cs_files,
+            "reference": "Design - Risco: Lint não configurado localmente",
+        })
+        return findings
+
+    result = run_cmd(
+        ["dotnet", "format", workspace, "--verify-no-changes"] + sum((["--include", f] for f in cs_files), []),
+        check=False,
+    )
     if result.returncode != 0:
         findings.append({
             "stack": "dotnet",
@@ -123,17 +187,8 @@ def run_dotnet_lint(files: list[dict[str, str]]) -> list[dict]:
             "reference": "Clean Code - nomenclatura e documentação XML",
         })
 
-    # Se nenhum lint estiver instalado, avisa graciosamente
-    if not findings:
-        findings.append({
-            "stack": "dotnet",
-            "tool": "lint",
-            "severity": "info",
-            "message": "Nenhum lint .NET configurado localmente (dotnet-format / StyleCop.Analyzers não encontrados). Instale para ativar a revisão automática.",
-            "files": cs_files,
-            "reference": "Design - Risco: Lint não configurado localmente",
-        })
-
+    # Lint limpo não é achado: não emite "não configurado" quando a
+    # verificação passou sem diferenças.
     return findings
 
 
@@ -144,41 +199,52 @@ def run_web_lint(files: list[dict[str, str]]) -> list[dict]:
     if not web_files:
         return findings
 
-    # Verifica se ESLint está disponível
-    result = run_cmd(["npx", "eslint"] + web_files, check=False)
-    if result.returncode != 0:
-        findings.append({
-            "stack": "web",
-            "tool": "ESLint",
-            "severity": "warning",
-            "message": "ESLint detectou violações de estilo em arquivos JS/Vue",
-            "files": web_files,
-            "reference": "Clean Code - formatação e estilo JS/Vue",
-        })
-
-    # Verifica se Prettier está disponível
-    result = run_cmd(["npx", "prettier", "--check"] + web_files, check=False)
-    if result.returncode != 0:
-        findings.append({
-            "stack": "web",
-            "tool": "Prettier",
-            "severity": "warning",
-            "message": "Prettier detectou diferenças de formatação em arquivos JS/Vue",
-            "files": web_files,
-            "reference": "Clean Code - formatação consistente",
-        })
-
-    # Se nenhum lint estiver instalado, avisa graciosamente
-    if not findings:
+    # Verifica se ESLint está disponível (antes de interpretar exit != 0 como violação)
+    if not tool_available(["npx", "eslint"]):
         findings.append({
             "stack": "web",
             "tool": "lint",
             "severity": "info",
-            "message": "Nenhum lint JS/Vue configurado localmente (ESLint / Prettier não encontrados). Instale para ativar a revisão automática.",
+            "message": "ESLint não configurado localmente. Instale para ativar a revisão automática.",
             "files": web_files,
             "reference": "Design - Risco: Lint não configurado localmente",
         })
+    else:
+        result = run_cmd(["npx", "eslint"] + web_files, check=False)
+        if result.returncode != 0:
+            findings.append({
+                "stack": "web",
+                "tool": "ESLint",
+                "severity": "warning",
+                "message": "ESLint detectou violações de estilo em arquivos JS/Vue",
+                "files": web_files,
+                "reference": "Clean Code - formatação e estilo JS/Vue",
+            })
 
+    # Verifica se Prettier está disponível
+    if not tool_available(["npx", "prettier"]):
+        findings.append({
+            "stack": "web",
+            "tool": "lint",
+            "severity": "info",
+            "message": "Prettier não configurado localmente. Instale para ativar a revisão automática.",
+            "files": web_files,
+            "reference": "Design - Risco: Lint não configurado localmente",
+        })
+    else:
+        result = run_cmd(["npx", "prettier", "--check"] + web_files, check=False)
+        if result.returncode != 0:
+            findings.append({
+                "stack": "web",
+                "tool": "Prettier",
+                "severity": "warning",
+                "message": "Prettier detectou diferenças de formatação em arquivos JS/Vue",
+                "files": web_files,
+                "reference": "Clean Code - formatação consistente",
+            })
+
+    # Lint limpo não é achado: não emite "não configurado" quando a
+    # verificação passou sem diferenças.
     return findings
 
 
