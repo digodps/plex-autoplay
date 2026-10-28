@@ -11,6 +11,7 @@
 #   6. Executa git clone -b <branch> <origin> <pasta-irma>
 #   7. Copia os artefatos da mudança (proposal, design, tasks, specs) para o clone
 #   8. Commita e pusha os artefatos no branch remoto, deixando-o pronto para trabalho
+#   9. Remove os artefatos da change do repositório original (já estão no outro branch)
 #
 # O PR e a implementacao das tasks sao feitos posteriormente pelo agente/usuario.
 #
@@ -166,6 +167,32 @@ def copy_artifacts_to_clone(change_name: str, clone_dir: Path) -> list[str]:
     return copied
 
 
+def remove_artifacts_from_original(change_name: str) -> list[str]:
+    """Remove os artefatos da mudança do repositório original (working tree).
+
+    Os artefatos ja foram copiados para o branch isolado, entao nao
+    precisam mais permanecer no repositorio original.
+    """
+    removed: list[str] = []
+    change_root = get_change_root(change_name)
+
+    for artifact in ["proposal.md", "design.md", "tasks.md", ".openspec.yaml"]:
+        path = change_root / artifact
+        if path.exists():
+            if path.is_dir():
+                shutil.rmtree(path)
+            else:
+                path.unlink()
+            removed.append(str(path))
+
+    specs_src = change_root / "specs"
+    if specs_src.exists():
+        shutil.rmtree(specs_src)
+        removed.append(str(specs_src))
+
+    return removed
+
+
 def commit_and_push_artifacts(clone_dir: Path, branch_name: str) -> bool:
     """Comita e push os artefatos copiados no clone."""
     # git add
@@ -301,6 +328,13 @@ def main() -> int:
     # 8. Commit e push dos artefatos no branch remoto
     if not commit_and_push_artifacts(clone_dir, branch_name):
         return 1
+
+    # 9. Remove artefatos da change do repositório original (já estão no outro branch)
+    removed = remove_artifacts_from_original(change_name)
+    if removed:
+        print(f"🗑️  Artefatos removidos do repositório original: {', '.join(removed)}")
+    else:
+        print("ℹ️  Nenhum artefato para remover do repositório original.")
 
     print(f"\n✅ Skill setup-spec concluída com sucesso.")
     print(f"   Branch remoto: {branch_name}")
