@@ -1,0 +1,45 @@
+using System.Diagnostics;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using OpenTelemetry;
+using OpenTelemetry.Exporter;
+using OpenTelemetry.Extensions.Hosting;
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
+
+namespace PlexAutoplay.Infrastructure.Telemetry;
+
+public static class OpenTelemetryService
+{
+    private static readonly ActivitySource ActivitySource = new("PlexAutoplay");
+
+    public static ActivitySource Tracer => ActivitySource;
+
+    public static IServiceCollection AddOpenTelemetryTelemetry(
+        this IServiceCollection services,
+        IConfiguration configuration)
+    {
+        var serviceName = configuration["OTEL_SERVICE_NAME"] ?? "plex-autoplay";
+
+        services.AddOpenTelemetry()
+            .ConfigureResource(resource => resource
+                .AddService(serviceName: serviceName, serviceVersion: "1.0.0")
+                .AddAttributes(new Dictionary<string, object>
+                {
+                    ["deployment.environment"] = configuration["ASPNETCORE_ENVIRONMENT"] ?? "Development"
+                }))
+            .WithTracing(tracing => tracing
+                .AddSource(ActivitySource.Name)
+                .AddSource("PlexAutoplay.Infrastructure")
+                .AddAspNetCoreInstrumentation()
+                .AddHttpClientInstrumentation()
+                .SetSampler(new AlwaysOnSampler()))
+            .WithMetrics(metrics => metrics
+                .AddAspNetCoreInstrumentation()
+                .AddHttpClientInstrumentation()
+                .AddMeter("PlexAutoplay"));
+
+        return services;
+    }
+}
