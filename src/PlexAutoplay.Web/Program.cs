@@ -8,7 +8,6 @@ using PlexAutoplay.Infrastructure.PlexProxy;
 using PlexAutoplay.Infrastructure.Sync;
 using PlexAutoplay.Infrastructure.Telemetry;
 using PlexAutoplay.Web.Middleware;
-using OpenTelemetry.Exporter.Prometheus;
 using Serilog;
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
