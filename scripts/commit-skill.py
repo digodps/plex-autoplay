@@ -148,6 +148,18 @@ def infer_type(file_path: str) -> str:
     return "feat"
 
 
+# Artefatos de build/gerados que nunca devem ser commitados (mesmo que
+# rastreados ou presentes no git status).
+ARTIFACT_PATTERN = re.compile(
+    r"(^|/)(bin|obj)/|tests/e2e/playwright-report/|tests/e2e/test-results/|test-artifacts/"
+)
+
+
+def is_generated_artifact(path: str) -> bool:
+    """Identifica artefatos de build/gerados que não devem virar commit."""
+    return bool(ARTIFACT_PATTERN.search(path))
+
+
 def validate_commit_type(commit_type: str) -> None:
     """Rejeita tipos de commit que não estão na lista de conventional commits válidos."""
     if commit_type not in VALID_TYPES:
@@ -301,8 +313,8 @@ def main() -> int:
         print("❌ Diretório openspec/changes não encontrado. Rode a partir da raiz do repositório.", file=sys.stderr)
         return 1
 
-    # 1. Lista arquivos modificados
-    modified_files = get_git_status_porcelain()
+    # 1. Lista arquivos modificados (exclui artefatos de build/gerados)
+    modified_files = [f for f in get_git_status_porcelain() if not is_generated_artifact(f["path"])]
     if not modified_files:
         print("ℹ️  Nenhum arquivo modificado para commitar.")
         return 0
@@ -312,11 +324,20 @@ def main() -> int:
         print(f"   {f['status']}  {f['path']}")
 
     # 2. Descobre mudanças em andamento
-    changes = get_in_progress_changes()
-    if not changes:
-        print("⚠️  Nenhuma mudança OpenSpec em andamento encontrada.")
-        print("   Arquivos serão agrupados sem referência a task.")
-        changes = []
+    if args.change:
+        # --change tem prioridade: usa a mudança informada mesmo que não
+        # esteja marcada como in-progress no openspec list.
+        change_root = get_change_root(args.change, changes_dir)
+        if not change_root.exists():
+            print(f"❌ Mudança OpenSpec não encontrada: {args.change}", file=sys.stderr)
+            return 1
+        changes = [{"name": args.change, "status": "in-progress"}]
+    else:
+        changes = get_in_progress_changes()
+        if not changes:
+            print("⚠️  Nenhuma mudança OpenSpec em andamento encontrada.")
+            print("   Arquivos serão agrupados sem referência a task.")
+            changes = []
 
     # 3. Mapeia arquivos para tasks
     grouped = map_files_to_tasks(modified_files, changes, changes_dir)
