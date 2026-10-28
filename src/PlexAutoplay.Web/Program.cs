@@ -15,6 +15,8 @@ using System.Diagnostics;
 using System.Diagnostics.Metrics;
 using System.Net.Http.Headers;
 using System.Text.Json;
+using System.Text.Json.Serialization;
+using Microsoft.AspNetCore.WebUtilities;
 using System.Collections.Concurrent;
 using System.Net.WebSockets;
 using System.Security.Cryptography;
@@ -407,9 +409,40 @@ app.MapGet("/api/markers/{ratingKey}", async (string ratingKey, [FromServices] I
     return Results.Ok(markers.Select(m => new { m.RatingKey, m.Kind, m.StartMs, m.EndMs }));
 });
 
-app.MapPost("/api/markers", async ([FromBody] MarkerCreateRequest req, [FromServices] IMarkerRepository markerRepo) =>
+app.MapPost("/api/markers", async (HttpContext context, [FromServices] IMarkerRepository markerRepo, [FromServices] CustomJsonWriterService customJsonWriter) =>
 {
-    var exists = await markerRepo.ExistsAsync(req.RatingKey, req.Kind);
+    context.Request.EnableBuffering();
+    using var reader = new StreamReader(context.Request.Body);
+    var bodyText = await reader.ReadToEndAsync();
+    context.Request.Body.Position = 0;
+
+    var ratingKey = "";
+    var kind = "";
+    var startMs = 0L;
+    var endMs = 0L;
+
+    var contentType = context.Request.ContentType ?? "";
+
+    if (contentType.StartsWith("application/json"))
+    {
+        using var doc = JsonDocument.Parse(bodyText);
+        var root = doc.RootElement;
+        ratingKey = root.GetProperty("RatingKey").GetString() ?? "";
+        kind = root.GetProperty("Kind").GetString() ?? "";
+        startMs = root.GetProperty("StartMs").GetInt64();
+        endMs = root.GetProperty("EndMs").GetInt64();
+    }
+    else
+    {
+        // Form data (application/x-www-form-urlencoded) from UI forms
+        var form = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(bodyText);
+        ratingKey = form["RatingKey"].ToString() ?? "";
+        kind = form["Kind"].ToString() ?? "";
+        startMs = long.TryParse(form["StartMs"].ToString(), out var sk) ? sk : 0;
+        endMs = long.TryParse(form["EndMs"].ToString(), out var em) ? em : 0;
+    }
+
+    var exists = await markerRepo.ExistsAsync(ratingKey, kind);
     if (exists)
     {
         return Results.Conflict(new { error = "Marker already exists" });
@@ -417,14 +450,15 @@ app.MapPost("/api/markers", async ([FromBody] MarkerCreateRequest req, [FromServ
 
     var marker = new PlexAutoplay.Domain.Entities.Marker
     {
-        RatingKey = req.RatingKey,
-        Kind = req.Kind,
-        StartMs = req.StartMs,
-        EndMs = req.EndMs
+        RatingKey = ratingKey,
+        Kind = kind,
+        StartMs = startMs,
+        EndMs = endMs
     };
 
     await markerRepo.AddAsync(marker);
-    return Results.Created($"/api/markers/{req.RatingKey}", new { marker.RatingKey, marker.Kind, marker.StartMs, marker.EndMs });
+    customJsonWriter.UpsertMarkers(ratingKey, new[] { new CustomJsonWriterService.MarkerEntry(kind, startMs, endMs) });
+    return Results.Created($"/api/markers/{ratingKey}", new { ratingKey, kind, startMs, endMs });
 });
 
 app.MapDelete("/api/markers/{ratingKey}/{kind}", async (string ratingKey, string kind, [FromServices] IMarkerRepository markerRepo) =>

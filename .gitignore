@@ -24,9 +24,21 @@ htmlcov/
 *.swp
 *.swo
 .DS_Store
-config/*
+config/
 
 # Test artifacts (not committed)
 test-artifacts/
+tests/e2e/test-results/
+tests/e2e/playwright-report/
+tests/e2e/node_modules/
+
+# .NET build output (binários - não commitar)
 bin/
 obj/
+*.dll
+*.pdb
+*.exe
+*.cache
+*.sourcelink.json
+*.FileListAbsolute.txt
+.vs/

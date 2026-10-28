@@ -97,7 +97,7 @@ test.describe('Marcadores (CRUD)', () => {
         'Content-Type': 'application/json',
         'X-CSRF-TOKEN': 'test-csrf-token'
       },
-      body: JSON.stringify({ rating_key: 'test-123', kind: 'intro', start_ms: 0, end_ms: 90000 })
+      body: JSON.stringify({ RatingKey: 'test-123', Kind: 'intro', StartMs: 0, EndMs: 90000 })
     });
     expect(createResponse.status()).toBe(201);
 
@@ -106,9 +106,9 @@ test.describe('Marcadores (CRUD)', () => {
       headers: { Authorization: `Bearer ${token}` },
     });
     const markers = await listResponse.json();
-    const found = markers.find(m => m.ratingKey === 'test-123');
+    const found = markers.find(m => m.RatingKey === 'test-123');
     expect(found).toBeTruthy();
-    expect(found.kind).toBe('intro');
+    expect(found.Kind).toBe('intro');
   });
 
   test('rotas mutantes requerem token CSRF', async ({ page, request }) => {
@@ -117,7 +117,7 @@ test.describe('Marcadores (CRUD)', () => {
       headers: {
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ rating_key: 'no-csrf', kind: 'intro', start_ms: 0, end_ms: 90000 })
+      body: JSON.stringify({ RatingKey: 'no-csrf', Kind: 'intro', StartMs: 0, EndMs: 90000 })
     });
     // Sem autenticação também falharia, mas CSRF deve ser verificado primeiro ou junto
     expect([401, 403]).toContain(response.status());

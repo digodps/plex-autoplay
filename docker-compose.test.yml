@@ -13,10 +13,9 @@ services:
       - JWT_SECRET=${JWT_SECRET}
       - ADMIN_PASSWORD=${ADMIN_PASSWORD}
       - MEDIA_ROOT=${MEDIA_ROOT}
-      - PLAYWRIGHT_BASE_URL=https://plex-autoplay:8443
+      - PLAYWRIGHT_BASE_URL=https://plex-autoplay:443
       - INSIDE_EXECUTOR_CONTAINER=true
     working_dir: /workspace
-    user: "1000:1000"
     networks:
       - plex-test-network
 

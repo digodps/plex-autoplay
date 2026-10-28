@@ -18,6 +18,8 @@ module.exports = defineConfig({
     // Timeout de cada teste individual
     actionTimeout: 10 * 1000,
     navigationTimeout: 30 * 1000,
+    // Aceita certificado auto-assinado do container
+    ignoreHTTPSErrors: true,
   },
 
   projects: [
@@ -27,11 +29,6 @@ module.exports = defineConfig({
     },
   ],
 
-  webServer: {
-    // Não inicia servidor web; os testes rodam contra o container Docker já em execução
-    command: 'echo "Container Docker deve estar rodando antes dos testes"',
-    port: 8080,
-    timeout: 120 * 1000,
-    reuseExistingServer: !process.env.CI,
-  },
+  // O servidor web já está rodando via docker-compose (serviço plex-autoplay).
+  // Não é necessário webServer pois a aplicação já está em execução na rede Docker.
 });
