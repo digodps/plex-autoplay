@@ -15,4 +15,4 @@
 ## 3. Validação integrada
 
 - [x] 3.1 Validar o stack completo localmente (Podman): `scripts/run-e2e-tests.sh` com `plex-mock` no Compose e `APP_HOST` default, e2e verde — verificar: saída do executor com todos os testes passando e `docker compose down` executado
-- [ ] 3.2 Validar o pipeline no GitHub Actions: abrir PR com a change, conferir checks `build` e `e2e` verdes no PR — verificar: `gh pr checks` com os dois jobs de sucesso
+- [x] 3.2 Validar o pipeline no GitHub Actions: abrir PR com a change, conferir checks `build` e `e2e` verdes no PR — verificar: `gh pr checks` com os dois jobs de sucesso
