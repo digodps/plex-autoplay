@@ -1,0 +1,31 @@
+{
+  "name": "plex-autoplay",
+  "version": "1.0.0",
+  "description": "> **Dashboard web para gerenciar marcadores de intro/créditos no Plex via API oficial** – gera `custom.json` para o **PlexAutoSkip** (embutido) que envia comandos de *seek* aos players compatíveis.",
+  "main": "index.js",
+  "directories": {
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/digodps/plex-autoplay.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/digodps/plex-autoplay/issues"
+  },
+  "homepage": "https://github.com/digodps/plex-autoplay#readme",
+  "private": "true",
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.13.0",
+    "eslint-plugin-vue": "^10.12.0",
+    "prettier": "^3.9.10"
+  },
+  "type": "module"
+}
