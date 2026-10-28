@@ -4,7 +4,7 @@
 
 Define o comportamento do servidor WebSocket (WSS na porta 8081) que interpreta mensagens do protocolo Plex Companion enviadas por players compatíveis e responde com comandos de seek para pular segmentos de intro e créditos com base nos marcadores armazenados em custom.json.
 
-## ADDED Requirements
+## Requirements
 
 ### Requirement: Servir WebSocket Secure na porta 8081
 O sistema SHALL expor um endpoint WebSocket sobre TLS (WSS) na porta 8081 para players compatíveis com o protocolo Plex Companion.

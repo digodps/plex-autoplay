@@ -4,7 +4,7 @@
 
 Define o comportamento do scanner real de bibliotecas Plex que lista episódios, detecta marcadores de intro e créditos via ffprobe e os persiste em SQLite e no arquivo custom.json no formato PlexAutoSkip.
 
-## ADDED Requirements
+## Requirements
 
 ### Requirement: Listar episódios de uma biblioteca de séries
 O sistema SHALL listar todos os episódios de uma biblioteca de séries do Plex consultando a API do servidor, incluindo o rating key e o caminho do arquivo de mídia (MediaPart.file) de cada episódio.
