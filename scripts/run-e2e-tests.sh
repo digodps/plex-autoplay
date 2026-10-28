@@ -92,7 +92,9 @@ log "Todas as variáveis obrigatórias estão definidas."
 # a partir do container executor (rede Docker interna).
 # A aplicacao ja sobe no mesmo docker-compose.test.yml; nao precisa de
 # Docker-in-Docker para subí-la.
-APP_HOST="plex-autoplay.dns.podman"
+# O host pode ser sobrescrito via ambiente (ex.: no GitHub Actions o
+# Docker resolve o container_name diretamente: APP_HOST=plex-autoplay-test).
+APP_HOST="${APP_HOST:-plex-autoplay.dns.podman}"
 log "Aguardando a aplicacao ficar disponível em ${APP_HOST}:80..."
 for i in $(seq 1 30); do
   APP_PORT=443
