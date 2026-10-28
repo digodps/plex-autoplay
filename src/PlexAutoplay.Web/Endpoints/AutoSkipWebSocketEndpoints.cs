@@ -1,5 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
-using PlexAutoplay.Infrastructure.AutoSkip;
+using PlexAutoplay.Domain.Ports;
 
 namespace PlexAutoplay.Web.Endpoints;
 
@@ -11,7 +11,7 @@ public static class AutoSkipWebSocketEndpoints
 {
     public static void MapAutoSkipWebSocketEndpoints(this IEndpointRouteBuilder app)
     {
-        app.Map("/ws", async (HttpContext context, [FromServices] PlexAutoSkipService autoSkipService) =>
+        app.Map("/ws", async (HttpContext context, [FromServices] IPlexAutoSkipService autoSkipService) =>
         {
             if (context.WebSockets.IsWebSocketRequest)
             {

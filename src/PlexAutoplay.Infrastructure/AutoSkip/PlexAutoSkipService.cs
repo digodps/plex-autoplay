@@ -1,9 +1,13 @@
 namespace PlexAutoplay.Infrastructure.AutoSkip;
 
+using PlexAutoplay.Domain.Ports;
 using System.Text.Json;
 using System.Threading.Channels;
 
-public class PlexAutoSkipService
+/// <summary>
+/// Implementação de <see cref="IPlexAutoSkipService"/> para leitura de marcadores do custom.json.
+/// </summary>
+public class PlexAutoSkipService : IPlexAutoSkipService
 {
     private readonly string _customJsonPath;
     private readonly Dictionary<string, List<MarkerInfo>> _markers = new();
@@ -58,10 +62,8 @@ public class PlexAutoSkipService
         }
     }
 
-    public List<MarkerInfo> GetMarkersForEpisode(string ratingKey)
+    public IReadOnlyList<MarkerInfo> GetMarkersForEpisode(string ratingKey)
     {
-        return _markers.TryGetValue(ratingKey, out var markers) ? markers : new List<MarkerInfo>();
+        return _markers.TryGetValue(ratingKey, out var markers) ? markers : Array.Empty<MarkerInfo>();
     }
 }
-
-public record MarkerInfo(string Kind, long StartMs, long EndMs);

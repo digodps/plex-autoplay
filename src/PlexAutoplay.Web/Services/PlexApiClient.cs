@@ -8,8 +8,10 @@ namespace PlexAutoplay.Web.Services;
 
 /// <summary>
 /// Cliente HTTP para a API do Plex, com telemetria (traces, métricas e logs).
+/// Dividido em partials por domínio: núcleo (bibliotecas/episódios) em
+/// <see cref="PlexApiClient"/> e séries em <c>PlexApiClient.Series</c>.
 /// </summary>
-public class PlexApiClient : IPlexApiClient
+public partial class PlexApiClient : IPlexApiClient
 {
     private readonly HttpClient _httpClient;
     private static readonly ActivitySource ActivitySource = PlexAutoplay.Infrastructure.Telemetry.OpenTelemetryService.Tracer;
@@ -48,17 +50,25 @@ public class PlexApiClient : IPlexApiClient
             using var doc = JsonDocument.Parse(json);
 
             var libraries = new List<PlexLibraryDto>();
-            var directory = doc.RootElement.GetProperty("Directory");
+            // Envelope padrão do Plex aninha Directory em MediaContainer;
+            // alguns proxies/mock devolvem Directory na raiz.
+            var root = doc.RootElement;
+            var directory = root.TryGetProperty("Directory", out var directDir)
+                ? directDir
+                : root.TryGetProperty("MediaContainer", out var container) && container.TryGetProperty("Directory", out var nestedDir)
+                    ? nestedDir
+                    : default;
 
-            foreach (var item in directory.EnumerateArray())
-            {
-                libraries.Add(new PlexLibraryDto(
-                    item.GetProperty("key").GetString() ?? "",
-                    item.GetProperty("title").GetString() ?? "",
-                    item.GetProperty("type").GetString() ?? "",
-                    item.GetProperty("agent").GetString() ?? ""
-                ));
-            }
+            if (directory.ValueKind == JsonValueKind.Array)
+                foreach (var item in directory.EnumerateArray())
+                {
+                    libraries.Add(new PlexLibraryDto(
+                        item.GetProperty("key").GetString() ?? "",
+                        item.GetProperty("title").GetString() ?? "",
+                        item.GetProperty("type").GetString() ?? "",
+                        item.GetProperty("agent").GetString() ?? ""
+                    ));
+                }
 
             var durationMs = (DateTime.UtcNow - startTime).TotalMilliseconds;
             Log.Information("Plex API call: GetLibraries", new { external_service = "plex", duration_ms = durationMs, status_code = (int)response.StatusCode, count = libraries.Count });

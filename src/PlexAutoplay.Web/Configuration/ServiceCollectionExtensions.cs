@@ -64,8 +64,8 @@ public static class ServiceCollectionExtensions
 
         // PlexAutoSkip service (reader) and CustomJsonWriterService (writer)
         var customJsonPath = Environment.GetEnvironmentVariable("CUSTOM_JSON_PATH") ?? "/data/custom.json";
-        services.AddSingleton(new PlexAutoSkipService(customJsonPath));
-        services.AddSingleton(new CustomJsonWriterService(customJsonPath));
+        services.AddSingleton<IPlexAutoSkipService>(new PlexAutoSkipService(customJsonPath));
+        services.AddSingleton<ICustomJsonWriter>(new CustomJsonWriterService(customJsonPath));
 
         services.Configure<Microsoft.AspNetCore.Http.Json.JsonOptions>(options =>
         {
@@ -76,6 +76,6 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IMarkerDetector, PlexAutoplay.Infrastructure.Detection.FfmpegMarkerDetector>();
 
         // In-memory scan job tracking
-        services.AddSingleton<ScanJobStore>();
+        services.AddSingleton<IScanJobStore, ScanJobStore>();
     }
 }

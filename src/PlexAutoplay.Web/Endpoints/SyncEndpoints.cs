@@ -1,5 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
-using PlexAutoplay.Web.Services;
+using PlexAutoplay.Domain.Ports;
 
 namespace PlexAutoplay.Web.Endpoints;
 
@@ -10,7 +10,7 @@ public static class SyncEndpoints
 {
     public static void MapSyncEndpoints(this IEndpointRouteBuilder app)
     {
-        app.MapGet("/api/sync/status/{jobId}", (string jobId, [FromServices] ScanJobStore scanJobs) =>
+        app.MapGet("/api/sync/status/{jobId}", (string jobId, [FromServices] IScanJobStore scanJobs) =>
         {
             var job = scanJobs.Get(jobId);
             if (job != null)
@@ -28,7 +28,7 @@ public static class SyncEndpoints
             return Results.NotFound();
         });
 
-        app.MapGet("/api/sync/log/stream/{jobId}", async (string jobId, HttpContext context, [FromServices] ScanJobStore scanJobs) =>
+        app.MapGet("/api/sync/log/stream/{jobId}", async (string jobId, HttpContext context, [FromServices] IScanJobStore scanJobs) =>
         {
             context.Response.ContentType = "text/event-stream";
             context.Response.Headers.Append("Cache-Control", "no-cache");
@@ -50,7 +50,7 @@ public static class SyncEndpoints
             }
         });
 
-        app.MapPost("/api/sync/cancel/{jobId}", (string jobId, [FromServices] ScanJobStore scanJobs) =>
+        app.MapPost("/api/sync/cancel/{jobId}", (string jobId, [FromServices] IScanJobStore scanJobs) =>
         {
             var job = scanJobs.Get(jobId);
             if (job != null)
