@@ -1,86 +1,18 @@
 const { test, expect } = require("@playwright/test");
 const { loadEnv } = require("../utils/env");
+const { loginByUi, bearerToken } = require("../utils/auth");
 
 loadEnv();
 
-const BASE_URL =
-  process.env.PLAYWRIGHT_BASE_URL || "https://plex-autoplay.dns.podman:443";
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
+const BASE_URL = process.env.PLAYWRIGHT_BASE_URL || "https://plex-autoplay.dns.podman:443";
 
 test.describe("Marcadores (CRUD)", () => {
   test.beforeEach(async ({ page }) => {
-    // Faz login antes de cada teste
-    await page.goto(`${BASE_URL}/login`, { waitUntil: "networkidle" });
-    await page.waitForSelector('input[type="password"]', {
-      state: "visible",
-      timeout: 10000,
-    });
-    await page.fill('input[type="password"]', ADMIN_PASSWORD);
-    await page.click("button");
-    await page.waitForURL(`${BASE_URL}/dashboard`);
+    await loginByUi(page);
   });
 
-  test("cria marcador manual via formulário", async ({ page }) => {
-    const ratingKey = `e2e-${Date.now()}`;
-    await page.goto(`${BASE_URL}/markers`, { waitUntil: "networkidle" });
-
-    // Preenche formulário de criação usando placeholders
-    await page.fill('[placeholder="Rating Key"]', ratingKey);
-    await page.selectOption("select", "Intro");
-    await page.fill('[placeholder="Início (ms)"]', "1000");
-    await page.fill('[placeholder="Fim (ms)"]', "90000");
-
-    // Submete
-    await page.click('button:has-text("Adicionar")');
-
-    // Aguarda aparecer na listagem (tabela de marcadores)
-    await page.waitForTimeout(2000);
-    await expect(page.locator(`td:has-text("${ratingKey}")`)).toBeVisible();
-  });
-
-  test("remove marcador existente", async ({ page }) => {
-    const ratingKey = `e2e-remove-${Date.now()}`;
-    await page.goto(`${BASE_URL}/markers`, { waitUntil: "networkidle" });
-
-    // Adiciona um marcador primeiro para ter algo para remover
-    await page.fill('[placeholder="Rating Key"]', ratingKey);
-    await page.selectOption("select", "Créditos");
-    await page.fill('[placeholder="Início (ms)"]', "3600000");
-    await page.fill('[placeholder="Fim (ms)"]', "3660000");
-    await page.click('button:has-text("Adicionar")');
-
-    // Aguarda aparecer na lista
-    await page.waitForTimeout(2000);
-    await expect(page.locator(`td:has-text("${ratingKey}")`)).toBeVisible();
-
-    // Configura handler de diálogo ANTES de clicar em remover
-    page.on("dialog", (dialog) => dialog.accept());
-
-    // Remove o marcador
-    const removeBtn = page.locator("button.remove").first();
-    if ((await removeBtn.count()) > 0) {
-      await removeBtn.click();
-      await page.waitForTimeout(2000);
-      // O marcador pode ainda estar visível se a tabela não re-renderizar imediatamente
-      // Verifica via API que o marcador foi removido
-    }
-  });
-
-  test("lista marcadores via GET /api/markers", async ({ page, request }) => {
-    // Faz login para obter token
-    await page.goto(`${BASE_URL}/login`, { waitUntil: "networkidle" });
-    await page.waitForSelector('input[type="password"]', {
-      state: "visible",
-      timeout: 10000,
-    });
-    await page.fill('input[type="password"]', ADMIN_PASSWORD);
-    await page.click("button");
-    await page.waitForURL(`${BASE_URL}/dashboard`);
-
-    // Obtém token do localStorage
-    const token = await page.evaluate(() => localStorage.getItem("auth_token"));
-
-    // Chama a API de marcadores
+  test("lista marcadores via GET /api/markers exibindo origem", async ({ context, request }) => {
+    const token = await bearerToken(context);
     const response = await request.get(`${BASE_URL}/api/markers`, {
       headers: { Authorization: `Bearer ${token}` },
     });
@@ -88,48 +20,87 @@ test.describe("Marcadores (CRUD)", () => {
     expect(response.status()).toBe(200);
     const markers = await response.json();
     expect(Array.isArray(markers)).toBe(true);
+    // campo origin no contrato aditivo
+    markers.forEach((m) => {
+      expect(["manual", "detected"]).toContain(m.origin);
+    });
   });
 
-  test("marcador criado via API é gravado em custom.json", async ({
-    page,
+  test("cria marcador via POST query string (compat E2E legado) e grava origem manual", async ({
+    context,
     request,
   }) => {
-    await page.goto(`${BASE_URL}/login`, { waitUntil: "networkidle" });
-    await page.waitForSelector('input[type="password"]', {
-      state: "visible",
-      timeout: 10000,
-    });
-    await page.fill('input[type="password"]', ADMIN_PASSWORD);
-    await page.click("button");
-    await page.waitForURL(`${BASE_URL}/dashboard`);
+    const token = await bearerToken(context);
+    const ratingKey = `e2e-${Date.now()}`;
+    const kind = "intro";
 
-    const token = await page.evaluate(() => localStorage.getItem("auth_token"));
+    const response = await request.post(
+      `${BASE_URL}/api/markers?RatingKey=${ratingKey}&Kind=${kind}&StartMs=1000&EndMs=90000`,
+      { headers: { Authorization: `Bearer ${token}` } },
+    );
+    expect(response.status()).toBe(201);
+    const body = await response.json();
+    expect(body.origin).toBe("manual");
 
-    const ratingKey = `e2e-api-${Date.now()}`;
+    // duplicado retorna 409 (contrato mantido)
+    const dup = await request.post(
+      `${BASE_URL}/api/markers?RatingKey=${ratingKey}&Kind=${kind}&StartMs=1000&EndMs=90000`,
+      { headers: { Authorization: `Bearer ${token}` } },
+    );
+    expect(dup.status()).toBe(409);
 
-    // Verifica que a listagem de marcadores via API funciona
-    const listResponse = await request.get(`${BASE_URL}/api/markers`, {
+    const del = await request.delete(`${BASE_URL}/api/markers/${ratingKey}/${kind}`, {
       headers: { Authorization: `Bearer ${token}` },
     });
-    expect(listResponse.status()).toBe(200);
-    const markers = await listResponse.json();
-    expect(Array.isArray(markers)).toBe(true);
+    expect(del.status()).toBe(200);
   });
 
-  test("rotas mutantes requerem token CSRF", async ({ page, request }) => {
-    // Tenta criar marcador sem token CSRF - deve falhar com 403
-    const response = await request.post(`${BASE_URL}/api/markers`, {
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        RatingKey: "no-csrf",
-        Kind: "intro",
-        StartMs: 0,
-        EndMs: 90000,
-      }),
+  test("edita marcador existente via PUT, preservando origem", async ({ context, request }) => {
+    const token = await bearerToken(context);
+    const ratingKey = `e2e-put-${Date.now()}`;
+    const kind = "intro";
+
+    await request.post(
+      `${BASE_URL}/api/markers?RatingKey=${ratingKey}&Kind=${kind}&StartMs=1000&EndMs=90000`,
+      { headers: { Authorization: `Bearer ${token}` } },
+    );
+
+    const put = await request.put(`${BASE_URL}/api/markers/${ratingKey}/${kind}`, {
+      headers: { Authorization: `Bearer ${token}` },
+      data: { startMs: 2000, endMs: 95000 },
     });
-    // Sem autenticação também falharia, mas CSRF deve ser verificado primeiro ou junto
+    expect(put.status()).toBe(200);
+    const body = await put.json();
+    expect(body.startMs).toBe(2000);
+    expect(body.origin).toBe("manual");
+
+    // Valor atualizado na listagem
+    const list = await request.get(`${BASE_URL}/api/markers/${ratingKey}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const markers = await list.json();
+    const marker = markers.find((m) => m.kind === kind);
+    expect(marker.startMs).toBe(2000);
+
+    await request.delete(`${BASE_URL}/api/markers/${ratingKey}/${kind}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+  });
+
+  test("PUT em marcador inexistente retorna 404", async ({ context, request }) => {
+    const token = await bearerToken(context);
+    const put = await request.put(`/api/markers/e2e-nao-existe/intro`, {
+      headers: { Authorization: `Bearer ${token}` },
+      data: { startMs: 1, endMs: 2 },
+    });
+    expect(put.status()).toBe(404);
+  });
+
+  test("rotas mutantes sem token são rejeitadas", async ({ request }) => {
+    const response = await request.post(`${BASE_URL}/api/markers`, {
+      headers: { "Content-Type": "application/json" },
+      data: { RatingKey: "no-auth", Kind: "intro", StartMs: 0, EndMs: 90000 },
+    });
     expect([401, 403]).toContain(response.status());
   });
 });

@@ -1,0 +1,142 @@
+namespace PlexAutoplay.UnitTests;
+
+using System.Net;
+using PlexAutoplay.Web.Services;
+using Xunit;
+
+public class PlexApiClientTests
+{
+    private static PlexApiClient MakeClient(string baseUrl) =>
+        new(new HttpClient { BaseAddress = new Uri(baseUrl), DefaultRequestHeaders = { { "X-Plex-Token", "test-token" } } });
+
+    public static readonly string SeriesCatalogJson = """
+        {
+          "MediaContainer": {
+            "totalSize": 87,
+            "Metadata": [
+              {
+                "type": "show",
+                "ratingKey": "101",
+                "title": "Arrow",
+                "summary": "Um bilionário arma para combater o crime.",
+                "thumb": "library/metadata/101/thumb/169"
+              },
+              {
+                "type": "episode",
+                "ratingKey": "999",
+                "title": "Nao sou serie"
+              }
+            ]
+          }
+        }
+        """;
+
+    [Fact]
+    public async Task GetSeriesAsync_ParsesSeriesAndSendsContainerHeaders()
+    {
+        using var server = new FakePlexServer(SeriesCatalogJson);
+        var client = MakeClient(server.BaseUrl);
+
+        var result = await client.GetSeriesAsync("1", containerStart: 24, containerSize: 24, titleQuery: "arrow");
+
+        Assert.False(result.Failed);
+        Assert.Equal(87, result.TotalSize);
+        var series = Assert.Single(result.Items);
+        Assert.Equal("101", series.RatingKey);
+        Assert.Equal("Arrow", series.Title);
+        Assert.Equal("library/metadata/101/thumb/169", series.Thumb);
+
+        // Paginação delegada ao Plex via cabeçalhos de container + filtro por título
+        Assert.Equal("24", server.LastHeaders["X-Plex-Container-Start"]);
+        Assert.Equal("24", server.LastHeaders["X-Plex-Container-Size"]);
+        Assert.Contains("type=show", server.LastQuery);
+        Assert.Contains("title.contains=arrow", server.LastQuery);
+        Assert.Contains("/library/sections/1/all", server.LastPath);
+    }
+
+    [Fact]
+    public async Task GetSeriesAsync_WhenPlexFails_MarksFailed()
+    {
+        using var server = new FakePlexServer("""{"error":true}""", statusCode: 500);
+        var client = MakeClient(server.BaseUrl);
+
+        var result = await client.GetSeriesAsync("1", 0, 24);
+
+        Assert.True(result.Failed);
+        Assert.Empty(result.Items);
+    }
+
+    [Fact]
+    public async Task GetLibrariesAsync_ParsesNestedMediaContainerEnvelope()
+    {
+        using var server = new FakePlexServer("{}");
+
+        var json = """
+            {
+              "MediaContainer": {
+                "Directory": [
+                  { "key": "1", "title": "Séries", "type": "show", "agent": "tv.plex.agents.series" },
+                  { "key": "2", "title": "Filmes", "type": "movie", "agent": "com.plexapp.agents.imdb" }
+                ]
+              }
+            }
+            """;
+        server.ResetResponse(json);
+
+        var client = MakeClient(server.BaseUrl);
+        var libs = await client.GetLibrariesAsync();
+
+        Assert.Equal(2, libs.Count);
+        var show = libs.Single(l => l.Type == "show");
+        Assert.Equal("1", show.Key);
+        Assert.Equal("tv.plex.agents.series", show.Agent);
+    }
+
+    public static readonly string SeriesEpisodesJson = """
+        {
+          "MediaContainer": {
+            "Metadata": [
+              {
+                "type": "episode",
+                "ratingKey": "5001",
+                "title": "Pilot",
+                "parentIndex": 1,
+                "index": 1,
+                "Media": [ { "Part": [ { "file": "/Volumes/Series/Arrow S01E01.mkv" } ] } ]
+              },
+              {
+                "type": "clip",
+                "ratingKey": "7001",
+                "title": "Trailer"
+              }
+            ]
+          }
+        }
+        """;
+
+    [Fact]
+    public async Task GetSeriesEpisodesAsync_ParsesEpisodesOnly()
+    {
+        using var server = new FakePlexServer(SeriesEpisodesJson);
+        var client = MakeClient(server.BaseUrl);
+
+        var episodes = await client.GetSeriesEpisodesAsync("101");
+
+        var item = Assert.Single(episodes);
+        Assert.Equal("5001", item.RatingKey);
+        Assert.Equal(1, item.ParentIndex);
+        Assert.Equal(1, item.Index);
+        Assert.Equal("/Volumes/Series/Arrow S01E01.mkv", item.FilePath);
+    }
+
+    [Fact]
+    public async Task GetSeriesEpisodesAsync_WhenPlexFails_ReturnsEmpty()
+    {
+        using var server = new FakePlexServer("""{"nope":true}""", statusCode: 502);
+        var client = MakeClient(server.BaseUrl);
+
+        var episodes = await client.GetSeriesEpisodesAsync("101");
+
+        Assert.Empty(episodes);
+    }
+}
