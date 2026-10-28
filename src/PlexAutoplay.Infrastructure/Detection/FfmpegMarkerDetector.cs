@@ -1,3 +1,5 @@
+namespace PlexAutoplay.Infrastructure.Detection;
+
 using PlexAutoplay.Domain.Entities;
 using PlexAutoplay.Domain.Ports;
 using PlexAutoplay.Infrastructure.Telemetry;

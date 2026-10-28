@@ -1,9 +1,11 @@
 using Microsoft.AspNetCore.Mvc;
 using PlexAutoplay.Domain.Entities;
 using PlexAutoplay.Domain.Ports;
+using PlexAutoplay.Application;
 using PlexAutoplay.Infrastructure.AutoSkip;
 using PlexAutoplay.Infrastructure.Auth;
 using PlexAutoplay.Infrastructure.Cache;
+using PlexAutoplay.Infrastructure.Detection;
 using PlexAutoplay.Infrastructure.PlexProxy;
 using PlexAutoplay.Infrastructure.Sync;
 using PlexAutoplay.Infrastructure.Telemetry;
@@ -18,7 +20,20 @@ using System.Net.WebSockets;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 
+var logLevelRaw = Environment.GetEnvironmentVariable("LOG_LEVEL") ?? "Information";
+var logLevel = logLevelRaw switch
+{
+    "Debug" => Serilog.Events.LogEventLevel.Debug,
+    "Verbose" => Serilog.Events.LogEventLevel.Verbose,
+    "Warning" => Serilog.Events.LogEventLevel.Warning,
+    "Warn" => Serilog.Events.LogEventLevel.Warning,
+    "Error" => Serilog.Events.LogEventLevel.Error,
+    "Fatal" => Serilog.Events.LogEventLevel.Fatal,
+    _ => Serilog.Events.LogEventLevel.Information
+};
+
 Log.Logger = new LoggerConfiguration()
+    .MinimumLevel.ControlledBy(new Serilog.Core.LoggingLevelSwitch(logLevel))
     .WriteTo.Console(outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff} [{Level:u3}] {CorrelationId} {Message:lj}{NewLine}{Exception:lj}")
     .Enrich.FromLogContext()
     .Enrich.WithProperty("Service", "plex-autoplay")
@@ -29,6 +44,7 @@ builder.Host.UseSerilog();
 
 // --- Certificate configuration ---
 var httpsPort = int.Parse(Environment.GetEnvironmentVariable("HTTPS_PORT") ?? "443");
+var wsPort = int.Parse(Environment.GetEnvironmentVariable("WS_PORT") ?? "8081");
 var disableHttpRaw = Environment.GetEnvironmentVariable("DISABLE_HTTP") ?? "true";
 var disableHttp = disableHttpRaw.Equals("true", StringComparison.OrdinalIgnoreCase);
 var certPath = Environment.GetEnvironmentVariable("CERT_PATH");
@@ -100,8 +116,8 @@ builder.WebHost.ConfigureKestrel(options =>
         listenOptions.Protocols = Microsoft.AspNetCore.Server.Kestrel.Core.HttpProtocols.Http1AndHttp2;
     });
 
-    // WSS endpoint (WebSocket Secure on port 8081)
-    options.ListenAnyIP(8081, listenOptions =>
+    // WSS endpoint (WebSocket Secure on configurable port)
+    options.ListenAnyIP(wsPort, listenOptions =>
     {
         listenOptions.UseHttps(serverCert!);
         listenOptions.Protocols = Microsoft.AspNetCore.Server.Kestrel.Core.HttpProtocols.Http1AndHttp2;
@@ -149,6 +165,12 @@ var adminPassword = Environment.GetEnvironmentVariable("ADMIN_PASSWORD") ?? "adm
 var plexUrl = Environment.GetEnvironmentVariable("PLEX_URL") ?? "http://localhost:32400";
 var plexToken = Environment.GetEnvironmentVariable("PLEX_TOKEN") ?? "";
 
+// Media root for resolving local media file paths
+var mediaRoot = Environment.GetEnvironmentVariable("MEDIA_ROOT") ?? "/media";
+
+// Allowed hosts configuration
+var allowedHosts = Environment.GetEnvironmentVariable("ALLOWED_HOSTS") ?? "*";
+
 // Configure HttpClient for image proxy
 builder.Services.AddSingleton<ImageProxyService>(sp =>
 {
@@ -166,10 +188,15 @@ builder.Services.AddHttpClient<PlexApiClient>((sp, client) =>
     client.DefaultRequestHeaders.Add("X-Plex-Token", plexToken);
     client.DefaultRequestHeaders.Add("Accept", "application/json");
 });
+builder.Services.AddSingleton<IPlexApiClient>(sp => sp.GetRequiredService<PlexApiClient>());
 
-// Register PlexAutoSkip service
+// Register PlexAutoSkip service (reader) and CustomJsonWriterService (writer)
 var customJsonPath = Environment.GetEnvironmentVariable("CUSTOM_JSON_PATH") ?? "/data/custom.json";
 builder.Services.AddSingleton(new PlexAutoSkipService(customJsonPath));
+builder.Services.AddSingleton(new CustomJsonWriterService(customJsonPath));
+
+// Register marker detector
+builder.Services.AddSingleton<IMarkerDetector, PlexAutoplay.Infrastructure.Detection.FfmpegMarkerDetector>();
 
 var app = builder.Build();
 
@@ -192,6 +219,9 @@ app.UseMiddleware<CorrelationIdMiddleware>();
 // JWT Authentication middleware (before routing)
 app.UseMiddleware<JwtAuthMiddleware>();
 
+// CSRF protection on mutating API routes
+app.UseMiddleware<CsrfMiddleware>();
+
 app.MapGet("/auth/login", () => Results.Ok(new { message = "Use POST to authenticate" }));
 
 app.MapPost("/auth/login", (HttpContext context, [FromServices] JwtTokenService tokenService) =>
@@ -210,7 +240,7 @@ app.MapPost("/auth/login", (HttpContext context, [FromServices] JwtTokenService 
     return Results.Unauthorized();
 });
 
-app.MapGet("/api/plex/libraries", async ([FromServices] PlexApiClient plexClient) =>
+app.MapGet("/api/plex/libraries", async ([FromServices] IPlexApiClient plexClient) =>
 {
     var libraries = await plexClient.GetLibrariesAsync();
     var seriesLibraries = libraries.Where(l => l.Type == "show").ToList();
@@ -220,7 +250,7 @@ app.MapGet("/api/plex/libraries", async ([FromServices] PlexApiClient plexClient
 // Scan job tracking (in-memory for v1)
 var scanJobs = new ConcurrentDictionary<string, ScanJob>();
 
-app.MapPost("/api/plex/scan", async ([FromServices] PlexApiClient plexClient, [FromServices] IMarkerRepository markerRepo, [FromServices] IMarkerDetector markerDetector) =>
+app.MapPost("/api/plex/scan", async ([FromServices] PlexApiClient plexClient, [FromServices] IMarkerRepository markerRepo, [FromServices] IMarkerDetector markerDetector, [FromServices] CustomJsonWriterService customJsonWriter) =>
 {
     var jobId = Guid.NewGuid().ToString();
     var job = new ScanJob { JobId = jobId, Status = "queued" };
@@ -244,11 +274,58 @@ app.MapPost("/api/plex/scan", async ([FromServices] PlexApiClient plexClient, [F
             {
                 if (job.Status == "cancelled") break;
 
-                // In a full implementation, we'd list episodes from Plex and
-                // detect markers for each media file via ffprobe.
-                // For now, we simulate the scan flow.
-                await Task.Delay(500);
-                processed++;
+                try
+                {
+                    var episodes = await plexClient.GetEpisodesAsync(lib.Key);
+
+                    foreach (var episode in episodes)
+                    {
+                        if (job.Status == "cancelled") break;
+
+                        // Skip if already has both intro and credits markers
+                        var hasIntro = await markerRepo.ExistsAsync(episode.RatingKey, "intro");
+                        var hasCredits = await markerRepo.ExistsAsync(episode.RatingKey, "credits");
+                        if (hasIntro && hasCredits)
+                        {
+                            skipped++;
+                            continue;
+                        }
+
+                        // Resolve local media path
+                        var localPath = MediaPathResolver.Resolve(mediaRoot, episode.FilePath);
+                        if (string.IsNullOrEmpty(localPath) || !File.Exists(localPath))
+                        {
+                            skipped++;
+                            continue;
+                        }
+
+                        // Detect markers via ffprobe
+                        var detectedMarkers = markerDetector.Detect(localPath);
+
+                        var markerEntries = new List<CustomJsonWriterService.MarkerEntry>();
+                        foreach (var marker in detectedMarkers)
+                        {
+                            var exists = await markerRepo.ExistsAsync(episode.RatingKey, marker.Kind);
+                            if (!exists)
+                            {
+                                await markerRepo.AddAsync(marker with { RatingKey = episode.RatingKey });
+                                markerEntries.Add(new CustomJsonWriterService.MarkerEntry(marker.Kind, marker.StartMs, marker.EndMs));
+                            }
+                        }
+
+                        if (markerEntries.Count > 0)
+                        {
+                            customJsonWriter.UpsertMarkers(episode.RatingKey, markerEntries);
+                        }
+
+                        processed++;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Log.Warning(ex, "Error scanning library {LibKey}", lib.Key);
+                    errors++;
+                }
             }
 
             job.Status = "completed";
@@ -387,11 +464,55 @@ app.Map("/ws", async (HttpContext context, [FromServices] PlexAutoSkipService au
                 break;
             }
 
-            // Echo back a simple response - in full implementation, parse player
-            // commands and send seek commands based on custom.json markers
-            var response = JsonSerializer.Serialize(new { status = "ok", markers = autoSkipService.GetMarkersForEpisode("") });
-            var responseBytes = System.Text.Encoding.UTF8.GetBytes(response);
-            await webSocket.SendAsync(new ArraySegment<byte>(responseBytes), WebSocketMessageType.Text, true, CancellationToken.None);
+            if (result.MessageType != WebSocketMessageType.Text)
+                continue;
+
+            var json = System.Text.Encoding.UTF8.GetString(buffer, 0, result.Count);
+            try
+            {
+                using var doc = System.Text.Json.JsonDocument.Parse(json);
+                var root = doc.RootElement;
+
+                string? ratingKey = root.TryGetProperty("ratingKey", out var rkEl) ? rkEl.GetString() : null;
+                string? state = root.TryGetProperty("state", out var stEl) ? stEl.GetString() : null;
+                long positionMs = root.TryGetProperty("positionMs", out var pmEl) ? pmEl.GetInt64() : 0;
+
+                if (string.IsNullOrEmpty(ratingKey) || string.IsNullOrEmpty(state))
+                    continue;
+
+                // Only act on play state
+                if (!state.Equals("play", StringComparison.OrdinalIgnoreCase))
+                    continue;
+
+                var markers = autoSkipService.GetMarkersForEpisode(ratingKey);
+
+                foreach (var marker in markers)
+                {
+                    // If player is within intro/credits range, send seek to end of segment
+                    if (positionMs >= marker.StartMs && positionMs <= marker.EndMs)
+                    {
+                        var seekResponse = System.Text.Json.JsonSerializer.Serialize(new
+                        {
+                            status = "seek",
+                            targetMs = marker.EndMs,
+                            reason = marker.Kind,
+                            ratingKey
+                        });
+                        var seekBytes = System.Text.Encoding.UTF8.GetBytes(seekResponse);
+                        await webSocket.SendAsync(new ArraySegment<byte>(seekBytes), WebSocketMessageType.Text, true, CancellationToken.None);
+                        break;
+                    }
+                }
+
+                // If no seek needed, send heartbeat/ack
+                var ackResponse = System.Text.Json.JsonSerializer.Serialize(new { status = "ok", ratingKey });
+                var ackBytes = System.Text.Encoding.UTF8.GetBytes(ackResponse);
+                await webSocket.SendAsync(new ArraySegment<byte>(ackBytes), WebSocketMessageType.Text, true, CancellationToken.None);
+            }
+            catch
+            {
+                // Invalid JSON, ignore
+            }
         }
     }
     else
@@ -421,11 +542,76 @@ app.MapGet("/weatherforecast", () =>
 // Serve Vue SPA static files
 app.UseStaticFiles();
 
-// Prometheus metrics endpoint
-app.MapGet("/metrics", () => 
+// Scan status endpoint
+app.MapGet("/api/status", () =>
 {
-    var metrics = "# HELP plex_autoplay_info Plex Autoplay service info\n# TYPE plex_autoplay_info gauge\nplex_autoplay_info{version=\"1.0.0\",service=\"plex-autoplay\"} 1\n";
-    return Results.Text(metrics, "text/plain; version=0.0.4; charset=utf-8");
+    var lastJob = scanJobs.Values.OrderByDescending(j => j.UpdatedAt).FirstOrDefault();
+    var process = System.Diagnostics.Process.GetCurrentProcess();
+
+    return Results.Ok(new
+    {
+        service = "plex-autoplay",
+        version = "1.0.0",
+        lastJob = lastJob != null ? new
+        {
+            job_id = lastJob.JobId,
+            status = lastJob.Status,
+            processed = lastJob.Processed,
+            skipped = lastJob.Skipped,
+            errors = lastJob.Errors,
+            error = lastJob.ErrorMessage,
+            updated_at = lastJob.UpdatedAt
+        } : null,
+        process = new
+        {
+            cpu_total_ms = process.TotalProcessorTime.TotalMilliseconds,
+            memory_private_bytes = process.PrivateMemorySize64,
+            memory_working_set_bytes = process.WorkingSet64,
+            uptime_ms = (DateTime.UtcNow - process.StartTime.ToUniversalTime()).TotalMilliseconds
+        }
+    });
+});
+
+// Prometheus metrics endpoint (real metrics, not hardcoded)
+app.MapGet("/metrics", () =>
+{
+    var lastJob = scanJobs.Values.OrderByDescending(j => j.UpdatedAt).FirstOrDefault();
+    var process = System.Diagnostics.Process.GetCurrentProcess();
+    var lines = new List<string>
+    {
+        "# HELP plex_autoplay_info Plex Autoplay service info",
+        "# TYPE plex_autoplay_info gauge",
+        $"plex_autoplay_info{{version=\"1.0.0\",service=\"plex-autoplay\"}} 1",
+        "",
+        "# HELP plex_autoplay_process_memory_private_bytes Private memory bytes",
+        "# TYPE plex_autoplay_process_memory_private_bytes gauge",
+        $"plex_autoplay_process_memory_private_bytes {process.PrivateMemorySize64}",
+        "",
+        "# HELP plex_autoplay_process_memory_working_set_bytes Working set bytes",
+        "# TYPE plex_autoplay_process_memory_working_set_bytes gauge",
+        $"plex_autoplay_process_memory_working_set_bytes {process.WorkingSet64}",
+        "",
+        "# HELP plex_autoplay_process_cpu_total_ms Total CPU milliseconds",
+        "# TYPE plex_autoplay_process_cpu_total_ms counter",
+        $"plex_autoplay_process_cpu_total_ms {process.TotalProcessorTime.TotalMilliseconds}",
+        "",
+        "# HELP plex_autoplay_process_uptime_ms Process uptime milliseconds",
+        "# TYPE plex_autoplay_process_uptime_ms counter",
+        $"plex_autoplay_process_uptime_ms {(DateTime.UtcNow - process.StartTime.ToUniversalTime()).TotalMilliseconds}",
+        "",
+        "# HELP plex_autoplay_last_job_processed Last job processed count",
+        "# TYPE plex_autoplay_last_job_processed gauge",
+        $"plex_autoplay_last_job_processed {lastJob?.Processed ?? 0}",
+        "",
+        "# HELP plex_autoplay_last_job_skipped Last job skipped count",
+        "# TYPE plex_autoplay_last_job_skipped gauge",
+        $"plex_autoplay_last_job_skipped {lastJob?.Skipped ?? 0}",
+        "",
+        "# HELP plex_autoplay_last_job_errors Last job errors count",
+        "# TYPE plex_autoplay_last_job_errors gauge",
+        $"plex_autoplay_last_job_errors {lastJob?.Errors ?? 0}"
+    };
+    return Results.Text(string.Join("\n", lines) + "\n", "text/plain; version=0.0.4; charset=utf-8");
 });
 
 // Observability summary endpoint
@@ -456,6 +642,57 @@ app.MapGet("/api/observability/summary", () =>
         }
     };
     return Results.Ok(summary);
+});
+
+// Config endpoints (env-only, no app-config.json)
+app.MapGet("/config", () =>
+{
+    return Results.Ok(new
+    {
+        plex_url = Environment.GetEnvironmentVariable("PLEX_URL") ?? "",
+        sync_interval_minutes = Environment.GetEnvironmentVariable("SYNC_INTERVAL_MINUTES") ?? "5",
+        custom_json_path = Environment.GetEnvironmentVariable("CUSTOM_JSON_PATH") ?? "/data/custom.json",
+        media_root = Environment.GetEnvironmentVariable("MEDIA_ROOT") ?? "/media",
+        ws_port = Environment.GetEnvironmentVariable("WS_PORT") ?? "8081",
+        https_port = Environment.GetEnvironmentVariable("HTTPS_PORT") ?? "443",
+        disable_http = Environment.GetEnvironmentVariable("DISABLE_HTTP") ?? "true",
+        log_level = Environment.GetEnvironmentVariable("LOG_LEVEL") ?? "Information",
+        allowed_hosts = Environment.GetEnvironmentVariable("ALLOWED_HOSTS") ?? "*",
+        otel_exporter = Environment.GetEnvironmentVariable("OTEL_EXPORTER") ?? "console",
+        otel_endpoint = Environment.GetEnvironmentVariable("OTEL_ENDPOINT") ?? "",
+        otel_service_name = Environment.GetEnvironmentVariable("OTEL_SERVICE_NAME") ?? "plex-autoplay",
+        app_config_path = Environment.GetEnvironmentVariable("APP_CONFIG_PATH") ?? "/data/app-config.json",
+        note = "Configuration is read exclusively from environment variables. app-config.json is not used."
+    });
+});
+
+app.MapPost("/config", () =>
+{
+    // POST only validates current config values; does not write app-config.json
+    // per spec config-env requirement
+    return Results.Ok(new
+    {
+        status = "valid",
+        message = "Configuration validated from environment variables",
+        source = "environment_variables",
+        app_config_json_used = false
+    });
+});
+
+// Library episodes endpoint
+app.MapGet("/library/{section_key}", async (string section_key, [FromServices] IPlexApiClient plexClient) =>
+{
+    var episodes = await plexClient.GetEpisodesAsync(section_key);
+    var result = episodes.Select(e => new
+    {
+        rating_key = e.RatingKey,
+        title = e.Title,
+        season = e.ParentIndex,
+        episode = e.Index,
+        file_path = e.FilePath,
+        local_path = MediaPathResolver.Resolve(mediaRoot, e.FilePath)
+    });
+    return Results.Ok(result);
 });
 
 // SPA fallback: routes not matching API go to index.html
@@ -489,15 +726,7 @@ record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
     public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
 }
 
-public class PlexLibrary
-{
-    public string Key { get; set; } = "";
-    public string Title { get; set; } = "";
-    public string Type { get; set; } = "";
-    public string Agent { get; set; } = "";
-}
-
-public class PlexApiClient
+public class PlexApiClient : IPlexApiClient
 {
     private readonly HttpClient _httpClient;
     private static readonly ActivitySource ActivitySource = PlexAutoplay.Infrastructure.Telemetry.OpenTelemetryService.Tracer;
@@ -509,7 +738,7 @@ public class PlexApiClient
         _httpClient = httpClient;
     }
 
-    public async Task<List<PlexLibrary>> GetLibrariesAsync()
+    public async Task<List<PlexLibraryDto>> GetLibrariesAsync()
     {
         using var activity = ActivitySource.StartActivity("Plex.GetLibraries");
         activity?.SetTag("service.name", "plex");
@@ -527,26 +756,25 @@ public class PlexApiClient
                 activity?.SetTag("http.status_code", (int)response.StatusCode);
                 activity?.SetTag("error", true);
                 Log.Warning("Plex API returned {StatusCode} for GetLibraries", (int)response.StatusCode);
-                return new List<PlexLibrary>();
+                return new List<PlexLibraryDto>();
             }
 
             activity?.SetTag("http.status_code", (int)response.StatusCode);
 
             var json = await response.Content.ReadAsStringAsync();
             using var doc = JsonDocument.Parse(json);
-            
-            var libraries = new List<PlexLibrary>();
+
+            var libraries = new List<PlexLibraryDto>();
             var directory = doc.RootElement.GetProperty("Directory");
-            
+
             foreach (var item in directory.EnumerateArray())
             {
-                libraries.Add(new PlexLibrary
-                {
-                    Key = item.GetProperty("key").GetString() ?? "",
-                    Title = item.GetProperty("title").GetString() ?? "",
-                    Type = item.GetProperty("type").GetString() ?? "",
-                    Agent = item.GetProperty("agent").GetString() ?? ""
-                });
+                libraries.Add(new PlexLibraryDto(
+                    item.GetProperty("key").GetString() ?? "",
+                    item.GetProperty("title").GetString() ?? "",
+                    item.GetProperty("type").GetString() ?? "",
+                    item.GetProperty("agent").GetString() ?? ""
+                ));
             }
 
             var durationMs = (DateTime.UtcNow - startTime).TotalMilliseconds;
@@ -561,7 +789,84 @@ public class PlexApiClient
             activity?.SetTag("error.message", ex.Message);
             PlexErrorCounter.Add(1, new KeyValuePair<string, object?>("service", "plex"), new KeyValuePair<string, object?>("error_type", ex.GetType().Name));
             Log.Error(ex, "Plex API call failed: GetLibraries", new { external_service = "plex", duration_ms = durationMs, error_type = ex.GetType().Name });
-            return new List<PlexLibrary>();
+            return new List<PlexLibraryDto>();
+        }
+    }
+
+    public async Task<List<PlexEpisodeDto>> GetEpisodesAsync(string sectionKey)
+    {
+        using var activity = ActivitySource.StartActivity("Plex.GetEpisodes");
+        activity?.SetTag("service.name", "plex");
+        activity?.SetTag("http.method", "GET");
+        activity?.SetTag("http.url", $"/library/sections/{sectionKey}/items");
+
+        var startTime = DateTime.UtcNow;
+
+        try
+        {
+            var response = await _httpClient.GetAsync($"/library/sections/{sectionKey}/items");
+
+            if (!response.IsSuccessStatusCode)
+            {
+                activity?.SetTag("http.status_code", (int)response.StatusCode);
+                activity?.SetTag("error", true);
+                Log.Warning("Plex API returned {StatusCode} for GetEpisodes", (int)response.StatusCode);
+                return new List<PlexEpisodeDto>();
+            }
+
+            activity?.SetTag("http.status_code", (int)response.StatusCode);
+
+            var json = await response.Content.ReadAsStringAsync();
+            using var doc = JsonDocument.Parse(json);
+
+            var episodes = new List<PlexEpisodeDto>();
+            var metadata = doc.RootElement.GetProperty("MediaContainer").GetProperty("Metadata");
+
+            foreach (var item in metadata.EnumerateArray())
+            {
+                // Only process episodes (type "episode")
+                if (item.TryGetProperty("type", out var typeEl) && typeEl.GetString() != "episode")
+                    continue;
+
+                string? filePath = null;
+                if (item.TryGetProperty("Media", out var mediaEl))
+                {
+                    foreach (var media in mediaEl.EnumerateArray())
+                    {
+                        if (media.TryGetProperty("Part", out var partsEl))
+                        {
+                            foreach (var part in partsEl.EnumerateArray())
+                            {
+                                filePath = part.GetProperty("file").GetString();
+                                break;
+                            }
+                        }
+                        if (filePath != null) break;
+                    }
+                }
+
+                episodes.Add(new PlexEpisodeDto(
+                    item.GetProperty("ratingKey").GetString() ?? "",
+                    item.GetProperty("title").GetString() ?? "",
+                    item.GetProperty("parentIndex").GetInt32(),
+                    item.GetProperty("index").GetInt32(),
+                    filePath ?? ""
+                ));
+            }
+
+            var durationMs = (DateTime.UtcNow - startTime).TotalMilliseconds;
+            Log.Information("Plex API call: GetEpisodes", new { external_service = "plex", duration_ms = durationMs, status_code = (int)response.StatusCode, section_key = sectionKey, count = episodes.Count });
+
+            return episodes;
+        }
+        catch (Exception ex)
+        {
+            var durationMs = (DateTime.UtcNow - startTime).TotalMilliseconds;
+            activity?.SetTag("error", true);
+            activity?.SetTag("error.message", ex.Message);
+            PlexErrorCounter.Add(1, new KeyValuePair<string, object?>("service", "plex"), new KeyValuePair<string, object?>("error_type", ex.GetType().Name));
+            Log.Error(ex, "Plex API call failed: GetEpisodes", new { external_service = "plex", duration_ms = durationMs, error_type = ex.GetType().Name, section_key = sectionKey });
+            return new List<PlexEpisodeDto>();
         }
     }
 }

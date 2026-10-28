@@ -47,4 +47,91 @@ test.describe('Bibliotecas de séries', () => {
     // A página deve carregar sem exceção não tratada
     await expect(page.locator('h1')).toContainText('Bibliotecas');
   });
+
+  test('GET /api/status retorna estado do último job e métricas de processo', async ({ page, request }) => {
+    await page.goto(`${BASE_URL}/login`, { waitUntil: 'networkidle' });
+    await page.waitForSelector('input[type="password"]', { state: 'visible', timeout: 10000 });
+    await page.fill('input[type="password"]', ADMIN_PASSWORD);
+    await page.click('button');
+    await page.waitForURL(`${BASE_URL}/dashboard`);
+
+    const token = await page.evaluate(() => localStorage.getItem('auth_token'));
+
+    const response = await request.get(`${BASE_URL}/api/status`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    expect(response.status()).toBe(200);
+    const body = await response.json();
+    expect(body.service).toBe('plex-autoplay');
+    expect(body.process).toBeTruthy();
+    expect(body.process.memory_private_bytes).toBeGreaterThan(0);
+  });
+
+  test('GET /config retorna configuração via variáveis de ambiente', async ({ page, request }) => {
+    await page.goto(`${BASE_URL}/login`, { waitUntil: 'networkidle' });
+    await page.waitForSelector('input[type="password"]', { state: 'visible', timeout: 10000 });
+    await page.fill('input[type="password"]', ADMIN_PASSWORD);
+    await page.click('button');
+    await page.waitForURL(`${BASE_URL}/dashboard`);
+
+    const token = await page.evaluate(() => localStorage.getItem('auth_token'));
+
+    const response = await request.get(`${BASE_URL}/config`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    expect(response.status()).toBe(200);
+    const body = await response.json();
+    expect(body.note).toContain('environment variables');
+    expect(body.app_config_json_used).toBeUndefined();
+  });
+
+  test('POST /config não grava app-config.json', async ({ page, request }) => {
+    await page.goto(`${BASE_URL}/login`, { waitUntil: 'networkidle' });
+    await page.waitForSelector('input[type="password"]', { state: 'visible', timeout: 10000 });
+    await page.fill('input[type="password"]', ADMIN_PASSWORD);
+    await page.click('button');
+    await page.waitForURL(`${BASE_URL}/dashboard`);
+
+    const token = await page.evaluate(() => localStorage.getItem('auth_token'));
+
+    const response = await request.post(`${BASE_URL}/config`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    expect(response.status()).toBe(200);
+    const body = await response.json();
+    expect(body.status).toBe('valid');
+    expect(body.app_config_json_used).toBe(false);
+  });
+
+  test('GET /library/{section_key} retorna episódios com caminho de mídia resolvido', async ({ page, request }) => {
+    await page.goto(`${BASE_URL}/login`, { waitUntil: 'networkidle' });
+    await page.waitForSelector('input[type="password"]', { state: 'visible', timeout: 10000 });
+    await page.fill('input[type="password"]', ADMIN_PASSWORD);
+    await page.click('button');
+    await page.waitForURL(`${BASE_URL}/dashboard`);
+
+    const token = await page.evaluate(() => localStorage.getItem('auth_token'));
+
+    // Primeiro obtém bibliotecas para saber uma section_key
+    const libsResponse = await request.get(`${BASE_URL}/api/plex/libraries`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const libraries = await libsResponse.json();
+
+    if (libraries.length > 0) {
+      const sectionKey = libraries[0].key;
+      const episodesResponse = await request.get(`${BASE_URL}/library/${sectionKey}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      expect(episodesResponse.status()).toBe(200);
+      const episodes = await episodesResponse.json();
+      expect(Array.isArray(episodes)).toBe(true);
+      if (episodes.length > 0) {
+        expect(episodes[0].local_path).toBeTruthy();
+      }
+    }
+  });
 });
