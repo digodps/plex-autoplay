@@ -1,13 +1,13 @@
 ---
-description: "Executa a skill de setup isolado para mudanças OpenSpec (branch remoto + clone em pasta irmã)"
+description: "Executa a skill de setup isolado para mudanças OpenSpec (branch remoto dedicado)"
 ---
 
 Executa a skill de setup (`scripts/setup-spec.py`) no repositório atual,
-criando um branch remoto dedicado para uma mudança OpenSpec e clonando-o em uma
-pasta irmã fora da solução atual.
+criando um branch remoto dedicado para uma mudança OpenSpec e deixando o
+branch local pronto para uso (apontando para o remoto).
 
 Padrão de branch: `feature/<mudanca>-<span>` onde `<span>` segue `dd-mm-yyyy HH:mm:ss:mmm`
-(sanitizado para nomes de branch e pasta). Cada mudança gera seu próprio branch e clone isolados.
+(sanitizado para nomes de branch). Cada mudança gera seu próprio branch isolado.
 
 Uso:
 ```
@@ -26,10 +26,7 @@ O comando executa:
 2. Gera um span no formato `dd-mm-yyyy HH:mm:ss:mmm`
 3. Cria branch `feature/<mudanca>-<span-sanitizado>` a partir do `main` remoto limpo
 4. Faz push do branch para origin
-5. Cria pasta irmã `plex-setup-<mudanca>-<span-sanitizado>/` no mesmo pai da solução
-6. Executa `git clone -b <branch> <origin> <pasta-irma>`
-7. Copia os artefatos da mudança (proposal, design, tasks, specs) para o clone
-8. Commita e pusha os artefatos no branch remoto, deixando-o pronto para trabalho
+5. Deixa o branch local pronto para uso (apontando para o remoto)
 
 O PR é criado manualmente pelo usuário (este comando não automatiza).
 Não usa `Co-authored-by`.

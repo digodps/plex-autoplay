@@ -16,12 +16,30 @@ services:
       - JWT_SECRET=${JWT_SECRET}
       - ADMIN_PASSWORD=${ADMIN_PASSWORD}
       - MEDIA_ROOT=${MEDIA_ROOT}
-      - PLAYWRIGHT_BASE_URL=https://plex-autoplay.dns.podman:443
+      - APP_HOST=${APP_HOST:-plex-autoplay.dns.podman}
+      - PLAYWRIGHT_BASE_URL=https://${APP_HOST:-plex-autoplay.dns.podman}:443
       - INSIDE_EXECUTOR_CONTAINER=true
     working_dir: /workspace
     depends_on:
       plex-autoplay:
         condition: service_started
+      plex-mock:
+        condition: service_started
+    networks:
+      - plex-test-network
+
+  plex-mock:
+    image: node:20-slim
+    container_name: plex-mock
+    restart: "no"
+    working_dir: /app
+    command: ["node", "server.js"]
+    volumes:
+      - ./tests/e2e/mock-plex:/app:ro
+    expose:
+      - "32400"
+    security_opt:
+      - label=disable
     networks:
       - plex-test-network
 
@@ -29,6 +47,9 @@ services:
     build: .
     container_name: plex-autoplay-test
     restart: "no"
+    depends_on:
+      plex-mock:
+        condition: service_started
     ports:
       - "8443:80"
     volumes:

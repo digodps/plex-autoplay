@@ -1,4 +1,4 @@
-name: CI / CD
+name: CI
 
 on:
   push:
@@ -6,95 +6,80 @@ on:
   pull_request:
     branches: [main]
 
-env:
-  REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}
+permissions:
+  contents: read
 
 jobs:
   # --------------------------------------------------------------
-  # 1️⃣  Lint, type‑check & unit tests
+  # 1️⃣  Build da solution .NET
   # --------------------------------------------------------------
-  test:
+  build:
+    name: Build (.NET)
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - name: Set up .NET SDK
+        uses: actions/setup-dotnet@v4
         with:
-          python-version: "3.12"
-          cache: "pip"
+          dotnet-version: "10.0.x"
 
-      - name: Install deps
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-          pip install ruff mypy pytest pytest-cov
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-${{ hashFiles('**/*.csproj') }}
+          restore-keys: nuget-${{ runner.os }}-
 
-      - name: Lint (ruff)
-        run: ruff check .
-
-      - name: Type‑check (mypy)
-        run: mypy plex_autoplay
-
-      - name: Unit tests (pytest)
-        run: pytest -q --cov=plex_autoplay --cov-report=term-missing
+      - name: Build solution
+        run: dotnet build PlexAutoplay.slnx -c Release
 
   # --------------------------------------------------------------
-  # 2️⃣  Build & push Docker image (only on tags / main)
+  # 2️⃣  Testes e2e em container (app + executor + plex-mock)
   # --------------------------------------------------------------
-  docker:
-    needs: test
-    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/'))
+  e2e:
+    name: E2E (container)
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write   # needed for GHCR
+    timeout-minutes: 30
+    env:
+      APP_HOST: plex-autoplay-test
+      PLEX_URL: http://plex-mock:32400
+      PLEX_TOKEN: mock-token
+      JWT_SECRET: ci-e2e-jwt-secret-0123456789abcdef0123456789abcdef
+      ADMIN_PASSWORD: ci-e2e-admin-password
+      MEDIA_ROOT: /tmp/plex-media
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+      - name: Create .env for the test stack
+        run: |
+          cat > .env <<EOF
+          PLEX_URL=http://plex-mock:32400
+          PLEX_TOKEN=mock-token
+          JWT_SECRET=ci-e2e-jwt-secret-0123456789abcdef0123456789abcdef
+          ADMIN_PASSWORD=ci-e2e-admin-password
+          MEDIA_ROOT=/tmp/plex-media
+          EOF
 
-      - name: Log in to GHCR
-        uses: docker/login-action@v3
+      - name: Create media root directory
+        run: mkdir -p /tmp/plex-media
+
+      - name: Run e2e stack (app + executor + plex-mock)
+        run: >-
+          docker compose -f docker-compose.test.yml up
+          --build --abort-on-container-exit --exit-code-from executor
+
+      - name: Upload failure artifacts
+        if: failure()
+        uses: actions/upload-artifact@v4
         with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          name: e2e-failure-artifacts
+          path: test-artifacts/
+          if-no-files-found: ignore
 
-      - name: Extract metadata (tags, labels)
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-          tags: |
-            type=ref,event=branch
-            type=ref,event=pr
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=raw,value=latest,enable={{is_default_branch}}
-
-      - name: Build & push
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-  # --------------------------------------------------------------
-  # 3️⃣  Deploy (example – render, k8s, Portainer, etc.)
-  # --------------------------------------------------------------
-  # deploy:
-  #   needs: docker
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: Deploy to …
-  #       run: |
-  #         echo "Add your deploy step here (helm, kubectl, docker compose on remote, etc.)"
+      - name: Tear down stack
+        if: always()
+        run: docker compose -f docker-compose.test.yml down -v
