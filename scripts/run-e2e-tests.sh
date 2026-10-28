@@ -86,25 +86,27 @@ fi
 
 log "Todas as variáveis obrigatórias estão definidas."
 
-# --- 2. Aguardar a aplicação ficar disponível ---
-# A aplicação já sobe no mesmo docker-compose.test.yml; não precisa de
-# Docker-in-Docker para subí-la. Usa o nome do serviço Docker em vez de
-# localhost, pois estamos dentro de um container separado.
-log "Aguardando a aplicação ficar disponível nas portas 443 e 8081..."
-for port in 443 8081; do
-  for i in $(seq 1 30); do
-    if curl -sf "http://plex-autoplay:$port" >/dev/null 2>&1 || \
-       curl -skf "https://plex-autoplay:$port" >/dev/null 2>&1; then
-      log "Porta $port está respondendo."
-      break
-    fi
-    if [[ "$i" -eq 30 ]]; then
-      error "Timeout aguardando a porta $port ficar disponível."
-      exit 1
-    fi
-    sleep 2
-  done
+# --- 2. Aguardar a aplicacao ficar disponível ---
+# Em modo rootless/Podman o DNS do compose resolve apenas
+# <servico>.dns.podman. Usa esse nome para acessar a aplicacao
+# a partir do container executor (rede Docker interna).
+# A aplicacao ja sobe no mesmo docker-compose.test.yml; nao precisa de
+# Docker-in-Docker para subí-la.
+APP_HOST="plex-autoplay.dns.podman"
+log "Aguardando a aplicacao ficar disponível em ${APP_HOST}:80..."
+for i in $(seq 1 30); do
+  APP_PORT=443
+if curl -sk -o /dev/null "https://${APP_HOST}:${APP_PORT}" >/dev/null 2>&1; then
+    log "Aplicacao esta respondendo."
+    break
+  fi
+  if [[ "$i" -eq 30 ]]; then
+    error "Timeout aguardando a aplicacao ficar disponível."
+    exit 1
+  fi
+  sleep 2
 done
+
 
 log "Aplicação está disponível."
 
@@ -121,12 +123,21 @@ log "Rodando testes e2e (Playwright) com relatório HTML..."
 TEST_EXIT_CODE=0
 
 cd tests/e2e
+
+# Garante que as dependências do Playwright estão instaladas no container
+if [[ ! -d node_modules ]]; then
+  log "Instalando dependências do Playwright (npm install)..."
+  npm install
+fi
+
 npx playwright test --reporter=html || TEST_EXIT_CODE=$?
 cd "$PROJECT_ROOT"
 
 # --- 5. Capturar artefatos (sempre, para diagnóstico) ---
 log "Capturando artefatos de execução em $ARTIFACTS_DIR/..."
 mkdir -p "$ARTIFACTS_DIR"
+# Remove artifacts de execuções anteriores para evitar arquivos de falha obsoletos
+rm -rf "$ARTIFACTS_DIR/test-results" "$ARTIFACTS_DIR/playwright-report" 2>/dev/null || true
 
 # Relatório HTML do Playwright (sempre gerado com --reporter=html)
 if [[ -d tests/e2e/playwright-report ]]; then
