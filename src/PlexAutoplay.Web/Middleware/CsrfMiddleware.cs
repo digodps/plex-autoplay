@@ -31,6 +31,14 @@ public class CsrfMiddleware
             return;
         }
 
+        // Allow requests with Bearer JWT token without CSRF (stateless auth)
+        var authHeader = context.Request.Headers["Authorization"].FirstOrDefault();
+        if (!string.IsNullOrEmpty(authHeader) && authHeader.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
+        {
+            await _next(context);
+            return;
+        }
+
         // Only enforce CSRF on mutating API routes under /api/
         var method = context.Request.Method.ToUpperInvariant();
         var isMutatingApi = (method == "POST" || method == "PUT" || method == "DELETE")
