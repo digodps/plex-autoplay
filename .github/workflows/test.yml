@@ -1,0 +1,72 @@
+name: Testes E2E
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      # Plex mockado para CI (não há Plex real disponível no GitHub Actions)
+      plex-mock:
+        image: node:20-slim
+        ports:
+          - "32400:32400"
+        volumes:
+          - ./tests/e2e/mock-plex:/app
+        working_dir: /app
+        command: ["node", "server.js"]
+        options: >-
+          --health-cmd "curl -f http://localhost:32400/ || exit 1"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout do código
+        uses: actions/checkout@v4
+
+      - name: Valida se Docker está disponível
+        run: |
+          docker --version
+          docker compose version
+
+      - name: Cria .env a partir de segredos do GitHub
+        run: |
+          cat > .env <<EOF
+          PLEX_URL=http://plex-mock:32400
+          PLEX_TOKEN=${{ secrets.PLEX_TOKEN }}
+          JWT_SECRET=${{ secrets.JWT_SECRET }}
+          ADMIN_PASSWORD=${{ secrets.ADMIN_PASSWORD }}
+          MEDIA_ROOT=/tmp/plex-media
+          WEB_PORT=8080
+          WS_PORT=8081
+          HTTPS_PORT=443
+          DISABLE_HTTP=true
+          ASPNETCORE_ENVIRONMENT=Development
+          EOF
+
+      - name: Cria diretório de mídia fake para bind mount
+        run: |
+          mkdir -p /tmp/plex-media
+
+      - name: Roda executor de testes (docker-compose.test.yml)
+        run: |
+          docker compose -f docker-compose.test.yml up --build --abort-on-container-exit
+        env:
+          PLEX_URL: http://plex-mock:32400
+          PLEX_TOKEN: ${{ secrets.PLEX_TOKEN }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
+          MEDIA_ROOT: /tmp/plex-media
+
+      - name: Upload de artefatos de falha
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-artifacts
+          path: test-artifacts/
+          retention-days: 7

@@ -1,0 +1,56 @@
+services:
+  executor:
+    build:
+      context: .
+      dockerfile: Dockerfile.test-executor
+    container_name: plex-autoplay-executor
+    volumes:
+      - .:/workspace:Z
+      - ./test-artifacts:/workspace/test-artifacts:Z
+    environment:
+      - PLEX_URL=${PLEX_URL}
+      - PLEX_TOKEN=${PLEX_TOKEN}
+      - JWT_SECRET=${JWT_SECRET}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD}
+      - MEDIA_ROOT=${MEDIA_ROOT}
+      - PLAYWRIGHT_BASE_URL=https://plex-autoplay:8443
+      - INSIDE_EXECUTOR_CONTAINER=true
+    working_dir: /workspace
+    user: "1000:1000"
+    networks:
+      - plex-test-network
+
+  plex-autoplay:
+    build: .
+    container_name: plex-autoplay-test
+    restart: "no"
+    ports:
+      - "8443:443"
+      - "8081:8081"
+    volumes:
+      - plex-test-data:/data
+      - ${MEDIA_ROOT}:/media:ro
+    environment:
+      - PLEX_URL=${PLEX_URL}
+      - PLEX_TOKEN=${PLEX_TOKEN}
+      - MEDIA_ROOT=/media
+      - JWT_SECRET=${JWT_SECRET}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD}
+      - ASPNETCORE_URLS=https://+:443
+      - OTEL_EXPORTER=${OTEL_EXPORTER:-console}
+      - OTEL_ENDPOINT=${OTEL_ENDPOINT:-}
+      - OTEL_SERVICE_NAME=${OTEL_SERVICE_NAME:-plex-autoplay}
+      - CERT_PATH=${CERT_PATH}
+      - CERT_PASSWORD=${CERT_PASSWORD}
+      - CERT_BASE64=${CERT_BASE64}
+      - HTTPS_PORT=${HTTPS_PORT:-443}
+      - DISABLE_HTTP=${DISABLE_HTTP:-true}
+    networks:
+      - plex-test-network
+
+volumes:
+  plex-test-data:
+
+networks:
+  plex-test-network:
+    driver: bridge

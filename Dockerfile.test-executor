@@ -1,0 +1,16 @@
+# syntax=docker/dockerfile:1
+FROM node:20-slim
+
+# Install curl for health checks and Playwright system dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends curl && rm -rf /var/lib/apt/lists/*
+
+# Install Playwright and its system dependencies
+RUN npx playwright install --with-deps chromium
+
+WORKDIR /workspace
+
+# Copy the test runner script to a location outside the volume mount
+COPY scripts/run-e2e-tests.sh /usr/local/bin/run-e2e-tests.sh
+RUN chmod +x /usr/local/bin/run-e2e-tests.sh
+
+ENTRYPOINT ["bash", "/usr/local/bin/run-e2e-tests.sh"]
