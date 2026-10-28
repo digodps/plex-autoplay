@@ -3,8 +3,7 @@ const { loadEnv } = require("../utils/env");
 
 loadEnv();
 
-const BASE_URL =
-  process.env.PLAYWRIGHT_BASE_URL || "https://plex-autoplay.dns.podman:443";
+const BASE_URL = process.env.PLAYWRIGHT_BASE_URL || "https://plex-autoplay.dns.podman:443";
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
 
 test.describe("Bibliotecas de séries", () => {
@@ -23,9 +22,11 @@ test.describe("Bibliotecas de séries", () => {
   test('acessa /libraries e exibe apenas bibliotecas de tipo "show"', async ({
     page,
     request,
+    context,
   }) => {
-    // Obtém token do localStorage
-    const token = await page.evaluate(() => localStorage.getItem("auth_token"));
+    // Obtém token do cookie
+    const cookies = await context.cookies();
+    const token = cookies.find((c) => c.name === "auth_token")?.value ?? "";
 
     // Valida via API que apenas bibliotecas do tipo "show" são retornadas
     const response = await request.get(`${BASE_URL}/api/plex/libraries`, {
@@ -58,6 +59,7 @@ test.describe("Bibliotecas de séries", () => {
   test("GET /api/status retorna estado do último job e métricas de processo", async ({
     page,
     request,
+    context,
   }) => {
     await page.goto(`${BASE_URL}/login`, { waitUntil: "networkidle" });
     await page.waitForSelector('input[type="password"]', {
@@ -68,7 +70,8 @@ test.describe("Bibliotecas de séries", () => {
     await page.click("button");
     await page.waitForURL(`${BASE_URL}/dashboard`);
 
-    const token = await page.evaluate(() => localStorage.getItem("auth_token"));
+    const cookies = await context.cookies();
+    const token = cookies.find((c) => c.name === "auth_token")?.value ?? "";
 
     const response = await request.get(`${BASE_URL}/api/status`, {
       headers: { Authorization: `Bearer ${token}` },
@@ -84,6 +87,7 @@ test.describe("Bibliotecas de séries", () => {
   test("GET /config retorna configuração via variáveis de ambiente", async ({
     page,
     request,
+    context,
   }) => {
     await page.goto(`${BASE_URL}/login`, { waitUntil: "networkidle" });
     await page.waitForSelector('input[type="password"]', {
@@ -94,7 +98,8 @@ test.describe("Bibliotecas de séries", () => {
     await page.click("button");
     await page.waitForURL(`${BASE_URL}/dashboard`);
 
-    const token = await page.evaluate(() => localStorage.getItem("auth_token"));
+    const cookies = await context.cookies();
+    const token = cookies.find((c) => c.name === "auth_token")?.value ?? "";
 
     const response = await request.get(`${BASE_URL}/config`, {
       headers: { Authorization: `Bearer ${token}` },
@@ -106,7 +111,7 @@ test.describe("Bibliotecas de séries", () => {
     expect(body.app_config_json_used).toBeUndefined();
   });
 
-  test("POST /config não grava app-config.json", async ({ page, request }) => {
+  test("POST /config não grava app-config.json", async ({ page, request, context }) => {
     await page.goto(`${BASE_URL}/login`, { waitUntil: "networkidle" });
     await page.waitForSelector('input[type="password"]', {
       state: "visible",
@@ -116,7 +121,8 @@ test.describe("Bibliotecas de séries", () => {
     await page.click("button");
     await page.waitForURL(`${BASE_URL}/dashboard`);
 
-    const token = await page.evaluate(() => localStorage.getItem("auth_token"));
+    const cookies = await context.cookies();
+    const token = cookies.find((c) => c.name === "auth_token")?.value ?? "";
 
     const response = await request.post(`${BASE_URL}/config`, {
       headers: { Authorization: `Bearer ${token}` },
@@ -131,6 +137,7 @@ test.describe("Bibliotecas de séries", () => {
   test("GET /library/{section_key} retorna episódios com caminho de mídia resolvido", async ({
     page,
     request,
+    context,
   }) => {
     await page.goto(`${BASE_URL}/login`, { waitUntil: "networkidle" });
     await page.waitForSelector('input[type="password"]', {
@@ -141,7 +148,8 @@ test.describe("Bibliotecas de séries", () => {
     await page.click("button");
     await page.waitForURL(`${BASE_URL}/dashboard`);
 
-    const token = await page.evaluate(() => localStorage.getItem("auth_token"));
+    const cookies = await context.cookies();
+    const token = cookies.find((c) => c.name === "auth_token")?.value ?? "";
 
     // Primeiro obtém bibliotecas para saber uma section_key
     const libsResponse = await request.get(`${BASE_URL}/api/plex/libraries`, {
@@ -151,12 +159,9 @@ test.describe("Bibliotecas de séries", () => {
 
     if (libraries.length > 0) {
       const sectionKey = libraries[0].key;
-      const episodesResponse = await request.get(
-        `${BASE_URL}/library/${sectionKey}`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        },
-      );
+      const episodesResponse = await request.get(`${BASE_URL}/library/${sectionKey}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       expect(episodesResponse.status()).toBe(200);
       const episodes = await episodesResponse.json();
       expect(Array.isArray(episodes)).toBe(true);
