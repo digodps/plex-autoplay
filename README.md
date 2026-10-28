@@ -5,20 +5,24 @@
 ---
 
 ## 🎯  Visão geral
+
 | Funcionalidade | Status |
 |----------------|--------|
 | **Descoberta de bibliotecas** | ✅ Consulta `GET /library/sections` no Plex e apresenta cards com capa, título e tipo. |
-| **Geração de marcadores** | ✅ Scanner manual via UI: roda detecção (ffprobe silence/logo) e grava marcadores no **custom.json** (formato PlexAutoSkip). |
+| **Geração de marcadores** | ✅ Scanner manual via UI: grava marcadores no `custom.json` (formato PlexAutoSkip). |
 | **Edição manual de marcadores** | ✅ UI para criar/editar/remover marcadores de intro e créditos por episódio. |
 | **PlexAutoSkip embutido** | ✅ Lê `custom.json` e serve WebSocket na porta 8081 para players compatíveis. |
 | **Interface Web** | ✅ Dashboard único (auth + CSRF): config Plex, bibliotecas, scan manual, logs tempo real. |
-| **Infraestrutura** | ✅ Container único (supervisord): Flask + Redis + PlexAutoSkip. |
+| **Infraestrutura** | ✅ Container único (.NET 10): ASP.NET Core Web API + Vue SPA + SQLite. |
+| **Testes E2E** | ✅ Executor de testes dentro do Docker com Playwright + captura de artefatos de falha. |
+| **Observabilidade** | ✅ OpenTelemetry (traces + métricas Prometheus) + Serilog. |
 
-> ⚠️ **Auto-skip/auto-next server-side NÃO está implementado** (código removido). O skip funciona apenas via **PlexAutoSkip** nos players compatíveis.
+> ⚠️ **Auto-skip/auto-next server-side NÃO está implementado**. O skip funciona apenas via **PlexAutoSkip** nos players compatíveis.
 
 ---
 
 ## 📦  Requisitos
+
 | Item | Versão mínima |
 |------|---------------|
 | Docker Engine | 24.x |
@@ -37,19 +41,17 @@ cd plex-autoplay
 
 # 2️⃣  Crie o arquivo .env com suas credenciais
 cp .env.example .env
-# edite .env → PLEX_URL=...  PLEX_TOKEN=...  SETUP_TOKEN=seu-token-secreto
+# edite .env → PLEX_URL=...  PLEX_TOKEN=...  JWT_SECRET=...  ADMIN_PASSWORD=...  MEDIA_ROOT=...
 
 # 3️⃣  Build + up
-./scripts/start.sh  # ou: docker compose build && docker compose up -d
+./scripts/start.sh --detach
 
 # 4️⃣  Acesse o dashboard
-# HTTP  : http://localhost:8080
-# HTTPS : https://localhost:8080   (certificado auto‑assinado – aceite o aviso)
+# HTTPS : https://localhost:8443   (certificado auto‑assinado – aceite o aviso)
+# WebSocket (PlexAutoSkip): ws://localhost:8081
 
 # 5️⃣  Crie o usuário admin → Em ⚙ Configuração → salve URL/Token do Plex
 #     → Em ▤ Bibliotecas → veja os cards das bibliotecas do Plex
-#     → POST /api/plex/scan { "section_key":"1" } → job_id
-#     → GET  /api/plex/scan/<job_id> → quando status=completed, marcadores já estão no custom.json
 ```
 
 ---
@@ -66,80 +68,77 @@ cp .env.example .env
 
 ---
 
-## 🛡  Primeiro acesso – token pré‑definido (`SETUP_TOKEN`)
-
-Por padrão o sistema gera um token aleatório e o grava em `config/dashboard-setup-token`.
-Para ambientes automatizados (CI/CD, Portainer, Ansible, etc.) você pode **definir o token antes de subir o container**:
-
-```dotenv
-# .env  (ou direto no docker‑compose.yml / GitHub Actions secrets)
-SETUP_TOKEN=meu-token-super-seguro-123
-```
-
-* Com `SETUP_TOKEN` presente, a tela **“Criar administrador”** já aceita esse valor.
-* Se a variável **não** estiver definida, o comportamento antigo (geração automática + arquivo) permanece.
-
----
-
 ## ⚙️  Configuração (via UI ou `.env`)
 
 | Variável | Descrição | Padrão |
 |----------|-----------|--------|
-| `PLEX_URL` | URL base do PMS (ex.: `http://192.168.1.50:32400`) | `http://localhost:32400` |
+| `PLEX_URL` | URL base do PMS (ex.: `http://192.168.1.50:32400`) | – |
 | `PLEX_TOKEN` | Token admin (obrigatório) | – |
-| `SETUP_TOKEN` | Token de *primeiro acesso* (opcional) | *gerado automaticamente* |
-| `WEBHOOK_SECRET` | Segredo HMAC para validar `X-Plex-Signature` (opcional) | vazio |
-| `WEB_PORT` | Porta do dashboard (interno) | `8080` |
-| `DASHBOARD_HTTPS` | Ativar HTTPS auto‑assinado | `true` |
-| `DASHBOARD_COOKIE_SECURE` | Cookie `Secure` no HTTPS | `true` |
-| `DASHBOARD_TLS_HOSTS` | Hosts para certificado auto‑assinado | `localhost,plex-autoplay,host.docker.internal` |
-| `LOG_LEVEL` | Nível de log (`DEBUG`, `INFO`, `WARN`, `ERROR`) | `INFO` |
-| `PLEX_AUTOPLAY_CUSTOM_JSON_PATH` | Caminho do `custom.json` do PlexAutoSkip (opcional) | `/config/plexautoskip/custom.json` |
-| `PLEX_AUTOPLAY_CONFIG_DIR` | Diretório de config do PlexAutoSkip (opcional) | `/config/plexautoskip` |
+| `JWT_SECRET` | Chave secreta para assinar tokens JWT | – |
+| `ADMIN_PASSWORD` | Senha para login no painel administrativo | – |
+| `WEB_PORT` | Porta do dashboard (interno) | 8080 |
+| `WS_PORT` | Porta WebSocket do PlexAutoSkip (interno) | 8081 |
+| `SYNC_INTERVAL_MINUTES` | Intervalo em minutos entre varreduras automáticas das bibliotecas | 5 |
+| `CUSTOM_JSON_PATH` | Caminho do `custom.json` dentro do container | `/data/custom.json` |
+| `APP_CONFIG_PATH` | Caminho do `app-config.json` | `/data/app-config.json` |
+| `CERT_PATH` | Caminho para arquivo PFX no container | vazio |
+| `CERT_PASSWORD` | Senha do arquivo PFX (opcional) | vazio |
+| `CERT_BASE64` | Conteúdo base64 de um arquivo PFX (alternativa a `CERT_PATH`) | vazio |
+| `HTTPS_PORT` | Porta HTTPS (padrão: 443) | 443 |
+| `DISABLE_HTTP` | Desabilitar listener HTTP completamente | true |
+| `ASPNETCORE_ENVIRONMENT` | Ambiente ASP.NET Core | Development |
+| `LOG_LEVEL` | Nível de log (`DEBUG`, `INFO`, `WARN`, `ERROR`) | Information |
+| `ALLOWED_HOSTS` | Hosts permitidos | * |
+| `OTEL_EXPORTER` | Exportador de telemetria: `console` ou `otlp` | console |
+| `OTEL_ENDPOINT` | Endpoint OTLP (apenas quando `OTEL_EXPORTER=otlp`) | vazio |
+| `OTEL_SERVICE_NAME` | Nome do serviço para identificação nos traces/métricas | plex-autoplay |
 
-> **Configurações do PlexAutoSkip** (geradas automaticamente no `config.ini` via `start_autoskip.sh`):
-> `unwatched = False`, `first-episode-series = Always`, `start = 0` (ver `start_autoskip.sh` para detalhes).
-
-Todas as variáveis podem ser alteradas **pela UI** (⚙ Configuração) – o arquivo `config/app-config.json` é atualizado automaticamente e tem prioridade sobre o `.env`.
+Todas as variáveis podem ser alteradas **pela UI** (⚙ Configuração) – o arquivo `app-config.json` é atualizado automaticamente e tem prioridade sobre o `.env`.
 
 ---
 
-## 🐳  Docker – detalhes do container único
+## 🐳  Docker – detalhes do container
+
+O container roda .NET 10 ASP.NET Core Web API + Vue SPA + SQLite em modo HTTPS-only.
 
 ```text
-+---------------------------+
-|  supervisord (PID 1)      |
-|  ├─ redis-server :6379    |
-|  ├─ python -m plex_autoplay (Flask + Waitress/Cheroot) |
-|  └─ python /opt/plexautoskip/main.py (PlexAutoSkip) |
-+---------------------------+
++--------------------------------------------------+
+|  Container único (PID 1 = .NET 10)               |
+|  ├─ Kestrel :443 (HTTPS API + Vue SPA)           |
+|  ├─ Kestrel :8081 (WSS PlexAutoSkip)             |
+|  ├─ OpenTelemetry (traces + métricas Prometheus) |
+|  └─ SQLite (/data/app.db)                        |
++--------------------------------------------------+
 ```
 
-* `supervisord.conf` garante restart automático dos três processos.
-* **Redis** roda mas **não é usado** pelo código da aplicação atualmente (mantido para futuras filas).
-* **PlexAutoSkip** roda embutido, lendo `/config/plexautoskip/custom.json` e servindo WebSocket na porta 8081.
-* Nenhum volume de mídia é necessário; o container só monta o **named volume** `plex-autoplay-config:/config` (persistência de `app-config.json`, `custom.json`, certificado TLS, chaves de sessão).
+- **HTTPS** na porta 443 do container (mapeada para 8443 no host em modo rootless).
+- **WebSocket (PlexAutoSkip)** na porta 8081.
+- **HTTP** desabilitado por padrão (`DISABLE_HTTP=true`).
+- **Certificado auto-assinado** gerado automaticamente quando nenhum `CERT_PATH`/`CERT_BASE64` é fornecido.
+- **Volumes**: `plex-data` (`/data` - SQLite, custom.json, certificados) e bind mount `/media` (arquivos de mídia via `MEDIA_ROOT`).
 
 ---
 
 ## 📚  Endpoints da API (autenticados – CSRF)
 
-| Método | Rota | Descrição |
-|--------|------|-----------|
-| `GET`  | `/api/plex/libraries` | Lista seções do Plex (title, key, type, thumb_url). |
-| `POST` | `/api/plex/scan` | Inicia varredura completa de uma seção (`{ "section_key": "1" }`). Retorna `job_id`. |
-| `GET`  | `/api/plex/scan/<job_id>` | Status do job (`queued|running|completed|failed|cancelled`, processed, skipped, errors). |
-| `POST` | `/api/plex/scan/<job_id>/cancel` | Solicita cancelamento do job em execução; o worker interrompe quase imediatamente. |
-| `POST` | `/plex/webhook` | Recebe webhook `library.new / library.updated` do Plex (valida `X-Plex-Signature` com `WEBHOOK_SECRET`). **Atualmente apenas loga o evento.** |
-| `GET`  | `/api/sync/library/<section_key>/tree` | Retorna árvore de séries/episódios com marcadores mesclados (Plex + custom.json). |
-| `POST` | `/api/sync/marker` | Salva/atualiza marcador (`{rating_key, kind, start_ms, end_ms, section_key}`) no custom.json. |
-| `GET`  | `/api/status` | Status do último job + métricas de CPU/Mem/Rede. |
-| `GET`  | `/config` / `POST /config` | UI de configuração. |
-| `GET`  | `/libraries` | Página “Bibliotecas” – renderiza cards do Plex + botão “Escanear”. |
-| `GET`  | `/library/<section_key>` | Visualização de biblioteca com séries, episódios e edição de marcadores. |
-| `GET`  | `/` | Dashboard – visão geral + último job. |
+| Método | Rota | Descrição | Auth |
+|--------|------|-----------|------|
+| `POST` | `/auth/login` | Login com senha admin, retorna JWT | Não |
+| `GET` | `/api/plex/libraries` | Lista bibliotecas de séries | Sim |
+| `POST` | `/api/plex/scan` | Inicia escaneamento de marcadores | Sim |
+| `GET` | `/api/sync/status/{jobId}` | Status do scan | Sim |
+| `GET` | `/api/sync/log/stream/{jobId}` | Progresso via SSE | Sim |
+| `POST` | `/api/sync/cancel/{jobId}` | Cancela scan em execução | Sim |
+| `GET/POST/DELETE` | `/api/markers` | CRUD de marcadores | Sim |
+| `GET` | `/api/images/thumb/{ratingKey}` | Proxy de imagens do Plex | Sim |
+| `GET` | `/api/status` | Status do último job + métricas | Sim |
+| `GET` | `/config` / `POST /config` | UI de configuração | Sim |
+| `GET` | `/libraries` | Página “Bibliotecas” – renderiza cards do Plex | Sim |
+| `GET` | `/library/<section_key>` | Visualização de biblioteca com séries e episódios | Sim |
+| `GET` | `/` | Dashboard – visão geral + último job | Sim |
+| `WS` | `/ws` | WebSocket PlexAutoSkip (porta 8081) | Não |
 
-> Todas as rotas mutantes exigem sessão de admin + token CSRF (`X-CSRF-Token` header ou campo `csrf_token`).
+> Todas as rotas mutantes exigem sessão de admin + token CSRF.
 
 ---
 
@@ -147,125 +146,121 @@ Todas as variáveis podem ser alteradas **pela UI** (⚙ Configuração) – o a
 
 1. Usuário clica **“Escanear”** em uma biblioteca no dashboard.
 2. `POST /api/plex/scan { "section_key": "1" }` → cria job assíncrono.
-3. `PlexLibraryScanner.scan_section(section_key)`:
-   - Lista episódios via `PlexManager.list_episodes()`
-   - Para cada episódio sem marcadores nativos: roda `MarkerGenerator.generate(file_path)` (ffprobe)
-   - Salva marcadores no **custom.json** (formato PlexAutoSkip).
-4. UI exibe progresso em tempo real via **Server‑Sent Events** (`/api/plex/scan/<job_id>/log/stream`).
+3. `PlexLibraryScanner` processa a seção e salva marcadores no `custom.json`.
+4. UI exibe progresso via **Server‑Sent Events** (`/api/sync/log/stream/{jobId}`).
 5. Botão **“Cancelar”** interrompe o job quase instantaneamente.
 6. **PlexAutoSkip** lê o `custom.json` atualizado e envia comandos de *seek* aos players compatíveis.
 
 ---
 
-## 🧑‍💻  Configuração do Ambiente de Desenvolvimento
+## 🧪  Testes E2E (Playwright)
 
-Para contribuir com código, use o script automatizado que cria virtualenv, instala dependências, ferramentas de lint/teste e hooks de pre-commit:
+O projeto inclui um executor de testes e2e que roda **dentro do Docker**:
 
 ```bash
-# 1️⃣  Clone o repo
-git clone https://github.com/seu-usuario/plex-autoplay.git
-cd plex-autoplay
+# Verificar que o Docker está disponível
+docker --version && docker compose version
 
-# 2️⃣  Rode o setup único (cria .venv/, instala ruff, pre-commit, pytest, mypy, etc.)
-./setup-dev.sh
+# Subir a aplicação
+./scripts/start.sh --detach
 
-# 3️⃣  Ative o virtualenv em novos terminais
-source .venv/bin/activate
+# Rodar os testes e2e
+cd tests/e2e
+npx playwright test
+
+# Ver artefatos de falha (se houver)
+ls test-artifacts/
 ```
 
-O script `setup-dev.sh` faz tudo automaticamente:
-- ✅ Verifica Python ≥ 3.12
-- ✅ Cria/ativa virtualenv em `.venv/`
-- ✅ Instala dependências do `requirements.txt`
-- ✅ Instala ferramentas: **ruff, pre-commit, pytest, pytest-cov, mypy**
-- ✅ Configura **pre-commit hooks** (rodam `ruff check --fix`, `ruff format`, validações YAML/JSON/TOML antes de cada commit)
-- ✅ Roda lint inicial e testes unitários
+### Estrutura do executor
+
+```
+docker-compose.test.yml    # Compose separado para testes (executor + app)
+Dockerfile.test-executor   # Imagem Node + Playwright + Docker CLI
+scripts/run-e2e-tests.sh   # Orquestração: valida .env → compose up → playwright → captura falhas → compose down
+tests/e2e/mock-plex/       # Servidor Plex mock para CI
+```
+
+### GitHub Actions
+
+O workflow `.github/workflows/test.yml` roda o executor de testes com Plex mockado para CI/CD.
+
+---
+
+## 🧑‍💻  Desenvolvimento
+
+### Pré-requisitos
+- .NET 10 SDK
+- Node.js 20+
+- Docker Engine 24.x+
+- Docker Compose 2.x
 
 ### Comandos do dia a dia
 
 ```bash
-source .venv/bin/activate          # Ativar venv (obrigatório em cada terminal)
-
-ruff check . --fix                 # Corrigir lint automaticamente
-ruff format .                      # Formatar código (estilo consistente)
-pytest -q                          # Rodar testes rápidos (7 testes)
-pytest -q -k "nome_do_teste"       # Rodar teste específico
-mypy plex_autoplay                 # Type-check (opcional)
-
-./scripts/start.sh                 # Build + up containers (Docker)
-./scripts/logs.sh                  # Ver logs dos containers
-pre-commit run --all-files         # Rodar todos os hooks manualmente
-```
-
-> **Importante:** O hook de `pre-commit` roda automaticamente no `git commit`. Se houver erro de lint/formatação, o commit é bloqueado até corrigir. Isso garante que o CI nunca falhe por estilo de código.
-
----
-
-## 🛠  Desenvolvimento / Testes locais (Docker)
-
-```bash
 # Subir stack em modo dev (logs no terminal)
-docker compose up --build
+./scripts/start.sh
 
-# Rodar testes (pytest) dentro do container
-docker compose run --rm plex-autoplay pytest -q
+# Subir em segundo plano
+./scripts/start.sh --detach
 
-# Lint / type‑check dentro do container
-docker compose run --rm plex-autoplay ruff check .
-docker compose run --rm plex-autoplay mypy plex_autoplay
+# Ver logs
+./scripts/logs.sh --no-follow --tail 20
+
+# Parar
+./scripts/stop.sh
+
+# Rodar testes e2e
+cd tests/e2e
+npx playwright test
+
+# Pre-commit (valida .NET, Vue, YAML, JSON, GitHub Actions)
+pre-commit run --all-files
 ```
 
-*O código de detecção de marcadores (`marker_generator.py`) é um *stub* – implemente a lógica real (ffprobe `silencedetect`, logo detection, AniDB, etc.) e rode o helper CLI:*
-
-```bash
-docker compose exec plex-autoplay python -m plex_autoplay.application.marker_generator /media/serie/ep01.mkv
-```
-
----
-
-## 📂  Estrutura de pastas (resumo)
+### Estrutura de pastas
 
 ```
 plex-autoplay/
-├── Dockerfile                # python + redis + supervisor
-├── supervisord.conf          # sobe redis + app + plexautoskip
-├── docker-compose.yml        # stack único (named volume)
-├── scripts/start.sh / scripts/stop.sh / scripts/logs.sh
-├── .env.example
-├── config/                   # volume persistente (app-config.json, certs, session.key)
-├── plex_autoplay/
-│   ├── config.py            # Settings (dataclass)
-│   ├── main.py              # entrypoint – apenas dashboard
-│   ├── infrastructure/
-│   │   ├── paths.py         # Paths do PlexAutoSkip (env overrides)
-│   │   ├── plex/client.py   # PlexManager (list_sections, list_episodes, add_marker…)
-│   │   ├── markers/
-│   │   │   └── json_repository.py  # Leitura custom.json + marcadores nativos do Plex
-│   │   └── web/             # Flask app, rotas, templates, static
-│   └── application/
-│       ├── manual_marker_service.py  # CRUD de marcadores manuais (UI)
-│       ├── plex_library_scanner.py   # Scanner Plex → custom.json
-│       └── marker_generator.py       # Detecção via ffprobe (stub)
-└── tests/                    # pytest suite (config, PlexManager, metrics)
+├── src/
+│   ├── PlexAutoplay.Web/          # .NET 10 ASP.NET Core Web API + Vue SPA
+│   ├── PlexAutoplay.Application/  # Casos de uso (Application layer)
+│   ├── PlexAutoplay.Domain/       # Entidades e portas (Domain layer)
+│   └── PlexAutoplay.Infrastructure/  # Implementações (Infrastructure layer)
+├── tests/
+│   └── e2e/                       # Testes Playwright + mock Plex
+├── scripts/
+│   ├── start.sh                   # Sobe o container
+│   ├── stop.sh                    # Para o container
+│   ├── logs.sh                    # Visualiza logs
+│   └── run-e2e-tests.sh           # Executor de testes e2e dentro do Docker
+├── docker-compose.yml             # Stack de produção
+├── docker-compose.test.yml        # Stack de testes (isolado)
+├── Dockerfile                     # Imagem .NET 10
+├── Dockerfile.test-executor       # Imagem Node + Playwright
+├── .env / .env.example            # Variáveis de ambiente
+├── openspec/                      # Especificações OpenSpec
+└── README.md
 ```
 
 ---
 
 ## 🛡  Segurança
 
-* **HTTPS** auto‑assinado por padrão (`DASHBOARD_HTTPS=true`). Em produção, substitua os certificados em `config/` por um certificado válido (Let’s Encrypt, etc.) e defina `DASHBOARD_COOKIE_SECURE=true`.
+* **HTTPS** auto‑assinado por padrão (`DISABLE_HTTP=true`). Em produção, substitua os certificados por um certificado válido (Let’s Encrypt, etc.) e defina `DASHBOARD_COOKIE_SECURE=true`.
 * **CSRF** em todas as rotas `POST/PUT/DELETE`.
 * **Webhook** protegido por HMAC (`WEBHOOK_SECRET`).
 * Token Plex **nunca** escrito nos logs (mascarado na UI).
-* Container roda como root apenas para permitir que `supervisord` inicie o Redis como `appuser`; o código da aplicação roda com privilégios mínimos.
+* Container roda com privilégios mínimos.
 
 ---
 
 ## 📈  Observabilidade
 
 * Logs estruturados (`JSON`‑ready) – `LOG_LEVEL` controla verbosidade.
+* **OpenTelemetry**: traces distribuídos e métricas Prometheus.
 * Métricas de processo expostas em `/api/status` (CPU, RAM, rede, disco).
-* Métricas Prometheus opcionais (adicione `prometheus_client` no `requirements.txt` e endpoint `/metrics`).
+* Endpoint `/metrics` (Prometheus).
 
 ---
 
@@ -279,7 +274,6 @@ O PlexAutoSkip depende do protocolo **Plex Companion** para enviar comandos de *
 
 - O app **iOS** redesenhado não expõe mais o endpoint de controle remoto local.
 - O **Plex Web App** no navegador também não expõe mais essa API.
-- A Plex confirmou oficialmente que o protocolo Companion foi descontinuado.
 
 ### Clientes que **FUNCIONAM** com PlexAutoSkip
 
@@ -299,87 +293,6 @@ O PlexAutoSkip depende do protocolo **Plex Companion** para enviar comandos de *
 2. **Use AirPlay** do iOS para Apple TV.
 3. **Use Chromecast / Google Cast** do navegador/Android para TV.
 4. **Plex Desktop App** no mesmo servidor – funciona como player controlável.
-
----
-
-## 🐳 Deploy com Docker (.NET 10)
-
-### Pré-requisitos
-- Docker Engine 24.x+
-- Docker Compose 2.x+
-- Plex Media Server ≥ 1.22
-- Plex Token com permissão de escrita (Owner/Admin)
-
-### Variáveis de Ambiente Obrigatórias
-
-Crie um arquivo `.env` na raiz do projeto:
-
-```dotenv
-PLEX_URL=http://seu-plex:32400
-PLEX_TOKEN=seu_token_plex
-MEDIA_ROOT=/caminho/para/midia/do/plex
-JWT_SECRET=sua_chave_secreta_jwt
-ADMIN_PASSWORD=sua_senha_admin
-```
-
-| Variável | Descrição |
-|----------|-----------|
-| `PLEX_URL` | URL base do Plex Media Server |
-| `PLEX_TOKEN` | Token de autenticação do Plex (Owner/Admin) |
-| `MEDIA_ROOT` | Caminho absoluto do host para os arquivos de mídia do Plex (bind mount) |
-| `JWT_SECRET` | Chave secreta para assinatura de JWT |
-| `ADMIN_PASSWORD` | Senha para login no painel administrativo |
-| `SYNC_INTERVAL_MINUTES` | Intervalo de sincronização automática (padrão: 5) |
-
-### Início Rápido
-
-```bash
-# 1. Clone o repositório
-git clone https://github.com/seu-usuario/plex-autoplay.git
-cd plex-autoplay
-
-# 2. Crie o arquivo .env
-cp .env.example .env
-# Edite .env com suas credenciais Plex e caminhos
-
-# 3. Build e suba os containers
-docker compose build
-docker compose up -d
-
-# 4. Acesse o dashboard
-# http://localhost:8080
-# WebSocket (PlexAutoSkip): ws://localhost:8081
-```
-
-### Estrutura de Volumes
-
-| Volume | Caminho no Container | Descrição |
-|--------|---------------------|-----------|
-| `plex-data` | `/data` | SQLite (`app.db`), `custom.json`, cache de imagens, `app-config.json` |
-| Bind mount | `/media` | Arquivos de mídia do Plex (via `MEDIA_ROOT`) |
-
-### Endpoints da API
-
-| Método | Rota | Descrição | Auth |
-|--------|------|-----------|------|
-| `POST` | `/auth/login` | Login com senha admin, retorna JWT | Não |
-| `GET` | `/api/plex/libraries` | Lista bibliotecas de séries | Sim |
-| `POST` | `/api/plex/scan` | Inicia escaneamento de marcadores | Sim |
-| `GET` | `/api/sync/status/{jobId}` | Status do scan | Sim |
-| `GET` | `/api/sync/log/stream/{jobId}` | Progresso via SSE | Sim |
-| `POST` | `/api/sync/cancel/{jobId}` | Cancela scan em execução | Sim |
-| `GET/POST/DELETE` | `/api/markers` | CRUD de marcadores | Sim |
-| `GET` | `/api/images/{path}` | Proxy de imagens do Plex | Sim |
-| `WS` | `/ws` | WebSocket PlexAutoSkip (porta 8081) | Não |
-
-### Arquitetura
-
-- **Backend**: .NET 10 ASP.NET Core Web API
-- **Frontend**: Vue.js 3 + Vite + Pinia + Vue Router
-- **Banco**: SQLite (Dapper ORM)
-- **Detecção**: ffprobe (silence detection)
-- **Autenticação**: JWT stateless (sem expiração)
-- **Sincronização**: BackgroundService configurável via UI
 
 ---
 
