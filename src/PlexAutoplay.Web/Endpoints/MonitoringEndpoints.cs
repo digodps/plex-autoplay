@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
+using PlexAutoplay.Domain.Ports;
 using PlexAutoplay.Web.Services;
+using Serilog;
 
 namespace PlexAutoplay.Web.Endpoints;
 
@@ -10,37 +12,60 @@ public static class MonitoringEndpoints
 {
     public static void MapMonitoringEndpoints(this IEndpointRouteBuilder app)
     {
-        app.MapGet("/api/status", ([FromServices] ScanJobStore scanJobs) =>
+        app.MapGet("/api/status", ([FromServices] IScanJobStore scanJobs) =>
         {
-            var lastJob = scanJobs.GetLatest();
-            var process = System.Diagnostics.Process.GetCurrentProcess();
-
-            return Results.Ok(new
+            try
             {
-                service = "plex-autoplay",
-                version = "1.0.0",
-                lastJob = lastJob != null ? new
+                var lastJob = scanJobs.GetLatest();
+                var process = System.Diagnostics.Process.GetCurrentProcess();
+
+                return Results.Ok(new
                 {
-                    job_id = lastJob.JobId,
-                    status = lastJob.Status,
-                    processed = lastJob.Processed,
-                    skipped = lastJob.Skipped,
-                    errors = lastJob.Errors,
-                    error = lastJob.ErrorMessage,
-                    updated_at = lastJob.UpdatedAt
-                } : null,
-                process = new
+                    service = "plex-autoplay",
+                    version = "1.0.0",
+                    lastJob = lastJob != null ? new
+                    {
+                        job_id = lastJob.JobId,
+                        status = lastJob.Status,
+                        processed = lastJob.Processed,
+                        skipped = lastJob.Skipped,
+                        errors = lastJob.Errors,
+                        error = lastJob.ErrorMessage,
+                        updated_at = lastJob.UpdatedAt
+                    } : null,
+                    process = new
+                    {
+                        cpu_total_ms = process.TotalProcessorTime.TotalMilliseconds,
+                        memory_private_bytes = process.PrivateMemorySize64,
+                        memory_working_set_bytes = process.WorkingSet64,
+                        uptime_ms = (DateTime.UtcNow - process.StartTime.ToUniversalTime()).TotalMilliseconds
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                // Nunca expor 500 ao cliente: logar com correlation ID e retornar 200 com dados parciais.
+                // CorrelationId já está enriquecido no LogContext pelo CorrelationIdMiddleware.
+                Log.Error(ex, "Falha inesperada ao montar resposta de /api/status; retornando 200 com dados parciais");
+
+                return Results.Ok(new
                 {
-                    cpu_total_ms = process.TotalProcessorTime.TotalMilliseconds,
-                    memory_private_bytes = process.PrivateMemorySize64,
-                    memory_working_set_bytes = process.WorkingSet64,
-                    uptime_ms = (DateTime.UtcNow - process.StartTime.ToUniversalTime()).TotalMilliseconds
-                }
-            });
+                    service = "plex-autoplay",
+                    version = "1.0.0",
+                    lastJob = (object?)null,
+                    process = new
+                    {
+                        cpu_total_ms = 0,
+                        memory_private_bytes = 0,
+                        memory_working_set_bytes = 0,
+                        uptime_ms = 0
+                    }
+                });
+            }
         });
 
         // Prometheus metrics endpoint (real metrics, not hardcoded)
-        app.MapGet("/metrics", ([FromServices] ScanJobStore scanJobs) =>
+        app.MapGet("/metrics", ([FromServices] IScanJobStore scanJobs) =>
         {
             var lastJob = scanJobs.GetLatest();
             var process = System.Diagnostics.Process.GetCurrentProcess();
