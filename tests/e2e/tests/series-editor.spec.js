@@ -24,25 +24,32 @@ test.describe("Catálogo de séries e editor de marcadores (UI)", () => {
     }
   });
 
-  test("página de séries exibe capas com descrição do catálogo", async ({ page }) => {
-    await page.goto(`${BASE_URL}/series`, { waitUntil: "networkidle" });
+  test("página de bibliotecas exibe séries inline com capas e descrição", async ({ page }) => {
+    await page.goto(`${BASE_URL}/libraries`, { waitUntil: "networkidle" });
 
-    // Auto-redireção para a única biblioteca de séries do mock
-    await page.waitForURL(/\/libraries\/\d+\/series/, { timeout: 15000 });
+    // Clica na primeira biblioteca para expandir e carregar séries
+    await page.locator(".library-card").first().click();
 
-    const cards = page.locator(".card");
+    // Aguarda o grid de séries aparecer
+    await page.waitForSelector(".series-grid .series-card", { timeout: 15000 });
+
+    const cards = page.locator(".series-grid .series-card");
     await expect(cards).toHaveCount(2, { timeout: 15000 });
 
     const first = cards.first();
-    await expect(first.locator(".card-title")).toHaveText("Arrow");
-    await expect(first.locator(".card-summary")).toContainText("bilionário");
+    await expect(first.locator("h4")).toHaveText("Arrow");
+    await expect(first.locator(".series-summary")).toContainText("bilionário");
   });
 
   test("clique na série abre o editor de marcadores estilo Plex", async ({ page }) => {
-    await page.goto(`${BASE_URL}/series`, { waitUntil: "networkidle" });
-    await page.waitForURL(/\/libraries\/\d+\/series/, { timeout: 15000 });
+    await page.goto(`${BASE_URL}/libraries`, { waitUntil: "networkidle" });
 
-    await page.locator(".card").first().click();
+    // Expande a biblioteca
+    await page.locator(".library-card").first().click();
+    await page.waitForSelector(".series-grid .series-card", { timeout: 15000 });
+
+    // Clica na primeira série
+    await page.locator(".series-grid .series-card").first().click();
 
     // Editor: rota /series/{key}/markers, temporadas e episódios
     await page.waitForURL(/\/series\/\d+\/markers/, { timeout: 15000 });
@@ -55,10 +62,14 @@ test.describe("Catálogo de séries e editor de marcadores (UI)", () => {
   });
 
   test("adiciona e edita marcador inline no editor com salvamento otimista", async ({ page }) => {
-    await page.goto(`${BASE_URL}/series`, { waitUntil: "networkidle" });
-    await page.waitForURL(/\/libraries\/\d+\/series/, { timeout: 15000 });
+    await page.goto(`${BASE_URL}/libraries`, { waitUntil: "networkidle" });
 
-    await page.locator(".card").first().click();
+    // Expande a biblioteca
+    await page.locator(".library-card").first().click();
+    await page.waitForSelector(".series-grid .series-card", { timeout: 15000 });
+
+    // Clica na primeira série
+    await page.locator(".series-grid .series-card").first().click();
     await page.waitForURL(/\/series\/\d+\/markers/, { timeout: 15000 });
     await page.waitForSelector(".season-title", { timeout: 15000 });
 
