@@ -54,26 +54,53 @@ export async function apiFetch(url, options = {}) {
 }
 
 /**
+ * Extrai uma mensagem legível do corpo de uma resposta de erro (RFC 7807
+ * Problem Details ou texto simples). Retorna null quando não houver corpo.
+ */
+export async function extractErrorMessage(res) {
+  try {
+    const ct = res.headers.get("content-type") || "";
+    if (ct.includes("application/json")) {
+      const body = await res.json();
+      return body.detail || body.title || body.message || JSON.stringify(body);
+    }
+    const text = await res.text();
+    return text || null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Lança um erro contendo a mensagem detalhada da resposta (quando disponível)
+ * para que o cliente possa exibi-la ao usuário e sugerir uma ação.
+ */
+export async function throwHttpError(res, defaultMessage) {
+  const detail = await extractErrorMessage(res);
+  throw new Error(detail || defaultMessage);
+}
+
+/**
  * Helpers específicos do Dashboard
  */
 
 /** Busca saúde do serviço + último job de sync + métricas do processo */
 export async function fetchStatus() {
   const res = await apiFetch("/api/status");
-  if (!res.ok) throw new Error("Falha ao buscar status do serviço");
+  if (!res.ok) await throwHttpError(res, "Falha ao buscar status do serviço");
   return res.json();
 }
 
 /** Busca bibliotecas de séries e agrega contagens */
 export async function fetchLibraries() {
   const res = await apiFetch("/api/plex/libraries");
-  if (!res.ok) throw new Error("Falha ao buscar bibliotecas");
+  if (!res.ok) await throwHttpError(res, "Falha ao buscar bibliotecas");
   return res.json();
 }
 
 /** Busca todos os marcadores (flat list) para agregação client-side */
 export async function fetchMarkers() {
   const res = await apiFetch("/api/markers");
-  if (!res.ok) throw new Error("Falha ao buscar marcadores");
+  if (!res.ok) await throwHttpError(res, "Falha ao buscar marcadores");
   return res.json();
 }
