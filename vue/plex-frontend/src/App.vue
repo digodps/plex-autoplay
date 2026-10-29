@@ -1,28 +1,10 @@
 <script setup>
-import { computed } from "vue";
-import { useRoute, useRouter } from "vue-router";
+import { useAppShell } from "./composables/useAppShell";
 import { useAuthStore } from "./stores/auth";
 import AppIcon from "./components/AppIcon.vue";
 
 const authStore = useAuthStore();
-const route = useRoute();
-const router = useRouter();
-
-// Login ocupa a tela inteira, sem shell
-const isLoginRoute = computed(() => route.name === "login");
-
-const navItems = [
-  { to: "/dashboard", label: "Início", icon: "home" },
-  { to: "/series", label: "Séries", icon: "tv" },
-  { to: "/libraries", label: "Bibliotecas", icon: "library" },
-  { to: "/sync", label: "Sincronizar", icon: "sync" },
-  { to: "/settings", label: "Ajustes", icon: "settings" },
-];
-
-const handleLogout = () => {
-  authStore.logout();
-  router.push({ name: "login" });
-};
+const { isLoginRoute, navItems, handleLogout } = useAppShell();
 </script>
 
 <template>
@@ -57,7 +39,7 @@ const handleLogout = () => {
             <span>PlexAutoSkip embutido</span>
           </footer>
 
-          <button class="logout-btn" @click="handleLogout" title="Sair">
+          <button class="logout-btn" title="Sair" @click="handleLogout">
             <AppIcon name="logout" size="sm" />
             <span>Sair</span>
           </button>
@@ -156,42 +138,44 @@ const handleLogout = () => {
 }
 
 .status-dot {
-    width: 8px;
-    height: 8px;
-    flex: none;
-    border-radius: 50%;
-    background: var(--success);
-  }
+  width: 8px;
+  height: 8px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--success);
+}
 
-  .logout-btn {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.55rem 0.75rem;
-    margin: 0.5rem 0.5rem 0;
-    border: none;
-    border-radius: var(--radius-sm);
-    background: var(--surface);
-    color: var(--text-secondary);
-    font-weight: 500;
-    font-size: 0.9rem;
-    cursor: pointer;
-    transition: background var(--speed) var(--ease), color var(--speed) var(--ease);
-  }
+.logout-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.55rem 0.75rem;
+  margin: 0.5rem 0.5rem 0;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--text-secondary);
+  font-weight: 500;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition:
+    background var(--speed) var(--ease),
+    color var(--speed) var(--ease);
+}
 
-  .logout-btn:hover {
-    background: var(--danger-bg, #fef2f2);
-    color: var(--danger, #dc2626);
-  }
+.logout-btn:hover {
+  background: var(--danger-bg, #fef2f2);
+  color: var(--danger, #dc2626);
+}
 
-  .logout-btn .icon {
-    width: 18px;
-    height: 18px;
-  }
+.logout-btn .icon {
+  width: 18px;
+  height: 18px;
+}
 
-  .content {
-    min-width: 0;
-  }
+.content {
+  min-width: 0;
+}
 
 @media (max-width: 768px) {
   .app-shell {

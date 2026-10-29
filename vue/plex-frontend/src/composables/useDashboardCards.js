@@ -86,11 +86,8 @@ export function useDashboardCards() {
     return {
       icon: "library",
       label: "Bibliotecas",
-      value: s.totalSeries.toLocaleString("pt-BR"),
-      breakdown: [
-        { label: "Bibliotecas", value: s.count },
-        { label: "Séries", value: s.totalSeries.toLocaleString("pt-BR") },
-      ],
+      value: s.count.toLocaleString("pt-BR"),
+      breakdown: [{ label: "Bibliotecas", value: s.count }],
       badge: s.count
         ? { text: `${s.count} libs`, variant: "neutral" }
         : { text: "Vazio", variant: "warning" },
