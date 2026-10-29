@@ -21,6 +21,7 @@ export const useDashboardStore = defineStore("dashboard", () => {
   // Estado de UI
   const loading = ref(false);
   const error = ref(null);
+  const libraryError = ref(null); // mensagem detalhada da falha da API do Plex
   const partialErrors = ref({}); // { status: true, libraries: false, markers: false }
 
   // Polling
@@ -64,9 +65,12 @@ export const useDashboardStore = defineStore("dashboard", () => {
         console.error("[Dashboard] fetchStatus failed:", statusRes.reason);
       }
 
-      if (librariesRes.status === "fulfilled") librariesData.value = librariesRes.value;
-      else {
+      if (librariesRes.status === "fulfilled") {
+        librariesData.value = librariesRes.value;
+        libraryError.value = null;
+      } else {
         partialErrors.value.libraries = true;
+        libraryError.value = librariesRes.reason?.message || "Falha ao buscar bibliotecas do Plex.";
         console.error("[Dashboard] fetchLibraries failed:", librariesRes.reason);
       }
 
@@ -106,6 +110,7 @@ export const useDashboardStore = defineStore("dashboard", () => {
 
   function clearError() {
     error.value = null;
+    libraryError.value = null;
     partialErrors.value = {};
   }
 
@@ -121,6 +126,7 @@ export const useDashboardStore = defineStore("dashboard", () => {
     markersData,
     loading,
     error,
+    libraryError,
     partialErrors,
     // Computeds
     serviceHealth,
