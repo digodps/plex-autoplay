@@ -57,14 +57,15 @@ export function createServiceHealthComputed(statusData) {
 export function createLibrariesSummaryComputed(librariesData) {
   return computed(() => {
     if (!librariesData.value?.length) return { count: 0, totalSeries: 0, items: [] };
-    const totalSeries = librariesData.value.reduce((sum, lib) => sum + (lib.seriesCount ?? 0), 0);
+    // Note: seriesCount não está disponível no DTO da biblioteca (requeriria N chamadas à API /api/series/{key})
+    // Por isso totalSeries fica 0; o dashboard mostra apenas a contagem de bibliotecas
     return {
       count: librariesData.value.length,
-      totalSeries,
+      totalSeries: 0,
       items: librariesData.value.map((lib) => ({
         key: lib.key,
         title: lib.title,
-        seriesCount: lib.seriesCount ?? 0,
+        seriesCount: 0,
       })),
     };
   });

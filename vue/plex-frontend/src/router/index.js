@@ -24,24 +24,9 @@ const routes = [
     component: () => import("../views/LibrariesView.vue"),
   },
   {
-    path: "/libraries/:key/series",
-    name: "series",
-    component: () => import("../views/SeriesView.vue"),
-  },
-  {
-    path: "/series",
-    name: "series-index",
-    component: () => import("../views/SeriesView.vue"),
-  },
-  {
     path: "/series/:seriesKey/markers",
     name: "series-markers",
     component: () => import("../views/MarkerEditorView.vue"),
-  },
-  {
-    path: "/markers",
-    name: "markers",
-    redirect: "/series",
   },
   {
     name: "sync",
