@@ -14,5 +14,9 @@ public class ScanJobStore : IScanJobStore
 
     public ScanJob? Get(string jobId) => _jobs.TryGetValue(jobId, out var job) ? job : null;
 
-    public ScanJob? GetLatest() => _jobs.Values.OrderByDescending(j => j.UpdatedAt).FirstOrDefault();
+    public ScanJob? GetLatest()
+    {
+        if (_jobs.IsEmpty) return null;
+        return _jobs.Values.OrderByDescending(j => j.UpdatedAt).FirstOrDefault();
+    }
 }

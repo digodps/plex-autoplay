@@ -47,9 +47,10 @@ public class PlexApiClientTests
         Assert.Equal("library/metadata/101/thumb/169", series.Thumb);
 
         // Paginação delegada ao Plex via cabeçalhos de container + filtro por título
+        // (type=show removido da URL porque o Plex 1.43.x retorna 500 com esse parâmetro;
+        //  o filtro por tipo é feito do lado do cliente no parsing)
         Assert.Equal("24", server.LastHeaders["X-Plex-Container-Start"]);
         Assert.Equal("24", server.LastHeaders["X-Plex-Container-Size"]);
-        Assert.Contains("type=show", server.LastQuery);
         Assert.Contains("title.contains=arrow", server.LastQuery);
         Assert.Contains("/library/sections/1/all", server.LastPath);
     }
@@ -84,12 +85,54 @@ public class PlexApiClientTests
         server.ResetResponse(json);
 
         var client = MakeClient(server.BaseUrl);
-        var libs = await client.GetLibrariesAsync();
+        var result = await client.GetLibrariesAsync();
 
-        Assert.Equal(2, libs.Count);
-        var show = libs.Single(l => l.Type == "show");
+        Assert.False(result.Failed);
+        Assert.Equal(2, result.Libraries.Count);
+        var show = result.Libraries.Single(l => l.Type == "show");
         Assert.Equal("1", show.Key);
         Assert.Equal("tv.plex.agents.series", show.Agent);
+    }
+
+    [Fact]
+    public async Task GetLibrariesAsync_WhenPlexFails_MarksFailedWithMessage()
+    {
+        using var server = new FakePlexServer("""{"error":true}""", statusCode: 500);
+        var client = MakeClient(server.BaseUrl);
+
+        var result = await client.GetLibrariesAsync();
+
+        Assert.True(result.Failed);
+        Assert.NotNull(result.ErrorMessage);
+        Assert.Empty(result.Libraries);
+        Assert.Contains("Plex", result.ErrorMessage);
+    }
+
+    [Fact]
+    public async Task GetLibrariesAsync_ExtractsSectionIdFromFullPathKey()
+    {
+        // O Plex real costuma devolver key como "/library/sections/1" (caminho completo)
+        // e não apenas o ID "1". O backend deve extrair apenas o segmento numérico.
+        using var server = new FakePlexServer("""
+            {
+              "MediaContainer": {
+                "Directory": [
+                  { "key": "/library/sections/1", "title": "Séries", "type": "show", "agent": "tv.plex.agents.series" },
+                  { "key": "/library/sections/2", "title": "Filmes", "type": "movie", "agent": "com.plexapp.agents.imdb" }
+                ]
+              }
+            }
+            """);
+
+        var client = MakeClient(server.BaseUrl);
+        var result = await client.GetLibrariesAsync();
+
+        Assert.False(result.Failed);
+        Assert.Equal(2, result.Libraries.Count);
+        Assert.Equal("1", result.Libraries[0].Key);
+        Assert.Equal("2", result.Libraries[1].Key);
+        Assert.Equal("Séries", result.Libraries[0].Title);
+        Assert.Equal("Filmes", result.Libraries[1].Title);
     }
 
     public static readonly string SeriesEpisodesJson = """
@@ -120,9 +163,10 @@ public class PlexApiClientTests
         using var server = new FakePlexServer(SeriesEpisodesJson);
         var client = MakeClient(server.BaseUrl);
 
-        var episodes = await client.GetSeriesEpisodesAsync("101");
+        var result = await client.GetSeriesEpisodesAsync("101");
 
-        var item = Assert.Single(episodes);
+        Assert.False(result.Failed);
+        var item = Assert.Single(result.Episodes);
         Assert.Equal("5001", item.RatingKey);
         Assert.Equal(1, item.ParentIndex);
         Assert.Equal(1, item.Index);
@@ -130,13 +174,16 @@ public class PlexApiClientTests
     }
 
     [Fact]
-    public async Task GetSeriesEpisodesAsync_WhenPlexFails_ReturnsEmpty()
+    public async Task GetSeriesEpisodesAsync_WhenPlexFails_MarksFailedWithMessage()
     {
         using var server = new FakePlexServer("""{"nope":true}""", statusCode: 502);
         var client = MakeClient(server.BaseUrl);
 
-        var episodes = await client.GetSeriesEpisodesAsync("101");
+        var result = await client.GetSeriesEpisodesAsync("101");
 
-        Assert.Empty(episodes);
+        Assert.True(result.Failed);
+        Assert.NotNull(result.ErrorMessage);
+        Assert.Empty(result.Episodes);
+        Assert.Contains("Plex", result.ErrorMessage);
     }
 }

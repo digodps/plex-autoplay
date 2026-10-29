@@ -43,9 +43,9 @@ public class SeriesEndpointsTests : IDisposable
     {
         public bool FailNextCall { get; set; }
 
-        public Task<List<PlexLibraryDto>> GetLibrariesAsync() => throw new NotImplementedException();
+        public Task<PlexLibrariesResult> GetLibrariesAsync() => Task.FromResult(PlexLibrariesResult.Empty);
 
-        public Task<List<PlexEpisodeDto>> GetEpisodesAsync(string sectionKey) => throw new NotImplementedException();
+        public Task<PlexEpisodesResult> GetEpisodesAsync(string sectionKey) => throw new NotImplementedException();
 
         public Task<PlexSeriesPage> GetSeriesAsync(string sectionKey, int containerStart, int containerSize, string? titleQuery = null)
         {
@@ -60,10 +60,10 @@ public class SeriesEndpointsTests : IDisposable
             return Task.FromResult(new PlexSeriesPage(items, 87));
         }
 
-        public Task<List<PlexEpisodeDto>> GetSeriesEpisodesAsync(string seriesKey) => Task.FromResult(new List<PlexEpisodeDto>
+        public Task<PlexEpisodesResult> GetSeriesEpisodesAsync(string seriesKey) => Task.FromResult(new PlexEpisodesResult(new List<PlexEpisodeDto>
         {
             new("5001", "Pilot", 1, 1, "/Volumes/Series/Arrow S01E01.mkv")
-        });
+        }));
     }
 
     [Fact]

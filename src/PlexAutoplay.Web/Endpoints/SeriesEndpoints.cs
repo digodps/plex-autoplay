@@ -49,8 +49,16 @@ public static class SeriesEndpoints
             string seriesKey,
             [FromServices] IPlexApiClient plexClient) =>
         {
-            var episodes = await plexClient.GetSeriesEpisodesAsync(seriesKey);
-            var result = episodes.Select(e => new
+            var episodesResult = await plexClient.GetSeriesEpisodesAsync(seriesKey);
+
+            if (episodesResult.Failed)
+            {
+                return Results.Problem(
+                    episodesResult.ErrorMessage ?? "Não foi possível consultar os episódios da série no Plex. Verifique a conexão com o servidor e tente novamente.",
+                    statusCode: 502);
+            }
+
+            var result = episodesResult.Episodes.Select(e => new
             {
                 rating_key = e.RatingKey,
                 title = e.Title,

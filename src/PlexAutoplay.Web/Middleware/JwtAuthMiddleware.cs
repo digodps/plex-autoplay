@@ -40,6 +40,15 @@ public class JwtAuthMiddleware
             return;
         }
 
+        // Allow image proxy requests (Plex thumbs - public content, no sensitive data)
+        // Browsers don't send Authorization headers or cookies in  tags,
+        // so these must be accessible without authentication.
+        if (path.StartsWith("/api/images/"))
+        {
+            await _next(context);
+            return;
+        }
+
         // Allow SPA routes (Vue Router handles these client-side)
         // Only API routes under /api/ require authentication
         if (!path.StartsWith("/api/"))
@@ -58,6 +67,15 @@ public class JwtAuthMiddleware
                 await _next(context);
                 return;
             }
+        }
+
+        // Also accept token from auth cookie (needed for EventSource/SSE which
+        // cannot send custom Authorization headers)
+        var cookieToken = context.Request.Cookies["auth_token"];
+        if (!string.IsNullOrEmpty(cookieToken) && _tokenService.ValidateToken(cookieToken))
+        {
+            await _next(context);
+            return;
         }
 
         context.Response.StatusCode = StatusCodes.Status401Unauthorized;
