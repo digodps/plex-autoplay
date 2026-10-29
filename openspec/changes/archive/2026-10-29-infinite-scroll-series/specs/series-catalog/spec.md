@@ -16,7 +16,7 @@ O sistema SHALL expor um endpoint que liste as séries de uma biblioteca do tipo
 ### Requirement: Paginação server-side do catálogo
 O sistema SHALL aceitar parâmetros de página e tamanho de página no endpoint de listagem de séries e SHALL delegar a paginação ao Plex via cabeçalhos de container (X-Plex-Container-Start/Size), retornando também a informação de total de itens para a UI paginar.
 
-#### Scenario: Página solicitada (MODIFICADO - agora interno ao infinite scroll)
+#### Scenario: Página solicitada
 - **WHEN** infinite scroll solicita próxima página com pageSize=24
 - **THEN** o sistema retorna no máximo 24 séries correspondentes ao intervalo paginado e um total para habilitar controles de paginação
 
