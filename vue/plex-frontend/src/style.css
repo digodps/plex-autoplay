@@ -277,3 +277,15 @@ a {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* Infinite scroll: container de grade com barra de rolagem oculta */
+.series-grid-wrapper {
+  overflow-y: auto;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE/Edge Legacy */
+}
+
+.series-grid-wrapper::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Edge */
+}
+
