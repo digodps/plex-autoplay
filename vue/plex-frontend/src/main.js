@@ -23,4 +23,8 @@ const app = createApp(App);
 app.use(createPinia());
 app.use(router);
 
-app.mount("#app");
+// Wait for router to be ready (initial navigation complete) before mounting
+// This prevents the "Redirecionando..." fallback from showing during redirect
+router.isReady().then(() => {
+  app.mount("#app");
+});

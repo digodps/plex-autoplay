@@ -4,7 +4,7 @@ import { useRoute, useRouter } from "vue-router";
 import AppIcon from "../components/AppIcon.vue";
 import SeriesCard from "../components/SeriesCard.vue";
 import SeriesPagination from "../components/SeriesPagination.vue";
-import { apiFetch } from "../api";
+import { apiFetch, extractErrorMessage } from "../api";
 
 const route = useRoute();
 const router = useRouter();
@@ -97,7 +97,7 @@ async function loadSeries() {
     const res = await apiFetch(`/api/series/${encodeURIComponent(libraryKey.value)}?${params}`);
 
     if (res.status === 502) {
-      error.value = "Não foi possível consultar o Plex. Verifique a conexão com o servidor.";
+      error.value = await extractErrorMessage(res) || "Não foi possível consultar o Plex. Verifique a conexão com o servidor.";
       seriesList.value = [];
       return;
     }
