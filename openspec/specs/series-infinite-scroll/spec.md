@@ -1,10 +1,9 @@
-# Spec Delta
+# series-infinite-scroll Specification
 
 ## Purpose
-
 Infinite scroll contínuo no catálogo de séries estilo Netflix, com lazy loading de imagens e sem barra de rolagem visível. Permite descoberta contínua de séries sem paginação explícita.
 
-## ADDED Requirements
+## Requirements
 
 ### Requirement: Infinite scroll contínuo no catálogo
 O sistema SHALL exibir séries em um container com rolagem infinita: ao rolar até próximo do fim, carrega automaticamente a próxima página sem ação do usuário, mantendo o estado visual e sem recarregar a página.
@@ -42,26 +41,3 @@ O sistema SHALL carregar imagens de capa das séries apenas quando entram na vie
 #### Scenario: Placeholder durante carregamento
 - **WHEN** imagem ainda não carregou
 - **THEN** exibe placeholder com cor de fundo e animação shimmer
-
-## MODIFIED Requirements
-
-### Requirement: Paginação server-side do catálogo
-O sistema SHALL aceitar parâmetros de página e tamanho de página no endpoint de listagem de séries e SHALL delegar a paginação ao Plex via cabeçalhos de container (X-Plex-Container-Start/Size), retornando também a informação de total de itens para a UI paginar.
-
-#### Scenario: Página solicitada (MODIFICADO - agora interno ao infinite scroll)
-- **WHEN** infinite scroll solicita próxima página com pageSize=24
-- **THEN** o sistema retorna no máximo 24 séries correspondentes ao intervalo paginado e um total para habilitar controles de paginação
-
-#### Scenario: Consulta grande não congela a UI (MANTIDO)
-- **WHEN** uma biblioteca possui milhares de séries
-- **THEN** cada resposta carrega apenas a página solicitada, nunca a biblioteca inteira
-
-## REMOVED Requirements
-
-### Requirement: Controles de paginação explícitos (Anterior/Próxima)
-**Reason**: Substituído por infinite scroll contínuo; botões de paginação removidos da UI
-**Migration**: Frontend usa IntersectionObserver para detectar fim da lista e carregar automaticamente
-
-### Requirement: Indicador de página atual / total de páginas
-**Reason**: Não aplicável no modelo infinite scroll; usuário navega por posição visual, não por número de página
-**Migration**: Removido componente SeriesPagination

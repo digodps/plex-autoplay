@@ -81,12 +81,17 @@
 - [x] 5.2 Copiar build para `src/PlexAutoplay.Web/wwwroot/` e `docker compose build`
   - **Verificação**: Imagem Docker criada sem erros
 
-- [ ] 5.3 `docker compose up -d` e smoke test:
+- [x] 5.3 `docker compose up -d` e smoke test:
   - Login → Bibliotecas → clicar biblioteca → rolar até fim → carrega próxima página
   - Buscar termo → lista reinicia
   - Deep-link `/libraries?key=6` → auto-expande e carrega
   - Scrollbar invisível em Chrome, Firefox, Safari
   - **Verificação**: Todos cenários funcionam no container
+
+## Workflow follow-up
+
+- [x] Validar specs com `openspec validate --specs`
+- [x] Arquivar change: `openspec archive infinite-scroll-series`
 
 ## Workflow follow-up
 
