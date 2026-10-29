@@ -55,7 +55,16 @@ NIST_SSDF_PRACTICES = {
 
 def run_cmd(cmd: list[str], check: bool = False) -> subprocess.CompletedProcess:
     """Executa um comando e retorna o resultado."""
-    return subprocess.run(cmd, capture_output=True, text=True, check=check)
+    try:
+        return subprocess.run(cmd, capture_output=True, text=True, check=check)
+    except FileNotFoundError:
+        return subprocess.CompletedProcess(cmd, 127, "", f"Command not found: {cmd[0]}")
+
+
+def run_cmd_in_distrobox(cmd: list[str], check: bool = False) -> subprocess.CompletedProcess:
+    """Executa um comando dentro do container Distrobox (Fedora)."""
+    full_cmd = ["distrobox", "enter", "fedora", "--"] + cmd
+    return subprocess.run(full_cmd, capture_output=True, text=True, check=check)
 
 
 def get_git_status_porcelain() -> list[dict[str, str]]:
@@ -121,6 +130,10 @@ def tool_available(argv: list[str]) -> bool:
     """Verifica se uma ferramenta está instalada (sem executar a análise)."""
     probe = argv[:2] + ["--version"]
     result = run_cmd(probe, check=False)
+    if result.returncode == 0:
+        return True
+    # Tenta no distrobox
+    result = run_cmd_in_distrobox(probe, check=False)
     return result.returncode == 0
 
 
@@ -161,7 +174,7 @@ def run_dotnet_lint(files: list[dict[str, str]]) -> list[dict]:
         })
         return findings
 
-    result = run_cmd(
+    result = run_cmd_in_distrobox(
         ["dotnet", "format", workspace, "--verify-no-changes"] + sum((["--include", f] for f in cs_files), []),
         check=False,
     )
@@ -176,7 +189,7 @@ def run_dotnet_lint(files: list[dict[str, str]]) -> list[dict]:
         })
 
     # Verifica se StyleCop está disponível (via dotnet)
-    result = run_cmd(["dotnet", "build", "-v:q"], check=False)
+    result = run_cmd_in_distrobox(["dotnet", "build", "-v:q"], check=False)
     if result.returncode != 0 and "StyleCop" in result.stderr:
         findings.append({
             "stack": "dotnet",
@@ -210,7 +223,7 @@ def run_web_lint(files: list[dict[str, str]]) -> list[dict]:
             "reference": "Design - Risco: Lint não configurado localmente",
         })
     else:
-        result = run_cmd(["npx", "eslint"] + web_files, check=False)
+        result = run_cmd_in_distrobox(["npx", "eslint"] + web_files, check=False)
         if result.returncode != 0:
             findings.append({
                 "stack": "web",
@@ -232,7 +245,7 @@ def run_web_lint(files: list[dict[str, str]]) -> list[dict]:
             "reference": "Design - Risco: Lint não configurado localmente",
         })
     else:
-        result = run_cmd(["npx", "prettier", "--check"] + web_files, check=False)
+        result = run_cmd_in_distrobox(["npx", "prettier", "--check"] + web_files, check=False)
         if result.returncode != 0:
             findings.append({
                 "stack": "web",

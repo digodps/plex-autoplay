@@ -36,7 +36,7 @@ public class SqliteMarkerRepositoryTests : IDisposable
     }
 
     [Fact]
-    public void Migration_OnLegacyDatabase_AddsOriginColumnWithManualDefault()
+    public async Task Migration_OnLegacyDatabase_AddsOriginColumnWithManualDefault()
     {
         CreateLegacySchema();
 
@@ -51,7 +51,7 @@ public class SqliteMarkerRepositoryTests : IDisposable
 
         // Construir o repositório dispara a migração no boot
         var repo = new SqliteMarkerRepository(ConnectionString);
-        var markers = repo.GetAllAsync().Result.ToList();
+        var markers = (await repo.GetAllAsync()).ToList();
 
         var marker = Assert.Single(markers);
         Assert.Equal("1001", marker.RatingKey);
