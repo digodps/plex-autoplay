@@ -22,10 +22,14 @@ public partial class PlexApiClient
 
         try
         {
-            var url = $"/library/sections/{sectionKey}/all?type=show";
+            // NOTA: O parâmetro ?type=show foi removido porque o Plex Media Server
+            // (versão 1.43.x) retorna HTTP 500 "bad lexical cast" quando esse
+            // parâmetro é enviado em /library/sections/{key}/all. O filtro por
+            // tipo "show" já é feito do lado do cliente no parsing da resposta.
+            var url = $"/library/sections/{sectionKey}/all";
             if (!string.IsNullOrWhiteSpace(titleQuery))
             {
-                url += $"&title.contains={Uri.EscapeDataString(titleQuery)}";
+                url += $"?title.contains={Uri.EscapeDataString(titleQuery)}";
             }
 
             using var request = new HttpRequestMessage(HttpMethod.Get, url);
@@ -87,7 +91,7 @@ public partial class PlexApiClient
         }
     }
 
-    public async Task<List<PlexEpisodeDto>> GetSeriesEpisodesAsync(string seriesKey)
+    public async Task<PlexEpisodesResult> GetSeriesEpisodesAsync(string seriesKey)
     {
         using var activity = ActivitySource.StartActivity("Plex.GetSeriesEpisodes");
         activity?.SetTag("service.name", "plex");
@@ -104,8 +108,10 @@ public partial class PlexApiClient
             {
                 activity?.SetTag("http.status_code", (int)response.StatusCode);
                 activity?.SetTag("error", true);
-                Log.Warning("Plex API returned {StatusCode} for GetSeriesEpisodes", (int)response.StatusCode);
-                return new List<PlexEpisodeDto>();
+                var statusCode = (int)response.StatusCode;
+                var errorMessage = $"Plex API retornou status {statusCode} ao buscar episódios da série {seriesKey}. Verifique a conexão com o servidor Plex.";
+                Log.Warning("Plex API returned {StatusCode} for GetSeriesEpisodes", statusCode);
+                return PlexEpisodesResult.FailedResult(errorMessage);
             }
 
             activity?.SetTag("http.status_code", (int)response.StatusCode);
@@ -150,7 +156,7 @@ public partial class PlexApiClient
             var durationMs = (DateTime.UtcNow - startTime).TotalMilliseconds;
             Log.Information("Plex API call: GetSeriesEpisodes", new { external_service = "plex", duration_ms = durationMs, status_code = (int)response.StatusCode, series_key = seriesKey, count = episodes.Count });
 
-            return episodes;
+            return new PlexEpisodesResult(episodes);
         }
         catch (Exception ex)
         {
@@ -158,8 +164,9 @@ public partial class PlexApiClient
             activity?.SetTag("error", true);
             activity?.SetTag("error.message", ex.Message);
             PlexErrorCounter.Add(1, new KeyValuePair<string, object?>("service", "plex"), new KeyValuePair<string, object?>("error_type", ex.GetType().Name));
+            var errorMessage = $"Falha ao contatar a API do Plex ao buscar episódios da série {seriesKey}: {ex.Message}. Verifique se o servidor Plex está acessível e se o token está configurado corretamente.";
             Log.Error(ex, "Plex API call failed: GetSeriesEpisodes", new { external_service = "plex", duration_ms = durationMs, error_type = ex.GetType().Name, series_key = seriesKey });
-            return new List<PlexEpisodeDto>();
+            return PlexEpisodesResult.FailedResult(errorMessage);
         }
     }
 }

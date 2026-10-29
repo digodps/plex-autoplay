@@ -16,8 +16,16 @@ public static class PlexEndpoints
     {
         app.MapGet("/api/plex/libraries", async ([FromServices] IPlexApiClient plexClient) =>
         {
-            var libraries = await plexClient.GetLibrariesAsync();
-            var seriesLibraries = libraries.Where(l => l.Type == "show").ToList();
+            var result = await plexClient.GetLibrariesAsync();
+
+            if (result.Failed)
+            {
+                return Results.Problem(
+                    result.ErrorMessage ?? "Não foi possível consultar as bibliotecas no Plex. Verifique a conexão com o servidor e tente novamente.",
+                    statusCode: 502);
+            }
+
+            var seriesLibraries = result.Libraries.Where(l => l.Type == "show").ToList();
             return Results.Ok(seriesLibraries);
         });
 
@@ -39,8 +47,15 @@ public static class PlexEndpoints
                     job.Status = "running";
                     job.UpdatedAt = DateTime.UtcNow;
 
-                    var libraries = await plexClient.GetLibrariesAsync();
-                    var seriesLibraries = libraries.Where(l => l.Type == "show").ToList();
+                    var librariesResult = await plexClient.GetLibrariesAsync();
+                    if (librariesResult.Failed)
+                    {
+                        job.Status = "failed";
+                        job.ErrorMessage = librariesResult.ErrorMessage ?? "Falha ao buscar bibliotecas do Plex";
+                        job.UpdatedAt = DateTime.UtcNow;
+                        return;
+                    }
+                    var seriesLibraries = librariesResult.Libraries.Where(l => l.Type == "show").ToList();
 
                     int processed = 0;
                     int skipped = 0;
@@ -52,7 +67,14 @@ public static class PlexEndpoints
 
                         try
                         {
-                            var episodes = await plexClient.GetEpisodesAsync(lib.Key);
+                            var episodesResult = await plexClient.GetEpisodesAsync(lib.Key);
+                            if (episodesResult.Failed)
+                            {
+                                Log.Warning("Falha ao buscar episódios da biblioteca {LibKey}: {ErrorMessage}", lib.Key, episodesResult.ErrorMessage);
+                                errors++;
+                                continue;
+                            }
+                            var episodes = episodesResult.Episodes;
 
                             foreach (var episode in episodes)
                             {
@@ -123,8 +145,16 @@ public static class PlexEndpoints
 
         app.MapGet("/library/{section_key}", async (string section_key, [FromServices] IPlexApiClient plexClient) =>
         {
-            var episodes = await plexClient.GetEpisodesAsync(section_key);
-            var result = episodes.Select(e => new
+            var episodesResult = await plexClient.GetEpisodesAsync(section_key);
+
+            if (episodesResult.Failed)
+            {
+                return Results.Problem(
+                    episodesResult.ErrorMessage ?? "Não foi possível consultar os episódios no Plex. Verifique a conexão com o servidor e tente novamente.",
+                    statusCode: 502);
+            }
+
+            var result = episodesResult.Episodes.Select(e => new
             {
                 rating_key = e.RatingKey,
                 title = e.Title,

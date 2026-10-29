@@ -81,8 +81,13 @@ public class SyncBackgroundService : BackgroundService
 
     private async Task RunScanAsync()
     {
-        var libraries = await _plexClient.GetLibrariesAsync();
-        var seriesLibraries = libraries.Where(l => l.Type == "show").ToList();
+        var librariesResult = await _plexClient.GetLibrariesAsync();
+        if (librariesResult.Failed)
+        {
+            _logger.LogWarning("Falha ao buscar bibliotecas do Plex: {ErrorMessage}", librariesResult.ErrorMessage);
+            return;
+        }
+        var seriesLibraries = librariesResult.Libraries.Where(l => l.Type == "show").ToList();
 
         int processed = 0;
         int skipped = 0;
@@ -92,7 +97,14 @@ public class SyncBackgroundService : BackgroundService
         {
             try
             {
-                var episodes = await _plexClient.GetEpisodesAsync(lib.Key);
+                var episodesResult = await _plexClient.GetEpisodesAsync(lib.Key);
+                if (episodesResult.Failed)
+                {
+                    _logger.LogWarning("Falha ao buscar episódios da biblioteca {LibKey}: {ErrorMessage}", lib.Key, episodesResult.ErrorMessage);
+                    errors++;
+                    continue;
+                }
+                var episodes = episodesResult.Episodes;
 
                 foreach (var episode in episodes)
                 {

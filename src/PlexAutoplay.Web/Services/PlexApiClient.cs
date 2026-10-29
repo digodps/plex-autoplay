@@ -23,7 +23,23 @@ public partial class PlexApiClient : IPlexApiClient
         _httpClient = httpClient;
     }
 
-    public async Task<List<PlexLibraryDto>> GetLibrariesAsync()
+    /// <summary>
+    /// Extrai o ID numérico da seção de uma chave do Plex.
+    /// O Plex pode devolver o key como "/library/sections/1" (caminho completo)
+    /// ou apenas "1" (ID puro). Retorna apenas o segmento numérico final.
+    /// </summary>
+    private static string ExtractSectionId(string rawKey)
+    {
+        if (string.IsNullOrWhiteSpace(rawKey))
+            return rawKey;
+
+        // Remove barras finais para evitar segmentos vazios
+        var trimmed = rawKey.TrimEnd('/');
+        var lastSlash = trimmed.LastIndexOf('/');
+        return lastSlash >= 0 ? trimmed[(lastSlash + 1)..] : trimmed;
+    }
+
+    public async Task<PlexLibrariesResult> GetLibrariesAsync()
     {
         using var activity = ActivitySource.StartActivity("Plex.GetLibraries");
         activity?.SetTag("service.name", "plex");
@@ -40,8 +56,10 @@ public partial class PlexApiClient : IPlexApiClient
             {
                 activity?.SetTag("http.status_code", (int)response.StatusCode);
                 activity?.SetTag("error", true);
-                Log.Warning("Plex API returned {StatusCode} for GetLibraries", (int)response.StatusCode);
-                return new List<PlexLibraryDto>();
+                var statusCode = (int)response.StatusCode;
+                var errorMessage = $"Plex API retornou status {statusCode} ao buscar bibliotecas. Verifique a URL do servidor, o token e a conectividade.";
+                Log.Warning("Plex API returned {StatusCode} for GetLibraries", statusCode);
+                return PlexLibrariesResult.FailedResult(errorMessage);
             }
 
             activity?.SetTag("http.status_code", (int)response.StatusCode);
@@ -62,8 +80,14 @@ public partial class PlexApiClient : IPlexApiClient
             if (directory.ValueKind == JsonValueKind.Array)
                 foreach (var item in directory.EnumerateArray())
                 {
+                    // O Plex pode devolver o key como "/library/sections/1" (caminho completo)
+                    // ou apenas "1" (ID). Extraímos apenas o segmento numérico final,
+                    // pois os endpoints de catálogo/episódios esperam o ID puro da seção.
+                    var rawKey = item.GetProperty("key").GetString() ?? "";
+                    var sectionId = ExtractSectionId(rawKey);
+
                     libraries.Add(new PlexLibraryDto(
-                        item.GetProperty("key").GetString() ?? "",
+                        sectionId,
                         item.GetProperty("title").GetString() ?? "",
                         item.GetProperty("type").GetString() ?? "",
                         item.GetProperty("agent").GetString() ?? ""
@@ -73,7 +97,7 @@ public partial class PlexApiClient : IPlexApiClient
             var durationMs = (DateTime.UtcNow - startTime).TotalMilliseconds;
             Log.Information("Plex API call: GetLibraries", new { external_service = "plex", duration_ms = durationMs, status_code = (int)response.StatusCode, count = libraries.Count });
 
-            return libraries;
+            return new PlexLibrariesResult(libraries);
         }
         catch (Exception ex)
         {
@@ -81,12 +105,13 @@ public partial class PlexApiClient : IPlexApiClient
             activity?.SetTag("error", true);
             activity?.SetTag("error.message", ex.Message);
             PlexErrorCounter.Add(1, new KeyValuePair<string, object?>("service", "plex"), new KeyValuePair<string, object?>("error_type", ex.GetType().Name));
+            var errorMessage = $"Falha ao contatar a API do Plex: {ex.Message}. Verifique se o servidor Plex está acessível e se o token está configurado corretamente.";
             Log.Error(ex, "Plex API call failed: GetLibraries", new { external_service = "plex", duration_ms = durationMs, error_type = ex.GetType().Name });
-            return new List<PlexLibraryDto>();
+            return PlexLibrariesResult.FailedResult(errorMessage);
         }
     }
 
-    public async Task<List<PlexEpisodeDto>> GetEpisodesAsync(string sectionKey)
+    public async Task<PlexEpisodesResult> GetEpisodesAsync(string sectionKey)
     {
         using var activity = ActivitySource.StartActivity("Plex.GetEpisodes");
         activity?.SetTag("service.name", "plex");
@@ -103,8 +128,10 @@ public partial class PlexApiClient : IPlexApiClient
             {
                 activity?.SetTag("http.status_code", (int)response.StatusCode);
                 activity?.SetTag("error", true);
-                Log.Warning("Plex API returned {StatusCode} for GetEpisodes", (int)response.StatusCode);
-                return new List<PlexEpisodeDto>();
+                var statusCode = (int)response.StatusCode;
+                var errorMessage = $"Plex API retornou status {statusCode} ao buscar episódios da seção {sectionKey}. Verifique a conexão com o servidor Plex.";
+                Log.Warning("Plex API returned {StatusCode} for GetEpisodes", statusCode);
+                return PlexEpisodesResult.FailedResult(errorMessage);
             }
 
             activity?.SetTag("http.status_code", (int)response.StatusCode);
@@ -150,7 +177,7 @@ public partial class PlexApiClient : IPlexApiClient
             var durationMs = (DateTime.UtcNow - startTime).TotalMilliseconds;
             Log.Information("Plex API call: GetEpisodes", new { external_service = "plex", duration_ms = durationMs, status_code = (int)response.StatusCode, section_key = sectionKey, count = episodes.Count });
 
-            return episodes;
+            return new PlexEpisodesResult(episodes);
         }
         catch (Exception ex)
         {
@@ -158,8 +185,9 @@ public partial class PlexApiClient : IPlexApiClient
             activity?.SetTag("error", true);
             activity?.SetTag("error.message", ex.Message);
             PlexErrorCounter.Add(1, new KeyValuePair<string, object?>("service", "plex"), new KeyValuePair<string, object?>("error_type", ex.GetType().Name));
+            var errorMessage = $"Falha ao contatar a API do Plex ao buscar episódios da seção {sectionKey}: {ex.Message}. Verifique se o servidor Plex está acessível e se o token está configurado corretamente.";
             Log.Error(ex, "Plex API call failed: GetEpisodes", new { external_service = "plex", duration_ms = durationMs, error_type = ex.GetType().Name, section_key = sectionKey });
-            return new List<PlexEpisodeDto>();
+            return PlexEpisodesResult.FailedResult(errorMessage);
         }
     }
 }
