@@ -1,147 +1,201 @@
 import { ref, computed, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { apiFetch, extractErrorMessage } from "../api";
+import { useInfiniteScroll } from "./useInfiniteScroll";
 
 /**
  * Composable para gerenciar o estado e lógica de exibição de séries inline
- * na view de Bibliotecas.
+ * na view de Bibliotecas com infinite scroll contínuo estilo Netflix.
  */
 export function useLibrarySeries() {
   const route = useRoute();
   const router = useRouter();
 
-  // Series state for inline expansion
+  const PAGE_SIZE = 24;
+
+  // Estado das séries para expansão inline
   const expandedLibraryKey = ref(null);
   const seriesList = ref([]);
   const seriesTotalSize = ref(0);
-  const seriesPage = ref(1);
-  const seriesPageSize = ref(24);
+  const internalPage = ref(1);
+  const hasMore = ref(true);
   const seriesQuery = ref("");
-  const seriesLoading = ref(false);
+  const seriesLoading = ref(false); // Carregamento inicial / reset
+  const isLoadingMore = ref(false); // Carregamento de páginas subsequentes
   const seriesError = ref("");
 
-  const totalSeriesPages = computed(() =>
-    Math.max(1, Math.ceil(seriesTotalSize.value / seriesPageSize.value)),
-  );
+  let seriesDebounceTimer = null;
 
-  // Debounce timer for search
-  let seriesDebounceTimer;
+  // Placeholder para compatibilidade caso consumido externamente
+  const expandedLibrary = computed(() => null);
 
-  // Computed to get the expanded library object
-  const expandedLibrary = computed(() => {
-    if (!expandedLibraryKey.value) return null;
-    return null; // Will be set by parent via libraries array
-  });
+  async function fetchSeriesPage(libraryKey, pageToFetch) {
+    if (!libraryKey) return null;
 
-  async function loadSeries(libraryKey) {
+    const params = new URLSearchParams({
+      page: String(pageToFetch),
+      pageSize: String(PAGE_SIZE),
+    });
+    if (seriesQuery.value.trim()) {
+      params.set("query", seriesQuery.value.trim());
+    }
+
+    const res = await apiFetch(`/api/series/${encodeURIComponent(libraryKey)}?${params}`);
+
+    if (res.status === 502) {
+      const msg =
+        (await extractErrorMessage(res)) ||
+        "Não foi possível consultar o Plex. Verifique a conexão com o servidor.";
+      throw new Error(msg);
+    }
+
+    if (!res.ok) {
+      throw new Error("Erro ao carregar séries");
+    }
+
+    return await res.json();
+  }
+
+  async function loadInitialSeries(libraryKey) {
     if (!libraryKey) return;
+
     seriesLoading.value = true;
     seriesError.value = "";
+    internalPage.value = 1;
+    hasMore.value = true;
+
     try {
-      const params = new URLSearchParams({
-        page: String(seriesPage.value),
-        pageSize: String(seriesPageSize.value),
-      });
-      if (seriesQuery.value.trim()) params.set("query", seriesQuery.value.trim());
+      const data = await fetchSeriesPage(libraryKey, 1);
+      if (!data) return;
 
-      const res = await apiFetch(`/api/series/${encodeURIComponent(libraryKey)}?${params}`);
-
-      if (res.status === 502) {
-        seriesError.value =
-          (await extractErrorMessage(res)) ||
-          "Não foi possível consultar o Plex. Verifique a conexão com o servidor.";
-        seriesList.value = [];
-        return;
-      }
-
-      if (res.ok) {
-        const data = await res.json();
-        seriesList.value = data.items ?? [];
-        seriesTotalSize.value = data.totalSize ?? 0;
-      } else {
-        seriesError.value = "Erro ao carregar séries";
-      }
-    } catch {
-      seriesError.value = "Erro de conexão";
+      const items = data.items ?? [];
+      seriesList.value = items;
+      seriesTotalSize.value = data.totalSize ?? 0;
+      hasMore.value = seriesList.value.length < seriesTotalSize.value && items.length >= PAGE_SIZE;
+    } catch (err) {
+      seriesError.value = err.message || "Erro de conexão";
+      seriesList.value = [];
+      seriesTotalSize.value = 0;
+      hasMore.value = false;
     } finally {
       seriesLoading.value = false;
     }
   }
 
+  async function loadNextPage() {
+    if (!expandedLibraryKey.value || !hasMore.value || seriesLoading.value || isLoadingMore.value) {
+      return false;
+    }
+
+    isLoadingMore.value = true;
+    const nextPage = internalPage.value + 1;
+
+    try {
+      const data = await fetchSeriesPage(expandedLibraryKey.value, nextPage);
+      if (!data) return false;
+
+      const newItems = data.items ?? [];
+      if (newItems.length === 0) {
+        hasMore.value = false;
+        return false;
+      }
+
+      // Evita duplicatas por ratingKey
+      const existingKeys = new Set(seriesList.value.map((s) => s.ratingKey));
+      const deduplicated = newItems.filter((s) => !existingKeys.has(s.ratingKey));
+
+      seriesList.value = [...seriesList.value, ...deduplicated];
+      seriesTotalSize.value = data.totalSize ?? seriesList.value.length;
+      internalPage.value = nextPage;
+
+      if (seriesList.value.length >= seriesTotalSize.value || newItems.length < PAGE_SIZE) {
+        hasMore.value = false;
+      }
+
+      return hasMore.value;
+    } catch (err) {
+      seriesError.value = err.message || "Erro ao carregar mais séries";
+      return false;
+    } finally {
+      isLoadingMore.value = false;
+    }
+  }
+
+  const { sentinelRef, loadMore } = useInfiniteScroll({
+    onLoadMore: loadNextPage,
+    hasMore,
+    isLoading: isLoadingMore,
+    rootMargin: "250px",
+  });
+
   function toggleLibrary(libraryKey) {
     if (expandedLibraryKey.value === libraryKey) {
-      // Collapse
+      // Recolher
       expandedLibraryKey.value = null;
       seriesList.value = [];
       seriesTotalSize.value = 0;
-      seriesPage.value = 1;
+      internalPage.value = 1;
+      hasMore.value = false;
       seriesQuery.value = "";
       seriesError.value = "";
       router.replace({ name: "libraries" });
     } else {
-      // Expand new library
+      // Expandir nova biblioteca
       expandedLibraryKey.value = libraryKey;
-      seriesPage.value = 1;
       seriesQuery.value = "";
       seriesError.value = "";
+      loadInitialSeries(libraryKey);
       router.replace({ name: "libraries", params: { key: libraryKey } });
     }
-  }
-
-  function goToSeriesPage(page) {
-    if (page < 1 || page > totalSeriesPages.value || page === seriesPage.value) return;
-    seriesPage.value = page;
   }
 
   function openSeriesMarkers(series) {
     router.push({ name: "series-markers", params: { seriesKey: series.ratingKey } });
   }
 
-  // Watch route param for deep-linking
+  // Monitorar parâmetro de rota para deep-linking
   watch(
     () => route.params.key,
     (newKey) => {
       if (newKey && newKey !== expandedLibraryKey.value) {
         expandedLibraryKey.value = newKey;
-        seriesPage.value = 1;
         seriesQuery.value = "";
+        loadInitialSeries(newKey);
       } else if (!newKey && expandedLibraryKey.value) {
         expandedLibraryKey.value = null;
+        seriesList.value = [];
+        hasMore.value = false;
       }
     },
   );
 
-  // Debounced search
+  // Busca com debounce - reseta para o início
   watch(seriesQuery, () => {
     clearTimeout(seriesDebounceTimer);
     seriesDebounceTimer = setTimeout(() => {
-      seriesPage.value = 1;
       if (expandedLibraryKey.value) {
-        // loadSeries will be called by parent
+        loadInitialSeries(expandedLibraryKey.value);
       }
     }, 300);
   });
 
-  // Expose loadSeries for parent to call with libraries array
-  const loadSeriesForKey = (libraryKey, libraries) => loadSeries(libraryKey, libraries);
-
   return {
-    // State
+    // Estado
     expandedLibraryKey,
     seriesList,
     seriesTotalSize,
-    seriesPage,
-    seriesPageSize,
     seriesQuery,
     seriesLoading,
+    isLoadingMore,
     seriesError,
-    totalSeriesPages,
-    // Computed
+    hasMore,
+    sentinelRef,
+    // Computados
     expandedLibrary,
-    // Methods
-    loadSeries: loadSeriesForKey,
+    // Métodos
+    loadSeries: loadInitialSeries,
+    loadMore,
     toggleLibrary,
-    goToSeriesPage,
     openSeriesMarkers,
   };
 }
