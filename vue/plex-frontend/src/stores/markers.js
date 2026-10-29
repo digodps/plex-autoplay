@@ -1,6 +1,6 @@
 import { defineStore } from "pinia";
 import { ref } from "vue";
-import { apiFetch } from "../api";
+import { apiFetch, extractErrorMessage } from "../api";
 
 /**
  * Store central de marcadores: junta episódios da série (Plex) com marcadores
@@ -28,7 +28,9 @@ export const useMarkerStore = defineStore("markers", () => {
       ]);
 
       if (!episodesRes.ok || !markersRes.ok) {
-        throw new Error("Erro ao carregar série");
+        const failedRes = episodesRes.ok ? markersRes : episodesRes;
+        const detail = await extractErrorMessage(failedRes);
+        throw new Error(detail || "Erro ao carregar série");
       }
 
       const episodes = await episodesRes.json();
@@ -58,8 +60,8 @@ export const useMarkerStore = defineStore("markers", () => {
         };
       }
       markersMap.value = markers;
-    } catch {
-      error.value = "Não foi possível carregar os dados da série.";
+    } catch (e) {
+      error.value = e.message || "Não foi possível carregar os dados da série.";
     } finally {
       loading.value = false;
     }

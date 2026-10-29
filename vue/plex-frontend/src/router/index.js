@@ -6,8 +6,7 @@ import SyncView from "../views/SyncView.vue";
 const routes = [
   {
     path: "/",
-    name: "login",
-    component: LoginView,
+    redirect: "/dashboard",
   },
   {
     path: "/login",
