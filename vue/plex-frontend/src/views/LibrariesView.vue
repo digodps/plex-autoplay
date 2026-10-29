@@ -1,44 +1,41 @@
 <script setup>
-import { ref, computed, watch, onMounted } from "vue";
-import { useRoute, useRouter } from "vue-router";
+import { ref, computed, onMounted } from "vue";
+import { useRoute } from "vue-router";
 import AppIcon from "../components/AppIcon.vue";
-import { apiFetch, extractErrorMessage } from "../api";
+import { apiFetch } from "../api";
+import { useLibrarySeries } from "../composables/useLibrarySeries";
 
 const route = useRoute();
-const router = useRouter();
 
 const libraries = ref([]);
 const error = ref("");
 
-// Series state for inline expansion
-const expandedLibraryKey = ref(null);
-const seriesList = ref([]);
-const seriesTotalSize = ref(0);
-const seriesPage = ref(1);
-const seriesPageSize = ref(24);
-const seriesQuery = ref("");
-const seriesLoading = ref(false);
-const seriesError = ref("");
+const {
+  expandedLibraryKey,
+  seriesList,
+  seriesTotalSize,
+  seriesQuery,
+  seriesLoading,
+  isLoadingMore,
+  seriesError,
+  hasMore,
+  sentinelRef,
+  loadSeries,
+  toggleLibrary,
+  openSeriesMarkers,
+} = useLibrarySeries();
 
-const totalSeriesPages = computed(() =>
-  Math.max(1, Math.ceil(seriesTotalSize.value / seriesPageSize.value)),
-);
-
-// Computed to get the expanded library object
 const expandedLibrary = computed(() => {
   if (!expandedLibraryKey.value) return null;
   return libraries.value.find((l) => l.key === expandedLibraryKey.value) || null;
 });
-
-// Debounce timer for search
-let seriesDebounceTimer;
 
 onMounted(async () => {
   try {
     const response = await apiFetch("/api/plex/libraries");
     if (response.ok) {
       libraries.value = await response.json();
-      // Deep-link: if route has key param, expand that library
+      // Deep-link: se a rota possuir o parâmetro key, expande a biblioteca correspondente
       if (route.params.key) {
         expandedLibraryKey.value = route.params.key;
         await loadSeries(route.params.key);
@@ -50,101 +47,6 @@ onMounted(async () => {
     error.value = "Erro de conexão";
   }
 });
-
-// Watch route param for deep-linking
-watch(
-  () => route.params.key,
-  (newKey) => {
-    if (newKey && newKey !== expandedLibraryKey.value) {
-      expandedLibraryKey.value = newKey;
-      seriesPage.value = 1;
-      seriesQuery.value = "";
-      loadSeries(newKey);
-    } else if (!newKey && expandedLibraryKey.value) {
-      // Navigated away from a library series view
-      expandedLibraryKey.value = null;
-    }
-  },
-);
-
-// Debounced search
-watch(seriesQuery, () => {
-  clearTimeout(seriesDebounceTimer);
-  seriesDebounceTimer = setTimeout(() => {
-    seriesPage.value = 1;
-    if (expandedLibraryKey.value) {
-      loadSeries(expandedLibraryKey.value);
-    }
-  }, 300);
-});
-
-async function loadSeries(libraryKey) {
-  if (!libraryKey) return;
-  seriesLoading.value = true;
-  seriesError.value = "";
-  try {
-    const params = new URLSearchParams({
-      page: String(seriesPage.value),
-      pageSize: String(seriesPageSize.value),
-    });
-    if (seriesQuery.value.trim()) params.set("query", seriesQuery.value.trim());
-
-    const res = await apiFetch(`/api/series/${encodeURIComponent(libraryKey)}?${params}`);
-
-    if (res.status === 502) {
-      seriesError.value =
-        (await extractErrorMessage(res)) ||
-        "Não foi possível consultar o Plex. Verifique a conexão com o servidor.";
-      seriesList.value = [];
-      return;
-    }
-
-    if (res.ok) {
-      const data = await res.json();
-      seriesList.value = data.items ?? [];
-      seriesTotalSize.value = data.totalSize ?? 0;
-    } else {
-      seriesError.value = "Erro ao carregar séries";
-    }
-  } catch {
-    seriesError.value = "Erro de conexão";
-  } finally {
-    seriesLoading.value = false;
-  }
-}
-
-function toggleLibrary(libraryKey) {
-  if (expandedLibraryKey.value === libraryKey) {
-    // Collapse
-    expandedLibraryKey.value = null;
-    seriesList.value = [];
-    seriesTotalSize.value = 0;
-    seriesPage.value = 1;
-    seriesQuery.value = "";
-    seriesError.value = "";
-    // Update URL to remove key param
-    router.replace({ name: "libraries" });
-  } else {
-    // Expand new library
-    expandedLibraryKey.value = libraryKey;
-    seriesPage.value = 1;
-    seriesQuery.value = "";
-    seriesError.value = "";
-    loadSeries(libraryKey);
-    // Update URL with key param
-    router.replace({ name: "libraries", params: { key: libraryKey } });
-  }
-}
-
-function goToSeriesPage(page) {
-  if (page < 1 || page > totalSeriesPages.value || page === seriesPage.value) return;
-  seriesPage.value = page;
-  loadSeries(expandedLibraryKey.value);
-}
-
-function openSeriesMarkers(series) {
-  router.push({ name: "series-markers", params: { seriesKey: series.ratingKey } });
-}
 </script>
 
 <template>
@@ -174,7 +76,7 @@ function openSeriesMarkers(series) {
       </div>
     </div>
 
-    <!-- Full-width series expansion (outside grid) -->
+    <!-- Expansão full-width de séries da biblioteca selecionada -->
     <div v-if="expandedLibraryKey" class="library-series-expansion-full">
       <div class="expansion-header">
         <h2>
@@ -209,9 +111,9 @@ function openSeriesMarkers(series) {
         </button>
       </div>
 
-      <!-- Skeleton loading -->
+      <!-- Skeletons durante carregamento inicial -->
       <div v-if="seriesLoading && seriesList.length === 0" class="series-grid">
-        <div v-for="n in seriesPageSize" :key="n" class="series-card skeleton">
+        <div v-for="n in 24" :key="n" class="series-card skeleton">
           <div class="series-card-poster skeleton"></div>
           <div class="series-card-info">
             <div class="skeleton-line"></div>
@@ -220,49 +122,49 @@ function openSeriesMarkers(series) {
         </div>
       </div>
 
-      <!-- Series grid -->
-      <div v-else-if="seriesList.length > 0" class="series-grid">
-        <div
-          v-for="series in seriesList"
-          :key="series.ratingKey"
-          class="series-card"
-          @click="openSeriesMarkers(series)"
-        >
-          <div class="series-card-poster">
-            <img v-if="series.thumb" :src="series.thumb" :alt="series.title" loading="lazy" />
-            <AppIcon v-else name="tv" size="lg" />
+      <!-- Grid de séries com wrapper de scrollbar oculta -->
+      <div v-else-if="seriesList.length > 0" class="series-grid-wrapper">
+        <div class="series-grid">
+          <div
+            v-for="series in seriesList"
+            :key="series.ratingKey"
+            class="series-card"
+            @click="openSeriesMarkers(series)"
+          >
+            <div class="series-card-poster">
+              <img v-if="series.thumb" :src="series.thumb" :alt="series.title" loading="lazy" />
+              <AppIcon v-else name="tv" size="lg" />
+            </div>
+            <div class="series-card-info">
+              <h4>{{ series.title }}</h4>
+              <p v-if="series.summary" class="series-summary">{{ series.summary }}</p>
+            </div>
           </div>
-          <div class="series-card-info">
-            <h4>{{ series.title }}</h4>
-            <p v-if="series.summary" class="series-summary">{{ series.summary }}</p>
-          </div>
+
+          <!-- Skeletons discretos no fim durante carregamento de próxima página -->
+          <template v-if="isLoadingMore">
+            <div v-for="n in 6" :key="'more-' + n" class="series-card skeleton">
+              <div class="series-card-poster skeleton"></div>
+              <div class="series-card-info">
+                <div class="skeleton-line"></div>
+                <div class="skeleton-line short"></div>
+              </div>
+            </div>
+          </template>
+
+          <!-- Sentinela do IntersectionObserver -->
+          <div ref="sentinelRef" class="sentinel" aria-hidden="true"></div>
+        </div>
+
+        <!-- Indicador de fim de catálogo -->
+        <div v-if="!hasMore && seriesList.length > 0" class="end-of-catalog">
+          <span>Fim do catálogo</span>
         </div>
       </div>
 
       <div v-else-if="!seriesLoading && !seriesError" class="empty">
         <AppIcon name="tv" size="lg" />
         <p>Nenhuma série encontrada.</p>
-      </div>
-
-      <!-- Pagination -->
-      <div v-if="totalSeriesPages > 1" class="series-pagination">
-        <button
-          class="btn btn-ghost btn-sm"
-          :disabled="seriesPage === 1"
-          @click="goToSeriesPage(seriesPage - 1)"
-        >
-          <AppIcon name="chevron-left" size="sm" />
-          Anterior
-        </button>
-        <span class="page-info"> Página {{ seriesPage }} de {{ totalSeriesPages }} </span>
-        <button
-          class="btn btn-ghost btn-sm"
-          :disabled="seriesPage === totalSeriesPages"
-          @click="goToSeriesPage(seriesPage + 1)"
-        >
-          Próxima
-          <AppIcon name="chevron-right" size="sm" />
-        </button>
       </div>
     </div>
 
@@ -327,7 +229,8 @@ function openSeriesMarkers(series) {
   font-size: 0.8rem;
   color: var(--text-secondary);
 }
-/* Full-width series expansion */
+
+/* Expansão full-width */
 .library-series-expansion-full {
   margin-top: 1.5rem;
   padding: 1.5rem;
@@ -361,16 +264,6 @@ function openSeriesMarkers(series) {
   color: var(--accent);
 }
 
-/* Keep existing library-series-expansion styles for reference but they're no longer used */
-.library-series-expansion {
-  display: none;
-}
-
-/* Adjust library-card is-expanded since expansion is now full-width */
-.library-card.is-expanded {
-  border-color: var(--accent);
-  box-shadow: var(--shadow-2);
-}
 .series-toolbar {
   display: flex;
   align-items: center;
@@ -397,6 +290,17 @@ function openSeriesMarkers(series) {
   font-size: 0.875rem;
   color: var(--text-secondary);
 }
+
+/* Infinite scroll container */
+.series-grid-wrapper {
+  overflow-y: auto;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE/Edge Legacy */
+}
+.series-grid-wrapper::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Edge */
+}
+
 .series-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
@@ -456,19 +360,23 @@ function openSeriesMarkers(series) {
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
-.series-pagination {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 1rem;
-  margin-top: 1rem;
-  padding-top: 1rem;
-  border-top: 1px solid var(--border);
+
+.sentinel {
+  width: 100%;
+  height: 1px;
+  grid-column: 1 / -1;
+  pointer-events: none;
+  visibility: hidden;
 }
-.page-info {
+
+.end-of-catalog {
+  text-align: center;
+  padding: 1.5rem 0;
+  color: var(--text-tertiary);
   font-size: 0.875rem;
-  color: var(--text-secondary);
+  font-style: italic;
 }
+
 .empty {
   color: var(--text-tertiary);
   font-style: italic;
@@ -480,7 +388,7 @@ function openSeriesMarkers(series) {
   opacity: 0.5;
 }
 
-/* Skeleton styles */
+/* Skeletons */
 .skeleton {
   animation: pulse 1.5s ease-in-out infinite;
 }
@@ -516,7 +424,7 @@ function openSeriesMarkers(series) {
   }
 }
 
-/* Button styles (reused from SeriesView) */
+/* Botões */
 .btn {
   display: inline-flex;
   align-items: center;
