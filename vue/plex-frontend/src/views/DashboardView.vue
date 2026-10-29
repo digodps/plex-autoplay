@@ -76,6 +76,17 @@ function handleViewFullLog() {
       <p>{{ store.error }}</p>
       <button class="btn" @click="store.retry"><AppIcon name="sync" /> Tentar novamente</button>
     </div>
+
+    <!-- Erro parcial da API do Plex (bibliotecas) com sugestão de ação -->
+    <div v-else-if="store.libraryError" class="dashboard-error">
+      <AppIcon name="warning" size="lg" />
+      <p>{{ store.libraryError }}</p>
+      <p class="dashboard-error-hint">
+        Verifique se o servidor Plex está acessível, se a URL e o token (X-Plex-Token)
+        estão configurados corretamente e se há conectividade de rede.
+      </p>
+      <button class="btn" @click="store.retry"><AppIcon name="sync" /> Tentar novamente</button>
+    </div>
   </div>
 </template>
 
@@ -136,5 +147,11 @@ function handleViewFullLog() {
 .dashboard-error p {
   margin: 0;
   font-size: 1rem;
+}
+
+.dashboard-error-hint {
+  margin: 0.5rem 0 0;
+  font-size: 0.85rem;
+  color: color-mix(in srgb, var(--danger) 70%, transparent);
 }
 </style>
