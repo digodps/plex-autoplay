@@ -5,7 +5,5 @@
     <Project Path="src/PlexAutoplay.Infrastructure/PlexAutoplay.Infrastructure.csproj" />
     <Project Path="src/PlexAutoplay.Web/PlexAutoplay.Web.csproj" />
   </Folder>
-  <Folder Name="/tests/">
-    <Project Path="tests/unit/PlexAutoplay.UnitTests.csproj" />
-  </Folder>
+  <Folder Name="/tests/" />
 </Solution>
