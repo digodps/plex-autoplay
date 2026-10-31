@@ -39,8 +39,8 @@ function redirectToLoginPreservingRoute() {
 }
 
 /**
- * fetch com Authorization do cookie; em 401 limpa a sessão e devolve ao login
- * (registrando a rota para retorno após autenticação).
+ * Fetch com Authorization do cookie; em 401 limpa sessão e devolve ao login
+ * (registrando rota retorno após autenticação).
  */
 export async function apiFetch(url, options = {}) {
   const token = getToken();
@@ -74,7 +74,7 @@ export async function extractErrorMessage(res) {
 }
 
 /**
- * Lança um erro contendo a mensagem detalhada da resposta (quando disponível)
+ * Lança um erro contendo mensagem detalhada da resposta (quando disponível)
  * para que o cliente possa exibi-la ao usuário e sugerir uma ação.
  */
 export async function throwHttpError(res, defaultMessage) {
@@ -82,9 +82,7 @@ export async function throwHttpError(res, defaultMessage) {
   throw new Error(detail || defaultMessage);
 }
 
-/**
- * Helpers específicos do Dashboard
- */
+/** Helpers específicos do Dashboard */
 
 /** Busca saúde do serviço + último job de sync + métricas do processo */
 export async function fetchStatus() {
