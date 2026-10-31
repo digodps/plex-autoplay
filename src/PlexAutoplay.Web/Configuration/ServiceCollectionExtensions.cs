@@ -34,6 +34,8 @@ public static class ServiceCollectionExtensions
         var sqliteConnectionString = Environment.GetEnvironmentVariable("SQLITE_CONNECTION_STRING") ?? "Data Source=/data/app.db";
         services.AddSingleton<IMarkerRepository>(
             new PlexAutoplay.Infrastructure.Persistence.Repositories.SqliteMarkerRepository(sqliteConnectionString));
+        services.AddSingleton<IUserThemeRepository>(
+            new PlexAutoplay.Infrastructure.Persistence.Repositories.SqliteUserThemeRepository(sqliteConnectionString));
 
         // JWT token service
         var jwtSecret = Environment.GetEnvironmentVariable("JWT_SECRET") ?? "default-secret-change-in-production";
