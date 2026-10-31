@@ -15,10 +15,18 @@
 - [x] 2.6 Implementar CRUD de marcadores: listar, criar `201`, duplicado `409`, consultar, editar `200`, remover `200` e confirmar remoção.
 - [x] 2.7 Implementar integração Plex: bibliotecas, episódios por biblioteca, séries, episódios por série e proxy de imagem quando houver dados.
 - [x] 2.8 Implementar scan: iniciar job, consultar status, cancelar job e tratar job concluído antes do cancelamento.
-- [x] 2.9 Implementar verificações de SPA e WebSocket: rotas `/login`, `/dashboard`, `/libraries`, `/settings`, `/sync` e handshake `101` em `wss://localhost:8081/ws`.
+- [x] 2.9 Implementar verificação de WebSocket: handshake `101` em `wss://localhost:8081/ws`.
 - [x] 2.10 Exibir relatório `PASS/SKIP/FAIL` e sair com código `1` quando `FAIL > 0`.
 
-## 3. Skill e sincronização
+## 3. Interface em navegador real (Playwright)
+
+- [x] 3.1 Criar `tests/e2e/acceptance.config.js` apontando para `ACCEPTANCE_BASE_URL` (padrão `https://localhost:8443`), com `ignoreHTTPSErrors` e `workers: 1`.
+- [x] 3.2 Criar `tests/e2e/tests/acceptance-real.spec.js` com login (senha incorreta e correta + cookie `auth_token`), dashboard, configurações, bibliotecas/séries/editor de marcadores e sincronização via UI.
+- [x] 3.3 Marcar `SKIP` quando o Plex não tiver bibliotecas ou séries; reprovar em erro de UI ou job `failed`.
+- [x] 3.4 Integrar a execução do Playwright ao `scripts/acceptance-test.sh`, convertendo cada resultado em `PASS`/`SKIP`/`FAIL`.
+- [x] 3.5 Reprovar com instrução explícita quando o Chromium do Playwright não estiver instalado.
+
+## 4. Skill e sincronização
 
 - [x] 3.1 Criar `.agent-source/skills/teste-aceitacao/SKILL.md` com o fluxo, interpretação do relatório e regra de reprovação.
 - [x] 3.2 Executar `python3 scripts/sync-agent-configs.py`.
@@ -26,9 +34,17 @@
 
 ## 4. Verificação
 
-- [x] 4.1 Executar `bash -n scripts/acceptance-test.sh` e confirmar sintaxe válida.
-- [x] 4.2 Executar `python3 scripts/create-skill.py teste-aceitacao --force` e confirmar sincronização sem erros.
-- [ ] 4.3 Executar `./scripts/acceptance-test.sh` em ambiente com `.env` e Plex configurados e exigir `RESULTADO: APROVADO`.
+- [x] 4.1 Criar `.agent-source/skills/teste-aceitacao/SKILL.md` com o fluxo, interpretação do relatório e regra de reprovação.
+- [x] 4.2 Executar `python3 scripts/sync-agent-configs.py`.
+- [x] 4.3 Validar que a skill existe em `.agents`, `.claude`, `.continue`, `.opencode`, `.github` e `.dsh`.
+
+## 5. Verificação
+
+- [x] 5.1 Executar `bash -n scripts/acceptance-test.sh` e confirmar sintaxe válida.
+- [x] 5.2 Executar `python3 scripts/create-skill.py teste-aceitacao --force` e confirmar sincronização sem erros.
+- [x] 5.3 Executar `node --check` em `acceptance.config.js` e no spec de aceitação.
+- [ ] 5.4 Instalar o Chromium: `(cd tests/e2e && npm install && npx playwright install chromium)`.
+- [ ] 5.5 Executar `./scripts/acceptance-test.sh` em ambiente com `.env` e Plex configurados e exigir `RESULTADO: APROVADO`.
 
 > Execução de 2026-10-31: `PASS=35 SKIP=1 FAIL=2` → `RESULTADO: REPROVADO`. Falhas reais encontradas:
 > - `GET /library/6` retorna `502`; o Plex responde `404` em `/library/sections/6/items` (a API do Plex expõe `/all`).
