@@ -24,6 +24,12 @@ const routes = [
     component: () => import("../views/LibrariesView.vue"),
   },
   {
+    path: "/libraries/:key/series",
+    name: "series",
+    component: () => import("../views/SeriesView.vue"),
+    props: true,
+  },
+  {
     path: "/series/:seriesKey/markers",
     name: "series-markers",
     component: () => import("../views/MarkerEditorView.vue"),

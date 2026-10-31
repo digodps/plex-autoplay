@@ -19,11 +19,13 @@ export function getCookie(name) {
  */
 export function setCookie(name, value, days = 0) {
   const expiry = days > 0 ? `; max-age=${days * 24 * 60 * 60}` : "";
-  document.cookie = `${name}=${encodeURIComponent(value)}${expiry}; path=/; SameSite=Lax`;
+  const secure = location.protocol === "https:" ? "; Secure" : "";
+  document.cookie = `${name}=${encodeURIComponent(value)}${expiry}; path=/; SameSite=Lax${secure}`;
 }
 
 export function deleteCookie(name) {
-  document.cookie = `${name}=; max-age=0; path=/`;
+  const secure = location.protocol === "https:" ? "; Secure" : "";
+  document.cookie = `${name}=; max-age=0; path=/; SameSite=Lax${secure}`;
 }
 
 export function getToken() {

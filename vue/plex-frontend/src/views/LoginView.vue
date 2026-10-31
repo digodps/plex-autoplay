@@ -3,6 +3,7 @@ import { useAuthStore } from "../stores/auth";
 import { useRoute, useRouter } from "vue-router";
 import { ref } from "vue";
 import AppIcon from "../components/AppIcon.vue";
+import { deleteCookie, AUTH_COOKIE } from "../api";
 
 const authStore = useAuthStore();
 const route = useRoute();
@@ -25,6 +26,9 @@ const handleLogin = async () => {
 
     if (response.ok) {
       const data = await response.json();
+
+      // Limpa qualquer cookie de autenticação existente antes de definir o novo
+      deleteCookie(AUTH_COOKIE);
       authStore.login(data.token, keepSigned.value);
 
       // Retorna à rota original que o usuário tentou acessar antes do guard,
@@ -54,27 +58,23 @@ const handleLogin = async () => {
         {{ error }}
       </div>
 
-      <div class="form-group">
-        <label for="password">Senha</label>
-        <input
-          id="password"
-          v-model="password"
-          type="password"
-          placeholder="Digite a senha"
-          @keyup.enter="handleLogin"
-        />
-      </div>
+      <form @submit.prevent="handleLogin">
+        <div class="form-group">
+          <label for="password">Senha</label>
+          <input id="password" v-model="password" type="password" placeholder="Digite a senha" />
+        </div>
 
-      <label class="keep-signed">
-        <input v-model="keepSigned" type="checkbox" />
-        <span>Manter-me conectado</span>
-      </label>
+        <label class="keep-signed">
+          <input v-model="keepSigned" type="checkbox" />
+          <span>Manter-me conectado</span>
+        </label>
 
-      <button :disabled="loading" @click="handleLogin">
-        <AppIcon v-if="!loading" name="check" size="sm" />
-        <AppIcon v-else name="spinner" size="sm" class="spin" />
-        {{ loading ? "Entrando..." : "Entrar" }}
-      </button>
+        <button :disabled="loading" type="submit">
+          <AppIcon v-if="!loading" name="check" size="sm" />
+          <AppIcon v-else name="spinner" size="sm" class="spin" />
+          {{ loading ? "Entrando..." : "Entrar" }}
+        </button>
+      </form>
 
       <p v-if="keepSigned" class="hint">
         A sessão permanecerá válida por 30 dias neste dispositivo.
