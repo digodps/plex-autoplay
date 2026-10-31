@@ -34,7 +34,7 @@ public static class AuthEndpoints
                     IsEssential = true
                 });
                 
-                return Results.Ok(new { success = true });
+                return Results.Ok(new { success = true, token });
             }
 
             return Results.Unauthorized();
