@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using PlexAutoplay.Domain.Entities;
 using PlexAutoplay.Domain.Ports;
 using System.Text.Json;
 
@@ -23,7 +24,7 @@ public static class MarkerEndpoints
             return Results.Ok(markers.Select(m => new { m.RatingKey, m.Kind, m.StartMs, m.EndMs, m.Origin }));
         });
 
-        app.MapPost("/api/markers", async (HttpContext context, [FromServices] IMarkerRepository markerRepo, [FromServices] ICustomJsonWriter customJsonWriter) =>
+        app.MapPost("/api/markers", async (HttpContext context, [FromServices] IMarkerRepository markerRepo) =>
         {
             // Prefer query string (works with Playwright), fallback to JSON body (Vue form)
             var ratingKey = context.Request.Query["RatingKey"].FirstOrDefault() ?? "";
@@ -81,7 +82,6 @@ public static class MarkerEndpoints
             };
 
             await markerRepo.AddAsync(marker);
-            customJsonWriter.UpsertMarkers(ratingKey, new[] { new ICustomJsonWriter.MarkerEntry(kind ?? "", startMs, endMs) });
             return Results.Created($"/api/markers/{ratingKey}", new { ratingKey, kind, startMs, endMs, origin = "manual" });
         });
 
@@ -89,8 +89,7 @@ public static class MarkerEndpoints
             string ratingKey,
             string kind,
             HttpContext context,
-            [FromServices] IMarkerRepository markerRepo,
-            [FromServices] ICustomJsonWriter customJsonWriter) =>
+            [FromServices] IMarkerRepository markerRepo) =>
         {
             long? startMs = null;
             long? endMs = null;
@@ -137,21 +136,17 @@ public static class MarkerEndpoints
 
             await markerRepo.UpdateAsync(current with { StartMs = startMs.Value, EndMs = endMs.Value });
 
-            // Reescreve custom.json preservando os outros marcadores do mesmo ratingKey
-            var others = existing
-                .Where(m => !string.Equals(m.Kind, kind, StringComparison.OrdinalIgnoreCase))
-                .Select(m => new ICustomJsonWriter.MarkerEntry(m.Kind, m.StartMs, m.EndMs))
-                .ToList();
-            others.Add(new ICustomJsonWriter.MarkerEntry(kind, startMs.Value, endMs.Value));
-            customJsonWriter.UpsertMarkers(ratingKey, others);
-
             return Results.Ok(new { ratingKey, kind, startMs, endMs, current.Origin });
         });
 
-        app.MapDelete("/api/markers/{ratingKey}/{kind}", async (string ratingKey, string kind, [FromServices] IMarkerRepository markerRepo) =>
+        // DELETE removes from SQLite only - custom.json is no longer present
+        app.MapDelete("/api/markers/{ratingKey}/{kind}", async (
+            string ratingKey,
+            string kind,
+            [FromServices] IMarkerRepository markerRepo) =>
         {
             await markerRepo.DeleteAsync(ratingKey, kind);
-            return Results.Ok(new { deleted = true });
+            return Results.Ok();
         });
     }
 }

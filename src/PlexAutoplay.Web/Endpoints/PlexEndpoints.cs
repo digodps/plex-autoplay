@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using PlexAutoplay.Application;
 using PlexAutoplay.Domain.Ports;
-using PlexAutoplay.Infrastructure.AutoSkip;
 using PlexAutoplay.Web.Services;
 using Serilog;
 
@@ -33,7 +32,6 @@ public static class PlexEndpoints
             [FromServices] IPlexApiClient plexClient,
             [FromServices] IMarkerRepository markerRepo,
             [FromServices] IMarkerDetector markerDetector,
-            [FromServices] ICustomJsonWriter customJsonWriter,
             [FromServices] IScanJobStore scanJobs) =>
         {
             var jobId = Guid.NewGuid().ToString();
@@ -100,20 +98,13 @@ public static class PlexEndpoints
                                 // Detect markers via ffprobe
                                 var detectedMarkers = markerDetector.Detect(localPath);
 
-                                var markerEntries = new List<ICustomJsonWriter.MarkerEntry>();
                                 foreach (var marker in detectedMarkers)
                                 {
                                     var exists = await markerRepo.ExistsAsync(episode.RatingKey, marker.Kind);
                                     if (!exists)
                                     {
                                         await markerRepo.AddAsync(marker with { RatingKey = episode.RatingKey, Origin = "detected" });
-                                        markerEntries.Add(new ICustomJsonWriter.MarkerEntry(marker.Kind, marker.StartMs, marker.EndMs));
                                     }
-                                }
-
-                                if (markerEntries.Count > 0)
-                                {
-                                    customJsonWriter.UpsertMarkers(episode.RatingKey, markerEntries);
                                 }
 
                                 processed++;

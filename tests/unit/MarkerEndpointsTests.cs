@@ -76,7 +76,7 @@ public class MarkerEndpointsTests : IClassFixture<MarkerEndpointsFixture>
     }
 
     [Fact]
-    public async Task Put_ExistingMarker_Returns200AndUpdatesCustomJson()
+    public async Task Put_ExistingMarker_Returns200AndUpdatesSqlite()
     {
         // Cria marcador manual
         await _fixture.Client.PostAsync("/api/markers", JsonContent(new
@@ -94,13 +94,6 @@ public class MarkerEndpointsTests : IClassFixture<MarkerEndpointsFixture>
         }));
 
         Assert.Equal(HttpStatusCode.OK, put.StatusCode);
-
-        // custom.json atualizado com os novos tempos
-        using var doc = JsonDocument.Parse(await File.ReadAllTextAsync(_fixture.CustomJsonPath));
-        var entry = doc.RootElement.GetProperty("5001").EnumerateArray().Single();
-        Assert.Equal("intro", entry.GetProperty("kind").GetString());
-        Assert.Equal(2000, entry.GetProperty("start_ms").GetInt64());
-        Assert.Equal(95000, entry.GetProperty("end_ms").GetInt64());
 
         // SQLite atualizado
         var get = await _fixture.Client.GetAsync("/api/markers/5001");
