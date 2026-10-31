@@ -30,20 +30,38 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Host.UseSerilog();
 
 // --- Certificate & Kestrel ---
+Log.Information("Carregando certificado...");
 var disableHttp = (Environment.GetEnvironmentVariable("DISABLE_HTTP") ?? "true").Equals("true", StringComparison.OrdinalIgnoreCase);
 var serverCert = ServerCertificateProvider.GetServerCertificate();
+Log.Information("Certificado carregado, configurando Kestrel...");
 KestrelSetup.Configure(builder, serverCert, disableHttp);
+Log.Information("Kestrel configurado.");
 
 // --- Services (DI) ---
+Log.Information("Adicionando serviços de aplicação...");
 builder.AddApplicationServices();
+Log.Information("Serviços de aplicação adicionados.");
 
 // Admin password for auth endpoints
 var adminPassword = Environment.GetEnvironmentVariable("ADMIN_PASSWORD") ?? "admin";
+Log.Information("Admin password set.");
 
 // Media root for resolving local media file paths
 var mediaRoot = Environment.GetEnvironmentVariable("MEDIA_ROOT") ?? "/media";
+Log.Information("Media root: {MediaRoot}", mediaRoot);
 
-var app = builder.Build();
+Log.Information("Chamando builder.Build()...");
+WebApplication app;
+try
+{
+    app = builder.Build();
+    Log.Information("Aplicação construída.");
+}
+catch (Exception ex)
+{
+    Log.Fatal(ex, "Erro ao construir a aplicação!");
+    throw;
+}
 
 // --- HTTP request pipeline ---
 if (app.Environment.IsDevelopment())

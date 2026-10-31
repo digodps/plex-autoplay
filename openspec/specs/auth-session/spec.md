@@ -66,3 +66,12 @@ O sistema SHALL perguntar ao usuário na tela de login se ele deseja manter a au
 
 - **WHEN** o usuário deixa "manter-me conectado" desmarcado e autentica-se
 - **THEN** o token é salvo em cookie de sessão, sendo encerrado ao fechar o navegador e pedindo novo login na visita seguinte.
+
+### Requirement: Limpeza de cookie antes do login
+
+O sistema SHALL limpar qualquer cookie de autenticação existente (`auth_token`) antes de tentar realizar a requisição de login ou armazenar um novo token, garantindo que cookies corrompidos ou obsoletos não interfiram na nova sessão.
+
+#### Scenario: Realização de login com cookie antigo existente
+
+- **WHEN** o usuário submete o formulário de login possuindo um cookie de autenticação antigo ou inválido no navegador
+- **THEN** o sistema remove o cookie existente antes de enviar as credenciais/armazenar o novo token e redireciona para o dashboard com o novo token válido.
