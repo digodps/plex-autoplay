@@ -9,7 +9,6 @@ const authStore = useAuthStore();
 const route = useRoute();
 const router = useRouter();
 const password = ref("");
-const keepSigned = ref(false);
 const error = ref("");
 const loading = ref(false);
 
@@ -43,7 +42,7 @@ const handleLogin = async () => {
 
     if (response.ok) {
       const data = await response.json();
-      authStore.login(data.token, keepSigned.value);
+      authStore.login(data.token);
       await router.push(getRedirect());
     } else {
       error.value = "Senha inválida";
@@ -73,21 +72,12 @@ const handleLogin = async () => {
           <input id="password" v-model="password" type="password" placeholder="Digite a senha" />
         </div>
 
-        <label class="keep-signed">
-          <input v-model="keepSigned" type="checkbox" />
-          <span>Manter-me conectado</span>
-        </label>
-
         <button :disabled="loading" type="submit">
           <AppIcon v-if="!loading" name="check" size="sm" />
           <AppIcon v-else name="spinner" size="sm" class="spin" />
           {{ loading ? "Entrando..." : "Entrar" }}
         </button>
       </form>
-
-      <p v-if="keepSigned" class="hint">
-        A sessão permanecerá válida por 30 dias neste dispositivo.
-      </p>
     </div>
   </div>
 </template>
@@ -134,26 +124,8 @@ const handleLogin = async () => {
   border-radius: var(--radius-sm, 4px);
   box-sizing: border-box;
 }
-.keep-signed {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
+.alert.error {
   margin-bottom: 1rem;
-  font-size: 0.9rem;
-  color: var(--text-secondary, #666);
-  cursor: pointer;
-  user-select: none;
-}
-.keep-signed input {
-  accent-color: var(--accent, #e5a00d);
-  width: 16px;
-  height: 16px;
-  cursor: pointer;
-}
-.hint {
-  margin: 0.75rem 0 0;
-  font-size: 0.8rem;
-  color: var(--text-tertiary, #999);
 }
 button {
   width: 100%;
