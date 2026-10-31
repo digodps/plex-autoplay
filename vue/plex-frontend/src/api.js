@@ -82,6 +82,15 @@ export async function throwHttpError(res, defaultMessage) {
   throw new Error(detail || defaultMessage);
 }
 
+/** Helpers de tema */
+export async function fetchTheme() {
+  const res = await apiFetch("/api/theme");
+  if (!res.ok) return null;
+  return await res.json();
+}
+
+/** Fim helpers de tema */
+
 /** Helpers específicos do Dashboard */
 
 /** Busca saúde do serviço + último job de sync + métricas do processo */

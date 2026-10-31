@@ -1,16 +1,58 @@
 <script setup>
-import { onMounted, onUnmounted } from "vue";
+import { onMounted, onUnmounted, watch } from "vue";
 import { useRouter } from "vue-router";
 import { apiFetch } from "../api";
 import { useDashboardStore } from "../stores/dashboard";
 import { useDashboardCards } from "../composables/useDashboardCards";
+import { useThemeStore } from "../stores/theme";
 import StatusCard from "../components/StatusCard.vue";
 import ActionBar from "../components/ActionBar.vue";
 import AppIcon from "../components/AppIcon.vue";
 
 const router = useRouter();
 const store = useDashboardStore();
+const themeStore = useThemeStore();
 const { serviceCard, syncCard, librariesCard, markersCard } = useDashboardCards();
+
+// Paleta de cores de destaque (acessibilidade validada para claro/escuro)
+const accentPalette = [
+  { name: "amber", value: "#e5a00d" },
+  { name: "blue", value: "#2563eb" },
+  { name: "green", value: "#16a34a" },
+  { name: "purple", value: "#7c3aed" },
+  { name: "pink", value: "#db2777" },
+  { name: "indigo", value: "#4f46e5" },
+];
+
+function toggleDarkMode() {
+  const modes = ["light", "dark", "system"];
+  const currentIndex = modes.indexOf(themeStore.mode);
+  themeStore.mode = modes[(currentIndex + 1) % modes.length];
+  themeStore.saveTheme();
+}
+
+function setAccentColor(color) {
+  themeStore.accent = color;
+  themeStore.saveTheme();
+}
+
+// Apply accent and mode to root element
+function applyTheme() {
+  document.documentElement.style.setProperty("--accent", themeStore.accent);
+  document.documentElement.classList.toggle("theme-dark", themeStore.mode === "dark");
+  document.documentElement.classList.toggle("theme-light", themeStore.mode === "light");
+}
+
+watch(
+  () => themeStore.accent,
+  () => applyTheme()
+);
+watch(
+  () => themeStore.mode,
+  () => applyTheme()
+);
+
+applyTheme();
 
 // Inicia polling ao montar, para ao desmontar
 onMounted(() => {
@@ -47,6 +89,29 @@ function handleViewFullLog() {
       <div>
         <h1>Início</h1>
         <p class="dashboard-subtitle">Visão geral do Plex Autoplay</p>
+      </div>
+      <div class="theme-controls" role="group" aria-label="Controles de tema">
+        <button
+          class="theme-toggle"
+          type="button"
+          :aria-label="`Modo de tema: ${themeStore.mode}. Clique para alternar.`"
+          @click="toggleDarkMode"
+        >
+          {{ themeStore.mode === "dark" ? "🌙" : themeStore.mode === "light" ? "☀️" : "💻" }}
+        </button>
+        <div class="accent-palette" role="group" aria-label="Cor de destaque">
+          <button
+            v-for="color in accentPalette"
+            :key="color.value"
+            class="accent-swatch"
+            :class="{ selected: themeStore.accent === color.value }"
+            :style="{ backgroundColor: color.value }"
+            :aria-label="`Selecionar cor ${color.name}`"
+            :aria-pressed="themeStore.accent === color.value"
+            type="button"
+            @click="setAccentColor(color.value)"
+          />
+        </div>
       </div>
       <ActionBar>
         <template #secondary>
@@ -91,6 +156,47 @@ function handleViewFullLog() {
 </template>
 
 <style scoped>
+.theme-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.theme-toggle {
+  padding: 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+  font-size: 1rem;
+}
+
+.theme-toggle:focus-visible,
+.accent-swatch:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.accent-palette {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.accent-swatch {
+  width: 1.5rem;
+  height: 1.5rem;
+  border: 2px solid transparent;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.accent-swatch.selected {
+  border-color: var(--text);
+  box-shadow: 0 0 0 2px var(--surface);
+}
+
 .dashboard {
   max-width: 1200px;
   margin: 0 auto;
