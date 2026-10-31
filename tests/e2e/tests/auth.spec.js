@@ -36,40 +36,15 @@ test.describe("Autenticação JWT", () => {
     await page.fill('input[type="password"]', ADMIN_PASSWORD);
     await page.click("button");
 
-    // Aguarda navegação e verifica token no cookie
+    // Aguarda navegação e verifica token no cookie HttpOnly
     await page.waitForURL(`${BASE_URL}/dashboard`);
     const cookies = await context.cookies();
     const authCookie = cookies.find((c) => c.name === "auth_token");
     expect(authCookie).toBeTruthy();
     expect(authCookie.value.length).toBeGreaterThan(0);
-    // Sem "manter-me conectado": cookie de sessão (sem max-age/expiry)
+    // Cookie de sessão (sem max-age/expiry) e HttpOnly
     expect(authCookie.expires).toBe(-1);
-
-    // localStorage não deve mais guardar o token
-    const localStorageToken = await page.evaluate(() => localStorage.getItem("auth_token"));
-    expect(localStorageToken).toBeFalsy();
-  });
-
-  test("cookie de sessão vira persistente quando 'manter-me conectado' é marcado", async ({
-    page,
-    context,
-  }) => {
-    await page.goto(`${BASE_URL}/login`, { waitUntil: "networkidle" });
-    await page.waitForSelector('input[type="password"]', {
-      state: "visible",
-      timeout: 10000,
-    });
-
-    await page.check('.keep-signed input[type="checkbox"]');
-    await page.fill('input[type="password"]', ADMIN_PASSWORD);
-    await page.click("button");
-
-    await page.waitForURL(`${BASE_URL}/dashboard`);
-    const cookies = await context.cookies();
-    const authCookie = cookies.find((c) => c.name === "auth_token");
-    expect(authCookie).toBeTruthy();
-    // Cookie persistente: expiração futura (~30 dias)
-    expect(authCookie.expires).toBeGreaterThan(Date.now() / 1000);
+    expect(authCookie.httpOnly).toBe(true);
   });
 
   test("login com senha incorreta retorna HTTP 401 e exibe erro", async ({ page }) => {

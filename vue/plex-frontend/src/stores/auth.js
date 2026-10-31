@@ -1,28 +1,20 @@
 import { defineStore } from "pinia";
-import { getToken, setCookie, deleteCookie, AUTH_COOKIE } from "../api";
+import { deleteCookie, AUTH_COOKIE } from "../api";
 
 export const useAuthStore = defineStore("auth", {
   state: () => ({
-    token: getToken(),
+    isAuthenticated: false,
   }),
-  getters: {
-    isAuthenticated: (state) => !!state.token,
-  },
   actions: {
-    /**
-     * @param {string} token
-     * @param {boolean} keepSigned true => cookie persistente (30 dias);
-     * false => cookie de sessão do navegador
-     */
-    login(token, keepSigned = false) {
-      this.token = "";
-      deleteCookie(AUTH_COOKIE);
-      setCookie(AUTH_COOKIE, token, keepSigned ? 30 : 0);
-      this.token = token;
+    login() {
+      this.isAuthenticated = true;
     },
     logout() {
-      this.token = "";
+      this.isAuthenticated = false;
       deleteCookie(AUTH_COOKIE);
+    },
+    setAuthenticated(value) {
+      this.isAuthenticated = value;
     },
   },
 });

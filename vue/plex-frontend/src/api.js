@@ -1,8 +1,8 @@
 /**
- * Helpers de autenticação: token em cookie + fetch com tratamento de 401.
+ * Helpers de autenticação: cookie HttpOnly + fetch com credentials include.
  *
- * O token continua viajando no header `Authorization: Bearer` (o middleware do
- * backend só lê o header); o cookie substitui o localStorage como armazenamento.
+ * O cookie `auth_token` é HttpOnly (definido pelo backend no login).
+ * O frontend usa `credentials: 'include'` para que o navegador envie o cookie automaticamente.
  */
 
 export const AUTH_COOKIE = "auth_token";
@@ -28,10 +28,6 @@ export function deleteCookie(name) {
   document.cookie = `${name}=; max-age=0; path=/; SameSite=Lax${secure}`;
 }
 
-export function getToken() {
-  return getCookie(AUTH_COOKIE);
-}
-
 function redirectToLoginPreservingRoute() {
   const route = window.location.pathname + window.location.search;
   deleteCookie(AUTH_COOKIE);
@@ -39,15 +35,11 @@ function redirectToLoginPreservingRoute() {
 }
 
 /**
- * Fetch com Authorization do cookie; em 401 limpa sessão e devolve ao login
- * (registrando rota retorno após autenticação).
+ * Fetch com credentials: 'include' para enviar cookie HttpOnly automaticamente.
+ * Em 401 limpa sessão e devolve ao login (registrando rota retorno após autenticação).
  */
 export async function apiFetch(url, options = {}) {
-  const token = getToken();
-  const headers = { ...(options.headers ?? {}) };
-  if (token) headers.Authorization = `Bearer ${token}`;
-
-  const res = await fetch(url, { ...options, headers });
+  const res = await fetch(url, { ...options, credentials: "include" });
 
   if (res.status === 401 && url.startsWith("/api/")) {
     redirectToLoginPreservingRoute();
