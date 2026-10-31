@@ -29,8 +29,8 @@ htmlcov/
 .DS_Store
 config/
 
-# Test artifacts (not committed)
-tests/*
+# Testes e artefatos (não versionados)
+tests/
 test-artifacts/*
 
 # .NET build output (binários - não commitar)
