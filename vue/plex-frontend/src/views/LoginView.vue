@@ -1,9 +1,9 @@
 <script setup>
-import { useAuthStore } from "../stores/auth";
+import { onMounted, ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import { ref } from "vue";
 import AppIcon from "../components/AppIcon.vue";
 import { deleteCookie, AUTH_COOKIE } from "../api";
+import { useAuthStore } from "../stores/auth";
 
 const authStore = useAuthStore();
 const route = useRoute();
@@ -13,9 +13,26 @@ const keepSigned = ref(false);
 const error = ref("");
 const loading = ref(false);
 
+const getRedirect = () =>
+  typeof route.query.redirect === "string" ? route.query.redirect : "/dashboard";
+
+onMounted(async () => {
+  if (!authStore.isAuthenticated) return;
+
+  const response = await fetch("/api/status", {
+    headers: { Authorization: `Bearer ${authStore.token}` },
+  });
+  if (response.ok) {
+    await router.replace(getRedirect());
+    return;
+  }
+  authStore.logout();
+});
+
 const handleLogin = async () => {
   error.value = "";
   loading.value = true;
+  deleteCookie(AUTH_COOKIE);
 
   try {
     const response = await fetch("/auth/login", {
@@ -26,16 +43,8 @@ const handleLogin = async () => {
 
     if (response.ok) {
       const data = await response.json();
-
-      // Limpa qualquer cookie de autenticação existente antes de definir o novo
-      deleteCookie(AUTH_COOKIE);
       authStore.login(data.token, keepSigned.value);
-
-      // Retorna à rota original que o usuário tentou acessar antes do guard,
-      // ou vai ao dashboard quando o login foi aberto diretamente.
-      const redirect =
-        typeof route.query.redirect === "string" ? route.query.redirect : "/dashboard";
-      router.push(redirect);
+      await router.push(getRedirect());
     } else {
       error.value = "Senha inválida";
     }
