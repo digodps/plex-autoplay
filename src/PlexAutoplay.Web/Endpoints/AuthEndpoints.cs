@@ -1,10 +1,11 @@
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using PlexAutoplay.Infrastructure.Auth;
 
 namespace PlexAutoplay.Web.Endpoints;
 
 /// <summary>
-/// Endpoints de autenticação (POST /auth/login emite JWT).
+/// Endpoints de autenticação (POST /auth/login define cookie HttpOnly).
 /// </summary>
 public static class AuthEndpoints
 {
@@ -22,7 +23,18 @@ public static class AuthEndpoints
             if (password == adminPassword)
             {
                 var token = tokenService.GenerateToken();
-                return Results.Ok(new { token });
+                
+                // Set HttpOnly cookie (session-only, Secure, SameSite=Lax)
+                context.Response.Cookies.Append("auth_token", token, new CookieOptions
+                {
+                    HttpOnly = true,
+                    Secure = true,
+                    SameSite = SameSiteMode.Lax,
+                    Path = "/",
+                    IsEssential = true
+                });
+                
+                return Results.Ok(new { success = true });
             }
 
             return Results.Unauthorized();
