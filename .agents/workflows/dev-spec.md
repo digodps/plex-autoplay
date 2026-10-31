@@ -34,14 +34,14 @@ Uso:
    - Antes de concluir, garanta que o código segue o [`DEVELOPMENT_GUIDE.md`](../../../DEVELOPMENT_GUIDE.md).
    - Atualiza `tasks.md` marcando as tarefas concluídas `[x]`.
 
-6. **Agente 3 (Tester em Container Distrobox)**:
+6. **Agente 3 (Tester)**:
    - Valida existência e preenchimento do `.env`.
    - Executa testes unitários:
-     `distrobox enter fedora -- dotnet test tests/unit/PlexAutoplay.UnitTests.csproj`
+     `dotnet test tests/unit/PlexAutoplay.UnitTests.csproj`
    - Executa testes E2E Playwright:
-     `distrobox enter fedora -- docker compose -f docker-compose.test.yml up --build --abort-on-container-exit --exit-code-from executor`
+     `docker compose -f docker-compose.test.yml up --build --abort-on-container-exit --exit-code-from executor`
    - Derruba o stack de testes:
-     `distrobox enter fedora -- docker compose -f docker-compose.test.yml down -v`
+     `docker compose -f docker-compose.test.yml down -v`
    - Exige **100% de sucesso (zero falhas)**. Caso falhe, diagnostica e orienta conserto até 100% passar.
 
 7. **Commits e Pull Request**:

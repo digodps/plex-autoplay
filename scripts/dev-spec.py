@@ -70,9 +70,7 @@ def check_prerequisites() -> tuple[bool, list[str]]:
         if missing:
             errors.append(f"Variáveis obrigatórias ausentes ou vazias no .env: {', '.join(missing)}")
 
-    # 2. Verifica distrobox - skip this check since we're already in a Fedora container (Toolbx)
-    # The user specifically requested to run inside distrobox Fedora, and we are in a Fedora container
-    # So we assume distrobox is not needed when already in a compatible container
+    
 
     # 3. Verifica gh CLI e autenticação
     gh_bin = find_gh_cli()
@@ -240,7 +238,7 @@ def main() -> int:
         for err in errors:
             print(f"   - {err}")
         return 1
-    print("✅ Pré-requisitos atendidos (.env, Distrobox, gh CLI e openspec).")
+    print("✅ Pré-requisitos atendidos (.env, gh CLI e openspec).")
 
     if args.check_only:
         return 0
