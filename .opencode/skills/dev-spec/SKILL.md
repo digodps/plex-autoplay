@@ -17,7 +17,7 @@ Esta skill orquestra a implementação ponta a ponta de uma mudança OpenSpec, i
 | Agente | Skill de Apoio |
 |--------|----------------|
 | Agente 1 (Backend) | `dev-spec.py`, `code-review-skill.py`, [`DEVELOPMENT_GUIDE.md`](../../../DEVELOPMENT_GUIDE.md) |
-| Agente 2 (Frontend) | `dev-spec.py`, `code-review-skill.py`, [`DEVELOPMENT_GUIDE.md`](../../../DEVELOPMENT_GUIDE.md) |
+| Agente 2 (Frontend + UX) | `dev-spec.py`, `code-review-skill.py`, pesquisa de UX, [`DEVELOPMENT_GUIDE.md`](../../../DEVELOPMENT_GUIDE.md) |
 | Agente 3 (Tester) | `dev-spec.py`, `run-e2e-tests.sh`, Validação com Navegador Real |
 | Human (Developer) | `commit-skill.py`, `code-review-skill.py --fix` |
 
@@ -30,11 +30,15 @@ A implementação ponta a ponta divide-se entre **três agentes especializados**
    - Corrige 100% das violações encontradas antes de avançar.
    - Spawna e monitora o Agente 2 e posteriormente o Agente 3.
 
-2. **Agente 2 (Frontend - Subagente em Background)**:
+2. **Agente 2 (Frontend + UX - Subagente em Background)**:
+   - Atua também como especialista de UX.
+   - Pesquisa padrões atuais em produtos equivalentes e documentação oficial antes de codar; registra decisões de fluxo, hierarquia visual, estados vazio/carregando/erro e critérios de usabilidade no `design.md` da change.
+   - Planeja experiência moderna, minimalista e distinta, com foco na tarefa principal, poucos passos, navegação previsível e feedback imediato.
+   - Valida responsividade, teclado, foco visível, contraste, semântica HTML e mensagens acessíveis.
    - Executa concorrentemente com o Agente 1.
    - Implementa componentes, views, composables e Pinia stores em `vue/plex-frontend/**`.
    - Executa `npx eslint --fix` e `npx prettier --write`.
-   - Corrige 100% das violações de estilo/código antes de sinalizar conclusão.
+   - Corrige 100% das violações de UX, acessibilidade, estilo e código antes de sinalizar conclusão.
 
 3. **Agente 3 (Tester - Subagente Sequencial)**:
    - Acionado apenas após Backend e Frontend estarem 100% implementados e limpos no code review.
