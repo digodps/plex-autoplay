@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using PlexAutoplay.Application;
+using PlexAutoplay.Domain.Ports;
 
 namespace PlexAutoplay.Web.Endpoints;
 
@@ -12,34 +13,29 @@ public static class SeriesEndpoints
     {
         app.MapGet("/api/series/{sectionKey}", async (
             string sectionKey,
-            [FromServices] IPlexApiClient plexClient,
+            [FromServices] ISeriesRepository seriesRepository,
             int? page = 1,
             int? pageSize = 24,
             string? query = null) =>
         {
             var size = pageSize is > 0 and <= 100 ? pageSize.Value : 24;
             var pageIndex = page is > 0 ? page.Value : 1;
-            var containerStart = (pageIndex - 1) * size;
+            var offset = (pageIndex - 1) * size;
 
-            var result = await plexClient.GetSeriesAsync(sectionKey, containerStart, size, query);
+            var (items, total) = await seriesRepository.GetByLibraryAsync(sectionKey, offset, size, query);
 
-            if (result.Failed)
+            var resultItems = items.Select(s => new
             {
-                return Results.Problem(
-                    "Não foi possível consultar o catálogo de séries no Plex. Verifique a conexão com o servidor e tente novamente.",
-                    statusCode: 502);
-            }
+                ratingKey = s.RatingKey,
+                title = s.Title,
+                summary = s.Summary,
+                thumb = string.IsNullOrEmpty(s.Thumb) ? null : "/api/images/" + s.Thumb.TrimStart('/')
+            });
 
             return Results.Ok(new
             {
-                items = result.Items.Select(s => new
-                {
-                    ratingKey = s.RatingKey,
-                    title = s.Title,
-                    summary = s.Summary,
-                    thumb = string.IsNullOrEmpty(s.Thumb) ? null : "/api/images/" + s.Thumb.TrimStart('/')
-                }),
-                totalSize = result.TotalSize,
+                items = resultItems,
+                totalSize = total,
                 page = pageIndex,
                 pageSize = size
             });
