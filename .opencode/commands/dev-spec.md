@@ -4,6 +4,8 @@ description: "Executa a skill de desenvolvimento multi-agente (Backend .NET, Fro
 
 Executa a skill `/dev-spec` para implementar e testar uma mudança OpenSpec com três agentes coordenados.
 
+> 📖 **Guia Obrigatório**: Antes de qualquer implementação, consulte o **[DEVELOPMENT_GUIDE.md](../../DEVELOPMENT_GUIDE.md)** que consolida todas as regras da Code Review para evitar erros comuns.
+
 Uso:
 ```
 /dev-spec [<change-name>] [--dry-run]
