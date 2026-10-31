@@ -144,7 +144,7 @@ public class CatalogSyncBackgroundService : BackgroundService
             var seriesResult = await _plexClient.GetSeriesAsync(lib.Key, 0, int.MaxValue);
             if (seriesResult.Failed)
             {
-                _logger.LogWarning("Failed to fetch series for library {LibKey}: {ErrorMessage}", lib.Key, seriesResult.ErrorMessage);
+                _logger.LogWarning("Failed to fetch series for library {LibKey}", lib.Key);
                 continue;
             }
 

@@ -101,10 +101,13 @@ def get_git_status_porcelain() -> list[dict[str, str]]:
 
 def get_in_progress_changes() -> list[dict]:
     """Lista mudanças OpenSpec com status in-progress."""
-    result = run_cmd(["openspec", "list", "--json"])
-    data = json.loads(result.stdout)
-    changes = data.get("changes", [])
-    return [c for c in changes if c.get("status") == "in-progress"]
+    try:
+        result = run_cmd(["openspec", "list", "--json"])
+        data = json.loads(result.stdout)
+        changes = data.get("changes", [])
+        return [c for c in changes if c.get("status") == "in-progress"]
+    except Exception:
+        return []
 
 
 def read_tasks_md(change_root: Path) -> Optional[str]:
@@ -188,21 +191,89 @@ def validate_body(body: str) -> None:
         raise ValueError("Corpo do commit não pode estar vazio. Descreva por que e o que foi feito.")
 
 
-def build_body(commit_type: str, scope: Optional[str], files: list[str], task_desc: Optional[str] = None) -> str:
+def build_body(commit_type: str, scope: Optional[str], files: list[str], task_desc: Optional[str] = None, inferred: bool = False) -> str:
     """Constrói o corpo descritivo livre (por que + o que foi feito)."""
     emoji = TYPE_EMOJI.get(commit_type, "✨")
     scope_str = f" ({scope})" if scope else ""
     file_list = "\n".join(f"  - {f}" for f in files)
-    lines = [
-        f"{commit_type}{scope_str}: altera {len(files)} arquivo(s) "
-        f"relacionado(s) à tarefa{' ' + task_desc if task_desc else ''}.",
-        "",
-        "Arquivos afetados:",
-        file_list,
-        "",
-        "Este commit segue o padrão: tipo(🎯escopo): título + corpo descritivo livre.",
-    ]
+    
+    if inferred:
+        # Para commits inferidos (sem OpenSpec), geramos descrição baseada nos arquivos
+        context = infer_context(files)
+        lines = [
+            f"{commit_type}{scope_str}: {context['title']}",
+            "",
+            "Motivo:",
+            f"  {context['reason']}",
+            "",
+            "O que foi feito:",
+            f"  {context['what']}",
+            "",
+            "Arquivos afetados:",
+            file_list,
+        ]
+    else:
+        lines = [
+            f"{commit_type}{scope_str}: altera {len(files)} arquivo(s) "
+            f"relacionado(s) à tarefa{' ' + task_desc if task_desc else ''}.",
+            "",
+            "Arquivos afetados:",
+            file_list,
+            "",
+            "Este commit segue o padrão: tipo(🎯escopo): título + corpo descritivo livre.",
+        ]
     return "\n".join(lines)
+
+
+def infer_context(files: list[str]) -> dict:
+    """Infere contexto (título, motivo, o que) a partir dos arquivos modificados."""
+    # Analisa extensões e caminhos para inferir o tipo de mudança
+    exts = {}
+    dirs = {}
+    for f in files:
+        ext = Path(f).suffix.lower()
+        exts[ext] = exts.get(ext, 0) + 1
+        parts = Path(f).parts
+        if len(parts) > 1:
+            dirs[parts[0]] = dirs.get(parts[0], 0) + 1
+    
+    # Determina tipo dominante
+    top_ext = max(exts, key=exts.get) if exts else ""
+    top_dir = max(dirs, key=dirs.get) if dirs else "root"
+    
+    # Mapeia extensões para contexto
+    ext_context = {
+        ".cs": ("Implementa lógica C#/.NET", "backend", "feat"),
+        ".py": ("Implementa script Python", "script", "feat"),
+        ".ts": ("Implementa lógica TypeScript", "frontend", "feat"),
+        ".tsx": ("Implementa componente React/Vue", "frontend", "feat"),
+        ".vue": ("Implementa componente Vue", "frontend", "feat"),
+        ".js": ("Implementa lógica JavaScript", "frontend", "feat"),
+        ".json": ("Atualiza configuração", "config", "chore"),
+        ".yaml": ("Atualiza configuração YAML", "config", "chore"),
+        ".yml": ("Atualiza configuração YAML", "config", "chore"),
+        ".md": ("Atualiza documentação", "docs", "docs"),
+        ".cshtml": ("Atualiza view Razor", "frontend", "feat"),
+        ".sql": ("Altera schema/migração SQL", "database", "fix"),
+        ".sh": ("Atualiza script shell", "script", "chore"),
+        ".dockerfile": ("Atualiza Dockerfile", "infra", "chore"),
+        ".toml": ("Atualiza configuração TOML", "config", "chore"),
+    }
+    
+    reason, default_scope, default_type = ext_context.get(top_ext, ("Altera arquivos", top_dir, "chore"))
+    
+    # Constrói título baseado no contexto
+    action = "Adiciona" if "Implementa" in reason else "Atualiza"
+    title = f"{action} {top_dir} ({top_ext if top_ext else 'arquivos'})"
+    what = f"{reason} em {len(files)} arquivo(s): {', '.join(set(Path(f).name for f in files[:5]))}"
+    if len(files) > 5:
+        what += f" e mais {len(files) - 5} arquivo(s)"
+    
+    return {
+        "title": title,
+        "reason": reason,
+        "what": what,
+    }
 
 
 def map_files_to_tasks(
@@ -247,7 +318,16 @@ def map_files_to_tasks(
             uncategorized.append(file_info)
 
     if uncategorized:
-        grouped["__uncategorized__"] = uncategorized
+        # Se não houver OpenSpec, agrupamos por diretório e tipo para inferir contexto
+        if not changes:
+            for f in uncategorized:
+                commit_type = infer_type(f["path"])
+                parts = Path(f["path"]).parts
+                scope = parts[0] if len(parts) > 1 else "root"
+                key = f"inferred::{scope}::{commit_type}"
+                grouped.setdefault(key, []).append(f)
+        else:
+            grouped["__uncategorized__"] = uncategorized
 
     return grouped
 
@@ -336,7 +416,7 @@ def main() -> int:
         changes = get_in_progress_changes()
         if not changes:
             print("⚠️  Nenhuma mudança OpenSpec em andamento encontrada.")
-            print("   Arquivos serão agrupados sem referência a task.")
+            print("   Analisando arquivos para inferir contexto...")
             changes = []
 
     # 3. Mapeia arquivos para tasks
@@ -349,6 +429,10 @@ def main() -> int:
             commit_type = "chore"
             scope = None
             body = build_body(commit_type, scope, [f["path"] for f in files])
+        elif key.startswith("inferred::"):
+            # Grupo inferido (sem OpenSpec): inferred::scope::type
+            _, scope, commit_type = key.split("::", 2)
+            body = build_body(commit_type, scope, [f["path"] for f in files], inferred=True)
         else:
             change_name, task_id = key.split("::", 1)
             # Infere tipo do primeiro arquivo (ou do mais comum)

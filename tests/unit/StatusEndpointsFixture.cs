@@ -58,5 +58,13 @@ public class StatusEndpointsFixture : IDisposable
         public ScanJob? Get(string jobId) => _jobs.GetValueOrDefault(jobId);
 
         public ScanJob? GetLatest() => _jobs.Values.MaxBy(job => job.UpdatedAt);
+
+        public void AddLog(string jobId, string level, string message, string? suggestion = null)
+        {
+            if (_jobs.TryGetValue(jobId, out var job))
+            {
+                job.Logs.Add(new ScanLogEntry(DateTime.UtcNow, message, level, suggestion));
+            }
+        }
     }
 }

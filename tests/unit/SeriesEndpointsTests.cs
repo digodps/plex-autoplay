@@ -6,7 +6,11 @@ using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using System.Net;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 using PlexAutoplay.Application;
+using PlexAutoplay.Domain.Ports;
+using PlexAutoplay.Domain.Entities;
 using PlexAutoplay.Web.Endpoints;
 using Xunit;
 
@@ -25,6 +29,7 @@ public class SeriesEndpointsTests : IDisposable
                 {
                     services.AddRouting();
                     services.AddSingleton<IPlexApiClient>(new FakePlexClient());
+                    services.AddSingleton<ISeriesRepository>(new FakeSeriesRepository());
                 });
                 webBuilder.Configure(app =>
                 {
@@ -37,6 +42,27 @@ public class SeriesEndpointsTests : IDisposable
     }
 
     public void Dispose() => _host.Dispose();
+
+    private sealed class FakeSeriesRepository : ISeriesRepository
+    {
+        public Task<(IEnumerable<Series> Items, int Total)> GetByLibraryAsync(string libraryRatingKey, int offset, int limit, string? query)
+        {
+            var items = new List<Series>
+            {
+                new() { RatingKey = "101", LibraryRatingKey = libraryRatingKey, Title = "Arrow", Summary = "Um bilionário arma contra o crime.", Thumb = "library/metadata/101/thumb/169" },
+                new() { RatingKey = "102", LibraryRatingKey = libraryRatingKey, Title = "Mercy", Summary = "", Thumb = "" }
+            };
+            return Task.FromResult(((IEnumerable<Series>)items, 87));
+        }
+
+        public Task<Series?> GetByRatingKeyAsync(string ratingKey) => Task.FromResult<Series?>(null);
+
+        public Task UpsertAsync(Series series) => Task.CompletedTask;
+
+        public Task DeleteAsync(string ratingKey) => Task.CompletedTask;
+
+        public Task DeleteByLibraryAsync(string libraryRatingKey) => Task.CompletedTask;
+    }
 
     /// <summary>IPlexApiClient fake com dados de catálogo e episódios.</summary>
     private class FakePlexClient : IPlexApiClient
@@ -60,10 +86,16 @@ public class SeriesEndpointsTests : IDisposable
             return Task.FromResult(new PlexSeriesPage(items, 87));
         }
 
-        public Task<PlexEpisodesResult> GetSeriesEpisodesAsync(string seriesKey) => Task.FromResult(new PlexEpisodesResult(new List<PlexEpisodeDto>
+        public Task<PlexEpisodesResult> GetSeriesEpisodesAsync(string seriesKey)
         {
-            new("5001", "Pilot", 1, 1, "/Volumes/Series/Arrow S01E01.mkv")
-        }));
+            if (FailNextCall)
+                return Task.FromResult(PlexEpisodesResult.FailedResult("Plex API error"));
+
+            return Task.FromResult(new PlexEpisodesResult(new List<PlexEpisodeDto>
+            {
+                new("5001", "Pilot", 1, 1, "/Volumes/Series/Arrow S01E01.mkv")
+            }));
+        }
     }
 
     [Fact]
@@ -90,12 +122,12 @@ public class SeriesEndpointsTests : IDisposable
     }
 
     [Fact]
-    public async Task GetSeries_WhenPlexFails_Returns502WithFriendlyMessage()
+    public async Task GetSeriesEpisodes_WhenPlexFails_Returns502WithFriendlyMessage()
     {
         var fake = (FakePlexClient)_host.Services.GetRequiredService<IPlexApiClient>();
         fake.FailNextCall = true;
 
-        var response = await _client.GetAsync("/api/series/1?page=1");
+        var response = await _client.GetAsync("/api/series/1/101/episodes");
 
         Assert.Equal(HttpStatusCode.BadGateway, response.StatusCode);
     }
