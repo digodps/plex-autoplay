@@ -2,7 +2,7 @@
 
 ## 1. Correção do achado [1]
 
-- [ ] 1.1 Aplicar correção nos arquivos: src/PlexAutoplay.Web/Configuration/ServerCertificateProvider.cs, src/PlexAutoplay.Web/Program.cs e verificar que o achado desaparece na próxima execução de /code-review
+- [x] 1.1 Verificado com `dotnet format PlexAutoplay.slnx --verify-no-changes` e `python scripts/code-review-skill.py`: nenhum ajuste necessário nos arquivos `src/PlexAutoplay.Web/Configuration/ServerCertificateProvider.cs` e `src/PlexAutoplay.Web/Program.cs`; achado não é reportado.
 
 ## Workflow follow-up
 
