@@ -18,7 +18,7 @@ Esta skill orquestra a implementação ponta a ponta de uma mudança OpenSpec, i
 |--------|----------------|
 | Agente 1 (Backend) | `dev-spec.py`, `code-review-skill.py`, [`DEVELOPMENT_GUIDE.md`](../../../DEVELOPMENT_GUIDE.md) |
 | Agente 2 (Frontend) | `dev-spec.py`, `code-review-skill.py`, [`DEVELOPMENT_GUIDE.md`](../../../DEVELOPMENT_GUIDE.md) |
-| Agente 3 (Tester) | `dev-spec.py`, `run-e2e-tests.sh` |
+| Agente 3 (Tester) | `dev-spec.py`, `run-e2e-tests.sh`, Validação com Navegador Real |
 | Human (Developer) | `commit-skill.py`, `code-review-skill.py --fix` |
 
 A implementação ponta a ponta divide-se entre **três agentes especializados**:
