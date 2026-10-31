@@ -27,7 +27,10 @@ public static class AuthEndpoints
                 // Set HttpOnly cookie (session-only, Secure, SameSite=Lax)
                 context.Response.Cookies.Append("auth_token", token, new CookieOptions
                 {
-                    HttpOnly = true,
+                    // HttpOnly removido: o frontend precisa ler o token via document.cookie
+                    // (stores/auth.js getToken usa document.cookie; o middleware lê header Authorization).
+                    // O middleware JwtAuthMiddleware continua validando o token tanto do header
+                    // quanto deste cookie, com ou sem HttpOnly.
                     Secure = true,
                     SameSite = SameSiteMode.Lax,
                     Path = "/",
