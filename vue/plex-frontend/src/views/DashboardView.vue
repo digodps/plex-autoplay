@@ -82,8 +82,8 @@ function handleViewFullLog() {
       <AppIcon name="warning" size="lg" />
       <p>{{ store.libraryError }}</p>
       <p class="dashboard-error-hint">
-        Verifique se o servidor Plex está acessível, se a URL e o token (X-Plex-Token)
-        estão configurados corretamente e se há conectividade de rede.
+        Verifique se o servidor Plex está acessível, se a URL e o token (X-Plex-Token) estão
+        configurados corretamente e se há conectividade de rede.
       </p>
       <button class="btn" @click="store.retry"><AppIcon name="sync" /> Tentar novamente</button>
     </div>

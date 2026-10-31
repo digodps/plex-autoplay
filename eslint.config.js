@@ -22,6 +22,9 @@ export default [
         EventSource: "readonly",
         process: "readonly",
         Buffer: "readonly",
+        location: "readonly",
+        requestAnimationFrame: "readonly",
+        navigator: "readonly",
       },
     },
     rules: {
@@ -34,6 +37,8 @@ export default [
       "vue/html-self-closing": "off",
       "vue/html-indent": "off",
       "vue/attributes-order": "warn",
+      // Permitir componentes de UI genéricos com nome de uma palavra (ex: Breadcrumb, Button, Icon)
+      "vue/multi-word-component-names": "off",
     },
   },
   {
