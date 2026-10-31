@@ -1,4 +1,5 @@
 using PlexAutoplay.Application;
+using PlexAutoplay.Domain;
 using PlexAutoplay.Domain.Ports;
 using PlexAutoplay.Infrastructure.Auth;
 using PlexAutoplay.Infrastructure.AutoSkip;
@@ -77,5 +78,8 @@ public static class ServiceCollectionExtensions
 
         // In-memory scan job tracking
         services.AddSingleton<IScanJobStore, ScanJobStore>();
+
+        // Process information service
+        services.AddSingleton<IProcessInfoService, ProcessInfoService>();
     }
 }
