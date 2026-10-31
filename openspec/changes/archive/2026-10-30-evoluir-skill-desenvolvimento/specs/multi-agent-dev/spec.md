@@ -39,13 +39,13 @@ O sistema SHALL exigir que cada agente de implementação execute a revisão de 
 - **WHEN** o Agente 1 e Agente 2 concluem a implementação e auto-correção
 - **THEN** o Agente 4 executa a `code-review-skill.py` formal, exibe achados interativamente, e o desenvolvedor seleciona itens para correção antes de prosseguir
 
-### Requirement: Validação integral de testes em container Distrobox
+### Requirement: Validação integral de testes em container
 
-O sistema SHALL acionar o Agente 3 (Tester) somente após a conclusão limpa das etapas de backend, frontend e Code Review formal (Agente 4) com reparos (Agente 5), executando a suíte de testes unitários e a stack E2E Playwright dentro do container via Distrobox, e incluir etapa de validação visual manual no navegador.
+O sistema SHALL acionar o Agente 3 (Tester) somente após a conclusão limpa das etapas de backend, frontend e Code Review formal (Agente 4) com reparos (Agente 5), executando a suíte de testes unitários e a stack E2E Playwright diretamente na máquina do dev, e incluir etapa de validação visual manual no navegador.
 
 #### Scenario: Execução completa com 100% de sucesso
 
-- **WHEN** o Agente 3 executa os testes unitários e E2E Playwright dentro do Distrobox
+- **WHEN** o Agente 3 executa os testes unitários e E2E Playwright
 - **THEN** todos os testes passam com zero falhas e o executor encerra com código de saída 0
 
 #### Scenario: Falha de teste gera reteste
@@ -56,7 +56,7 @@ O sistema SHALL acionar o Agente 3 (Tester) somente após a conclusão limpa das
 #### Scenario: Validação visual manual no navegador
 
 - **WHEN** todos os testes automatizados passam
-- **THEN** o Agente 3 orienta o desenvolvedor a abrir a aplicação no navegador dentro do Distrobox para validar visualmente o que foi solicitado
+- **THEN** o Agente 3 orienta o desenvolvedor a abrir a aplicação no navegador para validar visualmente o que foi solicitado
 
 ### Requirement: Commits semânticos e abertura automatizada de Pull Request
 
