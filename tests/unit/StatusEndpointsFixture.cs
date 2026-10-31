@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using PlexAutoplay.Domain;
 using PlexAutoplay.Domain.Ports;
 using PlexAutoplay.Web.Endpoints;
 using PlexAutoplay.Web.Services;
@@ -31,6 +32,7 @@ public class StatusEndpointsFixture : IDisposable
                 {
                     services.AddRouting();
                     services.AddSingleton<IScanJobStore>(ScanJobs);
+                    services.AddSingleton<IProcessInfoService, ProcessInfoService>();
                 });
                 webBuilder.Configure(app =>
                 {
