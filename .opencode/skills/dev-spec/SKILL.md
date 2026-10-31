@@ -24,7 +24,7 @@ Esta skill orquestra a implementação ponta a ponta de uma mudança OpenSpec, i
 A implementação ponta a ponta divide-se entre **três agentes especializados**:
 
 1. **Agente 1 (Backend - Orquestrador Principal)**:
-   - Configura o branch isolado `feature/<change>-<span>` via `scripts/setup-spec.py`.
+   - Configura o branch isolado `feature/<change>-<span>` (internal ao `/dev-spec`).
    - Implementa endpoints, DTOs, regras de domínio e persistência em `src/**`.
    - Executa `dotnet format PlexAutoplay.slnx` e validação Clean Code / SOLID.
    - Corrige 100% das violações encontradas antes de avançar.
