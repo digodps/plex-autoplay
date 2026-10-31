@@ -5,11 +5,10 @@ import AppIcon from "../components/AppIcon.vue";
 import { apiFetch } from "../api";
 
 const router = useRouter();
-
 const libraries = ref([]);
 const error = ref("");
 
-onMounted(async () => {
+async function loadLibraries() {
   try {
     const response = await apiFetch("/api/plex/libraries");
     if (response.ok) {
@@ -20,7 +19,9 @@ onMounted(async () => {
   } catch {
     error.value = "Erro de conexão";
   }
-});
+}
+
+onMounted(loadLibraries);
 
 function navigateToSeries(libraryKey) {
   router.push({ name: "series", params: { key: libraryKey } });
@@ -35,21 +36,25 @@ function navigateToSeries(libraryKey) {
       {{ error }}
     </div>
     <div v-else class="library-grid">
-      <div v-for="lib in libraries" :key="lib.key" class="library-card-wrapper">
-        <div class="library-card" @click="navigateToSeries(lib.key)">
-          <div class="library-card-icon"><AppIcon name="tv" /></div>
-          <h3>{{ lib.title }}</h3>
-          <span class="library-open">
-            <AppIcon name="chevron-right" size="sm" />
-            Ver séries
-          </span>
-        </div>
-      </div>
+      <button
+        v-for="lib in libraries"
+        :key="lib.key"
+        class="library-card"
+        type="button"
+        @click="navigateToSeries(lib.key)"
+      >
+        <span class="library-card-icon"><AppIcon name="tv" /></span>
+        <h3>{{ lib.title }}</h3>
+        <span class="library-open">
+          <AppIcon name="chevron-right" size="sm" />
+          Ver séries
+        </span>
+      </button>
     </div>
+  </div>
 
-    <div v-if="!error && libraries.length === 0" class="empty">
-      Nenhuma biblioteca de séries encontrada.
-    </div>
+  <div v-if="!error && libraries.length === 0" class="empty">
+    Nenhuma biblioteca de séries encontrada.
   </div>
 </template>
 
@@ -71,15 +76,13 @@ function navigateToSeries(libraryKey) {
   grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
   gap: 1rem;
 }
-.library-card-wrapper {
-  display: flex;
-  flex-direction: column;
-}
 .library-card {
   padding: 1.25rem;
   border: 1px solid var(--border);
   border-radius: var(--radius);
   background: var(--surface);
+  color: inherit;
+  text-align: left;
   transition:
     transform var(--speed) var(--ease),
     box-shadow var(--speed) var(--ease);
