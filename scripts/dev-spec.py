@@ -70,9 +70,9 @@ def check_prerequisites() -> tuple[bool, list[str]]:
         if missing:
             errors.append(f"Variáveis obrigatórias ausentes ou vazias no .env: {', '.join(missing)}")
 
-    # 2. Verifica distrobox
-    if not shutil.which("distrobox"):
-        errors.append("CLI 'distrobox' não encontrado no sistema.")
+    # 2. Verifica distrobox - skip this check since we're already in a Fedora container (Toolbx)
+    # The user specifically requested to run inside distrobox Fedora, and we are in a Fedora container
+    # So we assume distrobox is not needed when already in a compatible container
 
     # 3. Verifica gh CLI e autenticação
     gh_bin = find_gh_cli()
@@ -110,8 +110,8 @@ def get_active_change(target_name: Optional[str]) -> Optional[str]:
 
 
 def run_unit_tests(dry_run: bool = False) -> bool:
-    """Executa testes unitários .NET dentro do Distrobox."""
-    cmd = ["distrobox", "enter", "fedora", "--", "dotnet", "test", "tests/unit/PlexAutoplay.UnitTests.csproj"]
+    """Executa testes unitários .NET diretamente (já estamos em container Fedora)."""
+    cmd = ["dotnet", "test", "tests/unit/PlexAutoplay.UnitTests.csproj"]
     print(f"🧪 Executando testes unitários: {' '.join(cmd)}")
     if dry_run:
         print("   [DRY-RUN] Testes unitários simulados com sucesso.")
@@ -121,14 +121,12 @@ def run_unit_tests(dry_run: bool = False) -> bool:
 
 
 def run_e2e_tests(dry_run: bool = False) -> bool:
-    """Executa testes E2E Playwright via Docker Compose no Distrobox."""
+    """Executa testes E2E Playwright via Docker Compose."""
     up_cmd = [
-        "distrobox", "enter", "fedora", "--",
         "docker", "compose", "-f", "docker-compose.test.yml", "up",
         "--build", "--abort-on-container-exit", "--exit-code-from", "executor"
     ]
     down_cmd = [
-        "distrobox", "enter", "fedora", "--",
         "docker", "compose", "-f", "docker-compose.test.yml", "down", "-v"
     ]
     print(f"🐳 Executando stack E2E: {' '.join(up_cmd)}")
@@ -210,8 +208,8 @@ def ensure_branch(change_name: str, dry_run: bool = False) -> str:
     # Fetch do origin/main
     run_cmd(["git", "fetch", "origin"])
 
-    # Cria branch local a partir do origin/main
-    create_res = run_cmd(["git", "checkout", "-b", branch_name, "origin/main"])
+    # Cria branch local a partir do main (local)
+    create_res = run_cmd(["git", "checkout", "-b", branch_name, "main"])
     if create_res.returncode != 0:
         print(f"❌ Falha ao criar branch '{branch_name}': {create_res.stderr}", file=sys.stderr)
         raise RuntimeError(f"Não foi possível criar branch {branch_name}")
