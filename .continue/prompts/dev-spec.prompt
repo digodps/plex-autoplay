@@ -6,5 +6,5 @@ invokable: true
 
 This workflow prompt is already active. Follow its instructions directly. Do not call a tool named after this workflow.
 
-Workflow de desenvolvimento multi-agente integrado ao OpenSpec (Backend .NET, Frontend Vue 3, Tester em Distrobox com 100% de testes e PR).
+Workflow de desenvolvimento multi-agente integrado ao OpenSpec (Backend .NET, Frontend Vue 3, Tester com 100% de testes e PR).
 Consulte `scripts/dev-spec.py` e `.continue/skills/dev-spec/SKILL.md` para instruções completas.
