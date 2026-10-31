@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
 using PlexAutoplay.Domain.Ports;
-using PlexAutoplay.Web.Services;
 using Serilog;
 
 namespace PlexAutoplay.Web.Endpoints;
@@ -12,12 +11,12 @@ public static class MonitoringEndpoints
 {
     public static void MapMonitoringEndpoints(this IEndpointRouteBuilder app)
     {
-        app.MapGet("/api/status", ([FromServices] IScanJobStore scanJobs) =>
+        app.MapGet("/api/status", ([FromServices] IScanJobStore scanJobs, [FromServices] IProcessInfoService processInfo) =>
         {
             try
             {
                 var lastJob = scanJobs.GetLatest();
-                var process = System.Diagnostics.Process.GetCurrentProcess();
+                var process = processInfo;
 
                 return Results.Ok(new
                 {
@@ -38,7 +37,7 @@ public static class MonitoringEndpoints
                         cpu_total_ms = process.TotalProcessorTime.TotalMilliseconds,
                         memory_private_bytes = process.PrivateMemorySize64,
                         memory_working_set_bytes = process.WorkingSet64,
-                        uptime_ms = (DateTime.UtcNow - process.StartTime.ToUniversalTime()).TotalMilliseconds
+                        uptime_ms = (DateTime.UtcNow - process.StartTimeUtc).TotalMilliseconds
                     }
                 });
             }
@@ -65,10 +64,10 @@ public static class MonitoringEndpoints
         });
 
         // Prometheus metrics endpoint (real metrics, not hardcoded)
-        app.MapGet("/metrics", ([FromServices] IScanJobStore scanJobs) =>
+        app.MapGet("/metrics", ([FromServices] IScanJobStore scanJobs, [FromServices] IProcessInfoService processInfo) =>
         {
             var lastJob = scanJobs.GetLatest();
-            var process = System.Diagnostics.Process.GetCurrentProcess();
+            var process = processInfo;
             var lines = new List<string>
             {
                 "# HELP plex_autoplay_info Plex Autoplay service info",
@@ -89,7 +88,7 @@ public static class MonitoringEndpoints
                 "",
                 "# HELP plex_autoplay_process_uptime_ms Process uptime milliseconds",
                 "# TYPE plex_autoplay_process_uptime_ms counter",
-                $"plex_autoplay_process_uptime_ms {(DateTime.UtcNow - process.StartTime.ToUniversalTime()).TotalMilliseconds}",
+                $"plex_autoplay_process_uptime_ms {(DateTime.UtcNow - process.StartTimeUtc).TotalMilliseconds}",
                 "",
                 "# HELP plex_autoplay_last_job_processed Last job processed count",
                 "# TYPE plex_autoplay_last_job_processed gauge",

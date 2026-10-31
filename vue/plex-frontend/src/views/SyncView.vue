@@ -9,6 +9,33 @@ const errors = ref(0);
 const eventSource = ref(null);
 const currentJobId = ref(null);
 
+// Log entries from SSE
+const logEntries = ref([]);
+
+const logLevelIcons = {
+  info: "▶",
+  success: "✔",
+  skip: "⏭",
+  warning: "⚠",
+  error: "✖",
+};
+
+const logLevelColors = {
+  info: "text-info",
+  success: "text-success",
+  skip: "text-secondary",
+  warning: "text-warning",
+  error: "text-danger",
+};
+
+const formatLogTimestamp = (date) => {
+  return date.toLocaleTimeString("pt-BR", {
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+  });
+};
+
 const startScan = async () => {
   const response = await apiFetch("/api/plex/scan", {
     method: "POST",
@@ -29,10 +56,26 @@ const connectSSE = (jobId) => {
     status.value = data.status;
     processed.value = data.processed;
     skipped.value = data.skipped;
+    errors.value = data.errors || 0;
+
+    if (data.logs && data.logs.length > 0) {
+      const newLogs = data.logs.map((log) => ({
+        timestamp: new Date(log.timestamp),
+        level: log.level,
+        message: log.message,
+        suggestion: log.suggestion || null,
+      }));
+      logEntries.value = [...logEntries.value, ...newLogs];
+      // Keep only last 100 entries to prevent unlimited growth
+      if (logEntries.value.length > 100) {
+        logEntries.value = logEntries.value.slice(-100);
+      }
+    }
   };
 
   eventSource.value.onerror = () => {
     eventSource.value.close();
+    status.value = "failed";
   };
 };
 
@@ -41,6 +84,19 @@ const cancelScan = async () => {
   await apiFetch(`/api/sync/cancel/${currentJobId.value}`, {
     method: "POST",
   });
+  status.value = "cancelled";
+};
+
+const clearConsole = () => {
+  logEntries.value = [];
+};
+
+const getLogIcon = (level) => {
+  return logLevelIcons[level] || "▶";
+};
+
+const getLogColorClass = (level) => {
+  return logLevelColors[level] || "text-body";
 };
 
 onUnmounted(() => {
@@ -62,6 +118,31 @@ onUnmounted(() => {
       <p>Erros: {{ errors }}</p>
     </div>
 
+    <div class="log-panel">
+      <div class="log-header">
+        <h2>Console de Log</h2>
+        <div class="log-actions">
+          <button class="btn btn-sm btn-ghost" @click="clearConsole">Limpar Console</button>
+        </div>
+      </div>
+
+      <div class="log-container">
+        <div v-if="logEntries.length === 0" class="empty-log">
+          Nenhum log disponível. Inicie uma varredura para ver as linhas de log.
+        </div>
+        <div v-for="(entry, index) in logEntries" :key="index" class="log-entry">
+          <span class="log-timestamp">{{ formatLogTimestamp(entry.timestamp) }}</span>
+          <span :class="getLogColorClass(entry.level)" class="log-icon">{{
+            getLogIcon(entry.level)
+          }}</span>
+          <span class="log-message">{{ entry.message }}</span>
+          <div v-if="entry.suggestion" class="log-suggestion">
+            <strong>Sugestão:</strong> {{ entry.suggestion }}
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div class="actions">
       <button v-if="status !== 'running'" @click="startScan">Iniciar Escaneamento</button>
       <button v-if="status === 'running'" class="cancel" @click="cancelScan">Cancelar</button>
@@ -69,64 +150,4 @@ onUnmounted(() => {
   </div>
 </template>
 
-<style scoped>
-.sync {
-  padding: 2rem;
-}
-.status-badge {
-  display: inline-block;
-  padding: 0.5rem 1rem;
-  border-radius: 4px;
-  font-weight: 600;
-  text-transform: uppercase;
-}
-.status-idle {
-  background: #e5e7eb;
-  color: #374151;
-}
-.status-running {
-  background: #dbeafe;
-  color: #1e40af;
-}
-.status-completed {
-  background: #d1fae5;
-  color: #065f46;
-}
-.status-failed {
-  background: #fee2e2;
-  color: #991b1b;
-}
-.status-cancelled {
-  background: #f3f4f6;
-  color: #4b5563;
-}
-.progress {
-  margin: 1rem 0;
-  padding: 1rem;
-  background: #f5f5f5;
-  border-radius: 8px;
-}
-.actions {
-  margin-top: 1rem;
-}
-button {
-  padding: 0.75rem 1.5rem;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 1rem;
-}
-button:first-child {
-  background: #e5a00d;
-  color: white;
-}
-.cancel {
-  background: #dc2626;
-  color: white;
-  margin-left: 0.5rem;
-}
-button:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-</style>
+<style scoped src="./sync-view.css"></style>

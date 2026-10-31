@@ -2,7 +2,7 @@
 
 ## 1. Correção do achado [7]
 
-- [ ] 1.1 Aplicar correção nos arquivos: vue/plex-frontend/src/views/SeriesView.vue e verificar que o achado desaparece na próxima execução de /code-review
+- [x] 1.1 Aplicar correção nos arquivos: vue/plex-frontend/src/views/SeriesView.vue e verificar que o achado desaparece na próxima execução de /code-review
 
 ## Workflow follow-up
 

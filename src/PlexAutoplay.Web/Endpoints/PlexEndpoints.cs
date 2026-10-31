@@ -1,15 +1,12 @@
 using Microsoft.AspNetCore.Mvc;
 using PlexAutoplay.Application;
 using PlexAutoplay.Domain.Ports;
-using PlexAutoplay.Infrastructure.AutoSkip;
 using PlexAutoplay.Web.Services;
 using Serilog;
 
 namespace PlexAutoplay.Web.Endpoints;
 
-/// <summary>
-/// Endpoints de integração com o Plex: bibliotecas, varredura de marcadores e episódios.
-/// </summary>
+/// <summary>Endpoints de integração com o Plex: bibliotecas, varredura de marcadores e episódios.</summary>
 public static class PlexEndpoints
 {
     public static void MapPlexEndpoints(this IEndpointRouteBuilder app, string mediaRoot)
@@ -17,23 +14,14 @@ public static class PlexEndpoints
         app.MapGet("/api/plex/libraries", async ([FromServices] IPlexApiClient plexClient) =>
         {
             var result = await plexClient.GetLibrariesAsync();
-
-            if (result.Failed)
-            {
-                return Results.Problem(
-                    result.ErrorMessage ?? "Não foi possível consultar as bibliotecas no Plex. Verifique a conexão com o servidor e tente novamente.",
-                    statusCode: 502);
-            }
-
-            var seriesLibraries = result.Libraries.Where(l => l.Type == "show").ToList();
-            return Results.Ok(seriesLibraries);
+            if (result.Failed) return Results.Problem(result.ErrorMessage ?? "Não foi possível consultar as bibliotecas no Plex. Verifique a conexão com o servidor e tente novamente.", statusCode: 502);
+            return Results.Ok(result.Libraries.Where(l => l.Type == "show").ToList());
         });
 
         app.MapPost("/api/plex/scan", async (
             [FromServices] IPlexApiClient plexClient,
             [FromServices] IMarkerRepository markerRepo,
             [FromServices] IMarkerDetector markerDetector,
-            [FromServices] ICustomJsonWriter customJsonWriter,
             [FromServices] IScanJobStore scanJobs) =>
         {
             var jobId = Guid.NewGuid().ToString();
@@ -56,6 +44,7 @@ public static class PlexEndpoints
                         return;
                     }
                     var seriesLibraries = librariesResult.Libraries.Where(l => l.Type == "show").ToList();
+                    scanJobs.AddLog(jobId, "info", $"{seriesLibraries.Count} biblioteca(s) encontrada(s)");
 
                     int processed = 0;
                     int skipped = 0;
@@ -70,8 +59,8 @@ public static class PlexEndpoints
                             var episodesResult = await plexClient.GetEpisodesAsync(lib.Key);
                             if (episodesResult.Failed)
                             {
-                                Log.Warning("Falha ao buscar episódios da biblioteca {LibKey}: {ErrorMessage}", lib.Key, episodesResult.ErrorMessage);
                                 errors++;
+                                scanJobs.AddLog(jobId, "error", $"Falha ao buscar episódios da biblioteca {lib.Key}", "Verifique conexão com Plex e tente novamente.");
                                 continue;
                             }
                             var episodes = episodesResult.Episodes;
@@ -94,26 +83,20 @@ public static class PlexEndpoints
                                 if (string.IsNullOrEmpty(localPath) || !File.Exists(localPath))
                                 {
                                     skipped++;
+                                    scanJobs.AddLog(jobId, "skip", $"Episódio pulado: {episode.Title}");
                                     continue;
                                 }
 
                                 // Detect markers via ffprobe
                                 var detectedMarkers = markerDetector.Detect(localPath);
 
-                                var markerEntries = new List<ICustomJsonWriter.MarkerEntry>();
                                 foreach (var marker in detectedMarkers)
                                 {
                                     var exists = await markerRepo.ExistsAsync(episode.RatingKey, marker.Kind);
                                     if (!exists)
                                     {
                                         await markerRepo.AddAsync(marker with { RatingKey = episode.RatingKey, Origin = "detected" });
-                                        markerEntries.Add(new ICustomJsonWriter.MarkerEntry(marker.Kind, marker.StartMs, marker.EndMs));
                                     }
-                                }
-
-                                if (markerEntries.Count > 0)
-                                {
-                                    customJsonWriter.UpsertMarkers(episode.RatingKey, markerEntries);
                                 }
 
                                 processed++;
@@ -146,14 +129,7 @@ public static class PlexEndpoints
         app.MapGet("/library/{section_key}", async (string section_key, [FromServices] IPlexApiClient plexClient) =>
         {
             var episodesResult = await plexClient.GetEpisodesAsync(section_key);
-
-            if (episodesResult.Failed)
-            {
-                return Results.Problem(
-                    episodesResult.ErrorMessage ?? "Não foi possível consultar os episódios no Plex. Verifique a conexão com o servidor e tente novamente.",
-                    statusCode: 502);
-            }
-
+            if (episodesResult.Failed) return Results.Problem(episodesResult.ErrorMessage ?? "Não foi possível consultar os episódios no Plex. Verifique a conexão com o servidor e tente novamente.", statusCode: 502);
             var result = episodesResult.Episodes.Select(e => new
             {
                 rating_key = e.RatingKey,
