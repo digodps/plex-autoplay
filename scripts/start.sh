@@ -86,6 +86,14 @@ echo "WEB_PORT:     ${WEB_PORT:-8080}"
 echo "WS_PORT:      ${WS_PORT:-8081}"
 echo ""
 
+# Compila e publica antes de tocar no Docker (falha aqui aborta o start)
+echo "🔨 Compilando a solução (.NET 10)..."
+dotnet build PlexAutoplay.slnx --nologo -v minimal
+
+echo "📦 Publicando PlexAutoplay.Web (Release)..."
+dotnet publish src/PlexAutoplay.Web/PlexAutoplay.Web.csproj -c Release \
+  -o src/PlexAutoplay.Web/bin/publish --nologo -v minimal
+
 if [[ "$BUILD" == true ]]; then
   echo "🔨 Fazendo build da imagem Docker..."
   docker compose build
