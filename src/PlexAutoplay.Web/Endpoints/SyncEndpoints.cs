@@ -22,7 +22,8 @@ public static class SyncEndpoints
                     processed = job.Processed,
                     skipped = job.Skipped,
                     errors = job.Errors,
-                    error = job.ErrorMessage
+                    error = job.ErrorMessage,
+                    logs = job.Logs.ToArray()
                 });
             }
             return Results.NotFound();
@@ -39,7 +40,7 @@ public static class SyncEndpoints
                 var job = scanJobs.Get(jobId);
                 if (job != null)
                 {
-                    await context.Response.WriteAsync($"data: {System.Text.Json.JsonSerializer.Serialize(new { status = job.Status, processed = job.Processed, skipped = job.Skipped })}\n\n");
+                    await context.Response.WriteAsync($"data: {System.Text.Json.JsonSerializer.Serialize(new { status = job.Status, processed = job.Processed, skipped = job.Skipped, errors = job.Errors, logs = job.Logs.ToArray() })}\n\n");
                     await context.Response.Body.FlushAsync();
 
                     if (job.Status == "completed" || job.Status == "failed" || job.Status == "cancelled")
