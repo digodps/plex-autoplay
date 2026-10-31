@@ -174,6 +174,21 @@ public class PlexApiClientTests
     }
 
     [Fact]
+    public async Task GetEpisodesAsync_ParsesEpisodesAndUsesPlexAllEndpoint()
+    {
+        using var server = new FakePlexServer(SeriesEpisodesJson);
+        var client = MakeClient(server.BaseUrl);
+
+        var result = await client.GetEpisodesAsync("6");
+
+        Assert.False(result.Failed);
+        var item = Assert.Single(result.Episodes);
+        Assert.Equal("5001", item.RatingKey);
+        Assert.Equal("/library/sections/6/all", server.LastPath);
+        Assert.Contains("type=4", server.LastQuery);
+    }
+
+    [Fact]
     public async Task GetSeriesEpisodesAsync_WhenPlexFails_MarksFailedWithMessage()
     {
         using var server = new FakePlexServer("""{"nope":true}""", statusCode: 502);
