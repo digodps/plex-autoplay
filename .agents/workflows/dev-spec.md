@@ -13,7 +13,7 @@ Uso:
 
 1. **Seleção e Isolamento da Mudança**:
    - Identifica a mudança ativa via `openspec list --json` ou usa o argumento fornecido.
-   - Executa `python scripts/setup-spec.py --change <change>` para criar e posicionar o repositório no branch `feature/<change>-<span>` rastreando o remote origin.
+   - O branch `feature/<change>-<span>` é criado automaticamente pelo `/dev-spec`.
 
 2. **Divisão de Tarefas**:
    - Lê `openspec/changes/<change>/tasks.md`.

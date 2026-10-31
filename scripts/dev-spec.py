@@ -183,6 +183,49 @@ def create_pull_request(change_name: str, branch_name: str, dry_run: bool = Fals
     return res.returncode == 0
 
 
+def sanitize_span(span: str) -> str:
+    """Substitui espacos e dois-pontos por '-' para uso em nomes de branch."""
+    return span.replace(" ", "-").replace(":", "-")
+
+
+def generate_span() -> str:
+    """Gera um span no formato dd-mm-yyyy HH:mm:ss:mmm."""
+    from datetime import datetime
+    now = datetime.now()
+    return now.strftime("%d-%m-%Y %H:%M:%S:%f")[:-3]
+
+
+def ensure_branch(change_name: str, dry_run: bool = False) -> str:
+    """Cria e faz push do branch feature/<change>-<span> a partir do origin/main."""
+    span = generate_span()
+    span_sanitized = sanitize_span(span)
+    branch_name = f"feature/{change_name}-{span_sanitized}"
+
+    if dry_run:
+        print(f"   [DRY-RUN] Branch seria: {branch_name}")
+        return branch_name
+
+    print(f"🌿 [1/1] Garantindo branch isolado: {branch_name}")
+
+    # Fetch do origin/main
+    run_cmd(["git", "fetch", "origin"])
+
+    # Cria branch local a partir do origin/main
+    create_res = run_cmd(["git", "checkout", "-b", branch_name, "origin/main"])
+    if create_res.returncode != 0:
+        print(f"❌ Falha ao criar branch '{branch_name}': {create_res.stderr}", file=sys.stderr)
+        raise RuntimeError(f"Não foi possível criar branch {branch_name}")
+
+    # Push para origin
+    push_res = run_cmd(["git", "push", "origin", branch_name])
+    if push_res.returncode != 0:
+        print(f"❌ Falha ao fazer push do branch '{branch_name}': {push_res.stderr}", file=sys.stderr)
+        raise RuntimeError(f"Não foi possível fazer push da branch {branch_name}")
+
+    print(f"✅ Branch '{branch_name}' criado e pushado para origin.")
+    return branch_name
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Orquestrador e suporte do workflow /dev-spec")
     parser.add_argument("--change", default=None, help="Nome da mudança OpenSpec")
@@ -210,9 +253,8 @@ def main() -> int:
         return 1
     print(f"📋 Mudança selecionada: {change_name}")
 
-    # Identifica branch atual
-    res = run_cmd_nocheck(["git", "branch", "--show-current"])
-    branch_name = res.stdout.strip() if res.returncode == 0 else ""
+    # Garante branch isolado antes de quaisquer edições
+    branch_name = ensure_branch(change_name, dry_run=args.dry_run)
 
     if not args.skip_tests:
         print("\n🧪 [2/5] Executando testes unitários (.NET)...")

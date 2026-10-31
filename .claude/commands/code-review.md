@@ -1,13 +1,28 @@
 ---
-description: "Executa a skill de revisão de código (lint, OWASP Top 10, NIST SSDF, Clean Code, SOLID)"
+description: "Executa a skill de desenvolvimento multi-agente (Backend .NET, Frontend Vue 3 e Tester em Distrobox com 100% testes e PR)"
 ---
 
-Executa `python scripts/code-review-skill.py` no repositório atual,
-varrendo o working tree e gerando specs de correção para itens selecionados.
+Executa a skill `/dev-spec` para implementar e testar uma mudança OpenSpec com três agentes coordenados.
 
-Uso: `/code-review [--fix 1,2,3] [--dry-run]`
+> 📖 **Guia de Desenvolvimento Obrigatório**: Consulte o **[DEVELOPMENT_GUIDE.md](../../DEVELOPMENT_GUIDE.md)** antes de iniciar qualquer implementação - ele contém todas as regras da Code Review para evitar erros comuns.
 
-A skill varre o working tree, executa lint por stack (.NET/C# com
-dotnet-format + StyleCop.Analyzers; JS/Vue com ESLint + Prettier), cruza
-com OWASP Top 10 (2021) e NIST SSDF, avalia Clean Code e SOLID, pergunta
-interativamente o que corrigir e gera specs de correção OpenSpec.
+Uso:
+```
+/dev-spec [<change-name>] [--dry-run]
+```
+
+Exemplos:
+```
+/dev-spec                                  # usa a mudança em andamento
+/dev-spec infinite-scroll-series           # usa a mudança especificada
+/dev-spec --dry-run                        # simula os passos sem alterar código ou git
+```
+
+O comando orquestra:
+1. **Setup**: isolamento de branch `feature/<change>-<span>` (gerado pelo `/dev-spec`).
+2. **Desenvolvimento Paralelo**:
+   - **Agente 1 (Backend)**: implementa C#/.NET em `src/**` e roda code-review (.NET) com auto-correção.
+   - **Agente 2 (Frontend)**: implementa Vue 3 em `vue/plex-frontend/**` e roda code-review (ESLint/Prettier) com auto-correção.
+3. **Consolidação**: marca tarefas como `[x]` no `tasks.md`.
+4. **Agente 3 (Tester)**: roda testes unitários e E2E Playwright dentro do container via Distrobox (Fedora) exigindo 100% de sucesso.
+5. **Entrega**: commita via `scripts/commit-skill.py`, faz push para origin e abre Pull Request no GitHub via `gh pr create`.

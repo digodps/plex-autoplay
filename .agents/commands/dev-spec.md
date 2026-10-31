@@ -19,7 +19,7 @@ Exemplos:
 ```
 
 O comando orquestra:
-1. **Setup**: isolamento de branch `feature/<change>-<span>` via `scripts/setup-spec.py`.
+1. **Setup**: isolamento de branch `feature/<change>-<span>` (gerado pelo `/dev-spec`).
 2. **Desenvolvimento Paralelo**:
    - **Agente 1 (Backend)**: implementa C#/.NET em `src/**` e roda code-review (.NET) com auto-correção.
    - **Agente 2 (Frontend)**: implementa Vue 3 em `vue/plex-frontend/**` e roda code-review (ESLint/Prettier) com auto-correção.
