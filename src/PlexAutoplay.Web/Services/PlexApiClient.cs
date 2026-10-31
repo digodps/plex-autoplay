@@ -116,13 +116,13 @@ public partial class PlexApiClient : IPlexApiClient
         using var activity = ActivitySource.StartActivity("Plex.GetEpisodes");
         activity?.SetTag("service.name", "plex");
         activity?.SetTag("http.method", "GET");
-        activity?.SetTag("http.url", $"/library/sections/{sectionKey}/items");
+        activity?.SetTag("http.url", $"/library/sections/{sectionKey}/all?type=4");
 
         var startTime = DateTime.UtcNow;
 
         try
         {
-            var response = await _httpClient.GetAsync($"/library/sections/{sectionKey}/items");
+            var response = await _httpClient.GetAsync($"/library/sections/{sectionKey}/all?type=4");
 
             if (!response.IsSuccessStatusCode)
             {
