@@ -16,10 +16,17 @@ const loading = ref(false);
 const getRedirect = () =>
   typeof route.query.redirect === "string" ? route.query.redirect : "/dashboard";
 
-onMounted(() => {
-  if (authStore.isAuthenticated) {
-    router.replace(getRedirect());
+onMounted(async () => {
+  if (!authStore.isAuthenticated) return;
+
+  const response = await fetch("/api/status", {
+    headers: { Authorization: `Bearer ${authStore.token}` },
+  });
+  if (response.ok) {
+    await router.replace(getRedirect());
+    return;
   }
+  authStore.logout();
 });
 
 const handleLogin = async () => {
