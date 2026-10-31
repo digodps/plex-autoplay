@@ -1,7 +1,7 @@
 {
   "name": "plex-autoplay",
   "version": "1.0.0",
-  "description": "> **Dashboard web para gerenciar marcadores de intro/créditos no Plex via API oficial** – gera `custom.json` para o **PlexAutoSkip** (embutido) que envia comandos de *seek* aos players compatíveis.",
+  "description": "> **Dashboard web para gerenciar marcadores de intro/créditos no Plex via API oficial** – gera `SQLite marker database` para o **PlexAutoSkip** (embutido) que envia comandos de *seek* aos players compatíveis.",
   "main": "index.js",
   "directories": {
     "test": "tests"

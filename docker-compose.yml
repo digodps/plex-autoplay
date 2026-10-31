@@ -7,7 +7,7 @@ services:
       - "8443:443"     # HTTPS API + Vue SPA (mapeada para 8443 no host em modo rootless)
       - "8081:8081"   # WSS PlexAutoSkip WebSocket
     volumes:
-      - plex-data:/data              # SQLite, custom.json, image-cache, app-config.json
+      - plex-data:/data              # SQLite, image-cache, app-config.json
       - ${MEDIA_ROOT}:/media:ro     # Plex media files (read-only)
     environment:
       - PLEX_URL=${PLEX_URL}

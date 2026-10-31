@@ -4,7 +4,6 @@ using Microsoft.Extensions.Logging;
 using PlexAutoplay.Application;
 using PlexAutoplay.Domain.Entities;
 using PlexAutoplay.Domain.Ports;
-using PlexAutoplay.Infrastructure.AutoSkip;
 using System.Diagnostics.Metrics;
 using System.Threading;
 using System.Threading.Tasks;
@@ -17,7 +16,6 @@ public class SyncBackgroundService : BackgroundService
     private readonly IPlexApiClient _plexClient;
     private readonly IMarkerDetector _markerDetector;
     private readonly IMarkerRepository _markerRepository;
-    private readonly ICustomJsonWriter _customJsonWriter;
     private readonly string _mediaRoot;
     private int _intervalMinutes;
     private static readonly Meter SyncMeter = new("PlexAutoplay.Sync");
@@ -29,14 +27,12 @@ public class SyncBackgroundService : BackgroundService
         IPlexApiClient plexClient,
         IMarkerDetector markerDetector,
         IMarkerRepository markerRepository,
-        ICustomJsonWriter customJsonWriter,
         IConfiguration configuration)
     {
         _logger = logger;
         _plexClient = plexClient;
         _markerDetector = markerDetector;
         _markerRepository = markerRepository;
-        _customJsonWriter = customJsonWriter;
         _mediaRoot = configuration["MEDIA_ROOT"] ?? "/media";
         _intervalMinutes = configuration.GetValue("SYNC_INTERVAL_MINUTES", 5);
     }
@@ -128,7 +124,6 @@ public class SyncBackgroundService : BackgroundService
                     // Detect markers via ffprobe
                     var detectedMarkers = _markerDetector.Detect(localPath);
 
-                    var markerEntries = new List<ICustomJsonWriter.MarkerEntry>();
                     foreach (var marker in detectedMarkers)
                     {
                         var exists = await _markerRepository.ExistsAsync(episode.RatingKey, marker.Kind);
@@ -141,13 +136,7 @@ public class SyncBackgroundService : BackgroundService
                                 StartMs = marker.StartMs,
                                 EndMs = marker.EndMs
                             });
-                            markerEntries.Add(new ICustomJsonWriter.MarkerEntry(marker.Kind, marker.StartMs, marker.EndMs));
                         }
-                    }
-
-                    if (markerEntries.Count > 0)
-                    {
-                        _customJsonWriter.UpsertMarkers(episode.RatingKey, markerEntries);
                     }
 
                     processed++;
