@@ -13,6 +13,7 @@ public static class ServerCertificateProvider
 {
     public static X509Certificate2 GetServerCertificate()
     {
+        Log.Information("Iniciando carregamento do certificado...");
         var certBase64 = Environment.GetEnvironmentVariable("CERT_BASE64");
         var certPath = Environment.GetEnvironmentVariable("CERT_PATH");
         var certPassword = Environment.GetEnvironmentVariable("CERT_PASSWORD");
@@ -46,7 +47,12 @@ public static class ServerCertificateProvider
             serverCert = GenerateSelfSignedCertificate();
             Log.Information("Certificado auto-assinado gerado: {Subject} (expire: {NotAfter})", serverCert.Subject, serverCert.NotAfter);
         }
+        else
+        {
+            Log.Information("Certificado carregado com sucesso: {Subject} (expire: {NotAfter})", serverCert.Subject, serverCert.NotAfter);
+        }
 
+        Log.Information("GetServerCertificate concluído, retornando certificado.");
         return serverCert;
     }
 
@@ -89,17 +95,44 @@ public static class ServerCertificateProvider
 
     private static X509Certificate2 GenerateSelfSignedCertificate()
     {
-        using var ecdsa = ECDsa.Create(ECCurve.CreateFromValue("1.2.840.10045.3.1.7")); // nistP256 / P-256
-        var request = new CertificateRequest(new X500DistinguishedName("cn=plex-autoplay"), ecdsa, HashAlgorithmName.SHA256);
-        request.CertificateExtensions.Add(new X509KeyUsageExtension(X509KeyUsageFlags.DigitalSignature, false));
-        request.CertificateExtensions.Add(new X509EnhancedKeyUsageExtension(
-            new OidCollection { new Oid("1.3.6.1.5.5.7.3.1") }, false)); // Server Authentication
-        var sanBuilder = new SubjectAlternativeNameBuilder();
-        sanBuilder.AddDnsName("localhost");
-        sanBuilder.AddIpAddress(System.Net.IPAddress.Loopback);
-        request.CertificateExtensions.Add(sanBuilder.Build());
+        try
+        {
+            Console.WriteLine("[CERT] Gerando chave ECDsa...");
+            using var ecdsa = ECDsa.Create(ECCurve.NamedCurves.nistP256);
+            Console.WriteLine("[CERT] ECDsa criado com sucesso");
 
-        var cert = request.CreateSelfSigned(DateTimeOffset.Now, DateTimeOffset.Now.AddYears(1));
-        return new X509Certificate2(cert);
+            Console.WriteLine("[CERT] Criando X500DistinguishedName...");
+            var subject = new X500DistinguishedName("cn=plex-autoplay");
+            Console.WriteLine("[CERT] Subject criado: " + subject.Name);
+
+            Console.WriteLine("[CERT] Criando CertificateRequest...");
+            var request = new CertificateRequest(subject, ecdsa, HashAlgorithmName.SHA256);
+            Console.WriteLine("[CERT] CertificateRequest criado.");
+
+            Console.WriteLine("[CERT] Adicionando KeyUsage...");
+            request.CertificateExtensions.Add(new X509KeyUsageExtension(X509KeyUsageFlags.DigitalSignature, false));
+
+            Console.WriteLine("[CERT] Adicionando EnhancedKeyUsage...");
+            var oidCollection = new OidCollection { new Oid("1.3.6.1.5.5.7.3.1") };
+            request.CertificateExtensions.Add(new X509EnhancedKeyUsageExtension(oidCollection, false));
+
+            Console.WriteLine("[CERT] Adicionando SAN...");
+            var sanBuilder = new SubjectAlternativeNameBuilder();
+            sanBuilder.AddDnsName("localhost");
+            sanBuilder.AddIpAddress(System.Net.IPAddress.Loopback);
+            request.CertificateExtensions.Add(sanBuilder.Build());
+
+            Console.WriteLine("[CERT] Executando CreateSelfSigned...");
+            var cert = request.CreateSelfSigned(DateTimeOffset.Now, DateTimeOffset.Now.AddYears(1));
+            Console.WriteLine("[CERT] CreateSelfSigned concluído.");
+
+            // Retorna o certificado diretamente sem exportar/reimportar
+            return cert;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("[CERT ERROR] " + ex);
+            throw;
+        }
     }
 }
