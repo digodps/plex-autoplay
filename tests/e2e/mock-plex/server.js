@@ -5,7 +5,16 @@ const PORT = 32400;
 // ---- Gera 60 séries de mock para testar infinite scroll (3 páginas de 24) ----
 function generateSeries(count = 60) {
   const series = [];
-  const genres = ["Action", "Drama", "Comedy", "Sci-Fi", "Thriller", "Fantasy", "Horror", "Mystery"];
+  const genres = [
+    "Action",
+    "Drama",
+    "Comedy",
+    "Sci-Fi",
+    "Thriller",
+    "Fantasy",
+    "Horror",
+    "Mystery",
+  ];
   const templates = [
     "Uma história épica sobre {topic}",
     "A jornada de {topic} através de mundos desconhecidos",
@@ -14,9 +23,14 @@ function generateSeries(count = 60) {
     "Uma aventura de {topic} sem precedentes",
   ];
   const topics = [
-    "heróis improváveis", "viagens no tempo", "inteligência artificial",
-    "mundos paralelos", "sociedades distópicas", "mistérios antigos",
-    "poderes extraordinários", "conspirações globais",
+    "heróis improváveis",
+    "viagens no tempo",
+    "inteligência artificial",
+    "mundos paralelos",
+    "sociedades distópicas",
+    "mistérios antigos",
+    "poderes extraordinários",
+    "conspirações globais",
   ];
 
   for (let i = 1; i <= count; i++) {
