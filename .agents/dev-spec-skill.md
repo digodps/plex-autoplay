@@ -2,6 +2,8 @@
 
 Skill de desenvolvimento multi-agente para OpenSpec (Backend .NET, Frontend Vue 3, Tester em Distrobox, commits semânticos e PR).
 
+> 📖 **Guia de Desenvolvimento Obrigatório**: Consulte o **[DEVELOPMENT_GUIDE.md](DEVELOPMENT_GUIDE.md)** antes de qualquer implementação.
+
 ## Como usar
 ```
 /dev-spec [<change-name>] [--dry-run]

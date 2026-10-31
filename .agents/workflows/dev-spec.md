@@ -31,6 +31,7 @@ Uso:
    - Ambos resolvem todas as pendências antes de avançar.
 
 5. **Consolidação de Tasks**:
+   - Antes de concluir, garanta que o código segue o [`DEVELOPMENT_GUIDE.md`](../../../DEVELOPMENT_GUIDE.md).
    - Atualiza `tasks.md` marcando as tarefas concluídas `[x]`.
 
 6. **Agente 3 (Tester em Container Distrobox)**:
