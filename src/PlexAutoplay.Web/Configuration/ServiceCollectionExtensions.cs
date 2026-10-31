@@ -62,10 +62,9 @@ public static class ServiceCollectionExtensions
         });
         services.AddSingleton<IPlexApiClient>(sp => sp.GetRequiredService<PlexApiClient>());
 
-        // PlexAutoSkip service (reader) and CustomJsonWriterService (writer)
-        var customJsonPath = Environment.GetEnvironmentVariable("CUSTOM_JSON_PATH") ?? "/data/custom.json";
-        services.AddSingleton<IPlexAutoSkipService>(new PlexAutoSkipService(customJsonPath));
-        services.AddSingleton<ICustomJsonWriter>(new CustomJsonWriterService(customJsonPath));
+        // PlexAutoSkip reads markers from SQLite.
+        services.AddSingleton<IPlexAutoSkipService>(sp =>
+            new PlexAutoSkipService(sp.GetRequiredService<IMarkerRepository>()));
 
         services.Configure<Microsoft.AspNetCore.Http.Json.JsonOptions>(options =>
         {

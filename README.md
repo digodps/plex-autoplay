@@ -1,6 +1,6 @@
 # Plex‑Autoplay  <img src="https://img.shields.io/badge/Plex%20Autoplay-100%25%20Free-%23E5A00D?style=for-the-badge&logo=plex" alt="Plex Autoplay badge">
 
-> **Dashboard web para gerenciar marcadores de intro/créditos no Plex via API oficial** – gera `custom.json` para o **PlexAutoSkip** (embutido) que envia comandos de *seek* aos players compatíveis.
+> **Dashboard web para gerenciar marcadores de intro/créditos no Plex via API oficial** – gera `SQLite marker database` para o **PlexAutoSkip** (embutido) que envia comandos de *seek* aos players compatíveis.
 
 ---
 
@@ -9,9 +9,9 @@
 | Funcionalidade | Status |
 |----------------|--------|
 | **Descoberta de bibliotecas** | ✅ Consulta `GET /library/sections` no Plex e apresenta cards com capa, título e tipo. |
-| **Geração de marcadores** | ✅ Scanner manual via UI: grava marcadores no `custom.json` (formato PlexAutoSkip). |
+| **Geração de marcadores** | ✅ Scanner manual via UI: grava marcadores no `SQLite marker database` (formato PlexAutoSkip). |
 | **Edição manual de marcadores** | ✅ UI para criar/editar/remover marcadores de intro e créditos por episódio. |
-| **PlexAutoSkip embutido** | ✅ Lê `custom.json` e serve WebSocket na porta 8081 para players compatíveis. |
+| **PlexAutoSkip embutido** | ✅ Lê `SQLite marker database` e serve WebSocket na porta 8081 para players compatíveis. |
 | **Interface Web** | ✅ Dashboard único (auth + CSRF): config Plex, bibliotecas, scan manual, logs tempo real. |
 | **Infraestrutura** | ✅ Container único (.NET 10): ASP.NET Core Web API + Vue SPA + SQLite. |
 | **Testes E2E** | ✅ Executor de testes dentro do Docker com Playwright + captura de artefatos de falha. |
@@ -79,7 +79,6 @@ cp .env.example .env
 | `WEB_PORT` | Porta do dashboard (interno) | 8080 |
 | `WS_PORT` | Porta WebSocket do PlexAutoSkip (interno) | 8081 |
 | `SYNC_INTERVAL_MINUTES` | Intervalo em minutos entre varreduras automáticas das bibliotecas | 5 |
-| `CUSTOM_JSON_PATH` | Caminho do `custom.json` dentro do container | `/data/custom.json` |
 | `APP_CONFIG_PATH` | Caminho do `app-config.json` | `/data/app-config.json` |
 | `CERT_PATH` | Caminho para arquivo PFX no container | vazio |
 | `CERT_PASSWORD` | Senha do arquivo PFX (opcional) | vazio |
@@ -115,7 +114,7 @@ O container roda .NET 10 ASP.NET Core Web API + Vue SPA + SQLite em modo HTTPS-o
 - **WebSocket (PlexAutoSkip)** na porta 8081.
 - **HTTP** desabilitado por padrão (`DISABLE_HTTP=true`).
 - **Certificado auto-assinado** gerado automaticamente quando nenhum `CERT_PATH`/`CERT_BASE64` é fornecido.
-- **Volumes**: `plex-data` (`/data` - SQLite, custom.json, certificados) e bind mount `/media` (arquivos de mídia via `MEDIA_ROOT`).
+- **Volumes**: `plex-data` (`/data` - SQLite, SQLite marker database, certificados) e bind mount `/media` (arquivos de mídia via `MEDIA_ROOT`).
 
 ---
 
@@ -146,10 +145,10 @@ O container roda .NET 10 ASP.NET Core Web API + Vue SPA + SQLite em modo HTTPS-o
 
 1. Usuário clica **“Escanear”** em uma biblioteca no dashboard.
 2. `POST /api/plex/scan { "section_key": "1" }` → cria job assíncrono.
-3. `PlexLibraryScanner` processa a seção e salva marcadores no `custom.json`.
+3. `PlexLibraryScanner` processa a seção e salva marcadores no `SQLite marker database`.
 4. UI exibe progresso via **Server‑Sent Events** (`/api/sync/log/stream/{jobId}`).
 5. Botão **“Cancelar”** interrompe o job quase instantaneamente.
-6. **PlexAutoSkip** lê o `custom.json` atualizado e envia comandos de *seek* aos players compatíveis.
+6. **PlexAutoSkip** lê o `SQLite marker database` atualizado e envia comandos de *seek* aos players compatíveis.
 
 ---
 

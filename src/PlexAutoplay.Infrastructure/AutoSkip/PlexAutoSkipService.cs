@@ -1,69 +1,23 @@
 namespace PlexAutoplay.Infrastructure.AutoSkip;
 
 using PlexAutoplay.Domain.Ports;
-using System.Text.Json;
-using System.Threading.Channels;
 
 /// <summary>
-/// Implementação de <see cref="IPlexAutoSkipService"/> para leitura de marcadores do custom.json.
+/// Implementação de <see cref="IPlexAutoSkipService"/> baseada no SQLite.
 /// </summary>
-public class PlexAutoSkipService : IPlexAutoSkipService
+public sealed class PlexAutoSkipService : IPlexAutoSkipService
 {
-    private readonly string _customJsonPath;
-    private readonly Dictionary<string, List<MarkerInfo>> _markers = new();
-    private readonly FileSystemWatcher? _watcher;
+    private readonly IMarkerRepository _markerRepository;
 
-    public PlexAutoSkipService(string customJsonPath)
+    public PlexAutoSkipService(IMarkerRepository markerRepository)
     {
-        _customJsonPath = customJsonPath;
-        LoadMarkers();
-
-        // Watch for changes to custom.json
-        var dir = Path.GetDirectoryName(_customJsonPath);
-        if (!string.IsNullOrEmpty(dir) && Directory.Exists(dir))
-        {
-            _watcher = new FileSystemWatcher(dir, Path.GetFileName(_customJsonPath))
-            {
-                NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.FileName | NotifyFilters.Size
-            };
-            _watcher.Changed += (_, _) => LoadMarkers();
-            _watcher.EnableRaisingEvents = true;
-        }
-    }
-
-    private void LoadMarkers()
-    {
-        try
-        {
-            if (!File.Exists(_customJsonPath)) return;
-
-            var json = File.ReadAllText(_customJsonPath);
-            using var doc = JsonDocument.Parse(json);
-
-            _markers.Clear();
-            foreach (var property in doc.RootElement.EnumerateObject())
-            {
-                var ratingKey = property.Name;
-                var markerList = new List<MarkerInfo>();
-                foreach (var marker in property.Value.EnumerateArray())
-                {
-                    markerList.Add(new MarkerInfo(
-                        marker.GetProperty("kind").GetString() ?? "",
-                        marker.GetProperty("start_ms").GetInt64(),
-                        marker.GetProperty("end_ms").GetInt64()
-                    ));
-                }
-                _markers[ratingKey] = markerList;
-            }
-        }
-        catch
-        {
-            // Ignore parse errors, keep existing markers
-        }
+        _markerRepository = markerRepository;
     }
 
     public IReadOnlyList<MarkerInfo> GetMarkersForEpisode(string ratingKey)
     {
-        return _markers.TryGetValue(ratingKey, out var markers) ? markers : Array.Empty<MarkerInfo>();
+        return _markerRepository.GetByRatingKeyAsync(ratingKey).GetAwaiter().GetResult()
+            .Select(marker => new MarkerInfo(marker.Kind, marker.StartMs, marker.EndMs))
+            .ToList();
     }
 }

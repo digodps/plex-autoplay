@@ -13,7 +13,6 @@ public static class ConfigEndpoints
             {
                 plex_url = Environment.GetEnvironmentVariable("PLEX_URL") ?? "",
                 sync_interval_minutes = Environment.GetEnvironmentVariable("SYNC_INTERVAL_MINUTES") ?? "5",
-                custom_json_path = Environment.GetEnvironmentVariable("CUSTOM_JSON_PATH") ?? "/data/custom.json",
                 media_root = Environment.GetEnvironmentVariable("MEDIA_ROOT") ?? "/media",
                 ws_port = Environment.GetEnvironmentVariable("WS_PORT") ?? "8081",
                 https_port = Environment.GetEnvironmentVariable("HTTPS_PORT") ?? "443",

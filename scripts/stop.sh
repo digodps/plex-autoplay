@@ -55,7 +55,7 @@ fi
 if [[ "$REMOVE_VOLUMES" == true ]]; then
   echo "🗑  Removendo volume persistente (plex-data)..."
   docker compose down -v
-  echo "   Volume removido. Todos os dados locais (SQLite, custom.json, cache) foram apagados."
+  echo "   Volume removido. Todos os dados locais (SQLite, SQLite marker database, cache) foram apagados."
 fi
 
 echo ""
