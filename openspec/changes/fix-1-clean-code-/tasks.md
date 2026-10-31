@@ -2,7 +2,7 @@
 
 ## 1. Correção do achado [1]
 
-- [ ] 1.1 Aplicar correção nos arquivos: src/PlexAutoplay.Web/Endpoints/MonitoringEndpoints.cs e verificar que o achado desaparece na próxima execução de /code-review
+- [x] 1.1 Aplicar correção nos arquivos: src/PlexAutoplay.Web/Endpoints/MonitoringEndpoints.cs e verificar que o achado desaparece na próxima execução de /code-review
 
 ## Workflow follow-up
 

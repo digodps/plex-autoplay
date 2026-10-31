@@ -1,4 +1,5 @@
 using PlexAutoplay.Application;
+using PlexAutoplay.Domain;
 using PlexAutoplay.Domain.Ports;
 using PlexAutoplay.Infrastructure.Auth;
 using PlexAutoplay.Infrastructure.AutoSkip;
@@ -25,15 +26,20 @@ public static class ServiceCollectionExtensions
 
         // Periodic sync background service
         services.AddHostedService<SyncBackgroundService>();
+        services.AddHostedService<CatalogSyncBackgroundService>();
 
         // In-memory cache and the generic cache port (pluggable backend)
         services.AddMemoryCache();
         services.AddSingleton<ICacheService, ImageCacheService>();
 
-        // SQLite marker repository
+        // SQLite repositories
         var sqliteConnectionString = Environment.GetEnvironmentVariable("SQLITE_CONNECTION_STRING") ?? "Data Source=/data/app.db";
         services.AddSingleton<IMarkerRepository>(
             new PlexAutoplay.Infrastructure.Persistence.Repositories.SqliteMarkerRepository(sqliteConnectionString));
+        services.AddSingleton<ILibraryRepository>(
+            new PlexAutoplay.Infrastructure.Persistence.Repositories.SqliteLibraryRepository(sqliteConnectionString));
+        services.AddSingleton<ISeriesRepository>(
+            new PlexAutoplay.Infrastructure.Persistence.Repositories.SqliteSeriesRepository(sqliteConnectionString));
 
         // JWT token service
         var jwtSecret = Environment.GetEnvironmentVariable("JWT_SECRET") ?? "default-secret-change-in-production";
@@ -76,5 +82,8 @@ public static class ServiceCollectionExtensions
 
         // In-memory scan job tracking
         services.AddSingleton<IScanJobStore, ScanJobStore>();
+
+        // Process information service
+        services.AddSingleton<IProcessInfoService, ProcessInfoService>();
     }
 }
