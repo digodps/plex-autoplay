@@ -21,7 +21,7 @@ test.describe("Infinite Scroll Regression", () => {
     test.token = token;
   });
 
-  test("infinite scroll carrega múltiplas páginas ao rolar", async ({ page, _request }) => {
+  test("infinite scroll carrega múltiplas páginas ao rolar", async ({ page }) => {
     // Navega para a página de séries da biblioteca 1
     await page.goto(`${BASE_URL}/libraries/1/series`, { waitUntil: "networkidle" });
 
@@ -47,7 +47,7 @@ test.describe("Infinite Scroll Regression", () => {
     // Aguarda carregamento da próxima página (espera por nova resposta da API)
     await page.waitForResponse(
       (resp) => resp.url().includes("/api/series/1") && resp.url().includes("page=2"),
-      { timeout: 15000 }
+      { timeout: 15000 },
     );
 
     // Aguarda renderização dos novos cards
@@ -71,7 +71,7 @@ test.describe("Infinite Scroll Regression", () => {
     // Aguarda carregamento da página 3
     await page.waitForResponse(
       (resp) => resp.url().includes("/api/series/1") && resp.url().includes("page=3"),
-      { timeout: 15000 }
+      { timeout: 15000 },
     );
 
     await page.waitForTimeout(500);
@@ -86,7 +86,7 @@ test.describe("Infinite Scroll Regression", () => {
     await expect(endOfCatalog).toBeVisible({ timeout: 10000 });
   });
 
-  test("busca combina com infinite scroll", async ({ page, _request }) => {
+  test("busca combina com infinite scroll", async ({ page }) => {
     await page.goto(`${BASE_URL}/libraries/1/series`, { waitUntil: "networkidle" });
     await page.waitForSelector(".series-grid", { state: "visible", timeout: 10000 });
     await page.waitForTimeout(500);
@@ -98,7 +98,7 @@ test.describe("Infinite Scroll Regression", () => {
     // Aguarda debounce (300ms) e carregamento da página 1 filtrada
     await page.waitForResponse(
       (resp) => resp.url().includes("/api/series/1") && resp.url().includes("query=Action"),
-      { timeout: 10000 }
+      { timeout: 10000 },
     );
 
     await page.waitForTimeout(500);
@@ -126,8 +126,11 @@ test.describe("Infinite Scroll Regression", () => {
 
     // Aguarda página 2 com mesmo query
     await page.waitForResponse(
-      (resp) => resp.url().includes("/api/series/1") && resp.url().includes("page=2") && resp.url().includes("query=Action"),
-      { timeout: 15000 }
+      (resp) =>
+        resp.url().includes("/api/series/1") &&
+        resp.url().includes("page=2") &&
+        resp.url().includes("query=Action"),
+      { timeout: 15000 },
     );
 
     await page.waitForTimeout(500);
@@ -140,7 +143,7 @@ test.describe("Infinite Scroll Regression", () => {
     await searchInput.fill("");
     await page.waitForResponse(
       (resp) => resp.url().includes("/api/series/1") && !resp.url().includes("query="),
-      { timeout: 10000 }
+      { timeout: 10000 },
     );
 
     await page.waitForTimeout(500);
