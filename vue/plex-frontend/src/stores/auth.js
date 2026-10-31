@@ -9,15 +9,11 @@ export const useAuthStore = defineStore("auth", {
     isAuthenticated: (state) => !!state.token,
   },
   actions: {
-    /**
-     * @param {string} token
-     * @param {boolean} keepSigned true => cookie persistente (30 dias);
-     * false => cookie de sessão do navegador
-     */
-    login(token, keepSigned = false) {
+    login(token) {
       this.token = "";
       deleteCookie(AUTH_COOKIE);
-      setCookie(AUTH_COOKIE, token, keepSigned ? 30 : 0);
+      // Cookie de sessão (encerra quando o navegador fecha)
+      setCookie(AUTH_COOKIE, token, 0);
       this.token = token;
     },
     logout() {

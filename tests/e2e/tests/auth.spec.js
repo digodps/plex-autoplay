@@ -50,28 +50,6 @@ test.describe("Autenticação JWT", () => {
     expect(localStorageToken).toBeFalsy();
   });
 
-  test("cookie de sessão vira persistente quando 'manter-me conectado' é marcado", async ({
-    page,
-    context,
-  }) => {
-    await page.goto(`${BASE_URL}/login`, { waitUntil: "networkidle" });
-    await page.waitForSelector('input[type="password"]', {
-      state: "visible",
-      timeout: 10000,
-    });
-
-    await page.check('.keep-signed input[type="checkbox"]');
-    await page.fill('input[type="password"]', ADMIN_PASSWORD);
-    await page.click("button");
-
-    await page.waitForURL(`${BASE_URL}/dashboard`);
-    const cookies = await context.cookies();
-    const authCookie = cookies.find((c) => c.name === "auth_token");
-    expect(authCookie).toBeTruthy();
-    // Cookie persistente: expiração futura (~30 dias)
-    expect(authCookie.expires).toBeGreaterThan(Date.now() / 1000);
-  });
-
   test("login com senha incorreta retorna HTTP 401 e exibe erro", async ({ page }) => {
     await page.goto(`${BASE_URL}/login`, { waitUntil: "networkidle" });
     await page.waitForSelector('input[type="password"]', {
