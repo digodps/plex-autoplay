@@ -33,6 +33,8 @@ export function getToken() {
 }
 
 function redirectToLoginPreservingRoute() {
+  // Já no login: não redirecionar (evita loop com chamadas 401 da própria tela de login)
+  if (window.location.pathname === "/login") return;
   const route = window.location.pathname + window.location.search;
   deleteCookie(AUTH_COOKIE);
   window.location.href = `/login?redirect=${encodeURIComponent(route)}`;
