@@ -28,12 +28,6 @@
 
 ## 4. Skill e sincronização
 
-- [x] 3.1 Criar `.agent-source/skills/teste-aceitacao/SKILL.md` com o fluxo, interpretação do relatório e regra de reprovação.
-- [x] 3.2 Executar `python3 scripts/sync-agent-configs.py`.
-- [x] 3.3 Validar que a skill existe em `.agents`, `.claude`, `.continue`, `.opencode`, `.github` e `.dsh`.
-
-## 4. Verificação
-
 - [x] 4.1 Criar `.agent-source/skills/teste-aceitacao/SKILL.md` com o fluxo, interpretação do relatório e regra de reprovação.
 - [x] 4.2 Executar `python3 scripts/sync-agent-configs.py`.
 - [x] 4.3 Validar que a skill existe em `.agents`, `.claude`, `.continue`, `.opencode`, `.github` e `.dsh`.
@@ -43,11 +37,14 @@
 - [x] 5.1 Executar `bash -n scripts/acceptance-test.sh` e confirmar sintaxe válida.
 - [x] 5.2 Executar `python3 scripts/create-skill.py teste-aceitacao --force` e confirmar sincronização sem erros.
 - [x] 5.3 Executar `node --check` em `acceptance.config.js` e no spec de aceitação.
-- [ ] 5.4 Instalar o Chromium: `(cd tests/e2e && npm install && npx playwright install chromium)`.
-- [ ] 5.5 Executar `./scripts/acceptance-test.sh` em ambiente com `.env` e Plex configurados e exigir `RESULTADO: APROVADO`.
+- [x] 5.4 Instalar o Chromium: `(cd tests/e2e && npm install && npx playwright install chromium)`.
+- [x] 5.5 Executar `./scripts/acceptance-test.sh` em ambiente com `.env` e Plex configurados e exigir `RESULTADO: APROVADO`.
 
-> Execução de 2026-10-31: `PASS=35 SKIP=1 FAIL=2` → `RESULTADO: REPROVADO`. Falhas reais encontradas:
-> - `GET /library/6` retorna `502`; o Plex responde `404` em `/library/sections/6/items` (a API do Plex expõe `/all`).
-> - `POST /api/plex/scan` conclui com `errors=3`, mesmo problema de endpoint de episódios.
->
-> O executor está funcionando; a reprovação é do sistema testado.
+> Execução final de 2026-11-01: `PASS=40 SKIP=0 FAIL=0` → `RESULTADO: APROVADO`.
+> Correções aplicadas para chegar ao aprovado:
+> - `GET /library/{sectionKey}` passou a consultar `/library/sections/{sectionKey}/all?type=4` (o Plex devolvia 404 em `/items`).
+> - Parsing tolera `MediaContainer` sem `Metadata` (bibliotecas vazias) sem lançar exceção.
+> - `SqliteSeriesRepository` sempre define `@Query` e conta o total com o mesmo filtro (evitava `500`).
+> - Login devolve o token no corpo e o cookie `auth_token` é legível pelo frontend (HttpOnly bloqueava o guarda do Vue).
+> - `apiFetch` não redireciona para `/login` quando já está nele (evitava loop de redirect).
+> - Clique na série navega via `router.push`; bundle do `wwwroot` regenerado a partir de `vue/plex-frontend`.

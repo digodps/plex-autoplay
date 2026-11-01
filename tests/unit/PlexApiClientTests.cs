@@ -174,6 +174,30 @@ public class PlexApiClientTests
     }
 
     [Fact]
+    public async Task GetEpisodesAsync_WhenSectionHasNoMetadata_ReturnsEmpty()
+    {
+        using var server = new FakePlexServer("""{"MediaContainer":{"size":0}}""");
+        var client = MakeClient(server.BaseUrl);
+
+        var result = await client.GetEpisodesAsync("6");
+
+        Assert.False(result.Failed);
+        Assert.Empty(result.Episodes);
+    }
+
+    [Fact]
+    public async Task GetSeriesEpisodesAsync_WhenSeriesHasNoMetadata_ReturnsEmpty()
+    {
+        using var server = new FakePlexServer("""{"MediaContainer":{"size":0}}""");
+        var client = MakeClient(server.BaseUrl);
+
+        var result = await client.GetSeriesEpisodesAsync("101");
+
+        Assert.False(result.Failed);
+        Assert.Empty(result.Episodes);
+    }
+
+    [Fact]
     public async Task GetEpisodesAsync_ParsesEpisodesAndUsesPlexAllEndpoint()
     {
         using var server = new FakePlexServer(SeriesEpisodesJson);

@@ -49,7 +49,7 @@ export async function apiFetch(url, options = {}) {
 
   const res = await fetch(url, { ...options, headers });
 
-  if (res.status === 401 && url.startsWith("/api/")) {
+  if (res.status === 401 && url.startsWith("/api/") && window.location.pathname !== "/login") {
     redirectToLoginPreservingRoute();
   }
   return res;
