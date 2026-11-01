@@ -15,7 +15,7 @@ else
     if [[ ! -d node_modules ]]; then
       npm install --silent
     fi
-    ACCEPTANCE_BASE_URL="$BASE_URL" npx playwright test --config=acceptance.config.js
+    ACCEPTANCE_BASE_URL="$BASE_URL" npx playwright test --config=acceptance.config.cjs
   ) >"$PW_LOG" 2>&1
   PW_STATUS=$?
 
