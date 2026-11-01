@@ -29,9 +29,47 @@ htmlcov/
 .DS_Store
 config/
 
-# Testes e artefatos (não versionados)
-tests/
+# Artefatos gerados (não versionados)
 test-artifacts/*
+
+# Node.js dependencies (não versionados)
+node_modules/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+ENV/
+env/
+
+# Editor temp files
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+config/
+
+# Test runner output
+.playwright/
+playwright-report/
+test-results/
+
+# Node.js dependencies em tests/ (anteriormente ignorado por 'tests/')
+tests/e2e/node_modules/
+
+# .NET build output (binários - não commitar)
+bin/
+obj/
+*.dll
+*.pdb
+*.exe
+*.cache
+*.sourcelink.json
+*.FileListAbsolute.txt
+.vs/
 
 # .NET build output (binários - não commitar)
 bin/
