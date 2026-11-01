@@ -52,11 +52,13 @@ const router = createRouter({
 });
 
 // Guarda: todas as páginas exigem autenticação; o destino original é preservado
-// para retorno após o login.
-router.beforeEach((to) => {
+// para retorno após o login. Como o cookie auth_token é HttpOnly, o frontend
+// usa `credentials: 'include'` para que o navegador envie o cookie automaticamente.
+router.beforeEach(async (to) => {
   if (to.name === "login") return true;
 
-  if (!getToken()) {
+  const res = await fetch("/api/status", { credentials: "include" });
+  if (!res.ok) {
     return { name: "login", query: { redirect: to.fullPath } };
   }
   return true;
