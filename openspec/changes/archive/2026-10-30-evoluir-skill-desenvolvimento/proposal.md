@@ -8,7 +8,7 @@ O atual workflow multi-agente (`dev-spec.py`) tem três agentes (Backend, Fronte
 
 - **Adicionar Agente 4 (Reviewer)**: Executa a `code-review-skill.py` formal antes dos testes, apresenta achados interativamente e cria specs de correção.
 - **Adicionar Agente 5 (Repairer)**: Tenta auto-fix para issues comuns (formatação, estilo) e cria specs de reparo quando intervenção manual é necessária.
-- **Enriquecer o Tester (Agente 3)**: Incluir etapa de validação manual no navegador dentro do distrobox antes de relatar sucesso.
+- **Enriquecer o Tester (Agente 3)**: Incluir etapa de validação manual no navegador antes de relatar sucesso.
 - **Criar DEVELOPMENT_GUIDE.md**: Guia de padrões proativos baseado exatamente nas validações da Code Review, para que desenvolvedores evitem erros antes de commitar.
 - **Atualizar todos os arquivos de skill/documentation**: Inserir referências ao novo guia e fluxo atualizado em todos os markdowns (.opencode, .agents).
 
@@ -21,7 +21,7 @@ O atual workflow multi-agente (`dev-spec.py`) tem três agentes (Backend, Fronte
 
 ### Modified Capabilities
 
-- **multi-agent-dev**: O workflow principal passa de 3 para 5 agentes: adiciona Agente 4 (Reviewer - code review formal) e Agente 5 (Repairer - auto-reparo), além de etapa de validação visual manual no navegador dentro do distrobox no Agente 3 (Tester).
+- **multi-agent-dev**: O workflow principal passa de 3 para 5 agentes: adiciona Agente 4 (Reviewer - code review formal) e Agente 5 (Repairer - auto-reparo), além de etapa de validação visual manual no navegador no Agente 3 (Tester).
 - **code-review**: Agora opera como agente dedicado no fluxo `/dev-spec`, com etapa interativa de seleção de achados antes dos testes, integrada ao portão de qualidade.
 
 ## Impact

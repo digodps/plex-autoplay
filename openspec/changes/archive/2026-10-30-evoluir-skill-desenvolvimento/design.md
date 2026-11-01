@@ -2,7 +2,7 @@
 
 ## Context
 
-O workflow multi-agente atual (`dev-spec.py`) implementa o ciclo de vida de uma mudança OpenSpec com três agentes: Backend (implementa e roda code review), Frontend (implementa em background) e Tester (executa testes automatizados e E2E em distrobox). O Code Review (`code-review-skill.py`) já realiza verificações completas (lint, OWASP, NIST, Clean Code/SOLID), mas não está integrado como etapa obrigatória antes dos testes, causando retrabalho quando achados são descobertos após o início dos testes.
+O workflow multi-agente atual (`dev-spec.py`) implementa o ciclo de vida de uma mudança OpenSpec com três agentes: Backend (implementa e roda code review), Frontend (implementa em background) e Tester (executa testes automatizados e E2E). O Code Review (`code-review-skill.py`) já realiza verificações completas (lint, OWASP, NIST, Clean Code/SOLID), mas não está integrado como etapa obrigatória antes dos testes, causando retrabalho quando achados são descobertos após o início dos testes.
 
 Além disso, não existe guia de desenvolvimento proativo quepadronize o que deve ser seguido durante a implementação, levando a violações de padrões que poderiam ser evitadas.
 
@@ -10,7 +10,7 @@ Além disso, não existe guia de desenvolvimento proativo quepadronize o que dev
 
 - Adicionar Agente 4 (Reviewer) como etapa formal antes dos testes, integrando code-review-skill.py com feedback interativo.
 - Adicionar Agente 5 (Repairer) para auto-fix de issues comuns e criação de specs de reparo.
-- Enriquecer Agente 3 (Tester) com validação manual no navegador dentro do distrobox.
+- Enriquecer Agente 3 (Tester) com validação manual no navegador.
 - Criar DEVELOPMENT_GUIDE.md como guia de padrões proativos baseado nas validações da Code Review.
 - Atualizar todos os arquivos de skill/documentation para referenciarem o novo fluxo.
 
@@ -46,9 +46,9 @@ Além disso, não existe guia de desenvolvimento proativo quepadronize o que dev
 
 ### 3. Enriquecer Tester com validação manual no navegador
 
-**Decisão**: O Agente 3 agora inclui instrução de abrir app no navegador dentro do distrobox antes de reportar sucesso.
+**Decisão**: O Agente 3 agora inclui instrução de abrir app no navegador antes de reportar sucesso.
 
-**Racional**: O requisito original pede "teste manual logando na aplicação pelo navegador que estiver no distrobox". Isso deve ser uma etapa obrigatória de sanity check, não apenas opcional.
+**Racional**: O requisito original pede "teste manual logando na aplicação pelo navegador que estiver". Isso deve ser uma etapa obrigatória de sanity check, não apenas opcional.
 
 **Alternativas consideradas**:
 - Apenas testes automatizados (E2E Playwright): Não cobre todos os cenários visuais/UX.

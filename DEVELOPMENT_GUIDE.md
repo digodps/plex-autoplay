@@ -31,7 +31,7 @@
 - [ ] Stores Pinia tipados.
 
 ### Validação End-to-End Real (Obrigatório)
-- [ ] **Teste Manual com Navegador Real**: O agente Tester/Desenvolvedor deve executar o fluxo ponta a ponta (fechar/reabrir navegador, persistência de cookie, login/logout e auto-login) diretamente em um navegador real no ambiente (ex.: Distrobox/Browser), garantindo que o comportamento espelhe o uso real do usuário final.
+- [ ] **Teste Manual com Navegador Real**: O agente Tester/Desenvolvedor deve executar o fluxo ponta a ponta (fechar/reabrir navegador, persistência de cookie, login/logout e auto-login) diretamente em um navegador real no ambiente (ex.: Browser), garantindo que o comportamento espelhe o uso real do usuário final.
 
 ---
 

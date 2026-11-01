@@ -1,6 +1,6 @@
 ---
 name: dev-spec
-description: Orquestração de desenvolvimento multi-agente para OpenSpec (Backend .NET, Frontend Vue 3 e Tester em Distrobox com 100% de sucesso, commits semânticos e PR).
+description: Orquestração de desenvolvimento multi-agente para OpenSpec (Backend .NET, Frontend Vue 3 e Tester com 100% de sucesso, commits semânticos e PR).
 allowed-tools: Bash(*)
 license: MIT
 metadata:
@@ -65,10 +65,10 @@ A implementação ponta a ponta divide-se entre **três agentes especializados**
    - Acionado apenas após Backend e Frontend estarem 100% implementados e limpos no code review.
    - **Validação Automatizada**:
      - Valida variáveis obrigatórias do `.env` na raiz.
-     - Roda testes unitários dentro do container Distrobox.
+     - Roda testes unitários dentro do container.
      - Sobe a stack de testes e executa E2E Playwright.
    - **Validação Manual (Sanity Check)**:
-     - Após o sucesso dos testes automatizados, o Agente 3 deve orientar o desenvolvedor a abrir a aplicação no navegador dentro do Distrobox para validar visualmente o que foi solicitado.
+     - Após o sucesso dos testes automatizados, o Agente 3 deve orientar o desenvolvedor a abrir a aplicação no navegador para validar visualmente o que foi solicitado.
    - Exige **100% de aprovação (0 falhas)** em ambos os modos. Se houver falha, diagnostica, orienta o reparo e retesta.
 
 ---

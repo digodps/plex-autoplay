@@ -17,7 +17,7 @@ PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 cd "$PROJECT_ROOT"
 
 source "$SCRIPT_DIR/_common.sh"
-ensure_docker "$SCRIPT_DIR/$(basename "$0")" "$@"
+ensure_docker
 
 BUILD=false
 ATTACH=false
