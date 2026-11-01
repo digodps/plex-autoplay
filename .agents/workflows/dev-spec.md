@@ -34,21 +34,4 @@ Uso:
    - Antes de concluir, garanta que o código segue o [`DEVELOPMENT_GUIDE.md`](../../../DEVELOPMENT_GUIDE.md).
    - Atualiza `tasks.md` marcando as tarefas concluídas `[x]`.
 
-<<<<<<< HEAD
-6. **Agente 3 (Tester)**:
-=======
 6. **Agente 3 (Tester em container)**:
->>>>>>> origin/main
-   - Valida existência e preenchimento do `.env`.
-   - Executa testes unitários:
-     `dotnet test tests/unit/PlexAutoplay.UnitTests.csproj`
-   - Executa testes E2E Playwright:
-     `docker compose -f docker-compose.test.yml up --build --abort-on-container-exit --exit-code-from executor`
-   - Derruba o stack de testes:
-     `docker compose -f docker-compose.test.yml down -v`
-   - Exige **100% de sucesso (zero falhas)**. Caso falhe, diagnostica e orienta conserto até 100% passar.
-
-7. **Commits e Pull Request**:
-   - Executa `python scripts/commit-skill.py --change <change>` para gerar commits semânticos por task.
-   - Faz push do branch para origin.
-   - Executa `gh pr create` para abrir o Pull Request e devolve o link ao usuário para validação e merge manual.
