@@ -140,38 +140,39 @@ public partial class PlexApiClient : IPlexApiClient
             using var doc = JsonDocument.Parse(json);
 
             var episodes = new List<PlexEpisodeDto>();
-            var metadata = doc.RootElement.GetProperty("MediaContainer").GetProperty("Metadata");
-
-            foreach (var item in metadata.EnumerateArray())
+            if (doc.RootElement.GetProperty("MediaContainer").TryGetProperty("Metadata", out var metadata) && metadata.ValueKind == JsonValueKind.Array)
             {
-                // Only process episodes (type "episode")
-                if (item.TryGetProperty("type", out var typeEl) && typeEl.GetString() != "episode")
-                    continue;
-
-                string? filePath = null;
-                if (item.TryGetProperty("Media", out var mediaEl))
+                foreach (var item in metadata.EnumerateArray())
                 {
-                    foreach (var media in mediaEl.EnumerateArray())
-                    {
-                        if (media.TryGetProperty("Part", out var partsEl))
-                        {
-                            foreach (var part in partsEl.EnumerateArray())
-                            {
-                                filePath = part.GetProperty("file").GetString();
-                                break;
-                            }
-                        }
-                        if (filePath != null) break;
-                    }
-                }
+                    // Only process episodes (type "episode")
+                    if (item.TryGetProperty("type", out var typeEl) && typeEl.GetString() != "episode")
+                        continue;
 
-                episodes.Add(new PlexEpisodeDto(
-                    item.GetProperty("ratingKey").GetString() ?? "",
-                    item.GetProperty("title").GetString() ?? "",
-                    item.GetProperty("parentIndex").GetInt32(),
-                    item.GetProperty("index").GetInt32(),
-                    filePath ?? ""
-                ));
+                    string? filePath = null;
+                    if (item.TryGetProperty("Media", out var mediaEl))
+                    {
+                        foreach (var media in mediaEl.EnumerateArray())
+                        {
+                            if (media.TryGetProperty("Part", out var partsEl))
+                            {
+                                foreach (var part in partsEl.EnumerateArray())
+                                {
+                                    filePath = part.GetProperty("file").GetString();
+                                    break;
+                                }
+                            }
+                            if (filePath != null) break;
+                        }
+                    }
+
+                    episodes.Add(new PlexEpisodeDto(
+                        item.GetProperty("ratingKey").GetString() ?? "",
+                        item.GetProperty("title").GetString() ?? "",
+                        item.GetProperty("parentIndex").GetInt32(),
+                        item.GetProperty("index").GetInt32(),
+                        filePath ?? ""
+                    ));
+                }
             }
 
             var durationMs = (DateTime.UtcNow - startTime).TotalMilliseconds;

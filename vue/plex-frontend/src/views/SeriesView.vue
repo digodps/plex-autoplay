@@ -1,15 +1,19 @@
 <script setup>
 import { computed } from "vue";
-import { useRoute } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import AppIcon from "../components/AppIcon.vue";
 import Breadcrumb from "../components/Breadcrumb.vue";
 import { useSeriesCatalog } from "../composables/useSeriesCatalog";
 import "../views/SeriesView.css";
 
 const route = useRoute();
-defineEmits(["open-markers"]);
+const router = useRouter();
 
 const libraryKey = computed(() => route.params.key);
+
+function openMarkers(series) {
+  router.push({ name: "series-markers", params: { seriesKey: series.ratingKey } });
+}
 
 const {
   seriesList,
@@ -82,7 +86,7 @@ const breadcrumbItems = computed(() => [
           v-for="series in seriesList"
           :key="series.ratingKey"
           class="series-card"
-          @click="$emit('open-markers', series)"
+          @click="openMarkers(series)"
         >
           <div class="series-card-poster">
             <img v-if="series.thumb" :src="series.thumb" :alt="series.title" loading="lazy" />
