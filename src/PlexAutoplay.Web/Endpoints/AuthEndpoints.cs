@@ -23,18 +23,20 @@ public static class AuthEndpoints
             if (password == adminPassword)
             {
                 var token = tokenService.GenerateToken();
-                
-                // Set HttpOnly cookie (session-only, Secure, SameSite=Lax)
+
+                // Cookie legível pelo frontend: o guarda do Vue lê o token em
+                // document.cookie e o envia como Bearer. HttpOnly impediria o
+                // frontend de renovar o token após o login.
                 context.Response.Cookies.Append("auth_token", token, new CookieOptions
                 {
-                    HttpOnly = true,
+                    HttpOnly = false,
                     Secure = true,
                     SameSite = SameSiteMode.Lax,
                     Path = "/",
                     IsEssential = true
                 });
-                
-                return Results.Ok(new { success = true });
+
+                return Results.Ok(new { success = true, token });
             }
 
             return Results.Unauthorized();
