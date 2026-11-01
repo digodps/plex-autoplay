@@ -15,6 +15,12 @@ public class SqliteMarkerRepository : IMarkerRepository
     public SqliteMarkerRepository(string connectionString)
     {
         _connectionString = connectionString;
+        // Garante que o diretório do banco existe (evita SQLite Error 14 em Docker/ZimaOS)
+        var dir = Path.GetDirectoryName(_connectionString);
+        if (!string.IsNullOrEmpty(dir))
+        {
+            Directory.CreateDirectory(dir);
+        }
         EnsureTableCreated();
     }
 
