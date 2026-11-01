@@ -48,7 +48,11 @@ Além disso, não existe guia de desenvolvimento proativo quepadronize o que dev
 
 **Decisão**: O Agente 3 agora inclui instrução de abrir app no navegador antes de reportar sucesso.
 
+<<<<<<< HEAD
 **Racional**: O requisito original pede "teste manual logando na aplicação pelo navegador". Isso deve ser uma etapa obrigatória de sanity check, não apenas opcional.
+=======
+**Racional**: O requisito original pede "teste manual logando na aplicação pelo navegador que estiver". Isso deve ser uma etapa obrigatória de sanity check, não apenas opcional.
+>>>>>>> origin/main
 
 **Alternativas consideradas**:
 - Apenas testes automatizados (E2E Playwright): Não cobre todos os cenários visuais/UX.

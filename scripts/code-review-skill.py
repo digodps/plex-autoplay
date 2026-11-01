@@ -124,9 +124,13 @@ def tool_available(argv: list[str]) -> bool:
     """Verifica se uma ferramenta está instalada (sem executar a análise)."""
     probe = argv[:2] + ["--version"]
     result = run_cmd(probe, check=False)
+<<<<<<< HEAD
     if result.returncode == 0:
         return True
     return False
+=======
+    return result.returncode == 0
+>>>>>>> origin/main
 
 
 def run_dotnet_lint(files: list[dict[str, str]]) -> list[dict]:

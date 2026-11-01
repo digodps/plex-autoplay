@@ -3,7 +3,13 @@
 # acceptance-test.sh - Teste de aceitação da stack real do Plex Autoplay.
 #
 # Sobe a aplicação com scripts/start.sh e exercita as funções do sistema uma a
+<<<<<<< HEAD
 # uma. Qualquer erro de start, conexão, status HTTP ou contrato reprova a tarefa.
+=======
+# uma. Funções de interface são exercitadas por navegador real (Playwright);
+# contratos sem UI usam curl. Qualquer erro de start, conexão, status HTTP,
+# contrato ou passo do navegador reprova a tarefa.
+>>>>>>> origin/main
 #
 # Uso: ./scripts/acceptance-test.sh
 # Variáveis opcionais:
@@ -361,10 +367,49 @@ request GET /api/sync/status/acceptance-unknown 404 "${AUTH[@]}" \
 request POST /api/sync/cancel/acceptance-unknown 404 "${AUTH[@]}" \
   && pass "POST /api/sync/cancel desconhecido retorna 404"
 
+<<<<<<< HEAD
 # --- 8. SPA ---
 for route in /login /dashboard /libraries /settings /sync; do
   request GET "$route" 200 && pass "GET $route — SPA respondeu"
 done
+=======
+# --- 8. Interface em navegador real (Playwright) ---
+# Login, dashboard, configurações, bibliotecas/séries/editor e scan são
+# exercitados como o usuário faz: Chromium real contra BASE_URL.
+PW_LOG="$TMP/playwright.log"
+if ! command -v npx >/dev/null 2>&1; then
+  fail "Playwright — npx não encontrado; instale Node.js para testar a interface"
+else
+  (
+    cd tests/e2e || exit 1
+    if [[ ! -d node_modules ]]; then
+      npm install --silent
+    fi
+    ACCEPTANCE_BASE_URL="$BASE_URL" npx playwright test --config=acceptance.config.js
+  ) >"$PW_LOG" 2>&1
+  PW_STATUS=$?
+
+  if grep -qi "executable doesn't exist" "$PW_LOG"; then
+    fail "Playwright — navegador Chromium ausente; rode: (cd tests/e2e && npx playwright install chromium)"
+  elif [[ "$PW_STATUS" -ne 0 ]] && ! grep -qE '^\s+(✓|✘|✗)' "$PW_LOG"; then
+    tail -n 20 "$PW_LOG" >&2
+    fail "Playwright — execução da suíte de navegador falhou"
+  else
+    while IFS= read -r line; do
+      name="${line#"${line%%[![:space:]]*}"}"
+      case "$name" in
+        ✓*) pass "UI ${name#✓ }" ;;
+        ✘*|✗*) fail "UI ${name#??}" ;;
+        -*) skip "UI ${name#- }" ;;
+      esac
+    done < <(grep -E '^\s+(✓|✘|✗|-)' "$PW_LOG")
+  fi
+
+  if [[ -d tests/e2e/test-results ]]; then
+    echo "  (artefatos do navegador: tests/e2e/test-results)"
+  fi
+fi
+>>>>>>> origin/main
 
 # --- 9. WebSocket do PlexAutoSkip ---
 curl -sk --http1.1 --max-time 3 -D "$TMP/ws.headers" -o /dev/null \

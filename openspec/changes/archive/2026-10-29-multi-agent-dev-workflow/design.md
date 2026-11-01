@@ -2,7 +2,11 @@
 
 ## Context
 
+<<<<<<< HEAD
 O projeto Plex Autoplay possui stack híbrida com backend em .NET 10 (C#) e frontend em Vue 3 (Vite + Pinia). O ambiente de desenvolvimento roda sobre Bazzite (sistema operacional imutável baseado em Fedora), onde comandos de Docker e build são executados.
+=======
+O projeto Plex Autoplay possui stack híbrida com backend em .NET 10 (C#) e frontend em Vue 3 (Vite + Pinia). Os comandos de Docker e build são executados diretamente na máquina do desenvolvedor.
+>>>>>>> origin/main
 
 O repositório já dispõe de scripts utilitários em `scripts/`:
 - `setup-spec.py`: cria branch `feature/<change>-<span>` limpo a partir de `origin/main`.
@@ -18,7 +22,11 @@ A skill `/dev-spec` integrará essas capacidades em um protocolo automatizado mu
 - Coordenar a implementação de mudanças OpenSpec via três agentes (Backend, Frontend e Tester).
 - Permitir execução concorrente de Backend e Frontend para maximizar velocidade de entrega sem sobreposição de arquivos.
 - Garantir portão estrito de Code Review prévio com auto-correção de violações antes de submeter código aos testes.
+<<<<<<< HEAD
 - Executar testes unitários e testes E2E Playwright de forma confiável com o `.env` validado, exigindo 100% de sucesso.
+=======
+- Executar testes unitários e testes E2E Playwright de forma confiável na máquina do dev com o `.env` validado, exigindo 100% de sucesso.
+>>>>>>> origin/main
 - Gerar commits semânticos padronizados por tarefa e abrir o Pull Request via GitHub CLI (`gh`).
 
 **Non-Goals:**
@@ -44,8 +52,13 @@ A skill `/dev-spec` integrará essas capacidades em um protocolo automatizado mu
   - Frontend: `npx eslint --fix` e `npx prettier --write`.
   - Quaisquer erros devem ser sanados antes do Agente 3 (Tester) ser acionado.
 
+<<<<<<< HEAD
 ### 4. Execução de Testes
 - **Decisão**: 
+=======
+### 4. Execução de Testes na Máquina do Dev
+- **Decisão**: Os testes rodam diretamente na máquina do desenvolvedor:
+>>>>>>> origin/main
   - Unitários: `dotnet test tests/unit/PlexAutoplay.UnitTests.csproj`
   - E2E: `docker compose -f docker-compose.test.yml up --build --abort-on-container-exit --exit-code-from executor`
 - **Mitigação para .env**: O Agente Tester valida a presença das variáveis (`PLEX_URL`, `PLEX_TOKEN`, `JWT_SECRET`, `ADMIN_PASSWORD`, `MEDIA_ROOT`) antes do compose.
