@@ -38,25 +38,27 @@ public class SqliteSeriesRepository : ISeriesRepository
     public async Task<(IEnumerable<Series> Items, int Total)> GetByLibraryAsync(string libraryRatingKey, int offset, int limit, string? query)
     {
         using var conn = CreateConnection();
-        var parameters = new Dictionary<string, object> { ["LibraryRatingKey"] = libraryRatingKey, ["Offset"] = offset, ["Limit"] = limit };
-        var queryCondition = "";
-        if (!string.IsNullOrEmpty(query))
+        var parameters = new Dictionary<string, object>
         {
-            queryCondition = "AND Title LIKE @Query ";
-            parameters["Query"] = $"%{query}%";
-        }
+            ["LibraryRatingKey"] = libraryRatingKey,
+            ["Query"] = string.IsNullOrEmpty(query) ? "%" : $"%{query}%",
+            ["Offset"] = offset,
+            ["Limit"] = limit,
+        };
 
         var items = await conn.QueryAsync<Series>(
-            $@"SELECT RatingKey, LibraryRatingKey, Title, Summary, Thumb 
+            @"SELECT RatingKey, LibraryRatingKey, Title, Summary, Thumb 
               FROM Series 
               WHERE LibraryRatingKey = @LibraryRatingKey 
-              {queryCondition}
+              AND Title LIKE @Query 
               ORDER BY Title 
               LIMIT @Limit OFFSET @Offset",
             parameters);
 
         var total = await conn.ExecuteScalarAsync<int>(
-            $@"SELECT COUNT(*) FROM Series WHERE LibraryRatingKey = @LibraryRatingKey {queryCondition}",
+            @"SELECT COUNT(*) FROM Series 
+              WHERE LibraryRatingKey = @LibraryRatingKey 
+              AND Title LIKE @Query",
             parameters);
 
         return (items, total);

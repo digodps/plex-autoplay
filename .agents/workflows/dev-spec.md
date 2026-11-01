@@ -34,7 +34,11 @@ Uso:
    - Antes de concluir, garanta que o código segue o [`DEVELOPMENT_GUIDE.md`](../../../DEVELOPMENT_GUIDE.md).
    - Atualiza `tasks.md` marcando as tarefas concluídas `[x]`.
 
+<<<<<<< HEAD
 6. **Agente 3 (Tester)**:
+=======
+6. **Agente 3 (Tester em container)**:
+>>>>>>> origin/main
    - Valida existência e preenchimento do `.env`.
    - Executa testes unitários:
      `dotnet test tests/unit/PlexAutoplay.UnitTests.csproj`

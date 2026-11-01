@@ -1,6 +1,10 @@
 ---
 name: teste-aceitacao
+<<<<<<< HEAD
 description: Teste de aceitação ponta a ponta: inicia container via start.sh, exercita cada função do sistema e reprova em qualquer erro.
+=======
+description: Teste de aceitação ponta a ponta: inicia container via start.sh, exercita cada função do sistema (interface em navegador real via Playwright) e reprova em qualquer erro.
+>>>>>>> origin/main
 allowed-tools: Bash(*)
 license: MIT
 metadata:
@@ -10,7 +14,11 @@ metadata:
 
 # Skill `teste-aceitacao` (`/teste-aceitacao`)
 
+<<<<<<< HEAD
 Teste de aceitação ponta a ponta: inicia container via start.sh, exercita cada função do sistema e reprova em qualquer erro.
+=======
+Teste de aceitação ponta a ponta: inicia container via start.sh, exercita cada função do sistema (interface em navegador real via Playwright) e reprova em qualquer erro.
+>>>>>>> origin/main
 
 ## Uso
 
@@ -22,41 +30,77 @@ Execute a partir da raiz do repositório. O script:
 
 1. Valida `.env` e executa `./scripts/start.sh`.
 2. Obtém o token JWT em `POST /auth/login` e verifica o cookie `auth_token`.
+<<<<<<< HEAD
 3. Chama cada função do sistema, uma a uma, com `curl` e `curl -k`.
 4. Mostra `PASS`, `SKIP` e `FAIL` por verificação.
 5. Retorna `RESULTADO: APROVADO` somente com `FAIL=0`; qualquer falha retorna `RESULTADO: REPROVADO` e código de saída `1`.
+=======
+3. Acessa as funções de interface com Playwright em navegador real (Chromium) contra `ACCEPTANCE_BASE_URL`.
+4. Chama os contratos sem UI com `curl` e `curl -k`.
+5. Mostra `PASS`, `SKIP` e `FAIL` por verificação.
+6. Retorna `RESULTADO: APROVADO` somente com `FAIL=0`; qualquer falha retorna `RESULTADO: REPROVADO` e código de saída `1`.
+>>>>>>> origin/main
 
 ## Funções verificadas
 
 | Área | Verificações |
 |------|--------------|
 | Start | `scripts/start.sh`, aplicação respondendo em `https://localhost:8443/login` |
+<<<<<<< HEAD
 | Auth | `GET /auth/login`, senha incorreta `401`, login correto `200`, token JWT, cookie `auth_token`, `401` sem token |
+=======
+| Auth (API) | `GET /auth/login`, senha incorreta `401`, login correto `200`, token JWT, cookie `auth_token`, `401` sem token |
+| Auth (navegador) | formulário de login, senha incorreta exibe erro, senha correta abre `/dashboard` e define cookie |
+| Dashboard (navegador) | `h1` "Início", métricas visíveis, sem bloco de erro |
+| Configurações (navegador) | salvar intervalo e ver mensagem de sucesso |
+| Bibliotecas (navegador) | lista de bibliotecas, clique abre séries, clique na série abre o editor de marcadores |
+| Sincronização (navegador) | iniciar scan pelo botão, status sai de `idle`, cancelar quando possível; `failed` reprova |
+>>>>>>> origin/main
 | Monitoramento | `/api/status`, `/metrics`, `/api/observability/summary` |
 | Configuração | `GET/POST /config` |
 | Tema | `GET /api/theme`, `PUT /api/theme` válido `204`, inválido `400` |
 | Marcadores | listar, criar `201`, duplicado `409`, consultar, editar `200`, inexistente `404`, remover `200` e confirmar remoção |
 | Plex | bibliotecas, episódios por biblioteca, catálogo de séries, episódios por série, proxy de imagem |
 | Scan | iniciar job, status, SSE, cancelar; job `failed` reprova |
+<<<<<<< HEAD
 | SPA | `/login`, `/dashboard`, `/libraries`, `/settings`, `/sync` |
+=======
+>>>>>>> origin/main
 | WebSocket | handshake `101` em `https://localhost:8081/ws` |
 
 ## Regra de reprovação
 
 - Não declare a tarefa concluída sem a linha `RESULTADO: APROVADO` e código de saída `0`.
+<<<<<<< HEAD
 - `FAIL > 0`, timeout de start, erro de conexão, status HTTP inesperado, job com `status = failed` ou `errors > 0` significam **REPROVADO**.
 - `SKIP` de dados dependentes do Plex (sem bibliotecas, séries ou thumb) não reprova.
 - Em caso de falha, mostre ao usuário a linha `FAIL`, os logs relevantes e o comando de diagnóstico `./scripts/logs.sh --no-follow --tail 100`.
+=======
+- `FAIL > 0`, timeout de start, erro de conexão, status HTTP inesperado, passo de navegador com erro, job com `status = failed` ou `errors > 0` significam **REPROVADO**.
+- `SKIP` de dados dependentes do Plex (sem bibliotecas, séries ou thumb) não reprova.
+- Em caso de falha, mostre ao usuário a linha `FAIL`, os logs relevantes, os artefatos em `tests/e2e/test-results` e o comando de diagnóstico `./scripts/logs.sh --no-follow --tail 100`.
+>>>>>>> origin/main
 
 ## Pré-requisitos
 
 - Docker disponível e `.env` com `PLEX_URL`, `PLEX_TOKEN`, `JWT_SECRET`, `ADMIN_PASSWORD` e `MEDIA_ROOT`.
+<<<<<<< HEAD
 - Plex acessível com token de escrita para validar bibliotecas e séries.
 - O certificado é autoassinado; o script já usa `curl -k`.
+=======
+- Node.js + dependências de `tests/e2e` (`npm install`) e Chromium do Playwright (`npx playwright install chromium`).
+- Plex acessível com token de escrita para validar bibliotecas e séries.
+- O certificado é autoassinado; o script usa `curl -k` e o Playwright usa `ignoreHTTPSErrors`.
+>>>>>>> origin/main
 
 ## Observações
 
 - O script é idempotente: `scripts/start.sh` recompila, publica e sobe o container.
+<<<<<<< HEAD
+=======
+- A suíte de navegador fica em `tests/e2e/tests/acceptance-real.spec.js`, com config própria em `tests/e2e/acceptance.config.js` (não usa o compose de teste nem o Plex mockado).
+- `ACCEPTANCE_BASE_URL` (padrão `https://localhost:8443`) é repassada como `PLAYWRIGHT` baseURL.
+>>>>>>> origin/main
 - O container permanece em execução ao final; use `./scripts/stop.sh` para parar.
 - O marcador temporário é removido pelo `trap` mesmo em caso de falha.
 
@@ -79,9 +123,16 @@ O projeto possui testes E2E Playwright com Plex mockado, mas não possui um test
 
 - Criar a skill `teste-aceitacao`, invocável como `/teste-aceitacao`.
 - Iniciar a aplicação real com `scripts/start.sh` antes de qualquer verificação.
+<<<<<<< HEAD
 - Exercitar as funções do sistema uma a uma: autenticação, status, métricas, configuração, tema, CRUD de marcadores, bibliotecas, séries, episódios, scan/cancelamento de job, SSE/status, proxy de imagens, rotas SPA e WebSocket do PlexAutoSkip.
 - Reproduzir cada chamada com `curl` usando o token JWT obtido no login.
 - Considerar a tarefa **REPROVADA** se o start falhar ou se qualquer verificação obrigatória retornar status inesperado, corpo inválido ou erro de conexão.
+=======
+- Exercitar as funções do sistema uma a uma: autenticação, status, métricas, configuração, tema, CRUD de marcadores, bibliotecas, séries, episódios, scan/cancelamento de job, SSE/status, proxy de imagens e WebSocket do PlexAutoSkip.
+- Acessar as funções de interface com Playwright em navegador real (Chromium): login, dashboard, configurações, bibliotecas, séries, editor de marcadores e sincronização, reproduzindo o que o usuário faz no navegador.
+- Manter `curl` apenas para contratos sem interface: status, métricas, configuração, tema, CRUD de marcadores, Plex, scan/SSE e WebSocket.
+- Considerar a tarefa **REPROVADA** se o start falhar, se qualquer verificação obrigatória retornar status inesperado, corpo inválido ou erro de conexão, ou se qualquer passo do navegador real falhar.
+>>>>>>> origin/main
 - Exibir relatório final com `PASS`, `SKIP` e `FAIL`; sair com código diferente de zero quando houver falha.
 
 ## Capabilities
@@ -96,7 +147,13 @@ Nenhuma. A mudança adiciona ferramenta de validação e não altera comportamen
 
 ## Impact
 
+<<<<<<< HEAD
 - `scripts/acceptance-test.sh`: novo executor de aceitação.
+=======
+- `scripts/acceptance-test.sh`: executor de aceitação (contratos via `curl` + interface via Playwright).
+- `tests/e2e/acceptance.config.js`: configuração Playwright contra a stack real.
+- `tests/e2e/tests/acceptance-real.spec.js`: fluxos de navegador real do usuário.
+>>>>>>> origin/main
 - `.agent-source/skills/teste-aceitacao/SKILL.md`: instruções da skill.
 - `.agents`, `.claude`, `.continue`, `.opencode`, `.github`, `.dsh`: cópias sincronizadas da skill.
 - `openspec/changes/teste-aceitacao/`: artefatos de planejamento.
@@ -117,15 +174,25 @@ A autenticação é feita por `POST /auth/login` com `ADMIN_PASSWORD`; a respost
 **Goals:**
 
 - Validar a stack real iniciada por `scripts/start.sh`.
+<<<<<<< HEAD
 - Exercitar cada função exposta pelo sistema com uma chamada dedicada.
 - Reprovar a tarefa no primeiro erro crítico e continuar coletando os demais resultados quando possível.
 - Ser executável localmente sem dependências além de `bash`, `curl`, `python3` e Docker.
+=======
+- Exercitar a interface com Playwright em navegador real (Chromium), como o usuário faz.
+- Reprovar a tarefa no primeiro erro crítico e continuar coletando os demais resultados quando possível.
+- Ser executável localmente com `bash`, `curl`, `python3`, Docker, Node.js e o Chromium do Playwright.
+>>>>>>> origin/main
 - Limpar os dados temporários criados pelo próprio teste.
 
 **Non-Goals:**
 
 - Substituir os testes E2E Playwright com Plex mockado.
+<<<<<<< HEAD
 - Validar interface visual, acessibilidade ou navegador real.
+=======
+- Validar aparência pixel a pixel, acessibilidade formal ou múltiplos navegadores.
+>>>>>>> origin/main
 - Testar cenários de carga, concorrência ou recuperação de desastre.
 - Alterar endpoints, regras de negócio ou configuração da aplicação.
 
@@ -135,7 +202,11 @@ A autenticação é feita por `POST /auth/login` com `ADMIN_PASSWORD`; a respost
 
 Rationale: o fluxo já é shell (`start.sh`, `stop.sh`, `logs.sh`) e `curl` cobre HTTP/HTTPS/SSE/WebSocket handshake sem adicionar dependências. Python 3 já é usado pelos scripts do repositório para ler JSON.
 
+<<<<<<< HEAD
 Alternativa considerada: nova suíte Playwright. Rejeitada para este escopo porque o teste precisa validar a stack real e não a interface; Playwright adicionaria tempo e complexidade sem cobrir melhor os endpoints.
+=======
+Alternativa considerada: nova suíte Playwright para tudo. Rejeitada para o escopo de API: `curl` já cobre status, JSON e SSE sem infraestrutura extra. Playwright fica restrito aos fluxos de interface em `tests/e2e/tests/acceptance-real.spec.js`.
+>>>>>>> origin/main
 
 **2. `start.sh` como única forma de subir a aplicação**
 
@@ -159,6 +230,19 @@ Rationale: uma varredura completa pode durar horas em bibliotecas grandes. O tes
 
 Rationale: bibliotecas, séries, episódios e imagens só existem se o Plex estiver configurado e acessível. Quando a listagem de bibliotecas retorna vazia, as verificações dependentes são marcadas como `SKIP`, não como falha. Erros HTTP ou jobs `failed` continuam reprovando.
 
+<<<<<<< HEAD
+=======
+**7. Interface exercitada por navegador real (Playwright)**
+
+Rationale: `curl` não valida renderização, formulários nem navegação SPA. As funções que o usuário acessa pela interface (login, dashboard, configurações, bibliotecas, séries, editor de marcadores, sincronização) passam a ser exercitadas com Chromium real contra a stack iniciada por `start.sh`. `curl` permanece para contratos sem UI: status, métricas, configuração, tema, CRUD de marcadores, Plex, scan/SSE e WebSocket.
+
+Consequência: o executor passa a depender de Node.js, das dependências de `tests/e2e` e do navegador Chromium do Playwright. Ausência do navegador reprova com instrução de instalação (`npx playwright install chromium`).
+
+**8. Spec de aceitação dedicado**
+
+Rationale: `tests/e2e/tests/acceptance-real.spec.js` com `acceptance.config.js` próprio evita executar os specs do compose de teste (Plex mockado) contra a stack real. Dados ausentes do Plex (bibliotecas ou séries) continuam virando `SKIP`.
+
+>>>>>>> origin/main
 ## Risks / Trade-offs
 
 [O teste exige Plex real configurado no `.env`] → Mitigar: falhas de conexão e respostas 502 reprovam com mensagem apontando `PLEX_URL`/`PLEX_TOKEN`; dados ausentes viram `SKIP`.
@@ -169,15 +253,32 @@ Rationale: bibliotecas, séries, episódios e imagens só existem se o Plex esti
 
 [O teste grava marcador temporário no volume `/data`] → Mitigar: usa `RatingKey` único com timestamp e remove o marcador ao final, inclusive em caso de falha.
 
+<<<<<<< HEAD
 [Certificado autoassinado] → Mitigar: todas as chamadas usam `curl -k`.
+=======
+[Certificado autoassinado] → Mitigar: todas as chamadas usam `curl -k` e o Playwright usa `ignoreHTTPSErrors`.
+
+[Interface pode oscilar por causa de animações ou latência] → Mitigar: seletores estáveis (`h1`, `.library-card`, `.marker-row`), timeouts explícitos e `workers: 1` na config de aceitação.
+
+[Dependência de Node.js e do Chromium do Playwright] → Mitigar: o executor instala `tests/e2e/node_modules` quando ausente e reprova com instrução de `npx playwright install chromium` quando o navegador falta.
+>>>>>>> origin/main
 
 ## Migration Plan
 
 1. Criar `scripts/acceptance-test.sh` com as verificações e o relatório.
+<<<<<<< HEAD
 2. Criar `.agent-source/skills/teste-aceitacao/SKILL.md` com o fluxo de uso.
 3. Executar `python3 scripts/sync-agent-configs.py`.
 4. Validar as cópias em `.agents`, `.claude`, `.continue`, `.opencode`, `.github` e `.dsh`.
 5. Rollback: remover o script e a skill; nenhuma alteração de runtime é necessária.
+=======
+2. Criar `tests/e2e/acceptance.config.js` e `tests/e2e/tests/acceptance-real.spec.js`.
+3. Criar `.agent-source/skills/teste-aceitacao/SKILL.md` com o fluxo de uso.
+4. Executar `python3 scripts/sync-agent-configs.py`.
+4. Validar as cópias em `.agents`, `.claude`, `.continue`, `.opencode`, `.github` e `.dsh`.
+5. Validar a suíte de navegador: `(cd tests/e2e && npx playwright install chromium && npx playwright test --config=acceptance.config.js)`.
+6. Rollback: remover o script, a config e o spec de aceitação; nenhuma alteração de runtime é necessária.
+>>>>>>> origin/main
 
 ## Open Questions
 
@@ -202,10 +303,25 @@ Nenhuma.
 - [x] 2.6 Implementar CRUD de marcadores: listar, criar `201`, duplicado `409`, consultar, editar `200`, remover `200` e confirmar remoção.
 - [x] 2.7 Implementar integração Plex: bibliotecas, episódios por biblioteca, séries, episódios por série e proxy de imagem quando houver dados.
 - [x] 2.8 Implementar scan: iniciar job, consultar status, cancelar job e tratar job concluído antes do cancelamento.
+<<<<<<< HEAD
 - [x] 2.9 Implementar verificações de SPA e WebSocket: rotas `/login`, `/dashboard`, `/libraries`, `/settings`, `/sync` e handshake `101` em `wss://localhost:8081/ws`.
 - [x] 2.10 Exibir relatório `PASS/SKIP/FAIL` e sair com código `1` quando `FAIL > 0`.
 
 ## 3. Skill e sincronização
+=======
+- [x] 2.9 Implementar verificação de WebSocket: handshake `101` em `wss://localhost:8081/ws`.
+- [x] 2.10 Exibir relatório `PASS/SKIP/FAIL` e sair com código `1` quando `FAIL > 0`.
+
+## 3. Interface em navegador real (Playwright)
+
+- [x] 3.1 Criar `tests/e2e/acceptance.config.js` apontando para `ACCEPTANCE_BASE_URL` (padrão `https://localhost:8443`), com `ignoreHTTPSErrors` e `workers: 1`.
+- [x] 3.2 Criar `tests/e2e/tests/acceptance-real.spec.js` com login (senha incorreta e correta + cookie `auth_token`), dashboard, configurações, bibliotecas/séries/editor de marcadores e sincronização via UI.
+- [x] 3.3 Marcar `SKIP` quando o Plex não tiver bibliotecas ou séries; reprovar em erro de UI ou job `failed`.
+- [x] 3.4 Integrar a execução do Playwright ao `scripts/acceptance-test.sh`, convertendo cada resultado em `PASS`/`SKIP`/`FAIL`.
+- [x] 3.5 Reprovar com instrução explícita quando o Chromium do Playwright não estiver instalado.
+
+## 4. Skill e sincronização
+>>>>>>> origin/main
 
 - [x] 3.1 Criar `.agent-source/skills/teste-aceitacao/SKILL.md` com o fluxo, interpretação do relatório e regra de reprovação.
 - [x] 3.2 Executar `python3 scripts/sync-agent-configs.py`.
@@ -213,7 +329,27 @@ Nenhuma.
 
 ## 4. Verificação
 
+<<<<<<< HEAD
 - [ ] 4.1 Executar `bash -n scripts/acceptance-test.sh` e confirmar sintaxe válida.
 - [ ] 4.2 Executar `python3 scripts/create-skill.py teste-aceitacao --force` e confirmar sincronização sem erros.
 - [ ] 4.3 Executar `./scripts/acceptance-test.sh` em ambiente com `.env` e Plex configurados e exigir `RESULTADO: APROVADO`.
+=======
+- [x] 4.1 Criar `.agent-source/skills/teste-aceitacao/SKILL.md` com o fluxo, interpretação do relatório e regra de reprovação.
+- [x] 4.2 Executar `python3 scripts/sync-agent-configs.py`.
+- [x] 4.3 Validar que a skill existe em `.agents`, `.claude`, `.continue`, `.opencode`, `.github` e `.dsh`.
+
+## 5. Verificação
+
+- [x] 5.1 Executar `bash -n scripts/acceptance-test.sh` e confirmar sintaxe válida.
+- [x] 5.2 Executar `python3 scripts/create-skill.py teste-aceitacao --force` e confirmar sincronização sem erros.
+- [x] 5.3 Executar `node --check` em `acceptance.config.js` e no spec de aceitação.
+- [ ] 5.4 Instalar o Chromium: `(cd tests/e2e && npm install && npx playwright install chromium)`.
+- [ ] 5.5 Executar `./scripts/acceptance-test.sh` em ambiente com `.env` e Plex configurados e exigir `RESULTADO: APROVADO`.
+
+> Execução de 2026-10-31: `PASS=35 SKIP=1 FAIL=2` → `RESULTADO: REPROVADO`. Falhas reais encontradas:
+> - `GET /library/6` retorna `502`; o Plex responde `404` em `/library/sections/6/items` (a API do Plex expõe `/all`).
+> - `POST /api/plex/scan` conclui com `errors=3`, mesmo problema de endpoint de episódios.
+>
+> O executor está funcionando; a reprovação é do sistema testado.
+>>>>>>> origin/main
 
