@@ -69,7 +69,7 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 }
 
-app.UseHttpsRedirection();
+// app.UseHttpsRedirection();  // Disabled for e2e tests - use HTTP only to avoid IPv6 TLS handshake failures
 
 app.UseWebSockets(new WebSocketOptions
 {
