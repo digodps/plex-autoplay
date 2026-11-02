@@ -51,7 +51,7 @@ jobs:
       ADMIN_PASSWORD: ci-e2e-admin-password
       DISABLE_HTTP: false
       MEDIA_ROOT: /tmp/plex-media
-      PLAYWRIGHT_BASE_URL: http://plex-autoplay-test:80
+      PLAYWRIGHT_BASE_URL: https://plex-autoplay-test:443
     steps:
       - name: Checkout
         uses: actions/checkout@v4
