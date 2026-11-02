@@ -8,20 +8,8 @@ const BASE_URL =
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
 
 test.describe("Marcadores (CRUD)", () => {
-  test.beforeEach(async ({ page }) => {
-    // Faz login antes de cada teste
-    await page.goto(`${BASE_URL}/login`, { waitUntil: "networkidle" });
-    await page.waitForSelector('input[type="password"]', {
-      state: "visible",
-      timeout: 10000,
-    });
-    await page.fill('input[type="password"]', ADMIN_PASSWORD);
-    await page.click("button");
-    await page.waitForURL(`${BASE_URL}/dashboard`);
-  });
-
   test("lista marcadores via GET /api/markers", async ({ page, request }) => {
-    // Faz login para obter token
+    // Faz login
     await page.goto(`${BASE_URL}/login`, { waitUntil: "networkidle" });
     await page.waitForSelector('input[type="password"]', {
       state: "visible",
@@ -47,6 +35,16 @@ test.describe("Marcadores (CRUD)", () => {
   });
 
   test("marcador criado via API é gravado", async ({ page, request }) => {
+    // Faz login
+    await page.goto(`${BASE_URL}/login`, { waitUntil: "networkidle" });
+    await page.waitForSelector('input[type="password"]', {
+      state: "visible",
+      timeout: 10000,
+    });
+    await page.fill('input[type="password"]', ADMIN_PASSWORD);
+    await page.click("button");
+    await page.waitForURL(`${BASE_URL}/dashboard`);
+
     // Obtém token do cookie HTTP-only
     const cookies = await page.context().cookies();
     const authCookie = cookies.find((c) => c.name === "auth_token");
