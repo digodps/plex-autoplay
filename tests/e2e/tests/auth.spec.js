@@ -8,7 +8,8 @@ const BASE_URL =
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
 
 // Função para ler cookie auth_token do navegador
-const getAuthToken = () => {
+// Injetada globalmente para que page.evaluate a tenha acesso
+globalThis.getAuthToken = () => {
   return document.cookie.match(/(?:^|; )auth_token=([^;])/)?.[1];
 };
 
