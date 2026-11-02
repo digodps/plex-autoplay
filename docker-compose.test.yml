@@ -61,6 +61,7 @@ services:
       - MEDIA_ROOT=/media
       - JWT_SECRET=${JWT_SECRET}
       - ADMIN_PASSWORD=${ADMIN_PASSWORD}
+      - WEB_PORT=80
       - ASPNETCORE_URLS=http://0.0.0.0:80
       - DISABLE_HTTP=false
       - OTEL_EXPORTER=${OTEL_EXPORTER:-console}
