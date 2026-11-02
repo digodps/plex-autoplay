@@ -56,7 +56,7 @@ test.describe("Autenticação JWT", () => {
     expect(token.length).toBeGreaterThan(0);
   });
 
-  test "login com senha incorreta retorna HTTP 401 e exibe erro", async ({
+  test("login com senha incorreta retorna HTTP 401 e exibe erro", async ({
     page,
   }) => {
     await page.goto(`${BASE_URL}/login`, { waitUntil: "networkidle" });
