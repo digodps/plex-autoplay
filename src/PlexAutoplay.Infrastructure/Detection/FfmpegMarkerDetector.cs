@@ -11,68 +11,157 @@ using System.Text.RegularExpressions;
 public class FfmpegMarkerDetector : IMarkerDetector
 {
     private const int MinCreditsDurationMs = 300_000; // 5 minutes
+    private const int FallbackIntroLengthMs = 90_000; // typical TV/anime opening length
     private static readonly ActivitySource ActivitySource = OpenTelemetryService.Tracer;
+
+    private static readonly string[] IntroChapterNames = { "intro", "op", "opening", "opening credits", "abertura" };
+    private static readonly string[] CreditsChapterNames = { "credits", "ed", "ending", "outro", "end credits" };
 
     public IEnumerable<Marker> Detect(string filePath)
     {
         using var activity = ActivitySource.StartActivity("Ffmpeg.DetectMarkers");
         activity?.SetTag("file.path", filePath);
-        activity?.SetTag("detector.type", "ffprobe");
+        activity?.SetTag("detector.type", "ffprobe+chapters");
 
         var markers = new List<Marker>();
+        var chapters = GetChapters(filePath, activity);
 
-        var silenceSegments = RunSilenceDetect(filePath, activity);
-        if (silenceSegments.Count == 0)
+        var intro = FindChapterMarker(chapters, IntroChapterNames, "intro");
+        var credits = FindChapterMarker(chapters, CreditsChapterNames, "credits");
+
+        // Audio analysis is only needed where the container has no usable chapter metadata.
+        var silenceSegments = intro == null || credits == null
+            ? RunSilenceDetect(filePath, activity)
+            : new List<SilenceSegment>();
+        var durationMs = intro == null || credits == null ? GetDurationMs(filePath, activity) : 0;
+
+        if (intro == null)
         {
-            return markers;
+            intro = DetectIntroFromSilence(silenceSegments, durationMs);
+            if (intro != null) activity?.SetTag("intro.source", "silence");
         }
 
-        // Get file duration for credits detection
-        var durationMs = GetDurationMs(filePath, activity);
-
-        // Intro: silence at the very start (from 0ms)
-        var introSegment = silenceSegments.FirstOrDefault(s => s.StartMs <= 1000);
-        if (introSegment != null && introSegment.EndMs > 0)
+        if (credits == null && durationMs > MinCreditsDurationMs)
         {
-            markers.Add(new Marker
-            {
-                RatingKey = "", // Set by caller
-                Kind = "intro",
-                StartMs = 0,
-                EndMs = introSegment.EndMs
-            });
-        }
-
-        // Credits: silence near the end (last 15% of duration)
-        if (durationMs > MinCreditsDurationMs)
-        {
+            // Credits: last silence inside the final 15% of the file.
             var creditsThreshold = durationMs * 0.85;
             var creditsSegment = silenceSegments.LastOrDefault(s => s.StartMs >= creditsThreshold);
             if (creditsSegment != null)
             {
-                markers.Add(new Marker
+                credits = new Marker
                 {
                     RatingKey = "", // Set by caller
                     Kind = "credits",
                     StartMs = creditsSegment.StartMs,
                     EndMs = durationMs
-                });
+                };
+                activity?.SetTag("credits.source", "silence");
             }
         }
+
+        if (intro != null) markers.Add(intro);
+        if (credits != null) markers.Add(credits);
 
         activity?.SetTag("markers.detected", markers.Count);
         return markers;
     }
 
+    private static Marker? FindChapterMarker(List<Chapter> chapters, string[] names, string kind)
+    {
+        // Skipped: duration sanity checks. Tagged chapters are treated as ground truth.
+        var chapter = chapters.FirstOrDefault(c => MatchesName(c.Title, names));
+        if (chapter == null) return null;
+
+        return new Marker
+        {
+            RatingKey = "", // Set by caller
+            Kind = kind,
+            StartMs = chapter.StartMs,
+            EndMs = chapter.EndMs
+        };
+    }
+
+    private static bool MatchesName(string title, string[] names)
+    {
+        var normalized = Regex.Replace(title.Trim().ToLowerInvariant(), @"\s+", " ");
+        if (normalized.Length == 0) return false;
+
+        // "OP", "Intro", "Opening", "Opening Credits", "ED", "Ending", "Credits"
+        return names.Any(n => normalized == n || normalized.StartsWith(n + " "));
+    }
+
+    private static Marker? DetectIntroFromSilence(List<SilenceSegment> silenceSegments, int durationMs)
+    {
+        if (silenceSegments.Count == 0 || durationMs <= 0) return null;
+
+        // ponytail: without chapters the opening is guessed as the first >=1s silence gap
+        // between 20s and 5min that is followed by >=60s of continuous audio (the OP song).
+        // Upgrade path: fingerprint audio across episodes of the same series (needs >1 episode).
+        var gaps = silenceSegments
+            .Where(s => s.EndMs - s.StartMs >= 1000 && s.StartMs >= 20_000 && s.StartMs <= 300_000)
+            .OrderBy(s => s.StartMs)
+            .ToList();
+
+        foreach (var gap in gaps)
+        {
+            var nextStart = gaps.FirstOrDefault(g => g.StartMs > gap.StartMs)?.StartMs ?? durationMs;
+            if (nextStart - gap.EndMs < 60_000) continue;
+
+            var start = gap.StartMs;
+            var end = Math.Min(start + FallbackIntroLengthMs, durationMs - 120_000);
+            if (end - start < 30_000) continue;
+
+            return new Marker
+            {
+                RatingKey = "", // Set by caller
+                Kind = "intro",
+                StartMs = start,
+                EndMs = end
+            };
+        }
+
+        return null;
+    }
+
+    private List<Chapter> GetChapters(string filePath, Activity? parentActivity)
+    {
+        var chapters = new List<Chapter>();
+        var psi = new ProcessStartInfo
+        {
+            FileName = "ffprobe",
+            Arguments = $"-v error -show_chapters -of csv=p=0 \"{filePath}\"",
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            UseShellExecute = false,
+            CreateNoWindow = true
+        };
+
+        using var process = Process.Start(psi);
+        if (process == null) return chapters;
+
+        // csv=p=0 -> chapter_id,time_base,start,start_time,end,end_time,title
+        var output = process.StandardOutput.ReadToEnd();
+        process.WaitForExit();
+        if (process.ExitCode != 0) return chapters;
+
+        foreach (var line in output.Split('\n', StringSplitOptions.RemoveEmptyEntries))
+        {
+            var fields = line.Trim().Split(',');
+            if (fields.Length < 7) continue;
+            if (!double.TryParse(fields[3], NumberStyles.Float, CultureInfo.InvariantCulture, out var start)) continue;
+            if (!double.TryParse(fields[5], NumberStyles.Float, CultureInfo.InvariantCulture, out var end)) continue;
+
+            var title = string.Join(',', fields.Skip(6));
+            chapters.Add(new Chapter((long)(start * 1000), (long)(end * 1000), title));
+        }
+
+        return chapters;
+    }
+
     private List<SilenceSegment> RunSilenceDetect(string filePath, Activity? parentActivity)
     {
         var segments = new List<SilenceSegment>();
-
-        using var activity = parentActivity != null
-            ? ActivitySource.StartActivity("Ffmpeg.SilenceDetect", ActivityKind.Internal, parentActivity.Context)
-            : ActivitySource.StartActivity("Ffmpeg.SilenceDetect", ActivityKind.Internal);
-        activity?.SetTag("file.path", filePath);
-        activity?.SetTag("detection.type", "silence");
+        using var activity = ActivitySource.StartActivity("Ffmpeg.SilenceDetect", ActivityKind.Internal, parentActivity?.Context ?? default);
 
         var psi = new ProcessStartInfo
         {
@@ -113,21 +202,17 @@ public class FfmpegMarkerDetector : IMarkerDetector
         if (pendingStart.HasValue)
             segments.Add(new SilenceSegment((long)(pendingStart.Value * 1000), (long)(pendingStart.Value * 1000)));
 
-        activity?.SetTag("segments.found", segments.Count);
         return segments;
     }
 
-    private long GetDurationMs(string filePath, Activity? parentActivity)
+    private int GetDurationMs(string filePath, Activity? parentActivity)
     {
-        using var activity = parentActivity != null
-            ? ActivitySource.StartActivity("Ffmpeg.GetDuration", ActivityKind.Internal, parentActivity.Context)
-            : ActivitySource.StartActivity("Ffmpeg.GetDuration", ActivityKind.Internal);
-        activity?.SetTag("file.path", filePath);
+        using var activity = ActivitySource.StartActivity("Ffmpeg.GetDuration", ActivityKind.Internal, parentActivity?.Context ?? default);
 
         var psi = new ProcessStartInfo
         {
             FileName = "ffprobe",
-            Arguments = $"-v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 \"{filePath}\"",
+            Arguments = $"-v error -show_entries format=duration -of csv=p=0 \"{filePath}\"",
             RedirectStandardOutput = true,
             RedirectStandardError = true,
             UseShellExecute = false,
@@ -137,18 +222,14 @@ public class FfmpegMarkerDetector : IMarkerDetector
         using var process = Process.Start(psi);
         if (process == null) return 0;
 
-        var output = process.StandardOutput.ReadToEnd().Trim();
+        var output = process.StandardOutput.ReadToEnd();
         process.WaitForExit();
 
-        if (double.TryParse(output, out var durationSeconds))
-        {
-            var durationMs = (long)(durationSeconds * 1000);
-            activity?.SetTag("duration.ms", durationMs);
-            return durationMs;
-        }
-
-        return 0;
+        return double.TryParse(output.Trim(), NumberStyles.Float, CultureInfo.InvariantCulture, out var seconds)
+            ? (int)(seconds * 1000)
+            : 0;
     }
 
-    private record SilenceSegment(long StartMs, long EndMs);
+    private sealed record SilenceSegment(long StartMs, long EndMs);
+    private sealed record Chapter(long StartMs, long EndMs, string Title);
 }
