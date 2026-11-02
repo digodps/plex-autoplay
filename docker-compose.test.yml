@@ -33,7 +33,7 @@ services:
     container_name: plex-mock
     restart: "no"
     working_dir: /app
-    command: ["node", "server.js"]
+    command: ["node", "server.cjs"]
     volumes:
       - ./tests/e2e/mock-plex:/app:ro
     expose:
