@@ -7,31 +7,46 @@ const BASE_URL =
   process.env.PLAYWRIGHT_BASE_URL || "https://plex-autoplay.dns.podman:443";
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
 
+// Função para ler cookie auth_token do navegador
+const getAuthToken = () => {
+  return document.cookie.match(/(?:^|; )auth_token=([^;])/)?.[1];
+};
+
 test.describe("Autenticação JWT", () => {
-  test.beforeEach(async ({ page }) => {
-    // Faz login antes de cada teste
+  test("login com senha correta retorna token JWT e redireciona para dashboard", async ({
+    page,
+  }) => {
+    await page.goto(`${BASE_URL}/login`, { waitUntil: "networkidle" });
+
+    // Aguarda o campo de senha estar visível
+    await page.waitForSelector('input[type="password"]', {
+      state: "visible",
+      timeout: 10000,
+    });
+
+    // Preenche o formulário de login
+    await page.fill('input[type="password"]', ADMIN_PASSWORD);
+    await page.click("button");
+
+    // Verifica redirecionamento para o dashboard
+    await expect(page).toHaveURL(`${BASE_URL}/dashboard`);
+  });
+
+  test("token JWT é armazenado no cookie após login", async ({
+    page,
+  }) => {
     await page.goto(`${BASE_URL}/login`, { waitUntil: "networkidle" });
     await page.waitForSelector('input[type="password"]', {
       state: "visible",
       timeout: 10000,
     });
+
     await page.fill('input[type="password"]', ADMIN_PASSWORD);
     await page.click("button");
+
+    // Aguarda navegação e verifica token no cookie
     await page.waitForURL(`${BASE_URL}/dashboard`);
-  });
-
-  test("login com senha correta retorna token JWT e redireciona para dashboard", async ({
-    page,
-  }) => {
-    // Verifica redirecionamento para o dashboard
-    await expect(page).toHaveURL(`${BASE_URL}/dashboard`);
-  });
-
-  test("token JWT é armazenado no cookie após login", async ({ page }) => {
-    // Lê o cookie auth_token do contexto do navegador
-    const cookies = await page.context().cookies();
-    const authCookie = cookies.find((c) => c.name === "auth_token");
-    const token = authCookie?.value;
+    const token = await page.evaluate(() => getAuthToken());
     expect(token).toBeTruthy();
     expect(token.length).toBeGreaterThan(0);
   });
@@ -39,7 +54,6 @@ test.describe("Autenticação JWT", () => {
   test("login com senha incorreta retorna HTTP 401 e exibe erro", async ({
     page,
   }) => {
-    // Faz login com senha errada na página inicial
     await page.goto(`${BASE_URL}/login`, { waitUntil: "networkidle" });
     await page.waitForSelector('input[type="password"]', {
       state: "visible",
