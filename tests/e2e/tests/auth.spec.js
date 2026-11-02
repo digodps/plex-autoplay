@@ -7,6 +7,11 @@ const BASE_URL =
   process.env.PLAYWRIGHT_BASE_URL || "https://plex-autoplay.dns.podman:443";
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
 
+// Função para ler cookie auth_token do navegador
+const getAuthToken = () => {
+  return document.cookie.match(/(?:^|; )auth_token=([^;])/)?.[1];
+};
+
 test.describe("Autenticação JWT", () => {
   test("login com senha correta retorna token JWT e redireciona para dashboard", async ({
     page,
@@ -27,9 +32,8 @@ test.describe("Autenticação JWT", () => {
     await expect(page).toHaveURL(`${BASE_URL}/dashboard`);
   });
 
-  test("token JWT é armazenado no localStorage após login", async ({
+  test("token JWT é armazenado no cookie após login", async ({
     page,
-    context,
   }) => {
     await page.goto(`${BASE_URL}/login`, { waitUntil: "networkidle" });
     await page.waitForSelector('input[type="password"]', {
@@ -40,9 +44,9 @@ test.describe("Autenticação JWT", () => {
     await page.fill('input[type="password"]', ADMIN_PASSWORD);
     await page.click("button");
 
-    // Aguarda navegação e verifica token no localStorage
+    // Aguarda navegação e verifica token no cookie
     await page.waitForURL(`${BASE_URL}/dashboard`);
-    const token = await page.evaluate(() => localStorage.getItem("auth_token"));
+    const token = await page.evaluate(() => getAuthToken());
     expect(token).toBeTruthy();
     expect(token.length).toBeGreaterThan(0);
   });
