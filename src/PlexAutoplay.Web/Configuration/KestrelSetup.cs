@@ -12,11 +12,10 @@ public static class KestrelSetup
 {
     public static void Configure(WebApplicationBuilder builder, X509Certificate2 serverCert, bool disableHttp)
     {
-        var wsPort = int.Parse(Environment.GetEnvironmentVariable("WS_PORT") ?? "8081");
-
         builder.WebHost.ConfigureKestrel(options =>
         {
             // HTTP endpoint when DISABLE_HTTP=false (for e2e tests avoiding IPv6 TLS handshake failures)
+            // When disableHttp=true (default), HTTP is skipped; HTTPS and WSS are used by default
             if (!disableHttp)
             {
                 var httpPort = int.Parse(Environment.GetEnvironmentVariable("WEB_PORT") ?? "80");
@@ -27,16 +26,7 @@ public static class KestrelSetup
             {
                 Log.Information("Listener HTTP desabilitado (DISABLE_HTTP=true). Apenas HTTPS e WSS estão disponíveis.");
             }
-
-            // WSS endpoint (WebSocket Secure on configurable port) - only when HTTPS is enabled
-            if (!disableHttp)
-            {
-                options.ListenAnyIP(wsPort, listenOptions =>
-                {
-                    listenOptions.UseHttps(serverCert);
-                    listenOptions.Protocols = Microsoft.AspNetCore.Server.Kestrel.Core.HttpProtocols.Http1AndHttp2;
-                });
-            }
+            // When DISABLE_HTTP=false, skip HTTPS and WSS entirely to avoid IPv6 TLS handshake failures
         });
     }
 }
