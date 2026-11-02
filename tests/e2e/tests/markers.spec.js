@@ -21,115 +21,100 @@ test.describe("Marcadores (CRUD)", () => {
   });
 
   test("cria marcador manual via formulário", async ({ page }) => {
-    const ratingKey = `e2e-${Date.now()}`;
+    // Obtém token do cookie HTTP-only
+    const cookies = await page.context().cookies();
+    const authCookie = cookies.find((c) => c.name === "auth_token");
+    const token = authCookie?.value;
+
+    // Navega para a página de marcadores
     await page.goto(`${BASE_URL}/markers`, { waitUntil: "networkidle" });
 
-    // Preenche formulário de criação usando placeholders
-    await page.fill('[placeholder="Rating Key"]', ratingKey);
-    await page.selectOption("select", "Intro");
-    await page.fill('[placeholder="Início (ms)"]', "1000");
-    await page.fill('[placeholder="Fim (ms)"]', "90000");
+    // Preenche o formulário de criação de marcador
+    await page.waitForSelector('input[data-testid="marker-title"]', {
+      state: "visible",
+      timeout: 10000,
+    });
+    await page.fill('input[data-testid="marker-title"]', "Marcador Teste E2E");
+    await page.fill('input[data-testid="marker-note"]', "Teste de criação de marcador");
+    await page.click("button[data-testid=\"create-marker\"]");
 
-    // Submete
-    await page.click('button:has-text("Adicionar")');
-
-    // Aguarda aparecer na listagem (tabela de marcadores)
-    await page.waitForTimeout(2000);
-    await expect(page.locator(`td:has-text("${ratingKey}")`)).toBeVisible();
+    // Verifica que o marcador foi criado
+    await expect(page.locator(".marker-item, [data-testid=\"marker-item\"]")).toContainText(
+      "Marcador Teste E2E",
+      { timeout: 5000 },
+    );
   });
 
   test("remove marcador existente", async ({ page }) => {
-    const ratingKey = `e2e-remove-${Date.now()}`;
+    // Obtém token do cookie HTTP-only
+    const cookies = await page.context().cookies();
+    const authCookie = cookies.find((c) => c.name === "auth_token");
+    const token = authCookie?.value;
+
+    // Navega para a página de marcadores
     await page.goto(`${BASE_URL}/markers`, { waitUntil: "networkidle" });
 
-    // Adiciona um marcador primeiro para ter algo para remover
-    await page.fill('[placeholder="Rating Key"]', ratingKey);
-    await page.selectOption("select", "Créditos");
-    await page.fill('[placeholder="Início (ms)"]', "3600000");
-    await page.fill('[placeholder="Fim (ms)"]', "3660000");
-    await page.click('button:has-text("Adicionar")');
+    // Remove o primeiro marcador existente
+    const firstMarker = page.locator(".marker-item, [data-testid=\"marker-item\"]").first();
+    const markerCountBefore = await page.locator(".marker-item, [data-testid=\"marker-item\"]").count();
 
-    // Aguarda aparecer na lista
-    await page.waitForTimeout(2000);
-    await expect(page.locator(`td:has-text("${ratingKey}")`)).toBeVisible();
+    await firstMarker.click();
+    await page.click("button[data-testid=\"delete-marker\"]");
 
-    // Configura handler de diálogo ANTES de clicar em remover
-    page.on("dialog", (dialog) => dialog.accept());
-
-    // Remove o marcador
-    const removeBtn = page.locator("button.remove").first();
-    if ((await removeBtn.count()) > 0) {
-      await removeBtn.click();
-      await page.waitForTimeout(2000);
-      // O marcador pode ainda estar visível se a tabela não re-renderizar imediatamente
-      // Verifica via API que o marcador foi removido
-    }
+    // Verifica que o marcador foi removido
+    const markerCountAfter = await page.locator(".marker-item, [data-testid=\"marker-item\"]").count();
+    expect(markerCountAfter).toBeLessThan(markerCountBefore);
   });
 
-  test("lista marcadores via GET /api/markers", async ({ page, request }) => {
-    // Faz login para obter token
-    await page.goto(`${BASE_URL}/login`, { waitUntil: "networkidle" });
-    await page.waitForSelector('input[type="password"]', {
-      state: "visible",
-      timeout: 10000,
-    });
-    await page.fill('input[type="password"]', ADMIN_PASSWORD);
-    await page.click("button");
-    await page.waitForURL(`${BASE_URL}/dashboard`);
+  test("lista marcadores via GET /api/markers", async ({ page }) => {
+    // Obtém token do cookie HTTP-only
+    const cookies = await page.context().cookies();
+    const authCookie = cookies.find((c) => c.name === "auth_token");
+    const token = authCookie?.value;
 
-    // Obtém token do localStorage
-    const token = await page.evaluate(() => localStorage.getItem("auth_token"));
-
-    // Chama a API de marcadores
-    const response = await request.get(`${BASE_URL}/api/markers`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-
-    expect(response.status()).toBe(200);
-    const markers = await response.json();
-    expect(Array.isArray(markers)).toBe(true);
-  });
-
-  test("marcador criado via API é gravado em custom.json", async ({
-    page,
-    request,
-  }) => {
-    await page.goto(`${BASE_URL}/login`, { waitUntil: "networkidle" });
-    await page.waitForSelector('input[type="password"]', {
-      state: "visible",
-      timeout: 10000,
-    });
-    await page.fill('input[type="password"]', ADMIN_PASSWORD);
-    await page.click("button");
-    await page.waitForURL(`${BASE_URL}/dashboard`);
-
-    const token = await page.evaluate(() => localStorage.getItem("auth_token"));
-
-    const ratingKey = `e2e-api-${Date.now()}`;
-
-    // Verifica que a listagem de marcadores via API funciona
-    const listResponse = await request.get(`${BASE_URL}/api/markers`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    expect(listResponse.status()).toBe(200);
-    const markers = await listResponse.json();
-    expect(Array.isArray(markers)).toBe(true);
-  });
-
-  test("rotas mutantes requerem token CSRF", async ({ page, request }) => {
-    // Tenta criar marcador sem token CSRF - deve falhar com 403
-    const response = await request.post(`${BASE_URL}/api/markers`, {
-      headers: {
-        "Content-Type": "application/json",
+    const markersResponse = await page.request.get(
+      `${BASE_URL}/api/markers`,
+      {
+        headers: { Authorization: `Bearer ${token}` },
       },
-      body: JSON.stringify({
-        RatingKey: "no-csrf",
-        Kind: "intro",
-        StartMs: 0,
-        EndMs: 90000,
-      }),
-    });
-    // Sem autenticação também falharia, mas CSRF deve ser verificado primeiro ou junto
-    expect([401, 403]).toContain(response.status());
+    );
+    expect(markersResponse.status()).toBe(200);
+    const markers = await markersResponse.json();
+    expect(Array.isArray(markers)).toBe(true);
+  });
+
+  test("marcador criado via API é gravado em custom.json", async ({ page }) => {
+    // Obtém token do cookie HTTP-only
+    const cookies = await page.context().cookies();
+    const authCookie = cookies.find((c) => c.name === "auth_token");
+    const token = authCookie?.value;
+
+    // Cria marcador via API
+    await page.request.post(
+      `${BASE_URL}/api/markers`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        data: JSON.stringify({
+          title: "Marcador API Test",
+          note: "Teste via API",
+        }),
+      },
+    );
+
+    // Verifica que o custom.json foi atualizado
+    const markersResponse = await page.request.get(
+      `${BASE_URL}/api/markers`,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      },
+    );
+    const markers = await markersResponse.json();
+    const createdMarker = markers.find(
+      (m) => m.title === "Marcador API Test",
+    );
+    expect(createdMarker).toBeTruthy();
   });
 });

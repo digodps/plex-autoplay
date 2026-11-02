@@ -20,11 +20,11 @@ test.describe("Proxy de imagens do Plex", () => {
     await page.waitForURL(`${BASE_URL}/dashboard`);
   });
 
-  test("requisita imagem via proxy e verifica Content-Type", async ({
-    page,
-  }) => {
-    // Obtém token do localStorage
-    const token = await page.evaluate(() => localStorage.getItem("auth_token"));
+  test("requisita imagem via proxy e verifica Content-Type", async ({ page }) => {
+    // Obtém token do cookie HTTP-only
+    const cookies = await page.context().cookies();
+    const authCookie = cookies.find((c) => c.name === "auth_token");
+    const token = authCookie?.value;
 
     // Testa diretamente via API request
     const imgResponse = await page.request.get(
@@ -39,9 +39,7 @@ test.describe("Proxy de imagens do Plex", () => {
     expect(imgResponse.status()).toBeGreaterThanOrEqual(200);
   });
 
-  test("token Plex não é exposto em requisições de imagem", async ({
-    page,
-  }) => {
+  test("token Plex não é exposto em requisições de imagem", async ({ page }) => {
     let exposedToken = false;
 
     // Monitora todas as requisições de rede para vazamento de token
@@ -66,7 +64,9 @@ test.describe("Proxy de imagens do Plex", () => {
     });
 
     // Faz uma requisição de imagem para gerar tráfego
-    const token = await page.evaluate(() => localStorage.getItem("auth_token"));
+    const cookies = await page.context().cookies();
+    const authCookie = cookies.find((c) => c.name === "auth_token");
+    const token = authCookie?.value;
     await page.request.get(`${BASE_URL}/api/images/thumb/test123`, {
       headers: { Authorization: `Bearer ${token}` },
     });
