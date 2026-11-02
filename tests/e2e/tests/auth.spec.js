@@ -4,14 +4,14 @@ const { loadEnv } = require("../utils/env");
 loadEnv();
 
 const BASE_URL =
-  process.env.PLAYWRIGHT_BASE_URL || "https://plex-autoplay.dns.podman:443";
+  process.env.PLAYWRIGHT_BASE_URL || "http://plex-autoplay-test:80";
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
 
 test.describe("Autenticação JWT", () => {
   test("login com senha correta retorna token JWT e redireciona para dashboard", async ({
     page,
   }) => {
-    await page.goto(`${BASE_URL}/login`, { waitUntil: "networkidle" });
+    await page.goto(`${BASE_URL}/auth/login`, { waitUntil: "networkidle" });
 
     // Aguarda o campo de senha estar visível
     await page.waitForSelector('input[type="password"]', {
@@ -28,7 +28,7 @@ test.describe("Autenticação JWT", () => {
   });
 
   test("token JWT é armazenado no cookie após login", async ({ page, context }) => {
-    await page.goto(`${BASE_URL}/login`, { waitUntil: "networkidle" });
+    await page.goto(`${BASE_URL}/auth/login`, { waitUntil: "networkidle" });
     await page.waitForSelector('input[type="password"]', {
       state: "visible",
       timeout: 10000,
@@ -49,7 +49,7 @@ test.describe("Autenticação JWT", () => {
   test("login com senha incorreta retorna HTTP 401 e exibe erro", async ({
     page,
   }) => {
-    await page.goto(`${BASE_URL}/login`, { waitUntil: "networkidle" });
+    await page.goto(`${BASE_URL}/auth/login`, { waitUntil: "networkidle" });
     await page.waitForSelector('input[type="password"]', {
       state: "visible",
       timeout: 10000,
