@@ -40,7 +40,8 @@ test.describe("Bibliotecas de séries", () => {
     expect(showLibraries.length).toBeGreaterThan(0);
     // Verifica que todas as bibliotecas de tipo show têm nome
     showLibraries.forEach((lib) => {
-      expect(lib.name).toBeTruthy();
+      // Bibliotecas Plex têm 'title' como nome principal
+      expect(lib).toHaveProperty("title");
     });
   });
 
@@ -65,8 +66,11 @@ test.describe("Bibliotecas de séries", () => {
     const configResponse = await page.request.get(`${BASE_URL}/config`);
     expect(configResponse.status()).toBe(200);
     const config = await configResponse.json();
-    expect(config).toHaveProperty("jwtSecret");
-    expect(config).toHaveProperty("adminPassword");
+    // Configuração lida exclusivamente de variáveis de ambiente
+    expect(config).toHaveProperty("plex_url");
+    expect(config).toHaveProperty("sync_interval_minutes");
+    expect(config).toHaveProperty("media_root");
+    expect(config).toHaveProperty("log_level");
   });
 
   test("POST /config não grava app-config.json", async ({ page }) => {
