@@ -49,6 +49,7 @@ jobs:
       PLEX_TOKEN: mock-token
       JWT_SECRET: ci-e2e-jwt-secret-0123456789abcdef0123456789abcdef
       ADMIN_PASSWORD: ci-e2e-admin-password
+      DISABLE_HTTP: false
       MEDIA_ROOT: /tmp/plex-media
       PLAYWRIGHT_BASE_URL: https://plex-autoplay-test:443
     steps:
