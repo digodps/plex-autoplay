@@ -25,7 +25,7 @@ test.describe("Bibliotecas de séries", () => {
     request,
   }) => {
     // Obtém token do localStorage
-    const token = await page.evaluate(() => await page.context().cookies().then(c => c.find(x => x.name === "auth_token")?.value));
+    const token = await page.context().cookies().then(c => c.find(x => x.name === "auth_token")?.value);
 
     // Valida via API que apenas bibliotecas do tipo "show" são retornadas
     const response = await request.get(`${BASE_URL}/api/plex/libraries`, {
@@ -68,7 +68,7 @@ test.describe("Bibliotecas de séries", () => {
     await page.click("button");
     await page.waitForURL(`${BASE_URL}/dashboard`);
 
-    const token = await page.evaluate(() => await page.context().cookies().then(c => c.find(x => x.name === "auth_token")?.value));
+    const token = await page.context().cookies().then(c => c.find(x => x.name === "auth_token")?.value);
 
     const response = await request.get(`${BASE_URL}/api/status`, {
       headers: { Authorization: `Bearer ${token}` },
@@ -94,7 +94,7 @@ test.describe("Bibliotecas de séries", () => {
     await page.click("button");
     await page.waitForURL(`${BASE_URL}/dashboard`);
 
-    const token = await page.evaluate(() => await page.context().cookies().then(c => c.find(x => x.name === "auth_token")?.value));
+    const token = await page.context().cookies().then(c => c.find(x => x.name === "auth_token")?.value);
 
     const response = await request.get(`${BASE_URL}/config`, {
       headers: { Authorization: `Bearer ${token}` },
@@ -116,7 +116,7 @@ test.describe("Bibliotecas de séries", () => {
     await page.click("button");
     await page.waitForURL(`${BASE_URL}/dashboard`);
 
-    const token = await page.evaluate(() => await page.context().cookies().then(c => c.find(x => x.name === "auth_token")?.value));
+    const token = await page.context().cookies().then(c => c.find(x => x.name === "auth_token")?.value);
 
     const response = await request.post(`${BASE_URL}/config`, {
       headers: { Authorization: `Bearer ${token}` },
@@ -141,7 +141,7 @@ test.describe("Bibliotecas de séries", () => {
     await page.click("button");
     await page.waitForURL(`${BASE_URL}/dashboard`);
 
-    const token = await page.evaluate(() => await page.context().cookies().then(c => c.find(x => x.name === "auth_token")?.value));
+    const token = await page.context().cookies().then(c => c.find(x => x.name === "auth_token")?.value);
 
     // Primeiro obtém bibliotecas para saber uma section_key
     const libsResponse = await request.get(`${BASE_URL}/api/plex/libraries`, {
