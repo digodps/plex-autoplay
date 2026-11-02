@@ -7,13 +7,24 @@ const BASE_URL =
   process.env.PLAYWRIGHT_BASE_URL || "https://plex-autoplay.dns.podman:443";
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
 
-// Função para ler cookie auth_token do navegador
-// Injetada globalmente para que page.evaluate a tenha acesso
-globalThis.getAuthToken = () => {
-  return document.cookie.match(/(?:^|; )auth_token=([^;])/)?.[1];
+// Injetar função para ler cookie via script tag injetado
+const injectGetAuthTokenScript = async (page) => {
+  await page.addScriptTag({
+    content: `
+      // Função para ler cookie auth_token do navegador
+      // Injetada para que page.evaluate a tenha acesso
+      globalThis.getAuthToken = () => {
+        return document.cookie.match(/(?:^|; )auth_token=([^;])/)?.[1];
+      };
+    `,
+  });
 };
 
 test.describe("Autenticação JWT", () => {
+  test.beforeEach(async ({ page }) => {
+    await injectGetAuthTokenScript(page);
+  });
+
   test("login com senha correta retorna token JWT e redireciona para dashboard", async ({
     page,
   }) => {
