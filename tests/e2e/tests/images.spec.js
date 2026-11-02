@@ -28,7 +28,7 @@ test.describe("Proxy de imagens do Plex", () => {
 
     // Testa diretamente via API request
     const imgResponse = await page.request.get(
-      `${BASE_URL}/api/images/thumb/test123`,
+      `${BASE_URL}/api/images/test123`,
       {
         headers: { Authorization: `Bearer ${token}` },
       },
