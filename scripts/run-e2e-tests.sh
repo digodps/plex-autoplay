@@ -97,8 +97,8 @@ log "Todas as variáveis obrigatórias estão definidas."
 APP_HOST="${APP_HOST:-plex-autoplay.dns.podman}"
 log "Aguardando a aplicacao ficar disponível em ${APP_HOST}:80..."
 for i in $(seq 1 30); do
-  APP_PORT=443
-if curl -sk -o /dev/null "https://${APP_HOST}:${APP_PORT}" >/dev/null 2>&1; then
+  APP_PORT=80
+if curl -sk -o /dev/null "http://${APP_HOST}:${APP_PORT}" >/dev/null 2>&1; then
     log "Aplicacao esta respondendo."
     break
   fi
