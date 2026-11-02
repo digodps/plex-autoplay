@@ -83,7 +83,7 @@ app.UseMiddleware<CorrelationIdMiddleware>();
 app.UseMiddleware<JwtAuthMiddleware>();
 
 // --- Endpoints ---
-app.MapAuthEndpoints(adminPassword);
+app.MapAuthEndpoints(adminPassword, disableHttp);
 app.MapPlexEndpoints(mediaRoot);
 app.MapSeriesEndpoints(mediaRoot);
 app.MapSyncEndpoints();

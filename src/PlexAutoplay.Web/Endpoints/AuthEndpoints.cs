@@ -9,7 +9,7 @@ namespace PlexAutoplay.Web.Endpoints;
 /// </summary>
 public static class AuthEndpoints
 {
-    public static void MapAuthEndpoints(this IEndpointRouteBuilder app, string adminPassword)
+    public static void MapAuthEndpoints(this IEndpointRouteBuilder app, string adminPassword, bool disableHttp = false)
     {
         app.MapGet("/auth/login", () => Results.Ok(new { message = "Use POST to authenticate" }));
 
@@ -31,10 +31,11 @@ public static class AuthEndpoints
                 // (stores/auth.js getToken usa document.cookie; o middleware lê header Authorization).
                 // O middleware JwtAuthMiddleware continua validando o token tanto do header
                 // quanto deste cookie, com ou sem HttpOnly.
+                var cookieSecure = !disableHttp; // Secure only when HTTPS is enabled
                 context.Response.Cookies.Append("auth_token", token, new CookieOptions
                 {
                     HttpOnly = false,
-                    Secure = true,
+                    Secure = cookieSecure,
                     SameSite = SameSiteMode.Lax,
                     Path = "/",
                     IsEssential = true
