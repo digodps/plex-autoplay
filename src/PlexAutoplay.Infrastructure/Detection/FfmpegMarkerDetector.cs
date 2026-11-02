@@ -5,6 +5,7 @@ using PlexAutoplay.Domain.Ports;
 using PlexAutoplay.Infrastructure.Telemetry;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
 using System.Text.RegularExpressions;
 
 public class FfmpegMarkerDetector : IMarkerDetector
@@ -75,8 +76,8 @@ public class FfmpegMarkerDetector : IMarkerDetector
 
         var psi = new ProcessStartInfo
         {
-            FileName = "ffprobe",
-            Arguments = $"-hide_banner -level panic -f lavfi -i movie='{filePath}',silencedetect=noise=-30dB:d=1 -show_entries frame=pts_time -of csv=p=0",
+            FileName = "ffmpeg",
+            Arguments = $"-hide_banner -nostats -nostdin -i \"{filePath}\" -vn -sn -dn -af silencedetect=noise=-30dB:d=1 -f null -",
             RedirectStandardOutput = true,
             RedirectStandardError = true,
             UseShellExecute = false,
@@ -86,16 +87,31 @@ public class FfmpegMarkerDetector : IMarkerDetector
         using var process = Process.Start(psi);
         if (process == null) return segments;
 
-        var output = process.StandardOutput.ReadToEnd();
+        // ffmpeg reports silence_start/silence_end pairs on stderr while decoding audio.
+        var output = process.StandardError.ReadToEnd();
         process.WaitForExit();
 
+        double? pendingStart = null;
         foreach (var line in output.Split('\n', StringSplitOptions.RemoveEmptyEntries))
         {
-            if (double.TryParse(line.Trim(), out var ptsSeconds))
+            var match = Regex.Match(line, @"silence_(start|end):\s*([0-9.]+)");
+            if (!match.Success) continue;
+            if (!double.TryParse(match.Groups[2].Value, NumberStyles.Float, CultureInfo.InvariantCulture, out var seconds)) continue;
+
+            if (match.Groups[1].Value == "start")
             {
-                segments.Add(new SilenceSegment((long)(ptsSeconds * 1000), (long)(ptsSeconds * 1000)));
+                pendingStart = seconds;
+            }
+            else if (pendingStart.HasValue)
+            {
+                segments.Add(new SilenceSegment((long)(pendingStart.Value * 1000), (long)(seconds * 1000)));
+                pendingStart = null;
             }
         }
+
+        // Trailing silence never emits silence_end: the stream ends first.
+        if (pendingStart.HasValue)
+            segments.Add(new SilenceSegment((long)(pendingStart.Value * 1000), (long)(pendingStart.Value * 1000)));
 
         activity?.SetTag("segments.found", segments.Count);
         return segments;
