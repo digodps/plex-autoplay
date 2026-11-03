@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace PlexAutoplay.Web.Endpoints;
 
@@ -16,7 +17,7 @@ public static class PlexSaveEndpoint
     {
         app.MapPost("/api/plex/save", async (
             [FromBody] PlexSaveRequest request,
-            [FromServices] ILogger<PlexSaveEndpoint> logger) =>
+            [FromServices] ILoggerFactory loggerFactory) =>
         {
             try
             {
@@ -123,7 +124,7 @@ public static class PlexSaveEndpoint
                 // Write back the .env file
                 await System.IO.File.WriteAllLinesAsync(EnvFilePath, envLines, Encoding.UTF8);
 
-                logger.LogInformation("Plex config saved: URL={Url}, Token={TokenLen} chars", 
+                loggerFactory.CreateLogger("PlexSaveEndpoint").LogInformation("Plex config saved: URL={Url}, Token={TokenLen} chars", 
                     request.PlexUrl, request.PlexToken?.Length ?? 0);
 
                 return Results.Ok(new 
@@ -135,7 +136,7 @@ public static class PlexSaveEndpoint
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Erro ao salvar configurações do Plex");
+                loggerFactory.CreateLogger("PlexSaveEndpoint").LogError(ex, "Erro ao salvar configurações do Plex");
                 return Results.Problem($"Erro interno: {ex.Message}", statusCode: 500);
             }
         });
