@@ -1,0 +1,4 @@
+services:
+  plex-autoplay:
+    ports:
+      - "8080:80"

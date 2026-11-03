@@ -57,6 +57,13 @@ public class JwtAuthMiddleware
             return;
         }
 
+        // Allow Plex config endpoints without JWT (used by settings page before login token available)
+        if (path.StartsWith("/api/plex/save") || path.StartsWith("/api/plex/identity"))
+        {
+            await _next(context);
+            return;
+        }
+
         // Check for bearer token on API routes
         var authHeader = context.Request.Headers["Authorization"].FirstOrDefault();
         if (authHeader != null && authHeader.StartsWith("Bearer "))
