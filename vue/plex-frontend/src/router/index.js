@@ -44,6 +44,10 @@ const routes = [
     name: "settings",
     component: () => import("../views/SettingsView.vue"),
   },
+{
+   path: "/ajustes",
+   redirect: "/settings",
+},
 ];
 
 const router = createRouter({
