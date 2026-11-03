@@ -1,5 +1,6 @@
 import js from "@eslint/js";
 import pluginVue from "eslint-plugin-vue";
+import boundaries from "eslint-plugin-boundaries";
 
 export default [
   js.configs.recommended,
@@ -65,6 +66,44 @@ export default [
         Buffer: "readonly",
         URL: "readonly",
       },
+    },
+  },
+  {
+    // Fronteiras da matriz §4 do design (Clean Architecture):
+    // views -> composables | stores; components -> lib apenas;
+    // composables -> stores; stores -> api.js; lib -> puro.
+    files: ["**/src/**/*.{js,vue}"],
+    plugins: { boundaries },
+    settings: {
+      "boundaries/elements": [
+        { type: "views", pattern: "src/views/**/*" },
+        { type: "components", pattern: "src/components/**/*" },
+        { type: "composables", pattern: "src/composables/**/*" },
+        { type: "stores", pattern: "src/stores/**/*" },
+        { type: "lib", pattern: "src/lib/**/*" },
+        { type: "router", pattern: "src/router/**/*" },
+      ],
+    },
+    rules: {
+      "boundaries/dependencies": [
+        "error",
+        {
+          default: "allow",
+          policies: [
+            { from: "views", disallow: ["api"] },
+            {
+              from: "components",
+              disallow: ["stores", "composables", "api", "router"],
+            },
+            { from: "composables", disallow: ["api", "views", "components"] },
+            { from: "stores", disallow: ["composables", "views", "components"] },
+            {
+              from: "lib",
+              disallow: ["views", "components", "composables", "stores", "api", "router"],
+            },
+          ],
+        },
+      ],
     },
   },
 ];

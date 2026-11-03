@@ -125,8 +125,8 @@ function navigateToSeries(libraryKey) {
   gap: 0.5rem;
   padding: 0.75rem 1rem;
   border-radius: var(--radius);
-  background: var(--danger-bg, #fef2f2);
-  color: var(--danger, #dc2626);
+  background: color-mix(in srgb, var(--danger) 8%, transparent);
+  color: var(--danger);
   margin-bottom: 1rem;
 }
 .alert .icon {

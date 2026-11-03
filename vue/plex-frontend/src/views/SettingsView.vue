@@ -20,7 +20,7 @@ const saveInterval = async () => {
       interval.value = parseInt(newInterval)
     }
     message.value = "Intervalo salvo com sucesso"
-  } catch (err) {
+  } catch {
     message.value = "Erro ao salvar intervalo"
   } finally {
     saving.value = false
@@ -55,7 +55,7 @@ const fetchPlexIdentity = async () => {
     } else {
       message.value = data.error || "Erro ao obter token"
     }
-  } catch (err) {
+  } catch {
     message.value = "Erro de conexão com o Plex"
   } finally {
     saving.value = false
@@ -84,7 +84,7 @@ const savePlexConfig = async () => {
     } else {
       message.value = data.error || "Erro ao salvar configurações"
     }
-  } catch (err) {
+  } catch {
     message.value = "Erro ao salvar configurações"
   } finally {
     saving.value = false
@@ -100,132 +100,160 @@ const savePlexConfig = async () => {
     <div class="setting-group">
       <label>Intervalo de Sincronização (minutos)</label>
       <input
-        type="number"
         id="interval-input"
+        v-model.number="interval"
+        type="number"
         min="1"
         max="60"
-        v-model.number="interval"
-        style="width: 150px; padding: 0.75rem; border: 1px solid var(--border); border-radius: var(--radius-sm);"
+        class="settings-input settings-input--number"
       />
       <p class="hint">O serviço de sincronização roda a cada N minutos</p>
     </div>
 
     <button
-      @click="saveInterval"
-      style="
-        width: 100%;
-        margin-top: 0.5rem;
-        padding: 0.75rem;
-        background: var(--accent);
-        color: var(--accent-contrast);
-        border: none;
-        border-radius: var(--radius-sm);
-        font-weight: 500;
-        cursor: pointer;
-        transition: var(--transition-fast);
-      "
+      class="btn btn--primary btn--block"
       :disabled="saving"
+      @click="saveInterval"
     >
       {{ saving ? "Salvando..." : "Salvar Intervalo" }}
     </button>
-    <p
-      v-if="message"
-      style="
-        margin-top: 0.5rem;
-        font-size: 0.875rem;
-        color: var(--text-tertiary);
-      "
-    >
+    <p v-if="message" class="settings-msg">
       {{ message }}
     </p>
 
     <!-- --- Separador --- -->
-    <hr style="margin: 1.5rem 0; border: none; border-top: 1px solid var(--border);" />
+    <hr class="settings-hr" />
 
     <!-- Configurações Plex -->
     <div class="setting-group">
       <label>URL do Plex</label>
       <input
-        type="text"
         v-model="plexUrl"
+        type="text"
         placeholder="http://192.168.18.5:32400"
-        style="
-          width: 100%;
-          padding: 0.75rem;
-          border: 1px solid var(--border);
-          border-radius: var(--radius-sm);
-        "
+        class="settings-input"
       />
     </div>
 
     <div v-if="!tokenFetched" class="setting-group">
       <label>Token do Plex</label>
       <input
-        type="text"
         v-model="plexToken"
+        type="text"
         readonly
-        style="
-          width: 150px;
-          padding: 0.75rem;
-          border: 1px solid var(--border);
-          border-radius: var(--radius-sm);
-          background: var(--bg-sunken);
-        "
+        class="settings-input settings-input--readonly"
       />
-      <button
-        @click="fetchPlexIdentity"
-        style="
-          margin-left: 0.5rem;
-          padding: 0.5rem 1rem;
-          background: var(--accent);
-          color: var(--accent-contrast);
-          border: none;
-          border-radius: var(--radius-sm);
-          cursor: pointer;
-          font-size: 0.875rem;
-        "
-      >
-        Buscar Token
+      <button class="btn btn--primary btn--inline" @click="fetchPlexIdentity">
+        Buscar token
       </button>
     </div>
 
     <div v-if="tokenFetched" class="setting-group">
       <label>Token do Plex</label>
       <input
-        type="text"
         v-model="plexToken"
+        type="text"
         readonly
-        style="
-          width: 150px;
-          padding: 0.75rem;
-          border: 1px solid var(--border);
-          border-radius: var(--radius-sm);
-        "
+        class="settings-input settings-input--number"
       />
     </div>
 
     <button
-      @click="savePlexConfig"
       v-if="tokenFetched"
-      style="
-        width: 100%;
-        margin-top: 0.5rem;
-        padding: 0.75rem;
-        background: var(--accent);
-        color: var(--accent-contrast);
-        border: none;
-        border-radius: var(--radius-sm);
-        font-weight: 500;
-        cursor: pointer;
-        transition: var(--transition-fast);
-      "
+      class="btn btn--primary btn--block"
       :disabled="saving"
+      @click="savePlexConfig"
     >
       {{ saving ? "Salvando..." : "Salvar Configurações" }}
     </button>
 
-    <p v-if="message" style="margin-top: 0.5rem; font-size: 0.875rem; color: var(--text-tertiary);">
+    <p v-if="message" class="settings-msg">
       {{ message }}
     </p>
   </div>
 </template>
+
+<style scoped>
+.settings-view {
+  max-width: 34rem;
+}
+
+.setting-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-top: var(--space-4);
+}
+
+.settings-input {
+  width: 100%;
+  padding: var(--space-3);
+  border: 1px solid var(--border-input);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--text);
+}
+
+.settings-input:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.settings-input--number {
+  width: 150px;
+}
+
+.settings-input--readonly {
+  background: var(--bg-sunken, var(--surface-raised));
+}
+
+.hint {
+  font-size: 0.875rem;
+  color: var(--text-tertiary);
+}
+
+.settings-msg {
+  margin-top: var(--space-2);
+  font-size: 0.875rem;
+  color: var(--text-tertiary);
+}
+
+.settings-hr {
+  margin: var(--space-6) 0;
+  border: none;
+  border-top: 1px solid var(--border);
+}
+
+.btn--primary {
+  background: var(--accent);
+  color: var(--accent-contrast);
+  border: none;
+  font-weight: 500;
+  cursor: pointer;
+  transition: var(--transition-fast, 150ms ease);
+}
+
+.btn--primary:hover:not(:disabled) {
+  background: var(--accent-hover, var(--accent));
+}
+
+.btn--primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn--block {
+  width: 100%;
+  margin-top: var(--space-2);
+  padding: var(--space-3);
+  border-radius: var(--radius-sm);
+}
+
+.btn--inline {
+  align-self: flex-start;
+  margin-top: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-sm);
+  font-size: 0.875rem;
+}
+</style>

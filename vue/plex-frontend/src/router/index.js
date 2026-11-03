@@ -1,5 +1,4 @@
 import { createRouter, createWebHistory } from "vue-router";
-import { getToken } from "../api";
 import LoginView from "../views/LoginView.vue";
 import SyncView from "../views/SyncView.vue";
 

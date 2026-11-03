@@ -5,38 +5,16 @@
  * backend só lê o header); o cookie substitui o localStorage como armazenamento.
  */
 
-export const AUTH_COOKIE = "auth_token";
+import { getToken, deleteCookie } from "./lib/auth";
 
-export function getCookie(name) {
-  const match = document.cookie.match(new RegExp("(^|;\\s*)" + name + "=([^;]*)"));
-  return match ? decodeURIComponent(match[2]) : "";
-}
-
-/**
- * @param {string} name
- * @param {string} value
- * @param {number} days 0/negativo => cookie de sessão (encerra com o navegador)
- */
-export function setCookie(name, value, days = 0) {
-  const expiry = days > 0 ? `; max-age=${days * 24 * 60 * 60}` : "";
-  const secure = location.protocol === "https:" ? "; Secure" : "";
-  document.cookie = `${name}=${encodeURIComponent(value)}${expiry}; path=/; SameSite=Lax${secure}`;
-}
-
-export function deleteCookie(name) {
-  const secure = location.protocol === "https:" ? "; Secure" : "";
-  document.cookie = `${name}=; max-age=0; path=/; SameSite=Lax${secure}`;
-}
-
-export function getToken() {
-  return getCookie(AUTH_COOKIE);
-}
+// Re-export para compatibilidade com stores antigas que importavam daqui.
+export { getToken, setCookie, deleteCookie, AUTH_COOKIE } from "./lib/auth";
 
 function redirectToLoginPreservingRoute() {
   // Já no login: não redirecionar (evita loop com chamadas 401 da própria tela de login)
   if (window.location.pathname === "/login") return;
   const route = window.location.pathname + window.location.search;
-  deleteCookie(AUTH_COOKIE);
+  deleteCookie("auth_token");
   window.location.href = `/login?redirect=${encodeURIComponent(route)}`;
 }
 

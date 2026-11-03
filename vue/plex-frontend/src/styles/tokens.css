@@ -1,0 +1,77 @@
+/* ============================================
+   Tokens – Gray Scale (neutral) – §5.1
+   ============================================ */
+
+:root {
+  /* Background & Surface */
+  --bg: #fafafa;
+  --surface: #ffffff;
+  --surface-raised: #f5f5f5;
+  --border: #e5e5e5;
+  --border-strong: #d4d4d4;
+  --border-input: #737373;
+
+  /* Spacing – 8 steps from 4px to 32px */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-7: 28px;
+  --space-8: 32px;
+
+  /* Text & Non-Text */
+  --text: #171717;
+  --text-secondary: #525252;
+  --text-tertiary: #616161;
+
+  /* Accent (system token – no user selection) – gray */
+  --accent: #404040;
+  --accent-hover: #525252;
+  --accent-contrast: #fafafa;
+
+  /* Focus ring (fixed per theme) */
+  --focus-ring: #171717;
+
+  /* Radii */
+  --radius: 8px;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+
+  /* Target minimum size */
+  --target-min: 44px;
+
+  /* Transition */
+  --transition-fast: 150ms ease;
+
+  /* Shadows – single elevation */
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.08);
+
+  /* Semantic colors (only non-gray for meaning) */
+  --danger: #b91c1c;
+  --success: #15803d;
+  --warning: #b45309;
+}
+
+/* Dark theme overrides */
+[data-theme="dark"] {
+  --bg: #0a0a0a;
+  --surface: #171717;
+  --surface-raised: #1f1f1f;
+  --border: #262626;
+  --border-strong: #404040;
+  --border-input: #525252;
+  --text: #fafafa;
+  --text-secondary: #a3a3a3;
+  --text-tertiary: #717171;
+  --accent: #d4d4d4;
+  --accent-hover: #e5e5e5;
+  --accent-contrast: #171717;
+  --focus-ring: #fafafa;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.2);
+  --danger: #f87171;
+  --success: #4ade80;
+  --warning: #fbbf24;
+}

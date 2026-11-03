@@ -12,7 +12,7 @@ public static class ThemeEndpoints
             var preference = await repo.GetAsync("admin");
             return Results.Ok(preference ?? new UserThemePreference
             {
-                AccentColor = "#e5a00d",
+                AccentColor = "#171717",
                 Mode = "system"
             });
         });
@@ -20,7 +20,7 @@ public static class ThemeEndpoints
         app.MapPut("/api/theme", async (IUserThemeRepository repo, UserThemePreference preference) =>
         {
             if (preference.Mode is not ("light" or "dark" or "system") ||
-                preference.AccentColor is not ("#e5a00d" or "#2563eb" or "#16a34a" or "#7c3aed" or "#db2777" or "#4f46e5"))
+                preference.AccentColor is not ("#171717" or "#2563eb" or "#16a34a" or "#7c3aed" or "#db2777" or "#4f46e5"))
             {
                 return Results.ValidationProblem(new Dictionary<string, string[]>
                 {

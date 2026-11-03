@@ -1,7 +1,14 @@
 import { createApp } from "vue";
 import { createPinia } from "pinia";
-import "./style.css";
-import { getToken, setCookie } from "./api";
+import "./styles/tokens.css";
+import "./styles/base.css";
+import "./styles/shell.css";
+import "./styles/components/button.css";
+import "./styles/components/card.css";
+import "./styles/components/field.css";
+import "./styles/components/table.css";
+import "./styles/components/state.css";
+import { getToken, setCookie } from "./lib/auth";
 import App from "./App.vue";
 import router from "./router";
 import { useThemeStore } from "./stores/theme";
@@ -24,12 +31,12 @@ const app = createApp(App);
 app.use(createPinia());
 app.use(router);
 
-// Load theme preferences on startup (pre-mount) so UI renders with correct theme
+// Aplica o tema resolvido (localStorage/system) antes do mount e então
+// reconcilia com a preferência persistida no backend.
 const themeStore = useThemeStore();
+themeStore.applyTheme();
 themeStore.loadTheme().catch((e) => console.warn("Theme load error:", e));
 
-// Wait for router to be ready (initial navigation complete) before mounting
-// This prevents the "Redirecionando..." fallback from showing during redirect
 router.isReady().then(() => {
   app.mount("#app");
 });

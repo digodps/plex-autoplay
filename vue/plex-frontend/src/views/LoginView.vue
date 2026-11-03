@@ -88,23 +88,23 @@ const handleLogin = async () => {
   justify-content: center;
   align-items: center;
   min-height: 100dvh;
-  background: var(--bg-sunken, #f5f5f5);
+  background: var(--surface-raised);
 }
 .login-card {
-  background: var(--surface, white);
+  background: var(--surface);
   padding: 2rem;
-  border-radius: var(--radius-lg, 8px);
-  box-shadow: var(--shadow-2, 0 2px 10px rgba(0, 0, 0, 0.1));
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
   width: 100%;
   max-width: 400px;
 }
 .login-card h1 {
   margin: 0 0 0.5rem;
-  color: var(--accent, #e5a00d);
+  color: var(--accent);
 }
 .login-card p {
   margin: 0 0 1.5rem;
-  color: var(--text-secondary, #666);
+  color: var(--text-secondary);
 }
 .alert.error {
   margin-bottom: 1rem;
@@ -120,8 +120,8 @@ const handleLogin = async () => {
 .form-group input {
   width: 100%;
   padding: 0.75rem;
-  border: 1px solid var(--border, #ddd);
-  border-radius: var(--radius-sm, 4px);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
   box-sizing: border-box;
 }
 .alert.error {
@@ -130,10 +130,10 @@ const handleLogin = async () => {
 button {
   width: 100%;
   padding: 0.75rem;
-  background: var(--accent, #e5a00d);
-  color: var(--accent-contrast, white);
+  background: var(--accent);
+  color: var(--accent-contrast);
   border: none;
-  border-radius: var(--radius-sm, 4px);
+  border-radius: var(--radius-sm);
   font-size: 1rem;
   cursor: pointer;
   display: inline-flex;
@@ -143,7 +143,7 @@ button {
   font-weight: 600;
 }
 button:hover:not(:disabled) {
-  background: var(--accent-hover, #f5b21e);
+  background: var(--accent-hover);
 }
 button:disabled {
   opacity: 0.6;
