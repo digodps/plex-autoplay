@@ -140,8 +140,8 @@ const savePlexConfig = async () => {
       <input
         v-model="plexToken"
         type="text"
-        readonly
-        class="settings-input settings-input--readonly"
+
+        class="settings-input"
       />
       <button class="btn btn--primary btn--inline" @click="fetchPlexIdentity">
         Buscar token
@@ -153,7 +153,7 @@ const savePlexConfig = async () => {
       <input
         v-model="plexToken"
         type="text"
-        readonly
+
         class="settings-input settings-input--number"
       />
     </div>

@@ -96,6 +96,7 @@ app.MapAutoSkipWebSocketEndpoints();
 app.MapMonitoringEndpoints();
 app.MapConfigEndpoints();
 app.MapPlexSaveEndpoint();
+app.MapPlexIdentityEndpoint();
 app.MapThemeEndpoints();
 
 // Serve Vue SPA static files

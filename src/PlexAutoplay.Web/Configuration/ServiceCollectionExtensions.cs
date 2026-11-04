@@ -5,6 +5,7 @@ using PlexAutoplay.Domain.Ports;
 using PlexAutoplay.Infrastructure.Auth;
 using PlexAutoplay.Infrastructure.AutoSkip;
 using PlexAutoplay.Infrastructure.Cache;
+using PlexAutoplay.Infrastructure;
 using PlexAutoplay.Infrastructure.Detection;
 using PlexAutoplay.Infrastructure.PlexProxy;
 using PlexAutoplay.Infrastructure.Sync;
@@ -26,6 +27,7 @@ public static class ServiceCollectionExtensions
 
         // Periodic sync background service
         services.AddHostedService<SyncBackgroundService>();
+        services.AddHostedService<PlexAutoSkipBackgroundService>();
         services.AddHostedService<CatalogSyncBackgroundService>();
 
         // In-memory cache and the generic cache port (pluggable backend)

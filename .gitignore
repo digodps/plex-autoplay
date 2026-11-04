@@ -83,3 +83,6 @@ obj/
 .vs/
 src/PlexAutoplay.Web/core.258355
 src/PlexAutoplay.Web/core.259020
+
+# Docker runtime data (SQLite, app-config)
+data/

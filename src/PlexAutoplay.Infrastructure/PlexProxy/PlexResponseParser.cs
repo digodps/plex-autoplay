@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Xml.Linq;
 using PlexAutoplay.Application;
 
 namespace PlexAutoplay.Infrastructure.PlexProxy;
@@ -53,6 +54,41 @@ public static class PlexResponseParser
     public static IReadOnlyList<PlexEpisodeDto> ParseSeriesEpisodes(string json)
         => ParseEpisodesInternal(json);
 
+    private static IReadOnlyList<PlexEpisodeDto> ParseEpisodesInternal(string json)
+    {
+        var root = JsonSerializer.Deserialize<PlexRoot>(json, Options);
+        var container = root?.MediaContainer;
+        if (container is null)
+            return Array.Empty<PlexEpisodeDto>();
+
+        var episodes = new List<PlexEpisodeDto>();
+        if (container.Metadata is not null)
+        {
+            foreach (var item in container.Metadata)
+            {
+                // Filtro defensivo: apenas episódios (type=4)
+                if (item.Type is not null && item.Type != "4")
+                    continue;
+
+                // O caminho do arquivo está em Media[0].Part[0].File
+                string filePath = "";
+                if (item.Media is not null && item.Media.Count > 0 && item.Media[0].Part is not null && item.Media[0].Part.Count > 0)
+                {
+                    filePath = item.Media[0].Part[0].File ?? "";
+                }
+
+                episodes.Add(new PlexEpisodeDto(
+                    item.RatingKey ?? "",
+                    item.Title ?? "",
+                    item.ParentIndex,
+                    item.Index,
+                    filePath));
+            }
+        }
+
+        return episodes;
+    }
+
     public static (IReadOnlyList<PlexSeriesDto> Items, int TotalSize) ParseSeries(string json)
     {
         var root = JsonSerializer.Deserialize<PlexRoot>(json, Options);
@@ -80,57 +116,42 @@ public static class PlexResponseParser
         return (series, container.TotalSize);
     }
 
-    private static IReadOnlyList<PlexEpisodeDto> ParseEpisodesInternal(string json)
+    public static PlexIdentityResult ParseIdentity(string xml)
     {
-        var root = JsonSerializer.Deserialize<PlexRoot>(json, Options);
-        var metadata = root?.MediaContainer?.Metadata;
-        if (metadata is null)
-            return Array.Empty<PlexEpisodeDto>();
-
-        var episodes = new List<PlexEpisodeDto>();
-        foreach (var item in metadata)
+        try
         {
-            // Only process episodes (type "episode")
-            if (item.Type is not null && item.Type != "episode")
-                continue;
+            var doc = XDocument.Parse(xml);
+            var mediaContainer = doc.Root;
+            if (mediaContainer == null)
+                return PlexIdentityResult.FailedResult("Resposta XML inválida: raiz não encontrada");
 
-            string? filePath = null;
-            if (item.Media is not null)
-            {
-                foreach (var media in item.Media)
-                {
-                    if (media.Part is not null && media.Part.Count > 0)
-                    {
-                        filePath = media.Part[0].File;
-                        break;
-                    }
-                }
-            }
+            var machineIdentifier = mediaContainer.Attribute("machineIdentifier")?.Value ?? "";
+            var friendlyName = mediaContainer.Attribute("friendlyName")?.Value ?? "";
+            var version = mediaContainer.Attribute("version")?.Value ?? "";
 
-            episodes.Add(new PlexEpisodeDto(
-                item.RatingKey ?? "",
-                item.Title ?? "",
-                item.ParentIndex,
-                item.Index,
-                filePath ?? ""));
+            if (string.IsNullOrEmpty(machineIdentifier))
+                return PlexIdentityResult.FailedResult("Identificação do servidor Plex não encontrada na resposta");
+
+            return new PlexIdentityResult(machineIdentifier, friendlyName, version);
         }
-
-        return episodes;
+        catch (Exception ex)
+        {
+            return PlexIdentityResult.FailedResult("Erro ao parsear resposta XML do Plex: " + ex.Message);
+        }
     }
 
-    // --- Tipos de resposta (desserialização tipada) ---
-
+    // DTOs internos para deserialização JSON do Plex
     private sealed class PlexRoot
     {
-        public PlexContainer? MediaContainer { get; set; }
         public List<PlexDirectoryItem>? Directory { get; set; }
+        public PlexMediaContainer? MediaContainer { get; set; }
     }
 
-    private sealed class PlexContainer
+    private sealed class PlexMediaContainer
     {
-        public int TotalSize { get; set; }
-        public List<PlexMetadataItem>? Metadata { get; set; }
         public List<PlexDirectoryItem>? Directory { get; set; }
+        public List<PlexMetadataItem>? Metadata { get; set; }
+        public int TotalSize { get; set; }
     }
 
     private sealed class PlexDirectoryItem

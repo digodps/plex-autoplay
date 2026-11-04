@@ -1,13 +1,27 @@
 <!doctype html>
-<html lang="en">
+<html lang="pt-BR">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>plex-frontend</title>
-    <script type="module" crossorigin src="/assets/index-rMfSRK33.js"></script>
-    <link rel="modulepreload" crossorigin href="/assets/_plugin-vue_export-helper-CTDfljHv.js">
-    <link rel="stylesheet" crossorigin href="/assets/index-BNtKgD0E.css">
+    <title>Plex Autoplay</title>
+    <script>
+      // Anti-FOUC: aplica o tema antes do primeiro paint (script bloqueante).
+      (function () {
+        try {
+          var mode = localStorage.getItem("theme.mode") || "system";
+          var dark =
+            mode === "dark" ||
+            (mode === "system" &&
+              window.matchMedia("(prefers-color-scheme: dark)").matches);
+          document.documentElement.dataset.theme = dark ? "dark" : "light";
+        } catch (e) {
+          document.documentElement.dataset.theme = "light";
+        }
+      })();
+    </script>
+    <script type="module" crossorigin src="/assets/index-C7gexs8C.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-DEh2DZda.css">
   </head>
   <body>
     <div id="app"></div>

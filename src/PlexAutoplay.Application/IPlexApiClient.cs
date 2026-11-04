@@ -9,6 +9,7 @@ public interface IPlexApiClient
     Task<PlexEpisodesResult> GetEpisodesAsync(string sectionKey);
     Task<PlexSeriesPage> GetSeriesAsync(string sectionKey, int containerStart, int containerSize, string? titleQuery = null);
     Task<PlexEpisodesResult> GetSeriesEpisodesAsync(string seriesKey);
+    Task<PlexIdentityResult> GetIdentityAsync(string plexUrl, string plexToken);
 }
 
 /// <summary>
@@ -35,6 +36,19 @@ public record PlexEpisodesResult(
 {
     public static PlexEpisodesResult Empty => new(Array.Empty<PlexEpisodeDto>());
     public static PlexEpisodesResult FailedResult(string errorMessage) => new(Array.Empty<PlexEpisodeDto>(), true, errorMessage);
+}
+
+/// <summary>
+/// Resultado da consulta de identidade do Plex (validação de token/URL).
+/// </summary>
+public record PlexIdentityResult(
+    string MachineIdentifier,
+    string FriendlyName,
+    string Version,
+    bool Failed = false,
+    string? ErrorMessage = null)
+{
+    public static PlexIdentityResult FailedResult(string errorMessage) => new("", "", "", true, errorMessage);
 }
 
 public record PlexLibraryDto(string Key, string Title, string Type, string Agent);
