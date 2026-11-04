@@ -7,7 +7,8 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "lint": "eslint src --config ../../eslint.config.js"
+    "lint": "eslint src --config ../../eslint.config.js",
+    "test:tokens": "node --test tests/tokens.contrast.test.mjs"
   },
   "dependencies": {
     "pinia": "^4.1.0",
@@ -15,12 +16,16 @@
     "vue-router": "^5.4.0"
   },
   "devDependencies": {
+    "@material-tailwind/html": "^2.3.2",
     "@vitejs/plugin-vue": "^6.0.10",
+    "autoprefixer": "^10.6.2",
     "esbuild": "^0.28.2",
     "eslint": "^10.13.0",
     "eslint-plugin-boundaries": "^7.4.1",
     "eslint-plugin-vue": "^10.12.0",
+    "postcss": "^8.5.32",
     "prettier": "^3.9.10",
+    "tailwindcss": "^3.4.19",
     "vite": "^8.3.5"
   }
 }

@@ -1,5 +1,6 @@
 /* ============================================
-   Tokens – Gray Scale (neutral) – §5.1
+   Tokens – neutral scale + brand – §5.1
+   Fonte única de cor. Nenhum literal de cor fora daqui.
    ============================================ */
 
 :root {
@@ -30,6 +31,13 @@
   --accent: #404040;
   --accent-hover: #525252;
   --accent-contrast: #fafafa;
+
+  /* Brand (rail de navegação e acentos) */
+  --brand: #7d2ae8;
+  --brand-strong: #6a1fb8;
+  --brand-soft: #e9e2fb;
+  --rail-bg: #f2f0fa;
+  --rail-border: #e2dcf5;
 
   /* Focus ring (fixed per theme) */
   --focus-ring: #171717;
@@ -62,13 +70,18 @@
   --surface-raised: #1f1f1f;
   --border: #262626;
   --border-strong: #404040;
-  --border-input: #525252;
+  --border-input: #808080;
   --text: #fafafa;
   --text-secondary: #a3a3a3;
-  --text-tertiary: #717171;
+  --text-tertiary: #8f8f8f;
   --accent: #d4d4d4;
   --accent-hover: #e5e5e5;
   --accent-contrast: #171717;
+  --brand: #a578f0;
+  --brand-strong: #c9b4f7;
+  --brand-soft: #2a2145;
+  --rail-bg: #1b1730;
+  --rail-border: #2c2547;
   --focus-ring: #fafafa;
   --shadow-sm: 0 1px 3px rgba(0,0,0,0.2);
   --danger: #f87171;

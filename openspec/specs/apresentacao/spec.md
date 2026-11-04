@@ -10,15 +10,23 @@ acessibilidade (contraste, foco, alvos de toque, movimento reduzido).
 ## Requirements
 
 ### Requirement: Grayscale theme tokens in light and dark modes
-The system SHALL provide a single source of visual tokens in `src/styles/tokens.css` defining a neutral grayscale scale for both light (`:root`) and dark (`[data-theme="dark"]`) modes, where every text token meets a contrast ratio of at least 4.5:1 and every non-text token used to delimit or identify a control (input borders, icons, focus ring) meets at least 3:1 against its adjacent background.
+The system SHALL define every visual token in `src/styles/tokens.css`, for both light (`:root`) and dark (`[data-theme="dark"]`) modes: a neutral grayscale scale for text and surfaces plus a brand scale for navigation and accents, with text pairs at 4.5:1 or better and control-delimiting non-text pairs at 3:1 or better.
 
 #### Scenario: Text and non-text contrast are met in both modes
 - **WHEN** the interface renders in light mode or dark mode
-- **THEN** body, secondary and tertiary text reach at least 4.5:1 against the surface they sit on, and input borders, icons, controls and the focus ring reach at least 3:1 against the adjacent background
+- **THEN** body, secondary and tertiary text reach at least 4.5:1 against the surface they sit on, brand-strong labels reach at least 4.5:1 against the rail background, and input borders, icons, controls and the focus ring reach at least 3:1 against the adjacent background
+
+#### Scenario: Brand tokens are defined in both modes
+- **WHEN** `src/styles/tokens.css` is inspected
+- **THEN** `--brand`, `--brand-strong`, `--brand-soft`, `--rail-bg` and `--rail-border` are declared in `:root` and in `[data-theme="dark"]`
 
 #### Scenario: No color literal outside the token file
 - **WHEN** any `.vue` or component CSS file is inspected
 - **THEN** it contains no hexadecimal color literal, except the semantic tokens (`danger`, `success`, `warning`) and data-driven values
+
+#### Scenario: Contrast regression is caught by a test
+- **WHEN** a token value is changed so a text pair drops below 4.5:1 or a non-text pair below 3:1
+- **THEN** `node --test tests/` fails naming the offending token pair
 
 ### Requirement: Global theme applied before first paint
 The system SHALL apply the user's theme by setting `data-theme="light"|"dark"` on the root element before the application bundle executes, resolving `system` through `prefers-color-scheme`, so that no flash of incorrect theme occurs on any route.
@@ -45,6 +53,10 @@ The system SHALL enforce one-way import boundaries such that views may import co
 #### Scenario: A component reads global state
 - **WHEN** a file under `components/` imports a store or a composable
 - **THEN** the lint step reports an error and the build gate fails
+
+#### Scenario: A navigation component changes the route
+- **WHEN** a component under `components/` imports `vue-router`
+- **THEN** the lint step reports an error and the shell performs the route change instead, through an emitted event
 
 ### Requirement: No inline styles in components
 The system SHALL express all static styling through tokens and CSS classes, leaving inline `style` attributes only for justified dynamic bindings.
