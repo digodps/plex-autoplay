@@ -1,4 +1,5 @@
 using PlexAutoplay.Application;
+using PlexAutoplay.Application.UseCases;
 using PlexAutoplay.Domain;
 using PlexAutoplay.Domain.Ports;
 using PlexAutoplay.Infrastructure.Auth;
@@ -8,7 +9,6 @@ using PlexAutoplay.Infrastructure.Detection;
 using PlexAutoplay.Infrastructure.PlexProxy;
 using PlexAutoplay.Infrastructure.Sync;
 using PlexAutoplay.Infrastructure.Telemetry;
-using PlexAutoplay.Web.Services;
 
 namespace PlexAutoplay.Web.Configuration;
 
@@ -45,14 +45,15 @@ public static class ServiceCollectionExtensions
 
         // JWT token service
         var jwtSecret = Environment.GetEnvironmentVariable("JWT_SECRET") ?? "default-secret-change-in-production";
-        services.AddSingleton(new JwtTokenService(jwtSecret));
+        services.AddSingleton<JwtTokenService>(sp => new JwtTokenService(jwtSecret, sp.GetRequiredService<ILogger<JwtTokenService>>()));
+        services.AddSingleton<ITokenService>(sp => sp.GetRequiredService<JwtTokenService>());
 
         // Plex configuration
         var plexUrl = Environment.GetEnvironmentVariable("PLEX_URL") ?? "http://localhost:32400";
         var plexToken = Environment.GetEnvironmentVariable("PLEX_TOKEN") ?? "";
 
         // HttpClient for image proxy
-        services.AddSingleton<ImageProxyService>(sp =>
+        services.AddSingleton<IImageProxyService>(sp =>
         {
             var httpClientFactory = sp.GetRequiredService<IHttpClientFactory>();
             var httpClient = httpClientFactory.CreateClient();
@@ -74,6 +75,14 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IPlexAutoSkipService>(sp =>
             new PlexAutoSkipService(sp.GetRequiredService<IMarkerRepository>()));
 
+        // Use cases (application boundary)
+        services.AddSingleton<LibraryScanUseCase>();
+        services.AddSingleton<SaveMarkerUseCase>();
+        services.AddSingleton<GetMarkersQuery>();
+        services.AddSingleton<GetSeriesQuery>();
+        services.AddSingleton<GetThemeQuery>();
+        services.AddSingleton<SaveThemeCommand>();
+
         services.Configure<Microsoft.AspNetCore.Http.Json.JsonOptions>(options =>
         {
             options.SerializerOptions.PropertyNameCaseInsensitive = true;
@@ -86,6 +95,12 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IScanJobStore, ScanJobStore>();
 
         // Process information service
-        services.AddSingleton<IProcessInfoService, ProcessInfoService>();
+        services.AddSingleton<IProcessInfoService, PlexAutoplay.Infrastructure.Platform.ProcessInfoService>();
+
+        // Local media path resolver (probes the filesystem)
+        services.AddSingleton<IPathResolver, PlexAutoplay.Infrastructure.Platform.PathResolver>();
+
+        // Plex configuration store (reads/writes .env)
+        services.AddSingleton<IPlexConfigStore, PlexAutoplay.Infrastructure.Configuration.PlexConfigStore>();
     }
 }

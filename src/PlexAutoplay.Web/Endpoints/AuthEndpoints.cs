@@ -1,11 +1,13 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using PlexAutoplay.Infrastructure.Auth;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
+using PlexAutoplay.Application.DTOs;
+using PlexAutoplay.Application.UseCases;
 
 namespace PlexAutoplay.Web.Endpoints;
 
 /// <summary>
-/// Endpoints de autenticação (POST /auth/login define cookie HttpOnly).
+/// Endpoints de autenticação (POST /auth/login define cookie).
 /// </summary>
 public static class AuthEndpoints
 {
@@ -13,44 +15,33 @@ public static class AuthEndpoints
     {
         app.MapGet("/auth/login", () => Results.Ok(new { message = "Use POST to authenticate" }));
 
-        app.MapPost("/auth/login", (HttpContext context, [FromServices] JwtTokenService tokenService) =>
+        app.MapPost("/auth/login", (
+            HttpContext context,
+            [FromServices] LoginUseCase loginUseCase,
+            [FromBody(EmptyBodyBehavior = EmptyBodyBehavior.Allow)] LoginRequest? request) =>
         {
-            using var reader = new StreamReader(context.Request.Body);
-            var json = reader.ReadToEndAsync().Result;
+            var password = request?.Password ?? "";
 
-            var password = ExtractPassword(json);
+            var (success, token) = loginUseCase.TryGenerate(password);
 
-            if (password == adminPassword)
+            if (!success)
             {
-                var token = tokenService.GenerateToken();
-
-                // Cookie legível pelo frontend: o guarda do Vue lê o token em
-                // document.cookie e o envia como Bearer. HttpOnly impediria o
-                // frontend de renovar o token após o login.
-                // HttpOnly removido: o frontend precisa ler o token via document.cookie
-                // (stores/auth.js getToken usa document.cookie; o middleware lê header Authorization).
-                // O middleware JwtAuthMiddleware continua validando o token tanto do header
-                // quanto deste cookie, com ou sem HttpOnly.
-                var cookieSecure = !disableHttp; // Secure only when HTTPS is enabled
-                context.Response.Cookies.Append("auth_token", token, new CookieOptions
-                {
-                    HttpOnly = false,
-                    Secure = cookieSecure,
-                    SameSite = SameSiteMode.Lax,
-                    Path = "/",
-                    IsEssential = true
-                });
-
-                return Results.Ok(new { success = true, token });
+                return Results.Unauthorized();
             }
 
-            return Results.Unauthorized();
-        });
-    }
+            // Cookie legível pelo frontend: o guarda do Vue lê o token em
+            // document.cookie e o envia como Bearer.
+            var cookieSecure = !disableHttp; // Secure only when HTTPS is enabled
+            context.Response.Cookies.Append("auth_token", token!, new CookieOptions
+            {
+                HttpOnly = false,
+                Secure = cookieSecure,
+                SameSite = SameSiteMode.Lax,
+                Path = "/",
+                IsEssential = true
+            });
 
-    private static string? ExtractPassword(string json)
-    {
-        var match = System.Text.RegularExpressions.Regex.Match(json, @"""password""\s*:\s*""([^""]*)""");
-        return match.Success ? match.Groups[1].Value : null;
+            return Results.Ok(new { success = true, token });
+        });
     }
 }

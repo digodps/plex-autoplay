@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using PlexAutoplay.Domain.Ports;
 
 namespace PlexAutoplay.Web.Endpoints;
@@ -11,8 +12,11 @@ public static class AutoSkipWebSocketEndpoints
 {
     public static void MapAutoSkipWebSocketEndpoints(this IEndpointRouteBuilder app)
     {
-        app.Map("/ws", async (HttpContext context, [FromServices] IPlexAutoSkipService autoSkipService) =>
+        app.Map("/ws", async (HttpContext context,
+            [FromServices] IPlexAutoSkipService autoSkipService,
+            [FromServices] ILoggerFactory loggerFactory) =>
         {
+            var logger = loggerFactory.CreateLogger("PlexAutoSkip");
             if (context.WebSockets.IsWebSocketRequest)
             {
                 var webSocket = await context.WebSockets.AcceptWebSocketAsync();
@@ -47,7 +51,7 @@ public static class AutoSkipWebSocketEndpoints
                         if (!state.Equals("play", StringComparison.OrdinalIgnoreCase))
                             continue;
 
-                        var markers = autoSkipService.GetMarkersForEpisode(ratingKey);
+                        var markers = await autoSkipService.GetMarkersForEpisodeAsync(ratingKey);
 
                         foreach (var marker in markers)
                         {
@@ -72,9 +76,10 @@ public static class AutoSkipWebSocketEndpoints
                         var ackBytes = System.Text.Encoding.UTF8.GetBytes(ackResponse);
                         await webSocket.SendAsync(new ArraySegment<byte>(ackBytes), System.Net.WebSockets.WebSocketMessageType.Text, true, CancellationToken.None);
                     }
-                    catch
+                    catch (System.Text.Json.JsonException ex)
                     {
                         // Invalid JSON, ignore
+                        logger.LogWarning(ex, "WebSocket recebeu payload JSON inválido");
                     }
                 }
             }

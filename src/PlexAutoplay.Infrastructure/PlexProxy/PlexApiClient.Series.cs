@@ -1,9 +1,8 @@
 using System.Diagnostics;
-using System.Text.Json;
+using Microsoft.Extensions.Logging;
 using PlexAutoplay.Application;
-using Serilog;
 
-namespace PlexAutoplay.Web.Services;
+namespace PlexAutoplay.Infrastructure.PlexProxy;
 
 /// <summary>
 /// Partial do <see cref="PlexApiClient"/> com endpoints de séries
@@ -43,40 +42,17 @@ public partial class PlexApiClient
             {
                 activity?.SetTag("http.status_code", (int)response.StatusCode);
                 activity?.SetTag("error", true);
-                Log.Warning("Plex API returned {StatusCode} for GetSeries", (int)response.StatusCode);
+                _logger.LogWarning("Plex API returned {StatusCode} for GetSeries", (int)response.StatusCode);
                 return new PlexSeriesPage([], 0, Failed: true);
             }
 
             activity?.SetTag("http.status_code", (int)response.StatusCode);
 
             var json = await response.Content.ReadAsStringAsync();
-            using var doc = JsonDocument.Parse(json);
-
-            var series = new List<PlexSeriesDto>();
-            var container = doc.RootElement.GetProperty("MediaContainer");
-            var totalSize = container.TryGetProperty("totalSize", out var totalEl) ? totalEl.GetInt32()
-                            : container.TryGetProperty("TotalSize", out var totalEl2) ? totalEl2.GetInt32()
-                            : 0;
-
-            if (container.TryGetProperty("Metadata", out var metadata))
-            {
-                foreach (var item in metadata.EnumerateArray())
-                {
-                    // Filtro defensivo: apenas séries (por segurança contra versões que ignoram type=show)
-                    if (item.TryGetProperty("type", out var typeEl) && typeEl.GetString() != "show")
-                        continue;
-
-                    series.Add(new PlexSeriesDto(
-                        item.GetProperty("ratingKey").GetString() ?? "",
-                        item.GetProperty("title").GetString() ?? "",
-                        item.TryGetProperty("summary", out var summaryEl) ? summaryEl.GetString() ?? "" : "",
-                        item.TryGetProperty("thumb", out var thumbEl) ? thumbEl.GetString() ?? "" : ""
-                    ));
-                }
-            }
+            var (series, totalSize) = PlexResponseParser.ParseSeries(json);
 
             var durationMs = (DateTime.UtcNow - startTime).TotalMilliseconds;
-            Log.Information("Plex API call: GetSeries", new { external_service = "plex", duration_ms = durationMs, status_code = (int)response.StatusCode, section_key = sectionKey, count = series.Count, total_size = totalSize });
+            _logger.LogInformation("Plex API call: GetSeries {@Data}", new { external_service = "plex", duration_ms = durationMs, status_code = (int)response.StatusCode, section_key = sectionKey, count = series.Count, total_size = totalSize });
 
             return new PlexSeriesPage(series, totalSize);
         }
@@ -86,7 +62,7 @@ public partial class PlexApiClient
             activity?.SetTag("error", true);
             activity?.SetTag("error.message", ex.Message);
             PlexErrorCounter.Add(1, new KeyValuePair<string, object?>("service", "plex"), new KeyValuePair<string, object?>("error_type", ex.GetType().Name));
-            Log.Error(ex, "Plex API call failed: GetSeries", new { external_service = "plex", duration_ms = durationMs, error_type = ex.GetType().Name, section_key = sectionKey });
+            _logger.LogError(ex, "Plex API call failed: GetSeries {@Data}", new { external_service = "plex", duration_ms = durationMs, error_type = ex.GetType().Name, section_key = sectionKey });
             return new PlexSeriesPage([], 0, Failed: true);
         }
     }
@@ -110,52 +86,17 @@ public partial class PlexApiClient
                 activity?.SetTag("error", true);
                 var statusCode = (int)response.StatusCode;
                 var errorMessage = $"Plex API retornou status {statusCode} ao buscar episódios da série {seriesKey}. Verifique a conexão com o servidor Plex.";
-                Log.Warning("Plex API returned {StatusCode} for GetSeriesEpisodes", statusCode);
+                _logger.LogWarning("Plex API returned {StatusCode} for GetSeriesEpisodes", statusCode);
                 return PlexEpisodesResult.FailedResult(errorMessage);
             }
 
             activity?.SetTag("http.status_code", (int)response.StatusCode);
 
             var json = await response.Content.ReadAsStringAsync();
-            using var doc = JsonDocument.Parse(json);
-
-            var episodes = new List<PlexEpisodeDto>();
-            if (doc.RootElement.GetProperty("MediaContainer").TryGetProperty("Metadata", out var metadata) && metadata.ValueKind == JsonValueKind.Array)
-            {
-                foreach (var item in metadata.EnumerateArray())
-                {
-                    if (item.TryGetProperty("type", out var typeEl) && typeEl.GetString() != "episode")
-                        continue;
-
-                    string? filePath = null;
-                    if (item.TryGetProperty("Media", out var mediaEl))
-                    {
-                        foreach (var media in mediaEl.EnumerateArray())
-                        {
-                            if (media.TryGetProperty("Part", out var partsEl))
-                            {
-                                foreach (var part in partsEl.EnumerateArray())
-                                {
-                                    filePath = part.GetProperty("file").GetString();
-                                    break;
-                                }
-                            }
-                            if (filePath != null) break;
-                        }
-                    }
-
-                    episodes.Add(new PlexEpisodeDto(
-                        item.GetProperty("ratingKey").GetString() ?? "",
-                        item.GetProperty("title").GetString() ?? "",
-                        item.GetProperty("parentIndex").GetInt32(),
-                        item.GetProperty("index").GetInt32(),
-                        filePath ?? ""
-                    ));
-                }
-            }
+            var episodes = PlexResponseParser.ParseSeriesEpisodes(json);
 
             var durationMs = (DateTime.UtcNow - startTime).TotalMilliseconds;
-            Log.Information("Plex API call: GetSeriesEpisodes", new { external_service = "plex", duration_ms = durationMs, status_code = (int)response.StatusCode, series_key = seriesKey, count = episodes.Count });
+            _logger.LogInformation("Plex API call: GetSeriesEpisodes {@Data}", new { external_service = "plex", duration_ms = durationMs, status_code = (int)response.StatusCode, series_key = seriesKey, count = episodes.Count });
 
             return new PlexEpisodesResult(episodes);
         }
@@ -166,7 +107,7 @@ public partial class PlexApiClient
             activity?.SetTag("error.message", ex.Message);
             PlexErrorCounter.Add(1, new KeyValuePair<string, object?>("service", "plex"), new KeyValuePair<string, object?>("error_type", ex.GetType().Name));
             var errorMessage = $"Falha ao contatar a API do Plex ao buscar episódios da série {seriesKey}: {ex.Message}. Verifique se o servidor Plex está acessível e se o token está configurado corretamente.";
-            Log.Error(ex, "Plex API call failed: GetSeriesEpisodes", new { external_service = "plex", duration_ms = durationMs, error_type = ex.GetType().Name, series_key = seriesKey });
+            _logger.LogError(ex, "Plex API call failed: GetSeriesEpisodes {@Data}", new { external_service = "plex", duration_ms = durationMs, error_type = ex.GetType().Name, series_key = seriesKey });
             return PlexEpisodesResult.FailedResult(errorMessage);
         }
     }

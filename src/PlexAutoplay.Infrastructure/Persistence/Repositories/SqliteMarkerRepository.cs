@@ -15,38 +15,6 @@ public class SqliteMarkerRepository : IMarkerRepository
     public SqliteMarkerRepository(string connectionString)
     {
         _connectionString = connectionString;
-        // Garante que o diretório do banco existe (evita SQLite Error 14 em Docker/ZimaOS)
-        var dir = Path.GetDirectoryName(_connectionString);
-        if (!string.IsNullOrEmpty(dir))
-        {
-            Directory.CreateDirectory(dir);
-        }
-        EnsureTableCreated();
-    }
-
-    private void EnsureTableCreated()
-    {
-        using var conn = CreateConnection();
-        conn.ExecuteAsync(
-            @"CREATE TABLE IF NOT EXISTS Markers (
-                RatingKey TEXT NOT NULL,
-                Kind TEXT NOT NULL,
-                StartMs INTEGER NOT NULL,
-                EndMs INTEGER NOT NULL,
-                Origin TEXT NOT NULL DEFAULT 'manual',
-                PRIMARY KEY (RatingKey, Kind)
-            )").Wait();
-
-        // Migração aditiva: bancos criados antes da coluna Origin ganham a coluna com default 'manual'.
-        try
-        {
-            conn.ExecuteAsync(
-                "ALTER TABLE Markers ADD COLUMN Origin TEXT NOT NULL DEFAULT 'manual'").Wait();
-        }
-        catch
-        {
-            // Coluna já existe (ex.: "duplicate column name: Origin") — nada a fazer.
-        }
     }
 
     private DbConnection CreateConnection() => new SqliteConnection(_connectionString);

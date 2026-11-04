@@ -15,28 +15,6 @@ public class SqliteSeriesRepository : ISeriesRepository
     public SqliteSeriesRepository(string connectionString)
     {
         _connectionString = connectionString;
-        // Garante que o diretório do banco existe (evita SQLite Error 14 em Docker/ZimaOS)
-        var dir = Path.GetDirectoryName(_connectionString);
-        if (!string.IsNullOrEmpty(dir))
-        {
-            Directory.CreateDirectory(dir);
-        }
-        EnsureTableCreated();
-    }
-
-    private void EnsureTableCreated()
-    {
-        using var conn = CreateConnection();
-        conn.ExecuteAsync(
-            @"CREATE TABLE IF NOT EXISTS Series (
-                RatingKey TEXT NOT NULL PRIMARY KEY,
-                LibraryRatingKey TEXT NOT NULL,
-                Title TEXT NOT NULL,
-                Summary TEXT NOT NULL,
-                Thumb TEXT NOT NULL,
-                SyncedAt TEXT NOT NULL DEFAULT (datetime('now')),
-                FOREIGN KEY (LibraryRatingKey) REFERENCES Library(RatingKey) ON DELETE CASCADE
-            )").Wait();
     }
 
     private DbConnection CreateConnection() => new SqliteConnection(_connectionString);

@@ -2,9 +2,10 @@ namespace PlexAutoplay.Infrastructure.PlexProxy;
 
 using System.Net;
 using System.Net.Http.Headers;
+using PlexAutoplay.Application;
 using PlexAutoplay.Domain.Ports;
 
-public class ImageProxyService
+public class ImageProxyService : IImageProxyService
 {
     private readonly HttpClient _httpClient;
     private readonly string _plexToken;

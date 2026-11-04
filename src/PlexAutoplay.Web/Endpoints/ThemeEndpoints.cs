@@ -1,15 +1,16 @@
 namespace PlexAutoplay.Web.Endpoints;
 
+using Microsoft.AspNetCore.Mvc;
+using PlexAutoplay.Application.UseCases;
 using PlexAutoplay.Domain.Entities;
-using PlexAutoplay.Domain.Ports;
 
 public static class ThemeEndpoints
 {
     public static void MapThemeEndpoints(this IEndpointRouteBuilder app)
     {
-        app.MapGet("/api/theme", async (IUserThemeRepository repo) =>
+        app.MapGet("/api/theme", async ([FromServices] GetThemeQuery themeQuery) =>
         {
-            var preference = await repo.GetAsync("admin");
+            var preference = await themeQuery.GetAsync();
             return Results.Ok(preference ?? new UserThemePreference
             {
                 AccentColor = "#171717",
@@ -17,7 +18,7 @@ public static class ThemeEndpoints
             });
         });
 
-        app.MapPut("/api/theme", async (IUserThemeRepository repo, UserThemePreference preference) =>
+        app.MapPut("/api/theme", async ([FromServices] SaveThemeCommand themeCommand, UserThemePreference preference) =>
         {
             if (preference.Mode is not ("light" or "dark" or "system") ||
                 preference.AccentColor is not ("#171717" or "#2563eb" or "#16a34a" or "#7c3aed" or "#db2777" or "#4f46e5"))
@@ -28,7 +29,7 @@ public static class ThemeEndpoints
                 });
             }
 
-            await repo.UpsertAsync(preference with { UserId = "admin" });
+            await themeCommand.SaveAsync(preference);
             return Results.NoContent();
         });
     }

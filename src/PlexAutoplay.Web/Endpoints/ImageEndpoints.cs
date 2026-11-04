@@ -1,5 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
-using PlexAutoplay.Infrastructure.PlexProxy;
+using PlexAutoplay.Application;
 
 namespace PlexAutoplay.Web.Endpoints;
 
@@ -10,7 +10,7 @@ public static class ImageEndpoints
 {
     public static void MapImageEndpoints(this IEndpointRouteBuilder app)
     {
-        app.MapGet("/api/images/{**imagePath}", async (string imagePath, [FromServices] ImageProxyService proxyService) =>
+        app.MapGet("/api/images/{**imagePath}", async (string imagePath, [FromServices] IImageProxyService proxyService) =>
         {
             try
             {

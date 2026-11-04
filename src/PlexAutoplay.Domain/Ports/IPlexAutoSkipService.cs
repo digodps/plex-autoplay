@@ -8,7 +8,7 @@ public interface IPlexAutoSkipService
     /// <summary>
     /// Obtém marcadores para um episódio específico.
     /// </summary>
-    IReadOnlyList<MarkerInfo> GetMarkersForEpisode(string ratingKey);
+    Task<IReadOnlyList<MarkerInfo>> GetMarkersForEpisodeAsync(string ratingKey);
 }
 
 /// <summary>

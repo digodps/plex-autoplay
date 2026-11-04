@@ -2,8 +2,6 @@ namespace PlexAutoplay.Application.UseCases;
 
 using PlexAutoplay.Domain.Entities;
 using PlexAutoplay.Domain.Ports;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 
 public class SaveMarkerUseCase
 {
@@ -14,37 +12,43 @@ public class SaveMarkerUseCase
         _markerRepository = markerRepository;
     }
 
-    public async Task AddMarkerAsync(string ratingKey, string kind, long startMs, long endMs)
+    public async Task<SaveMarkerResult> AddMarkerAsync(string ratingKey, string kind, long startMs, long endMs)
     {
         var exists = await _markerRepository.ExistsAsync(ratingKey, kind);
         if (exists)
         {
-            return;
+            return SaveMarkerResult.AlreadyExists;
         }
 
-        var marker = new Marker
+        await _markerRepository.AddAsync(new Marker
         {
             RatingKey = ratingKey,
             Kind = kind,
             StartMs = startMs,
-            EndMs = endMs
-        };
+            EndMs = endMs,
+            Origin = "manual"
+        });
 
-        await _markerRepository.AddAsync(marker);
+        return SaveMarkerResult.Created;
+    }
+
+    /// <summary>Atualiza o intervalo de um marcador existente. Retorna null se não existir.</summary>
+    public async Task<Marker?> UpdateMarkerAsync(string ratingKey, string kind, long startMs, long endMs)
+    {
+        var current = (await _markerRepository.GetByRatingKeyAsync(ratingKey))
+            .FirstOrDefault(m => string.Equals(m.Kind, kind, StringComparison.OrdinalIgnoreCase));
+        if (current is null)
+        {
+            return null;
+        }
+
+        var updated = current with { StartMs = startMs, EndMs = endMs };
+        await _markerRepository.UpdateAsync(updated);
+        return updated;
     }
 
     public async Task RemoveMarkerAsync(string ratingKey, string kind)
     {
         await _markerRepository.DeleteAsync(ratingKey, kind);
-    }
-
-    public async Task<IEnumerable<Marker>> GetAllMarkersAsync()
-    {
-        return await _markerRepository.GetAllAsync();
-    }
-
-    public async Task<IEnumerable<Marker>> GetMarkersByRatingKeyAsync(string ratingKey)
-    {
-        return (await _markerRepository.GetByRatingKeyAsync(ratingKey)).ToList();
     }
 }

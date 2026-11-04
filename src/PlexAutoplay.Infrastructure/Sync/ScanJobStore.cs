@@ -1,7 +1,7 @@
 using PlexAutoplay.Domain.Ports;
 using System.Collections.Concurrent;
 
-namespace PlexAutoplay.Web.Services;
+namespace PlexAutoplay.Infrastructure.Sync;
 
 /// <summary>Implementação em memória de <see cref="IScanJobStore"/>.</summary>
 public class ScanJobStore : IScanJobStore

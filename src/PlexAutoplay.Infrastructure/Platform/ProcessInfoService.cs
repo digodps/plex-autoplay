@@ -3,7 +3,7 @@ using System.Diagnostics;
 
 using PlexAutoplay.Domain.Ports;
 
-namespace PlexAutoplay.Domain;
+namespace PlexAutoplay.Infrastructure.Platform;
 
 /// <summary>
 /// Implementação concreta da abstração IProcessInfoService.

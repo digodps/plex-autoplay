@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using PlexAutoplay.Infrastructure.Persistence;
 using PlexAutoplay.Web.Configuration;
 using PlexAutoplay.Web.Endpoints;
 using PlexAutoplay.Web.Middleware;
@@ -45,6 +46,8 @@ Log.Information("Serviços de aplicação adicionados.");
 // Admin password for auth endpoints
 var adminPassword = Environment.GetEnvironmentVariable("ADMIN_PASSWORD") ?? "admin";
 Log.Information("Admin password set.");
+builder.Services.AddSingleton(sp =>
+    new PlexAutoplay.Application.UseCases.LoginUseCase(sp.GetRequiredService<PlexAutoplay.Application.ITokenService>(), adminPassword));
 
 // Media root for resolving local media file paths
 var mediaRoot = Environment.GetEnvironmentVariable("MEDIA_ROOT") ?? "/media";
@@ -100,5 +103,10 @@ app.UseStaticFiles();
 
 // SPA fallback: routes not matching API go to index.html
 app.MapFallbackToFile("index.html");
+
+// --- Database schema initialization (composition root, before serving) ---
+Log.Information("Inicializando schema do banco...");
+await DatabaseInitializer.InitializeAsync(DatabaseInitializer.DefaultConnectionString);
+Log.Information("Schema do banco inicializado.");
 
 app.Run();

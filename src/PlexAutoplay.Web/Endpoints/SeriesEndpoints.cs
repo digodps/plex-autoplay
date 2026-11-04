@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using PlexAutoplay.Application;
-using PlexAutoplay.Domain.Ports;
+using PlexAutoplay.Application.UseCases;
 
 namespace PlexAutoplay.Web.Endpoints;
 
@@ -13,7 +13,7 @@ public static class SeriesEndpoints
     {
         app.MapGet("/api/series/{sectionKey}", async (
             string sectionKey,
-            [FromServices] ISeriesRepository seriesRepository,
+            [FromServices] GetSeriesQuery seriesQuery,
             int? page = 1,
             int? pageSize = 24,
             string? query = null) =>
@@ -22,7 +22,7 @@ public static class SeriesEndpoints
             var pageIndex = page is > 0 ? page.Value : 1;
             var offset = (pageIndex - 1) * size;
 
-            var (items, total) = await seriesRepository.GetByLibraryAsync(sectionKey, offset, size, query);
+            var (items, total) = await seriesQuery.ListAsync(sectionKey, offset, size, query);
 
             var resultItems = items.Select(s => new
             {
@@ -43,7 +43,8 @@ public static class SeriesEndpoints
 
         app.MapGet("/api/series/{sectionKey}/{seriesKey}/episodes", async (
             string seriesKey,
-            [FromServices] IPlexApiClient plexClient) =>
+            [FromServices] IPlexApiClient plexClient,
+            [FromServices] IPathResolver pathResolver) =>
         {
             var episodesResult = await plexClient.GetSeriesEpisodesAsync(seriesKey);
 
@@ -60,7 +61,7 @@ public static class SeriesEndpoints
                 title = e.Title,
                 season = e.ParentIndex,
                 episode = e.Index,
-                local_path = MediaPathResolver.Resolve(mediaRoot, e.FilePath)
+                local_path = pathResolver.Resolve(mediaRoot, e.FilePath)
             });
             return Results.Ok(result);
         });

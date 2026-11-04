@@ -2,7 +2,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using PlexAutoplay.Application;
-using PlexAutoplay.Domain.Entities;
+using PlexAutoplay.Application.UseCases;
 using PlexAutoplay.Domain.Ports;
 using System.Diagnostics.Metrics;
 using System.Threading;
@@ -14,8 +14,7 @@ public class SyncBackgroundService : BackgroundService
 {
     private readonly ILogger<SyncBackgroundService> _logger;
     private readonly IPlexApiClient _plexClient;
-    private readonly IMarkerDetector _markerDetector;
-    private readonly IMarkerRepository _markerRepository;
+    private readonly LibraryScanUseCase _libraryScan;
     private readonly string _mediaRoot;
     private int _intervalMinutes;
     private static readonly Meter SyncMeter = new("PlexAutoplay.Sync");
@@ -25,14 +24,12 @@ public class SyncBackgroundService : BackgroundService
     public SyncBackgroundService(
         ILogger<SyncBackgroundService> logger,
         IPlexApiClient plexClient,
-        IMarkerDetector markerDetector,
-        IMarkerRepository markerRepository,
+        LibraryScanUseCase libraryScan,
         IConfiguration configuration)
     {
         _logger = logger;
         _plexClient = plexClient;
-        _markerDetector = markerDetector;
-        _markerRepository = markerRepository;
+        _libraryScan = libraryScan;
         _mediaRoot = configuration["MEDIA_ROOT"] ?? "/media";
         _intervalMinutes = configuration.GetValue("SYNC_INTERVAL_MINUTES", 5);
     }
@@ -100,47 +97,12 @@ public class SyncBackgroundService : BackgroundService
                     errors++;
                     continue;
                 }
-                var episodes = episodesResult.Episodes;
 
-                foreach (var episode in episodes)
-                {
-                    // Skip if already has both intro and credits markers
-                    var hasIntro = await _markerRepository.ExistsAsync(episode.RatingKey, "intro");
-                    var hasCredits = await _markerRepository.ExistsAsync(episode.RatingKey, "credits");
-                    if (hasIntro && hasCredits)
-                    {
-                        skipped++;
-                        continue;
-                    }
+                var seeds = episodesResult.Episodes.Select(e => new EpisodeSeed(e.RatingKey, e.FilePath));
+                var summary = await _libraryScan.ScanLibraryAsync(seeds, _mediaRoot);
 
-                    // Resolve local media path
-                    var localPath = MediaPathResolver.Resolve(_mediaRoot, episode.FilePath);
-                    if (string.IsNullOrEmpty(localPath) || !System.IO.File.Exists(localPath))
-                    {
-                        skipped++;
-                        continue;
-                    }
-
-                    // Detect markers via ffprobe
-                    var detectedMarkers = _markerDetector.Detect(localPath);
-
-                    foreach (var marker in detectedMarkers)
-                    {
-                        var exists = await _markerRepository.ExistsAsync(episode.RatingKey, marker.Kind);
-                        if (!exists)
-                        {
-                            await _markerRepository.AddAsync(new PlexAutoplay.Domain.Entities.Marker
-                            {
-                                RatingKey = episode.RatingKey,
-                                Kind = marker.Kind,
-                                StartMs = marker.StartMs,
-                                EndMs = marker.EndMs
-                            });
-                        }
-                    }
-
-                    processed++;
-                }
+                processed += summary.Processed;
+                skipped += summary.Skipped;
             }
             catch (Exception ex)
             {

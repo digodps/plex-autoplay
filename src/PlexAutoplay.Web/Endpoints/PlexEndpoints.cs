@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using PlexAutoplay.Application;
+using PlexAutoplay.Application.UseCases;
 using PlexAutoplay.Domain.Ports;
-using PlexAutoplay.Web.Services;
 using Serilog;
 
 namespace PlexAutoplay.Web.Endpoints;
@@ -20,9 +20,9 @@ public static class PlexEndpoints
 
         app.MapPost("/api/plex/scan", async (
             [FromServices] IPlexApiClient plexClient,
-            [FromServices] IMarkerRepository markerRepo,
-            [FromServices] IMarkerDetector markerDetector,
-            [FromServices] IScanJobStore scanJobs) =>
+            [FromServices] LibraryScanUseCase libraryScan,
+            [FromServices] IScanJobStore scanJobs,
+            [FromServices] IPathResolver pathResolver) =>
         {
             var jobId = Guid.NewGuid().ToString();
             var job = new ScanJob { JobId = jobId, Status = "queued" };
@@ -63,43 +63,16 @@ public static class PlexEndpoints
                                 scanJobs.AddLog(jobId, "error", $"Falha ao buscar episódios da biblioteca {lib.Key}", "Verifique conexão com Plex e tente novamente.");
                                 continue;
                             }
-                            var episodes = episodesResult.Episodes;
 
-                            foreach (var episode in episodes)
+                            var seeds = episodesResult.Episodes.Select(e => new EpisodeSeed(e.RatingKey, e.FilePath));
+                            var summary = await libraryScan.ScanLibraryAsync(seeds, mediaRoot, origin: "detected");
+
+                            processed += summary.Processed;
+                            skipped += summary.Skipped;
+
+                            if (summary.Skipped > 0)
                             {
-                                if (job.Status == "cancelled") break;
-
-                                // Skip if already has both intro and credits markers
-                                var hasIntro = await markerRepo.ExistsAsync(episode.RatingKey, "intro");
-                                var hasCredits = await markerRepo.ExistsAsync(episode.RatingKey, "credits");
-                                if (hasIntro && hasCredits)
-                                {
-                                    skipped++;
-                                    continue;
-                                }
-
-                                // Resolve local media path
-                                var localPath = MediaPathResolver.Resolve(mediaRoot, episode.FilePath);
-                                if (string.IsNullOrEmpty(localPath) || !File.Exists(localPath))
-                                {
-                                    skipped++;
-                                    scanJobs.AddLog(jobId, "skip", $"Episódio pulado: {episode.Title}");
-                                    continue;
-                                }
-
-                                // Detect markers via ffprobe
-                                var detectedMarkers = markerDetector.Detect(localPath);
-
-                                foreach (var marker in detectedMarkers)
-                                {
-                                    var exists = await markerRepo.ExistsAsync(episode.RatingKey, marker.Kind);
-                                    if (!exists)
-                                    {
-                                        await markerRepo.AddAsync(marker with { RatingKey = episode.RatingKey, Origin = "detected" });
-                                    }
-                                }
-
-                                processed++;
+                                scanJobs.AddLog(jobId, "skip", $"{summary.Skipped} episódio(s) pulado(s) na biblioteca {lib.Key}");
                             }
                         }
                         catch (Exception ex)
@@ -126,7 +99,7 @@ public static class PlexEndpoints
             return Results.Ok(new { job_id = jobId });
         });
 
-        app.MapGet("/library/{section_key}", async (string section_key, [FromServices] IPlexApiClient plexClient) =>
+        app.MapGet("/library/{section_key}", async (string section_key, [FromServices] IPlexApiClient plexClient, [FromServices] IPathResolver pathResolver) =>
         {
             var episodesResult = await plexClient.GetEpisodesAsync(section_key);
             if (episodesResult.Failed) return Results.Problem(episodesResult.ErrorMessage ?? "Não foi possível consultar os episódios no Plex. Verifique a conexão com o servidor e tente novamente.", statusCode: 502);
@@ -137,7 +110,7 @@ public static class PlexEndpoints
                 season = e.ParentIndex,
                 episode = e.Index,
                 file_path = e.FilePath,
-                local_path = MediaPathResolver.Resolve(mediaRoot, e.FilePath)
+                local_path = pathResolver.Resolve(mediaRoot, e.FilePath)
             });
             return Results.Ok(result);
         });

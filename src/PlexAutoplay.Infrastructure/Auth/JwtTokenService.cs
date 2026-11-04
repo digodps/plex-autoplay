@@ -1,19 +1,23 @@
-namespace PlexAutoplay.Infrastructure.Auth;
-
+using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
+using PlexAutoplay.Application;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 
-public class JwtTokenService
+namespace PlexAutoplay.Infrastructure.Auth;
+
+public class JwtTokenService : ITokenService
 {
     private readonly string _secret;
     private readonly SymmetricSecurityKey _key;
+    private readonly ILogger<JwtTokenService> _logger;
 
-    public JwtTokenService(string secret)
+    public JwtTokenService(string secret, ILogger<JwtTokenService> logger)
     {
         _secret = secret;
         _key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secret));
+        _logger = logger;
     }
 
     public string GenerateToken()
@@ -61,8 +65,9 @@ public class JwtTokenService
             }, out _);
             return true;
         }
-        catch
+        catch (SecurityTokenException ex)
         {
+            _logger.LogWarning(ex, "Token JWT inválido");
             return false;
         }
     }

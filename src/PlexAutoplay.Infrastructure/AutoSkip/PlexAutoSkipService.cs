@@ -14,10 +14,9 @@ public sealed class PlexAutoSkipService : IPlexAutoSkipService
         _markerRepository = markerRepository;
     }
 
-    public IReadOnlyList<MarkerInfo> GetMarkersForEpisode(string ratingKey)
+    public async Task<IReadOnlyList<MarkerInfo>> GetMarkersForEpisodeAsync(string ratingKey)
     {
-        return _markerRepository.GetByRatingKeyAsync(ratingKey).GetAwaiter().GetResult()
-            .Select(marker => new MarkerInfo(marker.Kind, marker.StartMs, marker.EndMs))
-            .ToList();
+        var markers = await _markerRepository.GetByRatingKeyAsync(ratingKey);
+        return markers.Select(marker => new MarkerInfo(marker.Kind, marker.StartMs, marker.EndMs)).ToList();
     }
 }
