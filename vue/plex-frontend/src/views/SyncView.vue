@@ -150,4 +150,4 @@ onUnmounted(() => {
   </div>
 </template>
 
-<style scoped src="./sync-view.css"></style>
+
