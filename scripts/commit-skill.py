@@ -163,6 +163,24 @@ def is_generated_artifact(path: str) -> bool:
     return bool(ARTIFACT_PATTERN.search(path))
 
 
+SECRET_PATTERNS = [
+    (re.compile(r"(?i)(gh[pousr]_|github_pat_)[A-Za-z0-9_]+"), r"\1***"),
+    (re.compile(r"(?i)(AKIA[0-9A-Z]{16})"), "AKIA***"),
+    (re.compile(r"(?i)(https?://)[^/\s:@]+:[^/\s@]+@"), r"\1***:***@"),
+    (
+        re.compile(r"(?i)((?:password|passwd|token|secret|api[_-]?key|authorization)\s*[=:]\s*)[^\s]+"),
+        r"\1***",
+    ),
+]
+
+
+def redact_secrets(text: str) -> str:
+    """Remove credenciais de qualquer texto antes de imprimir no chat/log."""
+    for pattern, replacement in SECRET_PATTERNS:
+        text = pattern.sub(replacement, text)
+    return text
+
+
 def validate_commit_type(commit_type: str) -> None:
     """Rejeita tipos de commit que não estão na lista de conventional commits válidos."""
     if commit_type not in VALID_TYPES:
@@ -352,7 +370,7 @@ def commit_block(
     else:
         result = run_cmd(["git", "add"] + paths, check=False)
         if result.returncode != 0:
-            print(f"❌ Falha no git add: {result.stderr}", file=sys.stderr)
+            print(f"❌ Falha no git add: {redact_secrets(result.stderr)}", file=sys.stderr)
             return False
 
     # Título com base nos arquivos
@@ -367,18 +385,18 @@ def commit_block(
     message = f"{header}\n\n{body}"
 
     if dry_run:
-        print(f"[dry-run] git commit -m {message!r}")
+        print(f"[dry-run] git commit -m {redact_secrets(message)!r}")
         return True
 
     # Commit com múltiplas -m para cabeçalho e corpo
     commit_cmd = ["git", "commit", "-m", header, "-m", body]
     result = run_cmd(commit_cmd, check=False)
     if result.returncode != 0:
-        print(f"❌ Falha no git commit: {result.stderr}", file=sys.stderr)
+        print(f"❌ Falha no git commit: {redact_secrets(result.stderr)}", file=sys.stderr)
         return False
 
     print(f"✅ Commit criado: {header}")
-    print(result.stdout.strip())
+    print(redact_secrets(result.stdout.strip()))
     return True
 
 
