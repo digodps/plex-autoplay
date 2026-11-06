@@ -4,7 +4,6 @@ import { useRoute, useRouter } from "vue-router";
 import AppIcon from "../components/AppIcon.vue";
 import Breadcrumb from "../components/Breadcrumb.vue";
 import { useSeriesCatalog } from "../composables/useSeriesCatalog";
-import "../views/SeriesView.css";
 
 const route = useRoute();
 const router = useRouter();
