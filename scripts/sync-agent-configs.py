@@ -6,7 +6,7 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE = ROOT / ".agent-source"
-TARGETS = [".agents", ".claude", ".continue", ".opencode", ".github", ".dsh"]
+TARGETS = [".opencode"]
 
 
 def copy_tree(src: Path, dst: Path) -> None:
