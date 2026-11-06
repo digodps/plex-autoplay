@@ -1,18 +1,19 @@
 /* ============================================
-   Tokens – neutral scale + brand – §5.1
-   Fonte única de cor. Nenhum literal de cor fora daqui.
+   Design tokens — single source of truth.
+   No color / spacing / radius / shadow / transition
+   literal may live outside this file.
    ============================================ */
-
 :root {
-  /* Background & Surface */
+  /* Background & surface */
   --bg: #fafafa;
   --surface: #ffffff;
   --surface-raised: #f5f5f5;
+  --bg-sunken: #f0f0f0;
   --border: #e5e5e5;
   --border-strong: #d4d4d4;
   --border-input: #737373;
 
-  /* Spacing – 8 steps from 4px to 32px */
+  /* Spacing — 8 steps, 4px → 32px */
   --space-1: 4px;
   --space-2: 8px;
   --space-3: 12px;
@@ -22,20 +23,21 @@
   --space-7: 28px;
   --space-8: 32px;
 
-  /* Text & Non-Text */
+  /* Text */
   --text: #171717;
   --text-secondary: #525252;
   --text-tertiary: #616161;
 
-  /* Accent (system token – no user selection) – gray */
+  /* Accent (system neutral) */
   --accent: #404040;
   --accent-hover: #525252;
   --accent-contrast: #fafafa;
 
-  /* Brand (rail de navegação e acentos) */
+  /* Brand (neutral — no purple) */
   --brand: #7d2ae8;
   --brand-strong: #6a1fb8;
   --brand-soft: #e9e2fb;
+  --brand-contrast: #ffffff;
   --rail-bg: #f2f0fa;
   --rail-border: #e2dcf5;
 
@@ -47,17 +49,26 @@
   --radius-sm: 6px;
   --radius-md: 8px;
   --radius-lg: 12px;
+  --radius-xl: 18px;
 
   /* Target minimum size */
   --target-min: 44px;
 
-  /* Transition */
-  --transition-fast: 150ms ease;
+  /* Motion */
+  --speed: 150ms;
+  --ease: cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-fast: var(--speed) var(--ease);
 
-  /* Shadows – single elevation */
-  --shadow-sm: 0 1px 3px rgba(0,0,0,0.08);
+  /* Elevation */
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
+  --shadow-1: 0 1px 3px rgba(0, 0, 0, 0.08);
+  --shadow-2: 0 8px 24px rgba(0, 0, 0, 0.1);
 
-  /* Semantic colors (only non-gray for meaning) */
+  /* Typography */
+  --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --mono: "SFMono-Regular", Menlo, Consolas, "Liberation Mono", monospace;
+
+  /* Semantic colors (only non-gray meaning) */
   --danger: #b91c1c;
   --success: #15803d;
   --warning: #b45309;
@@ -68,22 +79,32 @@
   --bg: #0a0a0a;
   --surface: #171717;
   --surface-raised: #1f1f1f;
+  --bg-sunken: #141414;
   --border: #262626;
   --border-strong: #404040;
   --border-input: #808080;
+
   --text: #fafafa;
   --text-secondary: #a3a3a3;
   --text-tertiary: #8f8f8f;
+
   --accent: #d4d4d4;
   --accent-hover: #e5e5e5;
   --accent-contrast: #171717;
+
   --brand: #a578f0;
   --brand-strong: #c9b4f7;
   --brand-soft: #2a2145;
+  --brand-contrast: #171717;
   --rail-bg: #1b1730;
   --rail-border: #2c2547;
+
   --focus-ring: #fafafa;
-  --shadow-sm: 0 1px 3px rgba(0,0,0,0.2);
+
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.2);
+  --shadow-1: 0 1px 3px rgba(0, 0, 0, 0.2);
+  --shadow-2: 0 12px 32px rgba(0, 0, 0, 0.35);
+
   --danger: #f87171;
   --success: #4ade80;
   --warning: #fbbf24;
