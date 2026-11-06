@@ -88,4 +88,4 @@ const seasons = computed(() => {
   </div>
 </template>
 
-<style scoped src="./marker-editor.css"></style>
+
