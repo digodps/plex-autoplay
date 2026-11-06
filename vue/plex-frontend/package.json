@@ -3,6 +3,11 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  "description": "> **Dashboard web para gerenciar marcadores de intro/créditos no Plex via API oficial** – gera `SQLite marker database` para o **PlexAutoSkip** (embutido) que envia comandos de *seek* aos players compatíveis.",
+  "main": "index.js",
+  "directories": {
+    "test": "tests"
+  },
   "scripts": {
     "dev": "vite",
     "build": "vite build",
@@ -10,22 +15,37 @@
     "lint": "eslint src --config ../../eslint.config.js",
     "test:tokens": "node --test tests/tokens.contrast.test.mjs"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/digodps/plex-autoplay.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/digodps/plex-autoplay/issues"
+  },
+  "homepage": "https://github.com/digodps/plex-autoplay#readme",
+  "private": "true",
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.13.0",
+    "eslint-plugin-boundaries": "^7.4.1",
+    "eslint-plugin-vue": "^10.12.0",
+    "playwright": "^1.64.1",
+    "prettier": "^3.9.10",
+    "@vitejs/plugin-vue": "^6.0.10",
+    "autoprefixer": "^10.6.2",
+    "esbuild": "^0.28.2",
+    "postcss": "^8.5.32",
+    "prettier": "^3.9.10",
+    "tailwindcss": "^3.4.19",
+    "vite": "^8.3.5"
+  },
   "dependencies": {
     "pinia": "^4.1.0",
     "vue": "^3.5.44",
     "vue-router": "^5.4.0"
   },
-  "devDependencies": {
-    "@material-tailwind/html": "^2.3.2",
-    "@vitejs/plugin-vue": "^6.0.10",
-    "autoprefixer": "^10.6.2",
-    "esbuild": "^0.28.2",
-    "eslint": "^10.13.0",
-    "eslint-plugin-boundaries": "^7.4.1",
-    "eslint-plugin-vue": "^10.12.0",
-    "postcss": "^8.5.32",
-    "prettier": "^3.9.10",
-    "tailwindcss": "^3.4.19",
-    "vite": "^8.3.5"
-  }
+  "type": "module"
 }
