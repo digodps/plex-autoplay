@@ -1,9 +1,5 @@
-const withMT = require("@material-tailwind/html/utils/withMT");
-
-module.exports = withMT({
+module.exports = {
   content: ["./index.html", "./src/**/*.{vue,js}"],
-  // Preflight desligado: o reset do Tailwind quebraria as telas existentes,
-  // que ainda usam CSS próprio (ver docs/designs/sidebar-canva-material-tailwind.md).
   corePlugins: { preflight: false },
   theme: {
     extend: {
@@ -19,4 +15,4 @@ module.exports = withMT({
       },
     },
   },
-});
+};
