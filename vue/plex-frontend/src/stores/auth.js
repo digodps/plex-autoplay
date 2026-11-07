@@ -12,7 +12,6 @@ export const useAuthStore = defineStore("auth", {
     login(token) {
       this.token = "";
       deleteCookie(AUTH_COOKIE);
-      // Cookie de sessão (encerra quando o navegador fecha)
       setCookie(AUTH_COOKIE, token, 0);
       this.token = token;
     },
