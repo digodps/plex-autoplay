@@ -9,6 +9,7 @@ const sidebar = useSidebarStore();
 const props = defineProps({
   to: { type: String, required: true },
   icon: { type: String, required: true },
+  label: { type: String, default: "" },
 });
 
 const route = useRoute();
@@ -23,10 +24,9 @@ const isActive = computed(() => route.path === props.to);
       v-bind="$attrs"
       @click="sidebar.closeSidebar"
     >
-      <AppIcon :name="icon" size="sm" />
-      <span v-if="!isActive">{{ to }}</span>
-      <span v-else class="text-primary font-medium">
-        {{ to }}
+      <AppIcon :name="icon" size="sm" class="m-1" />
+      <span :class="{ 'text-primary font-medium': isActive }">
+        {{ label || to }}
       </span>
     </router-link>
   </li>

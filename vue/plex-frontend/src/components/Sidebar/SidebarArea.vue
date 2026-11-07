@@ -6,10 +6,10 @@ const menuGroups = [
   {
     name: "MENU",
     menuItems: [
-      { name: "Dashboard", to: "/dashboard", icon: "home" },
-      { name: "Bibliotecas", to: "/libraries", icon: "library" },
-      { name: "Sincronizar", to: "/sync", icon: "sync" },
-      { name: "Ajustes", to: "/settings", icon: "settings" },
+      { label: "Início", to: "/dashboard", icon: "home" },
+      { label: "Bibliotecas", to: "/libraries", icon: "library" },
+      { label: "Sincronização", to: "/sync", icon: "sync" },
+      { label: "Configurações", to: "/settings", icon: "settings" },
     ],
   },
 ];
@@ -43,6 +43,7 @@ const sidebar = useSidebarStore();
             :key="item.to"
             :to="item.to"
             :icon="item.icon"
+            :label="item.label"
           />
         </div>
       </li>
