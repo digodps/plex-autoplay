@@ -13,27 +13,28 @@
 /* Root CSS variables for theming (light/dark) */
 :root {
   --surface: #FFFFFF;
-  --border: #E2E8F0;
-  --text: #1E293B;
-  --text-secondary: #64748B;
-  --accent: #3C50E0;
-  --danger: #D34053;
-  --success: #219653;
-  --warning: #FFA70B;
+  --border: #D0D7DE;
+  --text: #24292F;
+  --text-secondary: #57606A;
+  --accent: #0969DA;
+  --danger: #CF222E;
+  --success: #1A7F37;
+  --warning: #9A6700;
   --radius: 0.5rem;
   --speed: 200ms;
   --ease: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+/* Dark mode with GitHub Theme colors */
 .dark {
-  --surface: #24303F;
-  --border: #3A4A5D;
-  --text: #F1F5F9;
-  --text-secondary: #8A99AF;
-  --accent: #3C50E0;
-  --danger: #D34053;
-  --success: #219653;
-  --warning: #FFA70B;
+  --surface: #0D1117;
+  --border: #30363D;
+  --text: #E6EDF3;
+  --text-secondary: #8B949E;
+  --accent: #58A6FF;
+  --danger: #F85149;
+  --success: #3FB950;
+  --warning: #D29922;
 }
 
 /* Body base – Inter font from Tailwind config, dark mode vars */

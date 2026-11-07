@@ -1,31 +1,18 @@
 import { defineStore } from "pinia";
 import { ref } from "vue";
 
+const PREF_KEY = "sidebar.collapsed";
+
 export const useSidebarStore = defineStore("sidebar", () => {
-  const isSidebarOpen = ref(false);
-  const page = ref("Dashboard");
-  const selected = ref("");
-  const isLoading = ref(false);
+  const isCollapsed = ref(localStorage.getItem(PREF_KEY) === "true");
 
-  function toggleSidebar() {
-    isSidebarOpen.value = !isSidebarOpen.value;
-  }
-
-  function closeSidebar() {
-    isSidebarOpen.value = false;
-  }
-
-  function setPage(next) {
-    page.value = next;
+  function toggleCollapsed() {
+    isCollapsed.value = !isCollapsed.value;
+    localStorage.setItem(PREF_KEY, isCollapsed.value ? "true" : "false");
   }
 
   return {
-    isSidebarOpen,
-    page,
-    selected,
-    isLoading,
-    toggleSidebar,
-    closeSidebar,
-    setPage,
+    isCollapsed,
+    toggleCollapsed,
   };
 });

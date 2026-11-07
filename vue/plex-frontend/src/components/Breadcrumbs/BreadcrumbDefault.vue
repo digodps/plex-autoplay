@@ -4,6 +4,7 @@ import AppIcon from "@/components/AppIcon.vue";
 defineProps({
   items: { type: Array, required: true },
 });
+
 defineEmits(["select"]);
 </script>
 
@@ -11,6 +12,8 @@ defineEmits(["select"]);
   <nav class="mb-6" aria-label="Navegação em trilha">
     <ol class="flex flex-wrap items-center gap-2 text-sm font-medium text-body dark:text-bodydark">
       <li v-for="(item, index) in items" :key="index" class="flex items-center gap-2">
+        <span v-if="item.loading" class="inline-block h-4 w-32 animate-pulse rounded bg-gray-2 motion-reduce:animate-none dark:bg-meta-4" aria-hidden="true"></span>
+
         <button
           v-if="!item.isCurrent && item.to"
           type="button"
@@ -19,13 +22,16 @@ defineEmits(["select"]);
         >
           {{ item.label }}
         </button>
+
         <span
-          v-else
-          :class="item.isCurrent ? 'text-black dark:text-white' : ''"
+          v-else-if="item.isCurrent"
+          :class="item.loading ? 'text-black dark:text-white' : ''
+          "
           :aria-current="item.isCurrent ? 'page' : undefined"
         >
           {{ item.label }}
         </span>
+
         <span v-if="index < items.length - 1" class="text-bodydark2" aria-hidden="true">
           <AppIcon name="chevron-right" size="xs" />
         </span>
