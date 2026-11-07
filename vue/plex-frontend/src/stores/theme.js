@@ -4,22 +4,21 @@ import { apiFetch } from "../api";
 
 const MODES = ["light", "dark", "system"];
 const STORAGE_KEY = "theme.mode";
-// Accent é token de sistema agora; enviamos um valor neutro fixo para
-// preservar o contrato PUT /api/theme (o campo é aceito, porém ignorado).
 const SYSTEM_ACCENT = "#171717";
 
 function resolveTheme(mode) {
   if (mode === "light" || mode === "dark") return mode;
-  return window.matchMedia("(prefers-color-scheme: dark)").matches
-    ? "dark"
-    : "light";
+  return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
 }
 
 export const useThemeStore = defineStore("theme", () => {
   const mode = ref(localStorage.getItem(STORAGE_KEY) || "system");
 
   function applyTheme() {
-    document.documentElement.dataset.theme = resolveTheme(mode.value);
+    const effective = resolveTheme(mode.value);
+    document.documentElement.dataset.theme = effective;
+    document.documentElement.classList.toggle("dark", effective === "dark");
+    document.documentElement.style.colorScheme = effective;
   }
 
   function setMode(next) {
@@ -33,6 +32,14 @@ export const useThemeStore = defineStore("theme", () => {
   function cycleMode() {
     const next = MODES[(MODES.indexOf(mode.value) + 1) % MODES.length];
     setMode(next);
+  }
+
+  function enterDark() {
+    setMode("dark");
+  }
+
+  function enterLight() {
+    setMode("light");
   }
 
   async function loadTheme() {
@@ -63,7 +70,6 @@ export const useThemeStore = defineStore("theme", () => {
     }
   }
 
-  // Reaplica o tema quando a preferência do sistema muda (apenas mode=system).
   const media = window.matchMedia("(prefers-color-scheme: dark)");
   if (media.addEventListener) {
     media.addEventListener("change", () => {
@@ -71,5 +77,14 @@ export const useThemeStore = defineStore("theme", () => {
     });
   }
 
-  return { mode, applyTheme, loadTheme, saveTheme, setMode, cycleMode };
+  return {
+    mode,
+    applyTheme,
+    loadTheme,
+    saveTheme,
+    setMode,
+    cycleMode,
+    enterDark,
+    enterLight,
+  };
 });
