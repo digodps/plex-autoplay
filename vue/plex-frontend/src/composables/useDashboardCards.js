@@ -1,10 +1,6 @@
 import { computed } from "vue";
 import { useDashboardStore } from "../stores/dashboard";
 
-/**
- * Composable para configurar os cards do dashboard.
- * Extrai a lógica de mapeamento store -> props do StatusCard.
- */
 export function useDashboardCards() {
   const store = useDashboardStore();
 
@@ -14,7 +10,6 @@ export function useDashboardCards() {
     return "success";
   });
 
-  /** Card: Serviço (uptime, CPU, RAM) */
   const serviceCard = computed(() => {
     const h = store.serviceHealth;
     if (!h) return { loading: true };
@@ -27,16 +22,13 @@ export function useDashboardCards() {
         { label: "CPU", value: h.cpuPercent },
         { label: "RAM", value: `${h.memMB} MB` },
       ],
-      badge: h.lastJob
-        ? { text: h.lastJob.status, variant }
-        : { text: "Online", variant: "success" },
+      badge: h.lastJob ? { text: h.lastJob.status, variant } : { text: "Online", variant: "success" },
       href: "/settings",
       loading: store.loading && !h,
       error: store.partialErrors.status,
     };
   });
 
-  /** Card: Última Sincronização */
   const syncCard = computed(() => {
     const h = store.serviceHealth;
     if (!h) return { loading: true };
@@ -61,17 +53,9 @@ export function useDashboardCards() {
       label: "Última Sincronização",
       value: updatedAt,
       breakdown: [
-        {
-          label: "Processados",
-          value: job.processed.toLocaleString("pt-BR"),
-          class: "text-success",
-        },
+        { label: "Processados", value: job.processed.toLocaleString("pt-BR"), class: "text-success" },
         { label: "Pulados", value: job.skipped.toLocaleString("pt-BR") },
-        {
-          label: "Erros",
-          value: job.errors.toLocaleString("pt-BR"),
-          class: job.errors > 0 ? "text-danger" : "",
-        },
+        { label: "Erros", value: job.errors.toLocaleString("pt-BR"), class: job.errors > 0 ? "text-danger" : "" },
       ],
       badge: { text: job.status, variant },
       href: "/sync",
@@ -80,7 +64,6 @@ export function useDashboardCards() {
     };
   });
 
-  /** Card: Bibliotecas */
   const librariesCard = computed(() => {
     const s = store.librariesSummary;
     return {
@@ -88,16 +71,13 @@ export function useDashboardCards() {
       label: "Bibliotecas",
       value: s.count.toLocaleString("pt-BR"),
       breakdown: [{ label: "Bibliotecas", value: s.count }],
-      badge: s.count
-        ? { text: `${s.count} libs`, variant: "neutral" }
-        : { text: "Vazio", variant: "warning" },
+      badge: s.count ? { text: `${s.count} libs`, variant: "neutral" } : { text: "Vazio", variant: "warning" },
       href: "/libraries",
       loading: store.loading && !store.librariesData.length,
       error: store.partialErrors.libraries,
     };
   });
 
-  /** Card: Marcadores */
   const markersCard = computed(() => {
     const m = store.markersSummary;
     return {
@@ -110,9 +90,7 @@ export function useDashboardCards() {
         { label: "Detectados", value: m.byOrigin.detected.toLocaleString("pt-BR") },
         { label: "Manuais", value: m.byOrigin.manual.toLocaleString("pt-BR") },
       ],
-      badge: m.total
-        ? { text: "Cobertura", variant: "neutral" }
-        : { text: "Sem dados", variant: "warning" },
+      badge: m.total ? { text: "Cobertura", variant: "neutral" } : { text: "Sem dados", variant: "warning" },
       href: "/series",
       loading: store.loading && !store.markersData.length,
       error: store.partialErrors.markers,
