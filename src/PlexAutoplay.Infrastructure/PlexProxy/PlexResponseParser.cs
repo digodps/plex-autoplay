@@ -82,7 +82,8 @@ public static class PlexResponseParser
                     item.Title ?? "",
                     item.ParentIndex,
                     item.Index,
-                    filePath));
+                    filePath,
+                    item.Thumb ?? ""));
             }
         }
 

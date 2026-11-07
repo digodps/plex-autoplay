@@ -61,7 +61,8 @@ public static class SeriesEndpoints
                 title = e.Title,
                 season = e.ParentIndex,
                 episode = e.Index,
-                local_path = pathResolver.Resolve(mediaRoot, e.FilePath)
+                local_path = pathResolver.Resolve(mediaRoot, e.FilePath),
+                thumb = string.IsNullOrEmpty(e.Thumb) ? null : "/api/images/" + e.Thumb.TrimStart('/')
             });
             return Results.Ok(result);
         });

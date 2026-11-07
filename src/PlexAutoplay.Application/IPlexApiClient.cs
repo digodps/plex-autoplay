@@ -52,7 +52,7 @@ public record PlexIdentityResult(
 }
 
 public record PlexLibraryDto(string Key, string Title, string Type, string Agent);
-public record PlexEpisodeDto(string RatingKey, string Title, int ParentIndex, int Index, string FilePath);
+public record PlexEpisodeDto(string RatingKey, string Title, int ParentIndex, int Index, string FilePath, string Thumb = "");
 
 /// <summary>
 /// Página do catálogo de séries com o total sincronizado do Plex para paginação.
