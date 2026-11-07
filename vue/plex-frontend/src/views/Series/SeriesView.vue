@@ -23,7 +23,6 @@ const {
   refresh,
 } = useSeriesCatalog({ libraryKey: libraryKey.value });
 
-const libraryTitle = ref("");
 const libraryTitleRef = ref("");
 
 // Carrega título da biblioteca via API assim que o key fica disponível
@@ -54,7 +53,15 @@ const breadcrumbItems = computed(() => [
 ]);
 
 function openMarkers(series) {
-  router.push({ name: "series-markers", params: { seriesKey: series.ratingKey } });
+  router.push({
+    name: "series-markers",
+    params: { seriesKey: series.ratingKey },
+    query: {
+      libraryKey: libraryKey.value,
+      libraryTitle: computedLibraryTitle.value,
+      seriesTitle: series.title,
+    },
+  });
 }
 </script>
 

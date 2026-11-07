@@ -37,7 +37,11 @@ export const useMarkerStore = defineStore("markers", () => {
       }
 
       const episodesById = {};
-      for (const ep of episodes) episodesById[ep.rating_key] = ep;
+      for (const ep of episodes) {
+        const epCopy = { ...ep };
+        if (!('thumb' in epCopy)) epCopy.thumb = null;
+        episodesById[epCopy.rating_key] = epCopy;
+      }
       episodesMap.value = episodesById;
 
       // Initialize markersMap: create entry per episode rating key, and also capture
