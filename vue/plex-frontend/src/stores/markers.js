@@ -2,18 +2,13 @@ import { defineStore } from "pinia";
 import { ref } from "vue";
 import { apiFetch, extractErrorMessage } from "../api";
 
-/**
- * Store central de marcadores: junta episódios da série (Plex) com marcadores
- * persistidos (SQLite), por ratingKey, e orquestra o salvamento otimista.
- */
 export const useMarkerStore = defineStore("markers", () => {
-  // episódios e marcadores são idenxados por ratingKey
-  const episodesMap = ref({}); // ratingKey -> { title, season, episode, rating_key }
-  const markersMap = ref({}); // ratingKey -> { intro: {startMs,endMs,origin}|null, credits: {...}|null }
+  const episodesMap = ref({});
+  const markersMap = ref({});
   const loading = ref(false);
   const error = ref("");
   const seriesTitle = ref("");
-  const savingKeys = ref({}); // `${ratingKey}:${kind}` -> true quando salvando
+  const savingKeys = ref({});
 
   async function fetchSeries(seriesKey) {
     loading.value = true;
@@ -45,12 +40,10 @@ export const useMarkerStore = defineStore("markers", () => {
       for (const ep of episodes) episodesById[ep.rating_key] = ep;
       episodesMap.value = episodesById;
 
-      // merge: só marcadores de episódios desta série
       const markers = {};
       for (const ep of episodes) markers[ep.rating_key] = { intro: null, credits: null };
       for (const m of allMarkers) {
         if (!markers[m.ratingKey] && !markers[m.rating_key]) continue;
-        // normaliza camel/snake
         const key = m.ratingKey ?? m.rating_key;
         const kind = m.kind;
         markers[key][kind] = {
@@ -67,9 +60,6 @@ export const useMarkerStore = defineStore("markers", () => {
     }
   }
 
-  /**
-   * Cria marcador (POST) e o reflete no estado.
-   */
   async function createMarker(ratingKey, kind, startMs, endMs) {
     const key = `${ratingKey}:${kind}`;
     savingKeys.value[key] = true;
@@ -92,15 +82,11 @@ export const useMarkerStore = defineStore("markers", () => {
     }
   }
 
-  /**
-   * Atualização otimista: reflete imediatamente, envia PUT e reverte em falha.
-   */
   async function updateMarker(ratingKey, kind, startMs, endMs) {
     const key = `${ratingKey}:${kind}`;
     const previous = markersMap.value[ratingKey]?.[kind];
     savingKeys.value[key] = true;
 
-    // otimista
     markersMap.value[ratingKey][kind] = { ...(previous ?? {}), startMs, endMs };
 
     try {
@@ -110,10 +96,9 @@ export const useMarkerStore = defineStore("markers", () => {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ startMs, endMs }),
-        },
+        }
       );
       if (!res.ok) {
-        // rollback
         markersMap.value[ratingKey][kind] = previous;
         throw new Error("PUT falhou");
       }
@@ -131,15 +116,12 @@ export const useMarkerStore = defineStore("markers", () => {
     const previous = markersMap.value[ratingKey]?.[kind];
     savingKeys.value[key] = true;
 
-    // otimista
     markersMap.value[ratingKey][kind] = null;
 
     try {
       const res = await apiFetch(
         `/api/markers/${encodeURIComponent(ratingKey)}/${encodeURIComponent(kind)}`,
-        {
-          method: "DELETE",
-        },
+        { method: "DELETE" }
       );
       if (!res.ok) {
         markersMap.value[ratingKey][kind] = previous;
