@@ -1,70 +1,49 @@
 <script setup>
-import { useSidebarStore } from "@/stores/sidebar";
-import { useThemeStore } from "@/stores/theme";
 import AppIcon from "@/components/AppIcon.vue";
+import { isPathActive } from "@/lib/navigation";
 
-const sidebar = useSidebarStore();
-const theme = useThemeStore();
+const props = defineProps({
+  items: { type: Array, default: () => [] },
+  collapsed: { type: Boolean, default: false },
+  activePath: { type: String, default: "" },
+  error: { type: String, default: "" },
+});
 
-const menuGroups = [
-  {
-    name: "MENU",
-    menuItems: [{ label: "Bibliotecas", to: "/libraries", icon: "library" }],
-  },
-];
-
-const actionClasses =
-  "flex w-full items-center gap-2 rounded-lg p-2 text-gray-700 hover:text-primary hover:bg-gray-100 dark:text-bodydark dark:hover:bg-gray-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900";
+const itemClass =
+  "flex min-h-[44px] items-center gap-2 rounded-md px-3 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-100 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary motion-reduce:transition-none dark:text-bodydark dark:hover:bg-gray-800 dark:hover:text-primary";
+const activeClass = "bg-gray-100 font-medium text-primary dark:bg-gray-800";
 </script>
 
 <template>
-  <div
-    class="sidebar flex h-screen flex-col bg-gray-50 text-gray-700 text-sm border-r dark:text-bodydark dark:border-gray-800 dark:bg-gray-900"
-    :class="sidebar.isCollapsed ? 'w-16' : 'w-64'"
+  <aside
+    class="sidebar flex min-h-0 flex-col border-r bg-gray-50 text-sm text-gray-700 dark:border-gray-800 dark:bg-gray-900 dark:text-bodydark"
+    :class="collapsed ? 'w-16' : 'w-64 max-[768px]:w-16'"
   >
-    <div class="flex flex-col gap-1 p-2">
-      <button
-        :class="actionClasses"
-        type="button"
-        :aria-label="sidebar.isCollapsed ? 'Expandir menu' : 'Recolher menu'"
-        :aria-expanded="!sidebar.isCollapsed"
-        :title="sidebar.isCollapsed ? 'Expandir menu' : 'Recolher menu'"
-        @click="sidebar.toggleCollapsed"
-      >
-        <AppIcon name="menu" size="sm" />
-        <span v-if="!sidebar.isCollapsed" class="font-medium">Menu</span>
-      </button>
-
-      <button
-        :class="actionClasses"
-        type="button"
-        :aria-label="theme.mode === 'dark' ? 'Tema claro' : 'Tema escuro'"
-        :title="theme.mode === 'dark' ? 'Tema claro' : 'Tema escuro'"
-        @click="theme.toggle"
-      >
-        <AppIcon :name="theme.mode === 'dark' ? 'sun' : 'moon'" size="sm" />
-        <span v-if="!sidebar.isCollapsed">{{ theme.mode === 'dark' ? 'Light' : 'Dark' }}</span>
-      </button>
-
-      <div class="flex-1"></div>
-    </div>
-
-    <ul class="flex-1 flex flex-col p-2 pt-2 overflow-y-auto space-y-1">
-      <li
-        v-for="group in menuGroups"
-        :key="group.name"
-        class="flex flex-col space-y-1"
-      >
-        <router-link
-          v-for="menuItem in group.menuItems"
-          :key="menuItem.label"
-          :to="menuItem.to"
-          class="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-primary dark:text-bodydark transition-colors dark:hover:bg-gray-800 dark:hover:text-primary"
+    <p
+      v-if="error"
+      role="alert"
+      class="m-2 rounded-md bg-red-50 px-3 py-2 text-xs text-red-700 dark:bg-red-950 dark:text-red-300"
+    >
+      {{ error }}
+    </p>
+    <ul v-else class="m-0 flex list-none flex-col gap-1 overflow-y-auto p-2">
+      <li v-for="lib in props.items" :key="lib.key">
+        <RouterLink
+          :to="`/libraries/${lib.key}/series`"
+          :class="[
+            itemClass,
+            isPathActive(props.activePath, `/libraries/${lib.key}`) ? activeClass : '',
+          ]"
+          :aria-current="
+            isPathActive(props.activePath, `/libraries/${lib.key}`) ? 'page' : undefined
+          "
+          :aria-label="lib.title"
+          :title="collapsed ? lib.title : undefined"
         >
-          <AppIcon :name="menuItem.icon" size="sm" />
-          <span v-if="!sidebar.isCollapsed">{{ menuItem.label }}</span>
-        </router-link>
+          <AppIcon name="library" size="sm" />
+          <span v-if="!collapsed" class="truncate max-[768px]:hidden">{{ lib.title }}</span>
+        </RouterLink>
       </li>
     </ul>
-  </div>
+  </aside>
 </template>
