@@ -17,7 +17,7 @@ test("compact mode toggles and persists to localStorage", () => {
 
   sidebar.toggleCollapsed();
   assert.equal(sidebar.isCollapsed, true);
-  assert.equal(store.get("sidebar.collapsed"), "true");
+  assert.equal(store.get("sidebar.collapsed.v2"), "true");
 
   setActivePinia(createPinia());
   assert.equal(useSidebarStore().isCollapsed, true, "restores on load");

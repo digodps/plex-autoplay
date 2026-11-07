@@ -14,6 +14,7 @@
     "preview": "vite preview",
     "lint": "eslint src --config ../../eslint.config.js",
     "test:tokens": "node --test tests/tokens.contrast.test.mjs",
+    "test:breadcrumb": "node --test tests/breadcrumb.test.mjs",
     "test:sidebar": "node --test tests/sidebar-collapsed.test.mjs"
   },
   "repository": {
