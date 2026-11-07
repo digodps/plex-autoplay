@@ -5,7 +5,8 @@ export function useDashboardActions() {
     try {
       const res = await apiFetch("/api/plex/scan", { method: "POST" });
       if (res.ok) {
-        return { ok: true };
+        const data = await res.json().catch(() => ({}));
+        return { ok: true, jobId: data.job_id };
       }
       return { ok: false, error: await res.text() };
     } catch (e) {

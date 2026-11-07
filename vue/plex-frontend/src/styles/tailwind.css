@@ -1,5 +1,0 @@
-/* Tailwind CSS – utilitários usados pela camada de apresentação.
-   Preflight desligado em tailwind.config.cjs; o reset do projeto continua em base.css. */
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
