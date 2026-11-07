@@ -39,7 +39,7 @@
 
 /* Body base – Inter font from Tailwind config, dark mode vars */
 body {
-  @apply relative z-1 bg-white dark:bg-gray-800 font-sans text-base text-body dark:text-bodydark;
+  @apply relative z-1 bg-white dark:bg-gray-900 font-sans text-base text-body dark:text-bodydark;
   /* Maps: bg-whiten -> bg-white dark:bg-gray-800; font-satoshi -> font-sans (Inter) */
 }
 

@@ -39,6 +39,7 @@ module.exports = {
         gray: {
           // GitHub Theme gray palette (100=lightest, 900=darkest)
           // Light mode: used for surfaces, borders, backgrounds
+          2: "#F1F3F5",
           50: "#F8F9FA",
           100: "#F1F3F5",
           200: "#E4E7EB",
