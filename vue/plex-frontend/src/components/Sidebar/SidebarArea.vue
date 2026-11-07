@@ -8,7 +8,6 @@ const menuGroups = [
     menuItems: [
       { name: "Dashboard", to: "/dashboard", icon: "home" },
       { name: "Bibliotecas", to: "/libraries", icon: "library" },
-      { name: "Séries", to: "/libraries", icon: "tv" },
       { name: "Sincronizar", to: "/sync", icon: "sync" },
       { name: "Ajustes", to: "/settings", icon: "settings" },
     ],

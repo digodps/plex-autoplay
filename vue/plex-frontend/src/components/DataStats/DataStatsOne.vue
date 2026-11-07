@@ -3,13 +3,13 @@ import { computed } from "vue";
 import { useDashboardCards } from "@/composables/useDashboardCards";
 import CardDataStats from "@/components/CardDataStats.vue";
 
-const { serviceCard, syncCard, librariesCard, markersCard } = useDashboardCards();
+const { serviceCard, syncCard, librariesCard } = useDashboardCards();
 
-const cards = computed(() => [serviceCard.value, syncCard.value, librariesCard.value, markersCard.value]);
+const cards = computed(() => [serviceCard.value, syncCard.value, librariesCard.value]);
 </script>
 
 <template>
-  <div class="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6 xl:grid-cols-4 2xl:gap-7.5">
+  <div class="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6 xl:grid-cols-3 2xl:gap-7.5">
     <CardDataStats
       v-for="(card, idx) in cards"
       :key="idx"
