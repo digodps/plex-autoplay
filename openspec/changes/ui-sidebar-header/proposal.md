@@ -1,36 +1,58 @@
 # Change Proposal — ui-sidebar-header
 
-## Description
-Redesign the Plex Autoplay UI header/sidebar component with the following requirements:
-- **Title bar** with hamburger menu button to toggle sidebar description visibility
-- **Breadcrumb** showing the selected item on the right side
-- **Profile menu** and **Logout** button on the far right
-- **Dark mode** toggle button in the header
-- **Settings** option that opens in a modal dialog
-- **Sidebar** should display only the **libraries** list
-- Theme should use **GitHub Theme** colors (matching VS Code GitHub Dark/Light)
-
-## Motivation
-User reported that dark mode menu/panel backgrounds appear light/white. New UI requirements for consistent GitHub Theme styling across all components.
-
 ## Why
-This change is needed to fix the dark mode background issue (user complaint) and implement the new UI requirements for the sidebar/header as specified. The GitHub Theme restyling ensures visual consistency with VS Code GitHub Dark/Light themes.
+
+O menu lateral atual exibe controles que não pertencem à navegação (botão
+"Menu", toggle de tema) e um item estático "Bibliotecas". O usuário quer as
+bibliotecas reais do Plex diretamente no menu, logo abaixo do header, com
+espaçamento entre elas.
+
+## What Changes
+
+- Sidebar passa a listar as bibliotecas carregadas de `GET /api/plex/libraries`.
+- Remove da sidebar o botão "Menu", o toggle de tema e o item estático
+  "Bibliotecas".
+- Sidebar renderiza abaixo do header (não ocupa a altura total ao lado dele).
+- Espaçamento vertical entre itens da lista.
+- Modo compacto (só ícones) mantido, controlado pelo hamburger do header e
+  persistido em `localStorage`.
+- Breadcrumb do header passa a compor o fluxo real da navegação, com apenas
+  `Início` fixo e o restante dinâmico: `Início > <título da biblioteca>` e
+  `Início > <biblioteca> > <série>`.
+- Breadcrumb duplicado dentro das views de séries/marcadores é removido; o
+  header é o único dono da trilha.
+- Reconcilia a spec `navegacao-lateral` com o comportamento implementado.
 
 ## Scope
-- Frontend Vue 3 components: AppHeader, AppSidebar, Breadcrumb, UserMenu
-- Tailwind CSS configuration updates to GitHub Theme palette
-- CSS variable updates for dark mode
-- Modal dialog for settings
+
+- `vue/plex-frontend/src/components/Sidebar/SidebarArea.vue`
+- `vue/plex-frontend/src/components/AppHeader.vue`
+- `vue/plex-frontend/src/components/layouts/DefaultLayout.vue`
+- `vue/plex-frontend/src/lib/breadcrumb.js` (novo)
+- `vue/plex-frontend/src/views/Series/SeriesView.vue` e
+  `views/Markers/MarkerEditorView.vue` (remover trilha duplicada)
+- `vue/plex-frontend/src/stores/sidebar.js` (somente se necessário)
+- `vue/plex-frontend/tailwind.config.cjs` (restaurar `gray-2`)
+- `vue/plex-frontend/tests/*.mjs`
+- `openspec/changes/ui-sidebar-header/**`
 
 ## Out of Scope
-- Backend API changes
-- Plex integration changes
-- Database schema changes
+
+- Backend e integração Plex (endpoint de bibliotecas já existe).
+- Troca de senha no SettingsModal.
+- Repaginação global do tema.
 
 ## Acceptance Criteria
-- Header renders with hamburger menu, breadcrumb, profile menu, dark mode toggle, settings button
-- Sidebar displays only libraries section
-- Dark mode uses GitHub Theme palette (#0d1117 surface, #353b45 panels)
-- Light mode uses GitHub Light palette
-- Settings opens in modal with form fields
-- All `openspec validate --strict` checks pass
+
+- Sidebar não contém "Menu", "Light"/toggle de tema nem item estático
+  "Bibliotecas".
+- Sidebar lista todas as bibliotecas retornadas por `/api/plex/libraries`.
+- Cada item navega para `/libraries/<key>/series`.
+- Sidebar começa abaixo do header.
+- Itens têm espaçamento vertical entre si.
+- Breadcrumb no header mostra `Início > <título da biblioteca>` na rota de
+  séries e `Início > <biblioteca> > <série>` nos marcadores, sem trilha
+  duplicada dentro do conteúdo.
+- `npm run build`, `npm run lint`, `npm run test:sidebar`,
+  `npm run test:breadcrumb` e `npm run test:tokens` passam.
+- `openspec validate ui-sidebar-header --strict` passa.
