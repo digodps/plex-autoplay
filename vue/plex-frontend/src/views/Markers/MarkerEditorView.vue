@@ -3,6 +3,7 @@ import { computed, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import DefaultLayout from "@/components/layouts/DefaultLayout.vue";
 import AppIcon from "@/components/AppIcon.vue";
+import BreadcrumbDefault from "@/components/Breadcrumbs/BreadcrumbDefault.vue";
 import MarkerRow from "@/components/MarkerRow.vue";
 import { useMarkerStore } from "@/stores/markers";
 
@@ -13,6 +14,28 @@ const seriesKey = computed(() => route.params.seriesKey);
 
 onMounted(() => {
   store.fetchSeries(seriesKey.value);
+});
+
+const seriesTitleFromQuery = computed(() => route.query.seriesTitle ? String(route.query.seriesTitle) : "");
+const libraryTitleFromQuery = computed(() => route.query.libraryTitle ? String(route.query.libraryTitle) : "");
+const libraryKeyFromQuery = computed(() => route.query.libraryKey ? String(route.query.libraryKey) : "");
+
+const breadcrumbItems = computed(() => {
+  const items = [
+    { label: "Bibliotecas", to: { name: "libraries" } },
+  ];
+  if (libraryTitleFromQuery.value) {
+    items.push({
+      label: libraryTitleFromQuery.value,
+      to: libraryKeyFromQuery.value ? { name: "series", params: { key: libraryKeyFromQuery.value } } : { name: "libraries" },
+      isCurrent: false,
+    });
+  }
+  items.push({
+    label: seriesTitleFromQuery.value || "Série",
+    isCurrent: true,
+  });
+  return items;
 });
 
 const seasons = computed(() => {
@@ -30,14 +53,12 @@ const seasons = computed(() => {
 
 <template>
   <DefaultLayout>
+    <BreadcrumbDefault
+      :items="breadcrumbItems"
+      @select="(to) => to && router.push(to)"
+    />
+
     <div class="mb-6 flex flex-wrap items-start gap-4">
-      <button
-        class="inline-flex items-center gap-1 rounded-lg border border-stroke bg-white px-3 py-2 text-sm font-medium text-body transition hover:border-primary hover:text-primary dark:border-strokedark dark:bg-boxdark dark:text-bodydark"
-        @click="router.back()"
-      >
-        <AppIcon name="chevron-left" size="sm" />
-        Voltar
-      </button>
       <div>
         <h1 class="text-title-md font-bold text-black dark:text-white">Marcadores da série</h1>
         <p class="mt-1 text-sm font-medium text-body dark:text-bodydark">
@@ -73,20 +94,34 @@ const seasons = computed(() => {
         </h2>
 
         <div class="divide-y divide-stroke dark:divide-strokedark">
-          <article v-for="ep in list" :key="ep.rating_key" class="px-6 py-4">
-            <div class="mb-3 flex flex-wrap items-center gap-2">
-              <span class="inline-flex rounded-full bg-meta-2 px-2.5 py-0.5 text-xs font-semibold text-body dark:bg-meta-4 dark:text-bodydark">
-                T{{ ep.season }} · E{{ ep.episode }}
-              </span>
-              <h3 class="text-sm font-semibold text-black dark:text-white">{{ ep.title }}</h3>
-            </div>
-            <div class="space-y-1">
-              <MarkerRow
-                v-for="kind in ['intro', 'credits']"
-                :key="kind"
-                :rating-key="ep.rating_key"
-                :kind="kind"
+          <article v-for="ep in list" :key="ep.rating_key" class="flex items-start gap-4 px-6 py-4">
+            <div class="aspect-video w-64 shrink-0 overflow-hidden rounded-sm bg-gray-2 dark:bg-meta-4">
+              <img
+                v-if="ep.thumb"
+                :src="ep.thumb"
+                :alt="ep.title"
+                loading="lazy"
+                class="h-full w-full object-cover"
               />
+              <div v-else class="flex h-full w-full items-center justify-center text-body dark:text-bodydark">
+                <AppIcon name="tv" size="sm" />
+              </div>
+            </div>
+            <div class="min-w-0 flex-1">
+              <div class="mb-3 flex flex-wrap items-center gap-2">
+                <span class="inline-flex rounded-full bg-meta-2 px-2.5 py-0.5 text-xs font-semibold text-body dark:bg-meta-4 dark:text-bodydark">
+                  T{{ ep.season }} · E{{ ep.episode }}
+                </span>
+                <h3 class="text-sm font-semibold text-black dark:text-white">{{ ep.title }}</h3>
+              </div>
+              <div class="space-y-1">
+                <MarkerRow
+                  v-for="kind in ['intro', 'credits']"
+                  :key="kind"
+                  :rating-key="ep.rating_key"
+                  :kind="kind"
+                />
+              </div>
             </div>
           </article>
         </div>
