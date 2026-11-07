@@ -66,8 +66,8 @@ public static class PlexResponseParser
         {
             foreach (var item in container.Metadata)
             {
-                // Filtro defensivo: apenas episódios (type=4)
-                if (item.Type is not null && item.Type != "4")
+                // Filtro defensivo: apenas episódios (Plex JSON usa "episode"; XML usa "4")
+                if (item.Type is not null && item.Type != "4" && item.Type != "episode")
                     continue;
 
                 // O caminho do arquivo está em Media[0].Part[0].File
