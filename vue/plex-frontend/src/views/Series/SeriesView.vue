@@ -1,10 +1,11 @@
 <script setup>
-import { computed } from "vue";
+import { computed, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import DefaultLayout from "@/components/layouts/DefaultLayout.vue";
 import AppIcon from "@/components/AppIcon.vue";
 import BreadcrumbDefault from "@/components/Breadcrumbs/BreadcrumbDefault.vue";
 import { useSeriesCatalog } from "@/composables/useSeriesCatalog";
+import { apiFetch } from "@/api";
 
 const route = useRoute();
 const router = useRouter();
@@ -22,13 +23,34 @@ const {
   refresh,
 } = useSeriesCatalog({ libraryKey: libraryKey.value });
 
-const libraryTitle = computed(() =>
-  libraryKey.value ? `Biblioteca ${libraryKey.value}` : "Biblioteca"
+const libraryTitle = ref("");
+const libraryTitleRef = ref("");
+
+// Carrega título da biblioteca via API assim que o key fica disponível
+watch(libraryKey, async (key) => {
+  if (!key) {
+    libraryTitleRef.value = "";
+    return;
+  }
+  try {
+    const res = await apiFetch("/api/plex/libraries");
+    if (!res.ok) return;
+    const libs = await res.json();
+    const lib = libs.find(l => String(l.key) === String(key));
+    libraryTitleRef.value = lib?.title ?? "";
+  } catch {
+    libraryTitleRef.value = "";
+  }
+}, { immediate: true });
+
+// Título combinado: usa título da API se disponível, senão fallback por key
+const computedLibraryTitle = computed(() =>
+  libraryTitleRef.value || (libraryKey.value ? `Biblioteca ${libraryKey.value}` : "Biblioteca")
 );
 
 const breadcrumbItems = computed(() => [
   { label: "Bibliotecas", to: { name: "libraries" } },
-  { label: libraryTitle.value, isCurrent: true },
+  { label: computedLibraryTitle.value, isCurrent: true },
 ]);
 
 function openMarkers(series) {
