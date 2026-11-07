@@ -29,9 +29,8 @@ export const useThemeStore = defineStore("theme", () => {
     saveTheme().catch((e) => console.warn("Theme save error:", e));
   }
 
-  function cycleMode() {
-    const next = MODES[(MODES.indexOf(mode.value) + 1) % MODES.length];
-    setMode(next);
+  function toggle() {
+    mode.value === "dark" ? enterLight() : enterDark();
   }
 
   function enterDark() {
@@ -83,7 +82,7 @@ export const useThemeStore = defineStore("theme", () => {
     loadTheme,
     saveTheme,
     setMode,
-    cycleMode,
+    toggle,
     enterDark,
     enterLight,
   };
