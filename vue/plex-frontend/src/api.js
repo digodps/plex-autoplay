@@ -1,27 +1,19 @@
 /**
- * Helpers de autenticação: token em cookie + fetch com tratamento de 401.
- *
- * O token continua viajando no header `Authorization: Bearer` (o middleware do
- * backend só lê o header); o cookie substitui o localStorage como armazenamento.
+ * Authenticated fetch helpers. Token travels in the Authorization header;
+ * a non-HttpOnly cookie is used as client-side storage.
  */
 
 import { getToken, deleteCookie } from "./lib/auth";
 
-// Re-export para compatibilidade com stores antigas que importavam daqui.
 export { getToken, setCookie, deleteCookie, AUTH_COOKIE } from "./lib/auth";
 
 function redirectToLoginPreservingRoute() {
-  // Já no login: não redirecionar (evita loop com chamadas 401 da própria tela de login)
   if (window.location.pathname === "/login") return;
   const route = window.location.pathname + window.location.search;
   deleteCookie("auth_token");
   window.location.href = `/login?redirect=${encodeURIComponent(route)}`;
 }
 
-/**
- * Fetch com Authorization do cookie; em 401 limpa sessão e devolve ao login
- * (registrando rota retorno após autenticação).
- */
 export async function apiFetch(url, options = {}) {
   const token = getToken();
   const headers = { ...(options.headers ?? {}) };
@@ -35,10 +27,6 @@ export async function apiFetch(url, options = {}) {
   return res;
 }
 
-/**
- * Extrai uma mensagem legível do corpo de uma resposta de erro (RFC 7807
- * Problem Details ou texto simples). Retorna null quando não houver corpo.
- */
 export async function extractErrorMessage(res) {
   try {
     const ct = res.headers.get("content-type") || "";
@@ -53,41 +41,29 @@ export async function extractErrorMessage(res) {
   }
 }
 
-/**
- * Lança um erro contendo mensagem detalhada da resposta (quando disponível)
- * para que o cliente possa exibi-la ao usuário e sugerir uma ação.
- */
 export async function throwHttpError(res, defaultMessage) {
   const detail = await extractErrorMessage(res);
   throw new Error(detail || defaultMessage);
 }
 
-/** Helpers de tema */
 export async function fetchTheme() {
   const res = await apiFetch("/api/theme");
   if (!res.ok) return null;
   return await res.json();
 }
 
-/** Fim helpers de tema */
-
-/** Helpers específicos do Dashboard */
-
-/** Busca saúde do serviço + último job de sync + métricas do processo */
 export async function fetchStatus() {
   const res = await apiFetch("/api/status");
   if (!res.ok) await throwHttpError(res, "Falha ao buscar status do serviço");
   return res.json();
 }
 
-/** Busca bibliotecas de séries e agrega contagens */
 export async function fetchLibraries() {
   const res = await apiFetch("/api/plex/libraries");
   if (!res.ok) await throwHttpError(res, "Falha ao buscar bibliotecas");
   return res.json();
 }
 
-/** Busca todos os marcadores (flat list) para agregação client-side */
 export async function fetchMarkers() {
   const res = await apiFetch("/api/markers");
   if (!res.ok) await throwHttpError(res, "Falha ao buscar marcadores");
