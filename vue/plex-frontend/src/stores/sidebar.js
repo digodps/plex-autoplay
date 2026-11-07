@@ -1,7 +1,7 @@
 import { defineStore } from "pinia";
 import { ref } from "vue";
 
-const PREF_KEY = "sidebar.collapsed";
+const PREF_KEY = "sidebar.collapsed.v2";
 
 export const useSidebarStore = defineStore("sidebar", () => {
   const isCollapsed = ref(localStorage.getItem(PREF_KEY) === "true");
