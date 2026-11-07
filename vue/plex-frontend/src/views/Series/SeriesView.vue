@@ -3,7 +3,6 @@ import { computed } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import DefaultLayout from "@/components/layouts/DefaultLayout.vue";
 import AppIcon from "@/components/AppIcon.vue";
-import BreadcrumbDefault from "@/components/Breadcrumbs/BreadcrumbDefault.vue";
 import { useSeriesCatalog } from "@/composables/useSeriesCatalog";
 import { useLibraryTitle } from "@/composables/useLibraryTitle";
 
@@ -30,15 +29,6 @@ const viewState = computed(() => {
   return "empty";
 });
 
-const breadcrumbItems = computed(() => [
-  { label: "Bibliotecas", to: { name: "libraries" }, isCurrent: false },
-  {
-    label: libraryTitleLoading.value ? "" : libraryTitle.value || "Biblioteca indisponível",
-    isCurrent: true,
-    loading: libraryTitleLoading.value,
-  },
-]);
-
 function openMarkers(series) {
   if (libraryTitleLoading.value) return;
   const query = {
@@ -52,8 +42,6 @@ function openMarkers(series) {
 
 <template>
   <DefaultLayout>
-    <BreadcrumbDefault :items="breadcrumbItems" @select="(to) => to && router.push(to)" />
-
     <div
       v-if="viewState === 'error'"
       class="mb-6 flex items-center gap-3 rounded-sm border border-meta-1/30 bg-meta-1/10 px-5 py-4 text-sm font-medium text-meta-1"

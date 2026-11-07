@@ -1,13 +1,16 @@
 <script setup>
 import { computed, ref } from "vue";
-import { useRoute, useRouter } from "vue-router";
+import { useRouter } from "vue-router";
 import { useSidebarStore } from "@/stores/sidebar";
 import { useThemeStore } from "@/stores/theme";
 import { useAuthStore } from "@/stores/auth";
 import AppIcon from "@/components/AppIcon.vue";
 import SettingsModal from "@/components/SettingsModal.vue";
 
-const route = useRoute();
+defineProps({
+  items: { type: Array, default: () => [] },
+});
+
 const router = useRouter();
 const sidebar = useSidebarStore();
 const theme = useThemeStore();
@@ -16,7 +19,6 @@ const auth = useAuthStore();
 const showProfile = ref(false);
 const showSettings = ref(false);
 
-const pageTitle = computed(() => route.meta.title || "");
 const isDark = computed(() => theme.mode === "dark");
 
 const iconButton =
@@ -45,11 +47,30 @@ function logout() {
 
     <span class="h-5 w-px bg-gray-300 dark:bg-gray-700" aria-hidden="true"></span>
 
-    <nav aria-label="Breadcrumb" class="truncate">
+    <nav aria-label="Breadcrumb" class="min-w-0 truncate">
       <ol class="flex items-center gap-1 text-gray-700 dark:text-bodydark">
-        <li><router-link to="/dashboard" class="hover:text-primary">Início</router-link></li>
-        <li aria-hidden="true">/</li>
-        <li class="font-medium text-black dark:text-white" aria-current="page">{{ pageTitle }}</li>
+        <li
+          v-for="(item, index) in items"
+          :key="index"
+          class="flex min-w-0 items-center gap-1"
+        >
+          <RouterLink
+            v-if="item.to && !item.isCurrent"
+            :to="item.to"
+            class="truncate hover:text-primary"
+          >
+            {{ item.label }}
+          </RouterLink>
+          <span
+            v-else
+            class="truncate"
+            :class="item.isCurrent ? 'font-medium text-black dark:text-white' : ''"
+            :aria-current="item.isCurrent ? 'page' : undefined"
+          >
+            {{ item.label }}
+          </span>
+          <span v-if="index < items.length - 1" aria-hidden="true">/</span>
+        </li>
       </ol>
     </nav>
 
