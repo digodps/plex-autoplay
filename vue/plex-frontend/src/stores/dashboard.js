@@ -7,45 +7,29 @@ import {
   createMarkersSummaryComputed,
 } from "../composables/useDashboardAggregators";
 
-/**
- * Store do Dashboard: agrega saúde do serviço, última sincronização,
- * visão geral de bibliotecas e cobertura de marcadores.
- * Faz polling automático a cada 30s enquanto a view está ativa.
- */
 export const useDashboardStore = defineStore("dashboard", () => {
-  // Estado bruto das respostas da API
   const statusData = ref(null);
   const librariesData = ref([]);
   const markersData = ref([]);
 
-  // Estado de UI
   const loading = ref(false);
   const error = ref(null);
-  const libraryError = ref(null); // mensagem detalhada da falha da API do Plex
-  const partialErrors = ref({}); // { status: true, libraries: false, markers: false }
+  const libraryError = ref(null);
+  const partialErrors = ref({});
 
-  // Polling
   let pollTimer = null;
-  const POLL_INTERVAL = 30_000; // 30 segundos
+  const POLL_INTERVAL = 30_000;
 
-  // --- Computeds: dados transformados (usam agregadores extraídos) ---
   const serviceHealth = createServiceHealthComputed(statusData);
   const librariesSummary = createLibrariesSummaryComputed(librariesData);
   const markersSummary = createMarkersSummaryComputed(markersData);
 
-  /** Loading global (qualquer fetch em andamento) */
   const isLoading = computed(() => loading.value);
-
-  /** Algum erro parcial ou total */
   const hasErrors = computed(() => Object.values(partialErrors.value).some((v) => v));
-
-  /** Erro total (todos falharam) */
   const isTotalFailure = computed(() => {
     const keys = Object.keys(partialErrors.value);
     return keys.length > 0 && keys.every((k) => partialErrors.value[k]);
   });
-
-  // --- Actions ---
 
   async function fetchAll() {
     loading.value = true;
@@ -80,12 +64,8 @@ export const useDashboardStore = defineStore("dashboard", () => {
         console.error("[Dashboard] fetchMarkers failed:", markersRes.reason);
       }
 
-      // Se todos falharam, define erro global
-      if (isTotalFailure.value) {
-        error.value = "Não foi possível carregar os dados do dashboard.";
-      }
+      if (isTotalFailure.value) error.value = "Não foi possível carregar os dados do dashboard.";
     } catch (e) {
-      // Promise.allSettled não rejeita, mas mantemos para segurança
       error.value = "Erro inesperado ao carregar dashboard.";
       console.error("[Dashboard] fetchAll unexpected error:", e);
     } finally {
@@ -94,9 +74,8 @@ export const useDashboardStore = defineStore("dashboard", () => {
   }
 
   function startPolling() {
-    if (pollTimer) return; // já rodando
+    if (pollTimer) return;
     pollTimer = setInterval(() => {
-      // Só faz fetch se não estiver carregando (evita sobreposição)
       if (!loading.value) fetchAll();
     }, POLL_INTERVAL);
   }
@@ -120,7 +99,6 @@ export const useDashboardStore = defineStore("dashboard", () => {
   }
 
   return {
-    // Estado
     statusData,
     librariesData,
     markersData,
@@ -128,14 +106,12 @@ export const useDashboardStore = defineStore("dashboard", () => {
     error,
     libraryError,
     partialErrors,
-    // Computeds
     serviceHealth,
     librariesSummary,
     markersSummary,
     isLoading,
     hasErrors,
     isTotalFailure,
-    // Actions
     fetchAll,
     startPolling,
     stopPolling,
