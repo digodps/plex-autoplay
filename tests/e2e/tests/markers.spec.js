@@ -5,7 +5,7 @@ loadEnv();
 
 const BASE_URL =
   process.env.PLAYWRIGHT_BASE_URL || "https://plex-autoplay.dns.podman:443";
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
+const OPERATOR_PASSWORD = process.env.OPERATOR_PASSWORD;
 
 test.describe("Marcadores (CRUD)", () => {
   test("lista marcadores via GET /api/markers", async ({ page, request }) => {
@@ -15,7 +15,7 @@ test.describe("Marcadores (CRUD)", () => {
       state: "visible",
       timeout: 10000,
     });
-    await page.fill('input[type="password"]', ADMIN_PASSWORD);
+    await page.fill('input[type="password"]', OPERATOR_PASSWORD);
     await page.click("button");
     await page.waitForURL(`${BASE_URL}/dashboard`);
 
@@ -41,7 +41,7 @@ test.describe("Marcadores (CRUD)", () => {
       state: "visible",
       timeout: 10000,
     });
-    await page.fill('input[type="password"]', ADMIN_PASSWORD);
+    await page.fill('input[type="password"]', OPERATOR_PASSWORD);
     await page.click("button");
     await page.waitForURL(`${BASE_URL}/dashboard`);
 

@@ -59,6 +59,13 @@ public static class DatabaseInitializer
             )
             """, false),
         (5, "ALTER TABLE Markers ADD COLUMN Origin TEXT NOT NULL DEFAULT 'manual'", true),
+        (6, """
+            CREATE TABLE IF NOT EXISTS AuthCredential (
+                UserId TEXT NOT NULL PRIMARY KEY,
+                PasswordHash TEXT NOT NULL,
+                UpdatedAt TEXT NOT NULL DEFAULT (datetime('now'))
+            )
+            """, false),
     ];
 
     public static async Task InitializeAsync(string connectionString)

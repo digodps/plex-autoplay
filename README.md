@@ -41,17 +41,18 @@ cd plex-autoplay
 
 # 2️⃣  Crie o arquivo .env com suas credenciais
 cp .env.example .env
-# edite .env → PLEX_URL=...  PLEX_TOKEN=...  JWT_SECRET=...  ADMIN_PASSWORD=...  MEDIA_ROOT=...
+# edite .env → PLEX_URL=...  PLEX_TOKEN=...  JWT_SECRET=...  MEDIA_ROOT=...
 
 # 3️⃣  Build + up
 ./scripts/start.sh --detach
 
-# 4️⃣  Acesse o dashboard
+# 4️⃣  Primeiro acesso: obtenha o token de setup de uso único no log
+docker logs plex-autoplay | grep SETUP_TOKEN
+# Abra https://localhost:8443/setup e crie a senha do operador
+
+# 5️⃣  Acesse o dashboard com a senha criada
 # HTTPS : https://localhost:8443   (certificado auto‑assinado – aceite o aviso)
 # WebSocket (PlexAutoSkip): wss://localhost:8081
-
-# 5️⃣  Crie o usuário admin → Em ⚙ Configuração → salve URL/Token do Plex
-#     → Em ▤ Bibliotecas → veja os cards das bibliotecas do Plex
 ```
 
 ---
@@ -75,7 +76,6 @@ cp .env.example .env
 | `PLEX_URL` | URL base do PMS (ex.: `http://192.168.1.50:32400`) | – |
 | `PLEX_TOKEN` | Token admin (obrigatório) | – |
 | `JWT_SECRET` | Chave secreta para assinar tokens JWT | – |
-| `ADMIN_PASSWORD` | Senha para login no painel administrativo | – |
 | `WEB_PORT` | Porta do dashboard (interno) | 8080 |
 | `WS_PORT` | Porta WebSocket do PlexAutoSkip (interno) | 8081 |
 | `SYNC_INTERVAL_MINUTES` | Intervalo em minutos entre varreduras automáticas das bibliotecas | 5 |

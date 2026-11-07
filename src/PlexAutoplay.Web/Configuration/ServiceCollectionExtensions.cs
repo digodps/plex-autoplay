@@ -45,6 +45,16 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<ISeriesRepository>(
             new PlexAutoplay.Infrastructure.Persistence.Repositories.SqliteSeriesRepository(sqliteConnectionString));
 
+        // Credencial administrativa, setup inicial e troca de senha
+        services.AddSingleton<IAuthCredentialStore>(
+            new PlexAutoplay.Infrastructure.Persistence.Repositories.SqliteAuthCredentialStore(sqliteConnectionString));
+        services.AddSingleton<IPasswordHasher>(new Pbkdf2PasswordHasher());
+        services.AddSingleton<SetupTokenService>();
+        services.AddSingleton<ISetupTokenValidator>(sp => sp.GetRequiredService<SetupTokenService>());
+        services.AddSingleton<LoginUseCase>();
+        services.AddSingleton<CompleteSetupUseCase>();
+        services.AddSingleton<ChangePasswordUseCase>();
+
         // JWT token service
         var jwtSecret = Environment.GetEnvironmentVariable("JWT_SECRET") ?? "default-secret-change-in-production";
         services.AddSingleton<JwtTokenService>(sp => new JwtTokenService(jwtSecret, sp.GetRequiredService<ILogger<JwtTokenService>>()));

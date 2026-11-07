@@ -3,21 +3,24 @@ namespace PlexAutoplay.Application.UseCases;
 public class LoginUseCase
 {
     private readonly ITokenService _tokenService;
-    private readonly string _adminPassword;
+    private readonly IAuthCredentialStore _credentials;
+    private readonly IPasswordHasher _hasher;
 
-    public LoginUseCase(ITokenService tokenService, string adminPassword)
+    public LoginUseCase(ITokenService tokenService, IAuthCredentialStore credentials, IPasswordHasher hasher)
     {
         _tokenService = tokenService;
-        _adminPassword = adminPassword;
+        _credentials = credentials;
+        _hasher = hasher;
     }
 
-    public (bool Success, string? Token) TryGenerate(string password)
+    public async Task<(bool Success, string? Token)> TryGenerateAsync(string password)
     {
-        if (password == _adminPassword)
+        var hash = await _credentials.GetHashAsync();
+        if (hash is null || !_hasher.Verify(password, hash))
         {
-            return (true, _tokenService.GenerateToken());
+            return (false, null);
         }
 
-        return (false, null);
+        return (true, _tokenService.GenerateToken());
     }
 }
