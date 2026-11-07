@@ -66,34 +66,21 @@ export function useDashboardCards() {
 
   const librariesCard = computed(() => {
     const s = store.librariesSummary;
+    const m = store.markersSummary;
     return {
       icon: "library",
       label: "Bibliotecas",
       value: s.count.toLocaleString("pt-BR"),
-      breakdown: [{ label: "Bibliotecas", value: s.count }],
-      badge: s.count ? { text: `${s.count} libs`, variant: "neutral" } : { text: "Vazio", variant: "warning" },
-      href: "/libraries",
-      loading: store.loading && !store.librariesData.length,
-      error: store.partialErrors.libraries,
-    };
-  });
-
-  const markersCard = computed(() => {
-    const m = store.markersSummary;
-    return {
-      icon: "bookmark",
-      label: "Marcadores",
-      value: m.total.toLocaleString("pt-BR"),
       breakdown: [
         { label: "Intro", value: m.byKind.intro.toLocaleString("pt-BR") },
         { label: "Créditos", value: m.byKind.credits.toLocaleString("pt-BR") },
         { label: "Detectados", value: m.byOrigin.detected.toLocaleString("pt-BR") },
         { label: "Manuais", value: m.byOrigin.manual.toLocaleString("pt-BR") },
       ],
-      badge: m.total ? { text: "Cobertura", variant: "neutral" } : { text: "Sem dados", variant: "warning" },
-      href: "/series",
-      loading: store.loading && !store.markersData.length,
-      error: store.partialErrors.markers,
+      badge: s.count ? { text: `${s.count} libs`, variant: "neutral" } : { text: "Vazio", variant: "warning" },
+      href: "/libraries",
+      loading: store.loading && (!store.librariesData.length || !store.markersData.length),
+      error: store.partialErrors.libraries || store.partialErrors.markers,
     };
   });
 
@@ -101,6 +88,5 @@ export function useDashboardCards() {
     serviceCard,
     syncCard,
     librariesCard,
-    markersCard,
   };
 }
