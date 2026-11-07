@@ -40,11 +40,17 @@ export const useMarkerStore = defineStore("markers", () => {
       for (const ep of episodes) episodesById[ep.rating_key] = ep;
       episodesMap.value = episodesById;
 
+      // Initialize markersMap: create entry per episode rating key, and also capture
+      // any markers that don't match an episode rating key (they remain available
+      // globally but are shown under the series that fetched them).
       const markers = {};
-      for (const ep of episodes) markers[ep.rating_key] = { intro: null, credits: null };
+      // One entry per known episode rating key
+      for (const ratingKey of Object.keys(episodesById)) markers[ratingKey] = { intro: null, credits: null };
+      // Also add any markers whose ratingKey doesn't correspond to a fetched episode;
+      // keep them under their own ratingKey so they can be displayed/edited later.
       for (const m of allMarkers) {
-        if (!markers[m.ratingKey] && !markers[m.rating_key]) continue;
         const key = m.ratingKey ?? m.rating_key;
+        if (!markers[key]) markers[key] = { intro: null, credits: null };
         const kind = m.kind;
         markers[key][kind] = {
           startMs: m.startMs ?? m.start_ms ?? 0,
