@@ -85,4 +85,4 @@ O workflow `publish-container.yml` SHALL disparar em push de tags `v*.*.*` e SHA
 #### Scenario: Push em main
 
 - **WHEN** um commit chega em `main`
-- **THEN** o workflow publica `:latest` e a tag de sha, sem tags semver
+- **THEN** o workflow publica apenas a tag de sha, sem `latest` e sem tags semver
