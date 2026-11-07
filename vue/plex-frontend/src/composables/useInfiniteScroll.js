@@ -16,14 +16,10 @@ export function useInfiniteScroll(options = {}) {
 
   function findScrollContainer(element) {
     if (!element || typeof window === "undefined") return null;
-
     let parent = element.parentElement;
     while (parent && parent !== document.body && parent !== document.documentElement) {
       const style = window.getComputedStyle(parent);
-      const overflowY = style.overflowY;
-      if (/auto|scroll|overlay/.test(overflowY)) {
-        return parent;
-      }
+      if (/auto|scroll|overlay/.test(style.overflowY)) return parent;
       parent = parent.parentElement;
     }
     return null;
@@ -37,9 +33,7 @@ export function useInfiniteScroll(options = {}) {
         const result = await onLoadMore();
         if (result === false || !hasMore.value) {
           hasMore.value = false;
-          if (typeof onEndReached === "function") {
-            onEndReached();
-          }
+          if (typeof onEndReached === "function") onEndReached();
         }
       }
     } finally {
@@ -64,13 +58,10 @@ export function useInfiniteScroll(options = {}) {
 
   function checkScrollPosition() {
     if (!sentinelRef.value || !detectedRoot || isLoading.value || !hasMore.value) return;
-    const sentinel = sentinelRef.value;
-    const container = detectedRoot;
-    const sentinelRect = sentinel.getBoundingClientRect();
-    const containerRect = container.getBoundingClientRect();
+    const sentinelRect = sentinelRef.value.getBoundingClientRect();
+    const containerRect = detectedRoot.getBoundingClientRect();
     const rootMarginPx = parseInt(rootMargin) || 200;
-    const distanceFromBottom = containerRect.bottom - sentinelRect.top;
-    if (distanceFromBottom <= rootMarginPx + container.clientHeight) {
+    if (containerRect.bottom - sentinelRect.top <= rootMarginPx + detectedRoot.clientHeight) {
       loadMore();
     }
   }
@@ -94,9 +85,7 @@ export function useInfiniteScroll(options = {}) {
     };
     container.addEventListener("scroll", scrollHandler, { passive: true });
     scrollCheckTimeout = setInterval(() => {
-      if (hasMore.value && !isLoading.value) {
-        checkScrollPosition();
-      }
+      if (hasMore.value && !isLoading.value) checkScrollPosition();
     }, 1000);
   }
 
@@ -106,17 +95,10 @@ export function useInfiniteScroll(options = {}) {
     if (!sentinelRef.value || !hasMore.value) return;
     const observerRoot = root ?? findScrollContainer(sentinelRef.value);
     detectedRoot = observerRoot;
-    if (!observerRoot) {
-      if (import.meta.env.DEV) {
-        console.warn("[useInfiniteScroll] Nenhum container rolável detectado...");
-      }
-    }
     observer = new window.IntersectionObserver(
       (entries) => {
         const [entry] = entries;
-        if (entry && entry.isIntersecting && !isLoading.value && hasMore.value) {
-          loadMore();
-        }
+        if (entry && entry.isIntersecting && !isLoading.value && hasMore.value) loadMore();
       },
       { root: observerRoot, rootMargin, threshold }
     );
@@ -124,39 +106,11 @@ export function useInfiniteScroll(options = {}) {
     setupScrollFallback();
   }
 
-  watch(sentinelRef, () => {
-    setupObserver();
-  });
+  watch(sentinelRef, () => setupObserver());
+  watch(hasMore, (next) => (next ? setupObserver() : cleanupObserver()));
 
-  watch(hasMore, (newVal) => {
-    if (newVal) {
-      setupObserver();
-    } else {
-      cleanupObserver();
-    }
-  });
+  onMounted(() => setupObserver());
+  onUnmounted(() => cleanupObserver());
 
-  watch(
-    () => (root ? root : findScrollContainer(sentinelRef.value)),
-    (newRoot) => {
-      if (!root && newRoot !== detectedRoot) {
-        setupObserver();
-      }
-    }
-  );
-
-  onMounted(() => {
-    setupObserver();
-  });
-
-  onUnmounted(() => {
-    cleanupObserver();
-  });
-
-  return {
-    sentinelRef,
-    isLoading,
-    hasMore,
-    loadMore,
-  };
+  return { sentinelRef, isLoading, hasMore, loadMore };
 }
