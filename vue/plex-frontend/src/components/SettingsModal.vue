@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref } from "vue";
+import { computed, onMounted, onUnmounted, ref } from "vue";
 import { useThemeStore } from "@/stores/theme";
 
 const props = defineProps({
@@ -29,6 +29,13 @@ function apply() {
   confirmPassword.value = "";
   emit("close");
 }
+
+function onKeydown(e) {
+  if (e.key === "Escape" && props.isOpen) emit("close");
+}
+
+onMounted(() => document.addEventListener("keydown", onKeydown));
+onUnmounted(() => document.removeEventListener("keydown", onKeydown));
 </script>
 
 <template>
