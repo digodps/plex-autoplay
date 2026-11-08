@@ -10,21 +10,20 @@ function libraryTitle(libraries, key) {
   return (libraries ?? []).find((lib) => String(lib.key) === String(key))?.title ?? "";
 }
 
-export function buildBreadcrumb(route, libraries = []) {
-  if (route?.name === "dashboard") return [{ label: HOME.label, isCurrent: true }];
-
+export function buildBreadcrumb(route, libraries = [], { loading = false } = {}) {
+  const name = route?.name;
   const params = route?.params ?? {};
   const query = route?.query ?? {};
   const key = params.key ?? query.libraryKey;
   const lib = libraryTitle(libraries, key) || text(query.libraryTitle);
   const items = [{ ...HOME }];
 
-  if (route?.name === "libraries") {
-    items.push({ label: LIBRARIES.label, isCurrent: true });
-  } else if (route?.name === "series") {
+  if (name === "libraries") {
     items.push({ ...LIBRARIES });
-    items.push({ label: lib || "Biblioteca", isCurrent: true });
-  } else if (route?.name === "series-markers") {
+  } else if (name === "series") {
+    items.push({ ...LIBRARIES });
+    if (!loading) items.push({ label: lib || "Biblioteca indisponível" });
+  } else if (name === "series-markers") {
     items.push({ ...LIBRARIES });
     if (lib) {
       items.push({
@@ -32,10 +31,14 @@ export function buildBreadcrumb(route, libraries = []) {
         to: key ? { name: "series", params: { key } } : undefined,
       });
     }
-    items.push({ label: text(query.seriesTitle) || "Série", isCurrent: true });
-  } else {
-    items.push({ label: route?.meta?.title ?? "", isCurrent: true });
+    items.push({ label: text(query.seriesTitle) || "Série" });
+  } else if (name !== "dashboard") {
+    items.push({ label: route?.meta?.title || "Página" });
   }
 
-  return items.filter((item) => item.label);
+  const filtered = items.filter((item) => item.label);
+  return filtered.map((item, index) => ({
+    ...item,
+    isCurrent: index === filtered.length - 1,
+  }));
 }

@@ -52,34 +52,36 @@ function openPassword() {
 
     <span class="h-5 w-px bg-gray-300 dark:bg-gray-700" aria-hidden="true"></span>
 
-    <nav aria-label="Breadcrumb" class="min-w-0 truncate">
-      <ol class="flex items-center gap-1 text-gray-700 dark:text-bodydark">
+    <nav aria-label="Breadcrumb" class="min-w-0 flex-1 overflow-x-auto">
+      <ol class="flex w-max items-center gap-1 whitespace-nowrap text-gray-700 dark:text-bodydark">
         <li
           v-for="(item, index) in items"
-          :key="index"
-          class="flex min-w-0 items-center gap-1"
+          :key="item.label"
+          class="flex items-center gap-1"
         >
           <RouterLink
             v-if="item.to && !item.isCurrent"
             :to="item.to"
-            class="truncate hover:text-primary"
+            class="hover:text-primary"
           >
             {{ item.label }}
           </RouterLink>
           <span
             v-else
-            class="truncate"
             :class="item.isCurrent ? 'font-medium text-black dark:text-white' : ''"
             :aria-current="item.isCurrent ? 'page' : undefined"
           >
             {{ item.label }}
           </span>
-          <span v-if="index < items.length - 1" aria-hidden="true">/</span>
+          <AppIcon
+            v-if="index < items.length - 1"
+            name="chevron-right"
+            size="sm"
+            class="shrink-0 text-gray-400"
+          />
         </li>
       </ol>
     </nav>
-
-    <div class="flex-1"></div>
 
     <button
       :class="iconButton"

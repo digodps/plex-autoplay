@@ -7,8 +7,11 @@ import { buildBreadcrumb } from "@/lib/breadcrumb";
 
 const route = useRoute();
 const libraries = ref([]);
+const loading = ref(true);
 
-const breadcrumbs = computed(() => buildBreadcrumb(route, libraries.value));
+const breadcrumbs = computed(() =>
+  buildBreadcrumb(route, libraries.value, { loading: loading.value }),
+);
 
 onMounted(async () => {
   try {
@@ -16,6 +19,8 @@ onMounted(async () => {
     libraries.value = Array.isArray(data) ? data : [];
   } catch {
     libraries.value = [];
+  } finally {
+    loading.value = false;
   }
 });
 </script>
