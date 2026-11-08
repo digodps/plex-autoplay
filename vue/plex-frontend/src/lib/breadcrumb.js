@@ -1,4 +1,5 @@
 const HOME = { label: "Início", to: { name: "dashboard" } };
+const LIBRARIES = { label: "Bibliotecas", to: { name: "libraries" } };
 
 function text(value) {
   return Array.isArray(value) ? String(value[0] ?? "") : value ? String(value) : "";
@@ -9,7 +10,7 @@ function libraryTitle(libraries, key) {
   return (libraries ?? []).find((lib) => String(lib.key) === String(key))?.title ?? "";
 }
 
-export function buildBreadcrumb(route, libraries = [], { loading = false } = {}) {
+export function buildBreadcrumb(route, libraries = []) {
   if (route?.name === "dashboard") return [{ label: HOME.label, isCurrent: true }];
 
   const params = route?.params ?? {};
@@ -19,10 +20,12 @@ export function buildBreadcrumb(route, libraries = [], { loading = false } = {})
   const items = [{ ...HOME }];
 
   if (route?.name === "libraries") {
-    items.push({ label: "Bibliotecas", isCurrent: true });
+    items.push({ label: LIBRARIES.label, isCurrent: true });
   } else if (route?.name === "series") {
-    items.push({ label: loading ? "" : lib || "Biblioteca indisponível", isCurrent: true });
+    items.push({ ...LIBRARIES });
+    items.push({ label: lib || "Biblioteca", isCurrent: true });
   } else if (route?.name === "series-markers") {
+    items.push({ ...LIBRARIES });
     if (lib) {
       items.push({
         label: lib,
