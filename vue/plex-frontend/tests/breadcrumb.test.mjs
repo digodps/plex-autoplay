@@ -7,33 +7,27 @@ const libraries = [
   { key: "2", title: "Filmes" },
 ];
 
-const home = { label: "Início", to: { name: "dashboard" }, isCurrent: false };
 const librariesItem = { label: "Bibliotecas", to: { name: "libraries" }, isCurrent: false };
 
 function contracts(items) {
   return items.map(({ label, to, isCurrent }) => ({ label, to, isCurrent }));
 }
 
-test("dashboard mostra Início, com destino e marcado como atual", () => {
-  const items = buildBreadcrumb({ name: "dashboard" }, libraries);
-  assert.deepEqual(contracts(items), [
-    { label: "Início", to: { name: "dashboard" }, isCurrent: true },
-  ]);
+test("dashboard não exibe trilha", () => {
+  assert.deepEqual(buildBreadcrumb({ name: "dashboard" }, libraries), []);
 });
 
-test("libraries mostra Início > Bibliotecas", () => {
+test("libraries mostra Bibliotecas", () => {
   const items = buildBreadcrumb({ name: "libraries" }, libraries);
   assert.deepEqual(contracts(items), [
-    home,
     { label: "Bibliotecas", to: { name: "libraries" }, isCurrent: true },
   ]);
 });
 
-test("séries da biblioteca: Início > Bibliotecas > título", () => {
+test("séries da biblioteca: Bibliotecas > título", () => {
   const items = buildBreadcrumb({ name: "series", params: { key: "1" } }, libraries);
   assert.deepEqual(contracts(items), [
-    home,
-    { ...librariesItem, isCurrent: false },
+    librariesItem,
     { label: "Animes", to: undefined, isCurrent: true },
   ]);
 });
@@ -44,7 +38,6 @@ test("fallback para query quando biblioteca não carregou", () => {
     [],
   );
   assert.deepEqual(contracts(items), [
-    home,
     librariesItem,
     { label: "Animes", to: undefined, isCurrent: true },
   ]);
@@ -53,21 +46,19 @@ test("fallback para query quando biblioteca não carregou", () => {
 test("biblioteca desconhecida após loading", () => {
   const items = buildBreadcrumb({ name: "series", params: { key: "9" } }, []);
   assert.deepEqual(contracts(items), [
-    home,
     librariesItem,
     { label: "Biblioteca indisponível", to: undefined, isCurrent: true },
   ]);
 });
 
-test("loading mostra Início > Bibliotecas sem inventar título", () => {
+test("loading mostra Bibliotecas sem inventar título", () => {
   const items = buildBreadcrumb({ name: "series", params: { key: "9" } }, [], { loading: true });
   assert.deepEqual(contracts(items), [
-    home,
     { label: "Bibliotecas", to: { name: "libraries" }, isCurrent: true },
   ]);
 });
 
-test("marcadores: Início > Bibliotecas > biblioteca > série", () => {
+test("marcadores: Bibliotecas > biblioteca > série", () => {
   const items = buildBreadcrumb(
     {
       name: "series-markers",
@@ -77,44 +68,51 @@ test("marcadores: Início > Bibliotecas > biblioteca > série", () => {
     libraries,
   );
   assert.deepEqual(contracts(items), [
-    home,
     librariesItem,
     { label: "Animes", to: { name: "series", params: { key: "1" } }, isCurrent: false },
     { label: "Aosh", to: undefined, isCurrent: true },
   ]);
 });
 
-test("deep link de marcadores sem metadados: Início > Bibliotecas > Série", () => {
+test("deep link de marcadores sem metadados: Bibliotecas > Série", () => {
   const items = buildBreadcrumb(
     { name: "series-markers", params: { seriesKey: "42" } },
     libraries,
   );
   assert.deepEqual(contracts(items), [
-    home,
     librariesItem,
     { label: "Série", to: undefined, isCurrent: true },
   ]);
 });
 
-test("rota desconhecida usa meta.title", () => {
+test("deep link de marcadores com bibliotecas ainda carregando: Bibliotecas > Série", () => {
+  const items = buildBreadcrumb(
+    { name: "series-markers", params: { seriesKey: "42" } },
+    [],
+    { loading: true },
+  );
+  assert.deepEqual(contracts(items), [
+    librariesItem,
+    { label: "Série", to: undefined, isCurrent: true },
+  ]);
+});
+
+test("rota conhecida usa meta.title sem Início", () => {
   const items = buildBreadcrumb({ name: "settings", meta: { title: "Configurações" } }, libraries);
   assert.deepEqual(contracts(items), [
-    home,
     { label: "Configurações", to: undefined, isCurrent: true },
   ]);
 });
 
-test("rota desconhecida sem título usa Página", () => {
+test("rota sem título usa Página", () => {
   const items = buildBreadcrumb({ name: "unknown" }, libraries);
   assert.deepEqual(contracts(items), [
-    home,
     { label: "Página", to: undefined, isCurrent: true },
   ]);
 });
 
-test("nenhum item vazio e último sempre atual", () => {
+test("trilha não vazia: nenhum item vazio, um único atual no fim", () => {
   const roads = [
-    { name: "dashboard" },
     { name: "libraries" },
     { name: "series", params: { key: "1" } },
     { name: "series", params: { key: "9" } },

@@ -50,15 +50,14 @@ function openPassword() {
       </span>
     </RouterLink>
 
-    <span class="h-5 w-px bg-gray-300 dark:bg-gray-700" aria-hidden="true"></span>
-
-    <nav aria-label="Breadcrumb" class="min-w-0 flex-1 overflow-x-auto">
+    <nav
+      v-if="items.length"
+      aria-label="Breadcrumb"
+      class="min-w-0 flex-1 overflow-x-auto"
+    >
       <ol class="flex w-max items-center gap-1 whitespace-nowrap text-gray-700 dark:text-bodydark">
-        <li
-          v-for="(item, index) in items"
-          :key="item.label"
-          class="flex items-center gap-1"
-        >
+        <li v-for="(item, index) in items" :key="index" class="flex items-center gap-1">
+          <AppIcon name="chevron-right" size="sm" class="shrink-0 text-gray-400" />
           <RouterLink
             v-if="item.to && !item.isCurrent"
             :to="item.to"
@@ -73,18 +72,12 @@ function openPassword() {
           >
             {{ item.label }}
           </span>
-          <AppIcon
-            v-if="index < items.length - 1"
-            name="chevron-right"
-            size="sm"
-            class="shrink-0 text-gray-400"
-          />
         </li>
       </ol>
     </nav>
 
     <button
-      :class="iconButton"
+      :class="[iconButton, 'ml-auto']"
       type="button"
       :aria-label="isDark ? 'Tema claro' : 'Tema escuro'"
       :title="isDark ? 'Tema claro' : 'Tema escuro'"
