@@ -59,6 +59,21 @@
 - [x] **Docker acceptance** — build do frontend, `docker build --no-cache -t
   plex-autoplay:ui-sidebar-header .`, `docker run -p 8080:80`, validação da UI.
 
+## Phase 4 — Sidebar flutuante
+
+- [x] **EGM A/S/C** — 3 revisores paralelos; achados triados em
+  `deficiencias_resolvidas.md`.
+- [x] **Specs** — `web-ui` atualizada: sidebar flutuante com margem em todos os
+  lados, raio > 0, borda completa e superfície distinta do fundo.
+- [ ] **SidebarArea** — aplicar `rounded-lg`, `border`, `my-2 mx-2`,
+  `overflow-y-auto overflow-x-hidden` e superfície dark `gray-800`.
+- [ ] **Build/lint/testes** — `npm run build`, `npm run lint`,
+  `npm run test:sidebar`, `npm run test:breadcrumb`, `npm run test:tokens`.
+- [ ] **QA Playwright** — validar margens >= 8px em todos os lados,
+  `border-radius > 0`, borda e superfície em light/dark, navegação e estado
+  ativo.
+- [ ] **Docker acceptance** — `docker build --no-cache` e execução isolada.
+
 ## Pendências (fora do escopo)
 
 - Troca de senha no `SettingsModal`.

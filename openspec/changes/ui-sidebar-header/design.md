@@ -5,17 +5,22 @@
 ```
 +--------------------------------------------------------------+
 | Header: hamburger | breadcrumb        tema | perfil | ajustes |
-+-------------------+------------------------------------------+
-| Sidebar           |                                          |
-| (bibliotecas)     |  Main content                            |
-| • Biblioteca A    |                                          |
-| • Biblioteca B    |                                          |
-+-------------------+------------------------------------------+
++--------------------------------------------------------------+
+   +-------------------+  +------------------------------------+
+   | Sidebar           |  |                                    |
+   | (bibliotecas)     |  |  Main content                      |
+   | • Biblioteca A    |  |                                    |
+   | • Biblioteca B    |  |                                    |
+   +-------------------+  +------------------------------------+
 ```
 
 - Header ocupa a largura total e fica no topo (`sticky top-0`).
-- Sidebar fica abaixo do header, com altura `calc(100vh - header)` e scroll
-  próprio.
+- Sidebar flutua como um card: margens externas em todos os lados,
+  `rounded-lg` (raio `0.5rem`, alinhado a `--radius`), borda completa e
+  superfície própria (`bg-gray-50` / `dark:bg-gray-800`), sem encostar no
+  header, nas bordas da viewport ou no conteúdo principal.
+- Altura derivada do flex do shell (`min-h-0 flex-1`) descontando as margens;
+  a lista rola dentro do próprio sidebar.
 - Conteúdo principal rola de forma independente.
 
 ## Componentes reais
@@ -35,7 +40,11 @@ item; caso contrário, o item é renderizado inline.
 
 - Props: `items` (array `{ key, title }`), `collapsed` (boolean).
 - Sem imports de `vue-router`, stores, composables ou `api.js`.
-- Larguras: `w-64` expandida, `w-16` compacta.
+- Larguras: `w-64` expandida, `w-16` compacta; margens externas
+  (`my-2 mx-2`; `max-[768px]:mx-2`) ficam fora da largura do card.
+- Flutuação: `rounded-lg`, `border` completo, `shadow-sm` e superfície
+  `bg-gray-50 dark:bg-gray-800`; `overflow-y-auto overflow-x-hidden` no
+  container para o scroll respeitar os cantos arredondados.
 - Lista: `<ul>` com `space-y-1` (margem entre bibliotecas) e `p-2`.
 - Item: `RouterLink` para `/libraries/<key>/series`, ícone `library`, rótulo com
   o título da biblioteca, alvo mínimo de 44px, `aria-current` quando ativo.

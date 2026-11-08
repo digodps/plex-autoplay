@@ -39,15 +39,25 @@ The sidebar MUST render one item per library returned by
 
 ### Requirement: Sidebar position and spacing
 
-The sidebar MUST render below the header, span the viewport height minus the
-header, scroll independently, and MUST keep a vertical margin between library
-items.
+The sidebar MUST render as a floating panel with a visible margin on every
+side (top, right, bottom and left), rounded corners, and a full border, so it
+does not touch the header, the viewport edges, or the main content. It MUST
+span the available height minus its vertical margins, scroll independently,
+and MUST keep a vertical margin between library items.
 
-#### Scenario: Sidebar starts below header
+#### Scenario: Sidebar floats below the header
 
 - **WHEN** the authenticated shell renders at a viewport of 1280x800
-- **THEN** the sidebar's top edge equals the header's bottom edge and the
-  sidebar does not overlap the header
+- **THEN** the sidebar's top edge is below the header's bottom edge by a
+  positive margin (at least 8px), its left, right and bottom margins are at
+  least 8px, its computed border-radius is greater than 0, and it does not
+  overlap the header or the main content
+
+#### Scenario: Floating panel surface
+
+- **WHEN** the sidebar is rendered in light or dark mode
+- **THEN** it has a full border and a surface color distinct from the page
+  background
 
 #### Scenario: Items are separated
 

@@ -12,7 +12,9 @@ espaçamento entre elas.
 - Sidebar passa a listar as bibliotecas carregadas de `GET /api/plex/libraries`.
 - Remove da sidebar o botão "Menu", o toggle de tema e o item estático
   "Bibliotecas".
-- Sidebar renderiza abaixo do header (não ocupa a altura total ao lado dele).
+- Sidebar renderiza como painel flutuante: margem em todos os lados, cantos
+  arredondados e borda completa, sem encostar no header, nas bordas da viewport
+  ou no conteúdo principal.
 - Espaçamento vertical entre itens da lista.
 - Modo compacto (só ícones) mantido, controlado pelo hamburger do header e
   persistido em `localStorage`.
