@@ -49,220 +49,182 @@ public class PlexAutoSkipBackgroundService : BackgroundService
         var settings = await _settings.GetAsync();
         var plexUrl = settings.PlexUrl.TrimEnd('/');
         using var http = _httpClientFactory.CreateClient();
-        var resp = await http.GetAsync($"{plexUrl}/status/stream", ct);
+        var req = new HttpRequestMessage(HttpMethod.Get, $"{plexUrl}/status/sessions");
+        req.Headers.Add("X-Plex-Token", settings.PlexToken);
+        var resp = await http.SendAsync(req, ct);
 
-        if (!resp.IsSuccessStatusCode) return;
+        if (!resp.IsSuccessStatusCode)
+        {
+            _logger.LogDebug("Plex /status/sessions returned {StatusCode}", resp.StatusCode);
+            return;
+        }
 
         var xml = await resp.Content.ReadAsStringAsync(ct);
-        var viewOffset = ExtractViewOffset(xml);
-        var ratingKey = ExtractRatingKey(xml);
+        var session = ParsePlayingSession(xml);
+        if (session is null) return;
 
-        if (viewOffset <= 0) return;
-
-        var markers = (await _markerRepository.GetByRatingKeyAsync(ratingKey.ToString())).Select(m => new MarkerInfo(m.Kind, m.StartMs, m.EndMs)).ToList();
+        var markers = (await _markerRepository.GetByRatingKeyAsync(session.RatingKey.ToString()))
+            .Select(m => new MarkerInfo(m.Kind, m.StartMs, m.EndMs))
+            .ToList();
 
         foreach (var marker in markers)
         {
-            if (viewOffset >= marker.StartMs && viewOffset <= marker.EndMs)
+            if (session.PositionMs >= marker.StartMs && session.PositionMs <= marker.EndMs)
             {
-                await SeekToEndOfMarkerAsync(new PlexSessionInfo
-                {
-                    PositionMs = viewOffset,
-                    RatingKey = ratingKey,
-                    ClientIp = ExtractClientIp(xml),
-                    ClientPort = ExtractClientPort(xml),
-                    MachineIdentifier = ExtractMachineIdentifier(xml)
-                }, marker, plexUrl, settings.PlexToken, ct);
-
+                _logger.LogInformation("Auto-skip trigger: pos={Pos}ms in marker [{Start},{End}] {Kind} ratingKey={RK}",
+                    session.PositionMs, marker.StartMs, marker.EndMs, marker.Kind, session.RatingKey);
+                await SeekToEndOfMarkerAsync(session, marker, plexUrl, settings.PlexToken, ct);
                 break;
             }
         }
     }
 
-    private static int ExtractViewOffset(string xml)
+    private static PlexSessionInfo? ParsePlayingSession(string xml)
     {
         try
         {
-            var start = xml.IndexOf("<ViewOffset>") + "<ViewOffset>".Length;
-            var end = xml.IndexOf("</ViewOffset>", start);
-            if (start > "<ViewOffset>".Length && end > start)
-                return int.Parse(xml.Substring(start, end - start));
+            var doc = System.Xml.Linq.XDocument.Parse(xml);
+            var video = doc.Descendants("Video").FirstOrDefault(v =>
+                v.Attribute("viewOffset") != null &&
+                v.Attribute("ratingKey") != null &&
+                v.Attribute("type")?.Value == "episode");
+
+            if (video == null) return null;
+
+            int viewOffset = int.Parse(video.Attribute("viewOffset")!.Value);
+            int ratingKey = int.Parse(video.Attribute("ratingKey")!.Value);
+
+            var player = video.Elements("Player").FirstOrDefault(p => p.Attribute("state")?.Value == "playing");
+            if (player == null) return null;
+
+            string clientIp = player.Attribute("address")?.Value ?? string.Empty;
+            string machineId = player.Attribute("machineIdentifier")?.Value ?? string.Empty;
+            string product = player.Attribute("product")?.Value ?? string.Empty;
+            string platform = player.Attribute("platform")?.Value ?? string.Empty;
+            string version = player.Attribute("version")?.Value ?? string.Empty;
+
+            // Map known client products to their companion control ports (from PlexAutoSkip)
+            int clientPort = GetClientPort(product);
+
+            return new PlexSessionInfo
+            {
+                PositionMs = viewOffset,
+                RatingKey = ratingKey,
+                ClientIp = clientIp,
+                ClientPort = clientPort,
+                MachineIdentifier = machineId,
+                Product = product,
+                Platform = platform,
+                Version = version
+            };
         }
-        catch { }
-        return 0;
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"ParsePlayingSession error: {ex.Message}");
+            return null;
+        }
     }
 
-    private static int ExtractRatingKey(string xml)
+    private static int GetClientPort(string product)
     {
-        try
+        return product switch
         {
-            var start = xml.IndexOf("<RatingKey>") + "<RatingKey>".Length;
-            var end = xml.IndexOf("</RatingKey>", start);
-            if (start > "<RatingKey>".Length && end > start)
-                return int.Parse(xml.Substring(start, end - start));
-        }
-        catch { }
-        return 0;
+            "Plex for Roku" => 8324,
+            "Plex for Android (TV)" => 32500,
+            "Plex for Android (Mobile)" => 32500,
+            "Plex for iOS" => 32500,
+            "Plex for Apple TV" => 32500,
+            "Plex for Windows" => 32700,
+            "Plex for Mac" => 32700,
+            _ => 0 // Unknown client — will use PMS proxy
+        };
     }
 
-    private static string ExtractClientIp(string xml)
+    private static bool IsBrokenClient(string product, string version)
     {
-        try
+        // PlexAutoSkip: these clients removed "Advertise as Player" / Plex Companion functionality
+        if (string.IsNullOrEmpty(product) || string.IsNullOrEmpty(version)) return false;
+        var v = version.Split('-')[0]; // strip build suffix
+        return product switch
         {
-            var start = xml.IndexOf("<Client>") + "<Client>".Length;
-            var end = xml.IndexOf("</Client>", start);
-            if (start > "<Client>".Length && end > start)
-                return xml.Substring(start, end - start);
-        }
-        catch { }
-        return string.Empty;
+            "Plex Web" => VersionCompare(v, "4.83.2") >= 0,
+            "Plex for Windows" => VersionCompare(v, "1.46.1") >= 0,
+            "Plex for Mac" => VersionCompare(v, "1.46.1") >= 0,
+            "Plex for Linux" => VersionCompare(v, "1.46.1") >= 0,
+            _ => false
+        };
     }
 
-    private static int ExtractClientPort(string xml)
+    private static int VersionCompare(string v1, string v2)
     {
         try
         {
-            var start = xml.IndexOf("<Port>") + "<Port>".Length;
-            var end = xml.IndexOf("</Port>", start);
-            if (start > "<Port>".Length && end > start)
-                return int.Parse(xml.Substring(start, end - start));
+            var a = new Version(v1);
+            var b = new Version(v2);
+            return a.CompareTo(b);
         }
-        catch { }
-        return 0;
-    }
-
-    private static string ExtractMachineIdentifier(string xml)
-    {
-        try
-        {
-            var start = xml.IndexOf("<MachineIdentifier>") + "<MachineIdentifier>".Length;
-            var end = xml.IndexOf("</MachineIdentifier>", start);
-            if (start > "<MachineIdentifier>".Length && end > start)
-                return xml.Substring(start, end - start);
-        }
-        catch { }
-        return string.Empty;
+        catch { return 0; }
     }
 
     private async Task SeekToEndOfMarkerAsync(PlexSessionInfo session, MarkerInfo marker, string plexUrl, string plexToken, CancellationToken ct)
     {
-        _logger.LogInformation(
-            "Auto-skip: position={Pos}ms within marker [{Start}ms, {End}ms] ({Reason}) for ratingKey={RK}",
-            session.PositionMs, marker.StartMs, marker.EndMs, marker.Kind, session.RatingKey);
+        string commandId = Guid.NewGuid().ToString("N")[..12];
 
-        // Step 1: Try PMS proxy first — goes through Plex Server, which Samsung TV accepts
+        // Skip known-broken clients (no Plex Companion support) — don't spam errors
+        if (IsBrokenClient(session.Product, session.Version))
+        {
+            _logger.LogInformation("Auto-skip: client {Product} {Version} lacks Plex Companion support, skipping seek (marker {Kind} ->{Ms}ms)",
+                session.Product, session.Version, marker.Kind, marker.EndMs);
+            return;
+        }
+
+        // 1) Direct client HTTP (preferred — works for Android, iOS, AppleTV, Roku, Windows/Mac desktop)
+        if (!string.IsNullOrEmpty(session.ClientIp) && session.ClientPort > 0)
+        {
+            try
+            {
+                using var httpClient = _httpClientFactory.CreateClient();
+                var seekUrl = $"http://{session.ClientIp}:{session.ClientPort}/player/playback/seekTo?offset={marker.EndMs}&commandID={commandId}&X-Plex-Token={Uri.EscapeDataString(plexToken)}";
+                var response = await httpClient.GetAsync(seekUrl, ct);
+                if (response.IsSuccessStatusCode)
+                {
+                    _logger.LogInformation("Seek via direct client ok ({Product} {Ip}:{Port}, ->{Ms}ms)", session.Product, session.ClientIp, session.ClientPort, marker.EndMs);
+                    return;
+                }
+                _logger.LogDebug("Direct client seek returned {StatusCode} ({Product} {Ip}:{Port})", response.StatusCode, session.Product, session.ClientIp, session.ClientPort);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogDebug(ex, "Direct client seek failed ({Product} {Ip}:{Port})", session.Product, session.ClientIp, session.ClientPort);
+            }
+        }
+
+        // 2) PMS proxy with X-Plex-Target-Client-Identifier (fallback for clients that proxy through server)
         if (!string.IsNullOrEmpty(session.MachineIdentifier))
         {
             try
             {
                 using var httpClient = _httpClientFactory.CreateClient();
-                var commandId = Guid.NewGuid().ToString();
-                var proxyUrl = $"{plexUrl}/players/{session.MachineIdentifier}/commands/seek?offset={marker.EndMs}&commandID={commandId}";
-
-                var response = await httpClient.GetAsync(proxyUrl, ct);
-
+                var proxyUrl = $"{plexUrl}/player/playback/seekTo?offset={marker.EndMs}&commandID={commandId}&type=video";
+                var req = new HttpRequestMessage(HttpMethod.Get, proxyUrl);
+                req.Headers.Add("X-Plex-Token", plexToken);
+                req.Headers.Add("X-Plex-Target-Client-Identifier", session.MachineIdentifier);
+                var response = await httpClient.SendAsync(req, ct);
                 if (response.IsSuccessStatusCode)
                 {
-                    _logger.LogInformation("Seek sent via PMS proxy for machineId={Mi}", session.MachineIdentifier);
+                    _logger.LogInformation("Seek via PMS proxy ok (machineId={Mi}, ->{Ms}ms)", session.MachineIdentifier, marker.EndMs);
+                    return;
                 }
-                else
-                {
-                    _logger.LogWarning("PMS proxy seek returned {StatusCode}", response.StatusCode);
-                    // Step 2: Fallback to direct client HTTP if PMS proxy fails
-                    if (!string.IsNullOrEmpty(session.ClientIp) && session.ClientPort > 0)
-                    {
-                        using var httpClient2 = _httpClientFactory.CreateClient();
-                        var commandId2 = Guid.NewGuid().ToString();
-                        var seekUrl = $"http://{session.ClientIp}:{session.ClientPort}/player/playback/seekTo?offset={marker.EndMs}&commandID={commandId2}&X-Plex-Token={plexToken}";
-
-                        var response2 = await httpClient2.GetAsync(seekUrl, ct);
-                        if (response2.IsSuccessStatusCode)
-                            _logger.LogInformation("Seek command sent to client {Ip} for marker skip", session.ClientIp);
-                    }
-                }
+                _logger.LogDebug("PMS proxy seek returned {StatusCode} (machineId={Mi})", response.StatusCode, session.MachineIdentifier);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Failed to send seek via PMS proxy");
-                // Step 2: Fallback to direct client HTTP if PMS proxy throws
-                if (!string.IsNullOrEmpty(session.ClientIp) && session.ClientPort > 0)
-                {
-                    try
-                    {
-                        using var httpClient2 = _httpClientFactory.CreateClient();
-                        var commandId2 = Guid.NewGuid().ToString();
-                        var seekUrl = $"http://{session.ClientIp}:{session.ClientPort}/player/playback/seekTo?offset={marker.EndMs}&commandID={commandId2}&X-Plex-Token={plexToken}";
-
-                        var response2 = await httpClient2.GetAsync(seekUrl, ct);
-                        if (response2.IsSuccessStatusCode)
-                            _logger.LogInformation("Seek command sent to client {Ip} for marker skip", session.ClientIp);
-                    }
-                    catch (Exception ex2)
-                    {
-                        _logger.LogError(ex2, "Failed to send seek to client {Ip}", session.ClientIp);
-                    }
-                }
+                _logger.LogDebug(ex, "PMS proxy seek failed (machineId={Mi})", session.MachineIdentifier);
             }
         }
-        // Step 2: If no MachineIdentifier, try direct client HTTP
-        else if (!string.IsNullOrEmpty(session.ClientIp) && session.ClientPort > 0)
-        {
-            try
-            {
-                using var httpClient = _httpClientFactory.CreateClient();
-                var commandId = Guid.NewGuid().ToString();
-                var seekUrl = $"http://{session.ClientIp}:{session.ClientPort}/player/playback/seekTo?offset={marker.EndMs}&commandID={commandId}&X-Plex-Token={plexToken}";
 
-                var response = await httpClient.GetAsync(seekUrl, ct);
-
-                if (response.IsSuccessStatusCode)
-                {
-                    _logger.LogInformation("Seek command sent to client {Ip} for marker skip", session.ClientIp);
-                }
-                else
-                {
-                    _logger.LogWarning("Seek command to client returned {StatusCode}", response.StatusCode);
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Failed to send seek to client {Ip}", session.ClientIp);
-            }
-        }
-        // Step 3: No valid client info — log and skip
-        else
-        {
-            _logger.LogWarning("No MachineIdentifier or ClientIp:ClientPort available for auto-skip seek");
-        }
-    }
-
-    private async Task SendSeekToPmsProxyAsync(PlexSessionInfo session, long targetMs, CancellationToken ct)
-    {
-        try
-        {
-            if (string.IsNullOrEmpty(session.MachineIdentifier)) return;
-
-            var settings = await _settings.GetAsync();
-            var plexUrl = settings.PlexUrl.TrimEnd('/');
-            using var httpClient = _httpClientFactory.CreateClient();
-            var commandId = Guid.NewGuid().ToString();
-            var proxyUrl = $"{plexUrl}/players/{session.MachineIdentifier}/commands/seek?offset={targetMs}&commandID={commandId}";
-
-            var response = await httpClient.GetAsync(proxyUrl, ct);
-
-            if (response.IsSuccessStatusCode)
-            {
-                _logger.LogInformation("PMS proxy seek completed for machineId={Mi}", session.MachineIdentifier);
-            }
-            else
-            {
-                _logger.LogWarning("PMS proxy seek returned {StatusCode}", response.StatusCode);
-            }
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed PMS proxy seek");
-        }
+        _logger.LogWarning("No viable seek path for {Product} (ip={Ip}, port={Port}, machineId={Mi})",
+            session.Product, session.ClientIp, session.ClientPort, session.MachineIdentifier);
     }
 }
 
@@ -273,4 +235,7 @@ public class PlexSessionInfo
     public string ClientIp { get; set; } = string.Empty;
     public int ClientPort { get; set; }
     public string MachineIdentifier { get; set; } = string.Empty;
+    public string Product { get; set; } = string.Empty;
+    public string Platform { get; set; } = string.Empty;
+    public string Version { get; set; } = string.Empty;
 }
