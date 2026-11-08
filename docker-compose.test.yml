@@ -15,9 +15,11 @@ services:
       - PLEX_TOKEN=${PLEX_TOKEN}
       - JWT_SECRET=${JWT_SECRET}
       - ADMIN_PASSWORD=${ADMIN_PASSWORD}
+      - SETUP_TOKEN=${SETUP_TOKEN}
       - MEDIA_ROOT=${MEDIA_ROOT}
       - APP_HOST=${APP_HOST:-plex-autoplay.dns.podman}
       - PLAYWRIGHT_BASE_URL=${PLAYWRIGHT_BASE_URL:-http://${APP_HOST:-plex-autoplay.dns.podman}:80}
+      - OPERATOR_PASSWORD=${OPERATOR_PASSWORD}
       - INSIDE_EXECUTOR_CONTAINER=true
     working_dir: /workspace
     depends_on:
@@ -61,6 +63,7 @@ services:
       - MEDIA_ROOT=/media
       - JWT_SECRET=${JWT_SECRET}
       - ADMIN_PASSWORD=${ADMIN_PASSWORD}
+      - SETUP_TOKEN=${SETUP_TOKEN}
       - WEB_PORT=80
       - ASPNETCORE_URLS=http://0.0.0.0:80
       - DISABLE_HTTP=false

@@ -68,7 +68,7 @@ async function handleLogin() {
         {{ error }}
       </div>
 
-      <form @submit.prevent="handleLogin">
+      <form @submit.prevent="handleLogin" data-testid="login-form">
         <div class="mb-5">
           <label class="mb-2.5 block font-medium text-black dark:text-white" for="password">
             Senha
@@ -81,12 +81,14 @@ async function handleLogin() {
             autocomplete="current-password"
             class="w-full rounded-lg border border-stroke bg-transparent py-4 pl-5 pr-12 text-black outline-none focus:border-primary focus-visible:shadow-none dark:border-form-strokedark dark:bg-form-input dark:text-white"
             required
+            data-testid="password-input"
           />
         </div>
 
         <button
           :disabled="loading"
           type="submit"
+          data-testid="login-submit"
           class="flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg bg-primary p-4 font-medium text-white transition hover:bg-opacity-90 disabled:opacity-60"
         >
           <AppIcon :name="loading ? 'spinner' : 'check'" size="sm" :class="{ 'animate-spin': loading }" />

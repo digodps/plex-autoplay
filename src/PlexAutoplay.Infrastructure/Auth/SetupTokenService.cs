@@ -14,7 +14,8 @@ public class SetupTokenService : ISetupTokenValidator
     private string? _token;
 
     /// <summary>
-    /// Gera o token apenas uma vez por processo. Usa SETUP_TOKEN do ambiente
+    /// Gera o token apenas uma vez por processo. Usa TEST_MASTER_PASSWORD do ambiente
+    /// quando presente (ambiente de teste, evita re-setup); usa SETUP_TOKEN do ambiente
     /// quando presente (hook de testes); caso contrário, 32 bytes aleatórios.
     /// </summary>
     public string EnsureGenerated()
@@ -23,13 +24,24 @@ public class SetupTokenService : ISetupTokenValidator
         {
             if (_token is null)
             {
-                var configured = Environment.GetEnvironmentVariable("SETUP_TOKEN");
-                _token = string.IsNullOrWhiteSpace(configured)
-                    ? Convert.ToBase64String(RandomNumberGenerator.GetBytes(32))
-                        .Replace('+', '-')
-                        .Replace('/', '_')
-                        .TrimEnd('=')
-                    : configured;
+                var masterPassword = Environment.GetEnvironmentVariable("TEST_MASTER_PASSWORD");
+                var setupToken = Environment.GetEnvironmentVariable("SETUP_TOKEN");
+
+                if (!string.IsNullOrWhiteSpace(masterPassword) && string.IsNullOrWhiteSpace(setupToken))
+                {
+                    // Ambiente de teste: reusa a senha mestra como token de setup.
+                    _token = masterPassword;
+                }
+                else
+                {
+                    var configured = string.IsNullOrWhiteSpace(setupToken) ? null : setupToken;
+                    _token = string.IsNullOrWhiteSpace(configured)
+                        ? Convert.ToBase64String(RandomNumberGenerator.GetBytes(32))
+                            .Replace('+', '-')
+                            .Replace('/', '_')
+                            .TrimEnd('=')
+                        : configured;
+                }
             }
 
             return _token;

@@ -15,34 +15,6 @@ const message = ref("");
 // Intervalo de sincronização (localStorage apenas)
 const interval = ref(localStorage.getItem("syncIntervalMinutes") ? parseInt(localStorage.getItem("syncIntervalMinutes")) : 5);
 
-async function fetchPlexIdentity() {
-  if (!plexUrl.value) {
-    message.value = "Informe a URL do Plex primeiro";
-    return;
-  }
-  saving.value = true;
-  message.value = "";
-  try {
-    const res = await apiFetch("/api/plex/identity", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ url: plexUrl.value }),
-    });
-    const data = await res.json().catch(() => ({}));
-    if (res.ok) {
-      plexToken.value = data.token || "";
-      tokenFetched.value = true;
-      message.value = "Token do Plex obtido com sucesso";
-    } else {
-      message.value = data.detail || "Erro ao obter token";
-    }
-  } catch {
-    message.value = "Erro de conexão com o Plex";
-  } finally {
-    saving.value = false;
-  }
-}
-
 async function savePlexConfig() {
   saving.value = true;
   message.value = "";
@@ -74,98 +46,94 @@ function saveInterval() {
 
 <template>
   <DefaultLayout>
-    <div class="mb-6">
-      <h1 class="text-title-md font-bold text-black dark:text-white">Ajustes</h1>
-    </div>
-
-    <!-- Intervalo de Sincronização -->
-    <div class="setting-group rounded-sm border border-stroke bg-white px-5 py-4 shadow-default dark:border-strokedark dark:bg-boxdark">
-      <label class="block text-sm font-medium text-body dark:text-bodydark mb-2">
-        Intervalo de Sincronização (minutos)
-      </label>
-      <input
-        v-model.number="interval"
-        type="number"
-        min="1"
-        max="60"
-        class="settings-input settings-input--number rounded border border-stroke bg-white text-black focus:border-primary dark:border-form-strokedark dark:bg-form-input dark:text-white"
-      />
-      <p class="text-xs text-bodydark2 mt-2">Intervalo em minutos entre sincronizações automáticas.</p>
-    </div>
-
-    <div class="flex items-center justify-end gap-2 mt-4">
-      <button
-        class="rounded-lg border border-stroke bg-white px-5 py-2.5 text-sm font-medium text-body transition hover:border-primary hover:text-primary dark:border-strokedark dark:bg-boxdark dark:text-bodydark"
-        :disabled="saving"
-        @click="saveInterval"
-      >
-        {{ saving ? "Salvando..." : "Salvar Intervalo" }}
-      </button>
-      <button
-        class="rounded-lg border border-stroke bg-white px-5 py-2.5 text-sm font-medium text-body transition hover:border-primary hover:text-primary dark:border-strokedark dark:bg-boxdark dark:text-bodydark"
-        @click="router.push('/settings')"
-      >
-        Cancelar
-      </button>
-    </div>
-
-    <p v-if="message" class="mt-2 text-sm text-meta-1">{{ message }}</p>
-
-    <hr class="mt-6 border-t border-stroke dark:border-strokedark" />
-
-    <!-- Configurações Plex -->
-    <div class="mt-6">
-      <h2 class="text-title-sm font-semibold text-black dark:text-white mb-3">Configurações do Plex</h2>
-
-      <div v-if="!tokenFetched" class="setting-group rounded-sm border border-stroke bg-white px-5 py-4 shadow-default dark:border-strokedark dark:bg-boxdark">
-        <label class="block text-sm font-medium text-body dark:text-bodydark mb-2">URL do Plex</label>
-        <input
-          v-model="plexUrl"
-          type="text"
-          placeholder="http://192.168.1.5:32400"
-          class="settings-input rounded border border-stroke bg-white text-black focus:border-primary dark:border-form-strokedark dark:bg-form-input dark:text-white"
-        />
+    <div class="bg-gray-50 dark:bg-gray-900 min-h-screen">
+      <div class="border-b border-gray-200 dark:border-gray-800 sticky top-0 z-20 bg-gray-50 dark:bg-gray-900">
+        <div class="max-w-2xl mx-auto px-4 py-3 flex items-center gap-2">
+          <h1 class="text-28 font-bold text-gray-900 dark:text-gray-100">Ajustes</h1>
+          <p class="text-sm text-gray-500 dark:text-gray-400">Configurações do Plex e sincronização.</p>
+        </div>
       </div>
 
-      <div v-if="!tokenFetched" class="setting-group rounded-sm border border-stroke bg-white px-5 py-4 shadow-default dark:border-strokedark dark:bg-boxdark">
-        <label class="block text-sm font-medium text-body dark:text-bodydark mb-2">Token do Plex</label>
-        <input
-          v-model="plexToken"
-          type="text"
-          class="settings-input rounded border border-stroke bg-white text-black focus:border-primary dark:border-form-strokedark dark:bg-form-input dark:text-white"
-        />
-        <button
-          class="mt-3 rounded-lg border border-stroke bg-primary px-4 py-2.5 text-sm font-medium text-white transition hover:bg-opacity-90 disabled:opacity-60"
-          @click="fetchPlexIdentity"
-        >
-          Buscar token
-        </button>
-      </div>
+      <div class="p-4 md:p-6 lg:p-8">
+        <!-- Intervalo de Sincronização -->
+        <div class="rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 p-4 space-y-3">
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            Intervalo de Sincronização (minutos)
+          </label>
+          <input
+            v-model.number="interval"
+            type="number"
+            min="1"
+            max="60"
+            class="w-full rounded border border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 text-black dark:text-white focus:border-primary focus:bg-white focus:text-black transition"
+            placeholder="5"
+          />
+          <p class="text-xs text-gray-500 dark:text-gray-400">Intervalo em minutos entre sincronizações automáticas.</p>
+        </div>
 
-      <div v-if="tokenFetched" class="setting-group rounded-sm border border-stroke bg-white px-5 py-4 shadow-default dark:border-strokedark dark:bg-boxdark">
-        <label class="block text-sm font-medium text-body dark:text-bodydark mb-2">Token do Plex</label>
-        <input
-          v-model="plexToken"
-          type="text"
-          class="settings-input rounded border border-stroke bg-white text-black focus:border-primary dark:border-form-strokedark dark:bg-form-input dark:text-white"
-        />
-      </div>
+        <div class="flex items-center justify-end gap-2">
+          <button
+            class="rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 px-4 py-2 text-sm font-medium text-gray-800 dark:text-gray-100 transition hover:border-gray-400 dark:hover:bg-gray-600 disabled:opacity-50"
+            :disabled="saving"
+            @click="saveInterval"
+          >
+            {{ saving ? "Salvando..." : "Salvar Intervalo" }}
+          </button>
+        </div>
 
-      <div class="flex items-end gap-2 mt-4">
-        <button
-          class="flex-1 rounded-lg border border-stroke bg-white px-5 py-2.5 text-sm font-medium text-body transition hover:border-primary hover:text-primary dark:border-strokedark dark:bg-boxdark dark:text-bodydark"
-          :disabled="saving"
-          @click="savePlexConfig"
-        >
-          {{ saving ? "Salvando..." : "Salvar Configurações" }}
-        </button>
-        <button
-          class="rounded-lg border border-stroke bg-white px-5 py-2.5 text-sm font-medium text-body transition hover:border-primary hover:text-primary dark:border-strokedark dark:bg-boxdark dark:text-bodydark"
-          @click="router.push('/settings')"
-        >
-          Cancelar
-        </button>
+        <p v-if="message" class="mt-2 text-sm text-gray-400 dark:text-gray-600">{{ message }}</p>
+
+        <hr class="mt-6 border-t border-gray-200 dark:border-gray-600" />
+
+        <!-- Configurações Plex -->
+        <div class="mt-6">
+          <h2 class="text-title-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">Configurações do Plex</h2>
+
+          <div v-if="!tokenFetched" class="rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 p-4 space-y-3">
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">URL do Plex</label>
+            <input
+              v-model="plexUrl"
+              type="text"
+              placeholder="http://192.168.1.5:32400"
+              class="w-full rounded border border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 text-black dark:text-white focus:border-primary focus:bg-white focus:text-black"
+            />
+          </div>
+
+          <div v-if="!tokenFetched" class="rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 p-4 space-y-3">
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Token do Plex</label>
+            <input
+              v-model="plexToken"
+              type="text"
+              class="w-full rounded border border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 text-black dark:text-white focus:border-primary focus:bg-white focus:text-black"
+            />
+          </div>
+
+          <div v-if="tokenFetched" class="rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 p-4 space-y-3">
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Token do Plex</label>
+            <input
+              v-model="plexToken"
+              type="text"
+              class="w-full rounded border border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 text-black dark:text-white focus:border-primary focus:bg-white focus:text-black"
+            />
+          </div>
+
+          <div class="flex items-end gap-2 mt-4">
+            <button
+              class="flex-1 rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 px-4 py-2 text-sm font-medium text-gray-800 dark:text-gray-100 transition hover:border-gray-400 dark:hover:bg-gray-600 disabled:opacity-50"
+              :disabled="saving"
+              @click="savePlexConfig"
+            >
+              {{ saving ? "Salvando..." : "Salvar Configurações" }}
+            </button>
+            <button
+              class="rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 px-4 py-2 text-sm font-medium text-gray-800 dark:text-gray-100 transition hover:border-gray-400 dark:hover:bg-gray-600"
+              @click="router.push('/settings')"
+            >
+              Cancelar
+            </button>
+          </div>
+        </div>
       </div>
-    </div>
-  </DefaultLayout>
-</template>
+      </div>
+    </DefaultLayout>
+  </template>

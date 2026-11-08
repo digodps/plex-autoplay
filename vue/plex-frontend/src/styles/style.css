@@ -16,7 +16,8 @@
   --border: #D0D7DE;
   --text: #24292F;
   --text-secondary: #57606A;
-  --accent: #0969DA;
+  --accent: #111113;
+  --accent-contrast: #FFFFFF;
   --danger: #CF222E;
   --success: #1A7F37;
   --warning: #9A6700;
@@ -31,7 +32,8 @@
   --border: #30363D;
   --text: #E6EDF3;
   --text-secondary: #8B949E;
-  --accent: #58A6FF;
+  --accent: #F6F6F7;
+  --accent-contrast: #111113;
   --danger: #F85149;
   --success: #3FB950;
   --warning: #D29922;
@@ -76,4 +78,8 @@ body {
 
 .inbox-height {
   @apply h-[calc(100vh_-_8.125rem)] lg:h-[calc(100vh_-_5.625rem)];
+}
+/* Neutral accent: primary buttons adopt the flipping contrast color */
+.bg-primary {
+  color: var(--accent-contrast);
 }
