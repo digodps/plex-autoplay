@@ -111,5 +111,6 @@ const seasons = computed(() => {
           </div>
         </div>
       </div>
+      </div>
     </DefaultLayout>
   </template>

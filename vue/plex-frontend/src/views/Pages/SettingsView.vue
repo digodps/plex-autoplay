@@ -15,34 +15,6 @@ const message = ref("");
 // Intervalo de sincronização (localStorage apenas)
 const interval = ref(localStorage.getItem("syncIntervalMinutes") ? parseInt(localStorage.getItem("syncIntervalMinutes")) : 5);
 
-async function fetchPlexIdentity() {
-  if (!plexUrl.value) {
-    message.value = "Informe a URL do Plex primeiro";
-    return;
-  }
-  saving.value = true;
-  message.value = "";
-  try {
-    const res = await apiFetch("/api/plex/identity", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ url: plexUrl.value }),
-    });
-    const data = await res.json().catch(() => ({}));
-    if (res.ok) {
-      plexToken.value = data.token || "";
-      tokenFetched.value = true;
-      message.value = "Token do Plex obtido com sucesso";
-    } else {
-      message.value = data.detail || "Erro ao obter token";
-    }
-  } catch {
-    message.value = "Erro de conexão com o Plex";
-  } finally {
-    saving.value = false;
-  }
-}
-
 async function savePlexConfig() {
   saving.value = true;
   message.value = "";
@@ -161,6 +133,7 @@ function saveInterval() {
             </button>
           </div>
         </div>
+      </div>
       </div>
     </DefaultLayout>
   </template>

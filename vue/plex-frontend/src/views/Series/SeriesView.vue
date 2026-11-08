@@ -18,7 +18,7 @@ const {
   error: libraryError,
 } = useLibraryTitle(libraryKey, queryTitle);
 
-const { seriesList, seriesTotalSize, seriesLoading, isLoadingMore, seriesError, sentinelRef } =
+const { seriesList, seriesTotalSize, seriesLoading, seriesError, sentinelRef } =
   useSeriesCatalog();
 
 const viewState = computed(() => {
@@ -142,6 +142,7 @@ function openMarkers(series) {
           <AppIcon name="tv" size="lg" class="mx-auto text-gray-400 dark:text-gray-600" />
           <p class="mt-3 text-sm font-medium text-gray-300 dark:text-gray-400">Nenhuma série encontrada.</p>
         </div>
+      </div>
       </div>
     </DefaultLayout>
   </template>

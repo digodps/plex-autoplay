@@ -118,5 +118,6 @@ function navigateToSeries(libraryKey, libraryTitle) {
           </p>
         </div>
       </div>
+      </div>
     </DefaultLayout>
   </template>

@@ -4,7 +4,6 @@ using PlexAutoplay.Domain;
 using PlexAutoplay.Domain.Ports;
 using PlexAutoplay.Infrastructure.Auth;
 using PlexAutoplay.Infrastructure.AutoSkip;
-using PlexAutoplay.Infrastructure.Persistence.Repositories;
 using PlexAutoplay.Infrastructure.Cache;
 using PlexAutoplay.Infrastructure;
 using PlexAutoplay.Infrastructure.Detection;
@@ -45,6 +44,16 @@ public static class ServiceCollectionExtensions
             new PlexAutoplay.Infrastructure.Persistence.Repositories.SqliteLibraryRepository(sqliteConnectionString));
         services.AddSingleton<ISeriesRepository>(
             new PlexAutoplay.Infrastructure.Persistence.Repositories.SqliteSeriesRepository(sqliteConnectionString));
+
+        // Credencial administrativa, setup inicial e troca de senha
+        services.AddSingleton<IAuthCredentialStore>(
+            new PlexAutoplay.Infrastructure.Persistence.Repositories.SqliteAuthCredentialStore(sqliteConnectionString));
+        services.AddSingleton<IPasswordHasher>(new Pbkdf2PasswordHasher());
+        services.AddSingleton<SetupTokenService>();
+        services.AddSingleton<ISetupTokenValidator>(sp => sp.GetRequiredService<SetupTokenService>());
+        services.AddSingleton<LoginUseCase>();
+        services.AddSingleton<CompleteSetupUseCase>();
+        services.AddSingleton<ChangePasswordUseCase>();
 
         // JWT token service
         var jwtSecret = Environment.GetEnvironmentVariable("JWT_SECRET") ?? "default-secret-change-in-production";
@@ -93,10 +102,6 @@ public static class ServiceCollectionExtensions
 
         // Marker detector
         services.AddSingleton<IMarkerDetector, PlexAutoplay.Infrastructure.Detection.FfmpegMarkerDetector>();
-
-        // Authentication services
-        services.AddSingleton<IAuthCredentialStore>(sp => new SqliteAuthCredentialStore(sqliteConnectionString));
-        services.AddSingleton<IPasswordHasher, Pbkdf2PasswordHasher>();
 
         // In-memory scan job tracking
         services.AddSingleton<IScanJobStore, ScanJobStore>();

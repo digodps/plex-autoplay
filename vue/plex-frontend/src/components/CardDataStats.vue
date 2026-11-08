@@ -49,7 +49,7 @@ const pillStyle = computed(() => ({
     :class="[
       isActive
         ? 'border-primary ring-1 ring-primary'
-        : 'border-stroke hover:border-primary/40 hover:shadow-md dark:border-gray-700',
+        : 'border-stroke hover:border-gray-400 hover:shadow-md dark:border-gray-700',
       error ? '!border-meta-1' : '',
       href ? 'block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900' : '',
     ]"
