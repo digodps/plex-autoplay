@@ -1,6 +1,9 @@
 services:
   plex-autoplay:
-    build: .
+    build:
+      context: .
+      args:
+        GIT_COMMIT: ${GIT_COMMIT:-local}
     image: plex-autoplay:latest
     container_name: plex-autoplay
     restart: unless-stopped

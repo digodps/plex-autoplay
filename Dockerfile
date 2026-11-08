@@ -9,6 +9,8 @@ COPY src/PlexAutoplay.Web/ ./src/PlexAutoplay.Web/
 RUN dotnet publish src/PlexAutoplay.Web/PlexAutoplay.Web.csproj -c Release -o /app/publish /p:UseAppHost=false
 
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
+ARG GIT_COMMIT=local
+LABEL org.opencontainers.image.revision=$GIT_COMMIT
 RUN apt-get update && apt-get install -y --no-install-recommends ffmpeg && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 COPY --from=build /app/publish .
