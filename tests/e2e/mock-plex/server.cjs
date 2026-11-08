@@ -1,6 +1,6 @@
 const http = require("http");
 
-const PORT = 32400;
+const PORT = Number(process.env.PORT) || 32400;
 
 // ---- Dados de mock: séries e episódios ----
 const series = [
@@ -70,6 +70,13 @@ const server = http.createServer((req, res) => {
 
   // Catalogo paginado de séries: /library/sections/{key}/all?type=show
   const catalogMatch = path.match(/^\/library\/sections\/(\d+)\/all$/);
+  // Episódios de uma seção (?type=4): usado pelo scan de marcadores.
+  if (catalogMatch && url.searchParams.get("type") === "4" && req.method === "GET") {
+    res.writeHead(200, { "Content-Type": "application/json" });
+    res.end(JSON.stringify(episodesResponse("101")));
+    return;
+  }
+
   if (catalogMatch && req.method === "GET") {
     const start = parseInt(req.headers["x-plex-container-start"] ?? "0", 10);
     const size = req.headers["x-plex-container-size"];
@@ -113,6 +120,15 @@ const server = http.createServer((req, res) => {
     );
     res.writeHead(200, { "Content-Type": "image/png", "Content-Length": png.length });
     res.end(png);
+    return;
+  }
+
+  // Identidade do servidor (validação de URL/token no setup inicial).
+  if (path === "/identity" && req.method === "GET") {
+    res.writeHead(200, { "Content-Type": "application/xml" });
+    res.end(
+      '<?xml version="1.0" encoding="UTF-8"?>\n<MediaContainer machineIdentifier="mock-machine" friendlyName="Plex Mock" version="1.40.0"/>',
+    );
     return;
   }
 

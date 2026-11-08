@@ -3,8 +3,9 @@ namespace PlexAutoplay.Infrastructure.PlexProxy;
 using PlexAutoplay.Application;
 
 /// <summary>
-/// Resolve URL e token do Plex no banco a cada requisição, permitindo troca
-/// em runtime sem reiniciar o container. Não usa DefaultRequestHeaders.
+/// Resolve o token do Plex no banco a cada requisição, permitindo troca em
+/// runtime sem reiniciar o container. A URL absoluta é responsabilidade do
+/// <see cref="PlexApiClient"/>, que conhece o path prefix de PLEX_URL.
 /// </summary>
 public sealed class PlexRequestHandler : DelegatingHandler
 {
@@ -19,13 +20,13 @@ public sealed class PlexRequestHandler : DelegatingHandler
         HttpRequestMessage request,
         CancellationToken cancellationToken)
     {
-        var settings = await _settings.GetAsync();
-
-        if (request.RequestUri is { IsAbsoluteUri: false })
+        if (request.RequestUri is not { IsAbsoluteUri: true })
         {
-            var baseUri = new Uri(settings.PlexUrl.TrimEnd('/') + "/", UriKind.Absolute);
-            request.RequestUri = new Uri(baseUri, request.RequestUri);
+            throw new InvalidOperationException(
+                "PlexApiClient deve montar URL absoluta a partir de PLEX_URL antes de enviar a requisição.");
         }
+
+        var settings = await _settings.GetAsync();
 
         if (!request.Headers.Contains("X-Plex-Token") && !string.IsNullOrEmpty(settings.PlexToken))
         {

@@ -99,7 +99,7 @@ public class SyncBackgroundService : BackgroundService
                 }
 
                 var seeds = episodesResult.Episodes.Select(e => new EpisodeSeed(e.RatingKey, e.FilePath));
-                var summary = await _libraryScan.ScanLibraryAsync(seeds, settings.MediaRoot);
+                var summary = await _libraryScan.ScanLibraryAsync(seeds, settings.MediaRoots);
 
                 processed += summary.Processed;
                 skipped += summary.Skipped;

@@ -25,13 +25,13 @@ public partial class PlexApiClient
             // (versão 1.43.x) retorna HTTP 500 "bad lexical cast" quando esse
             // parâmetro é enviado em /library/sections/{key}/all. O filtro por
             // tipo "show" já é feito do lado do cliente no parsing da resposta.
-            var url = $"/library/sections/{sectionKey}/all";
+            var url = $"library/sections/{sectionKey}/all";
             if (!string.IsNullOrWhiteSpace(titleQuery))
             {
                 url += $"?title.contains={Uri.EscapeDataString(titleQuery)}";
             }
 
-            using var request = new HttpRequestMessage(HttpMethod.Get, url);
+            using var request = new HttpRequestMessage(HttpMethod.Get, await BuildUrlAsync(url));
             // Paginação delegada ao Plex via cabeçalhos de container
             request.Headers.Add("X-Plex-Container-Start", containerStart.ToString());
             request.Headers.Add("X-Plex-Container-Size", containerSize.ToString());
@@ -78,7 +78,7 @@ public partial class PlexApiClient
 
         try
         {
-            var response = await _httpClient.GetAsync($"/library/metadata/{seriesKey}/allLeaves");
+            var response = await _httpClient.GetAsync(await BuildUrlAsync($"library/metadata/{seriesKey}/allLeaves"));
 
             if (!response.IsSuccessStatusCode)
             {

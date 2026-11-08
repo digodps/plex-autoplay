@@ -67,7 +67,7 @@ public static class PlexEndpoints
 
                             var seeds = episodesResult.Episodes.Select(e => new EpisodeSeed(e.RatingKey, e.FilePath));
                             var current = await settings.GetAsync();
-                            var summary = await libraryScan.ScanLibraryAsync(seeds, current.MediaRoot, origin: "detected");
+                            var summary = await libraryScan.ScanLibraryAsync(seeds, current.MediaRoots, origin: "detected");
 
                             processed += summary.Processed;
                             skipped += summary.Skipped;
@@ -113,7 +113,7 @@ public static class PlexEndpoints
                 season = e.ParentIndex,
                 episode = e.Index,
                 file_path = e.FilePath,
-                local_path = pathResolver.Resolve(current.MediaRoot, e.FilePath)
+                local_path = pathResolver.Resolve(current.MediaRoots, e.FilePath)
             });
             return Results.Ok(result);
         });

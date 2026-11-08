@@ -16,15 +16,30 @@ namespace PlexAutoplay.Infrastructure.PlexProxy;
 public partial class PlexApiClient : IPlexApiClient
 {
     private readonly HttpClient _httpClient;
+    private readonly IAppSettingsStore _settings;
     private readonly ILogger<PlexApiClient> _logger;
     private static readonly ActivitySource ActivitySource = OpenTelemetryService.Tracer;
     private static readonly Meter PlexMeter = new("PlexAutoplay.PlexApi");
     private static readonly Counter<int> PlexErrorCounter = PlexMeter.CreateCounter<int>("plex_api_errors_total");
 
-    public PlexApiClient(HttpClient httpClient, ILogger<PlexApiClient> logger)
+    public PlexApiClient(HttpClient httpClient, IAppSettingsStore settings, ILogger<PlexApiClient> logger)
     {
         _httpClient = httpClient;
+        _settings = settings;
         _logger = logger;
+    }
+
+    /// <summary>
+    /// URL absoluta do recurso, preservando path prefix de PLEX_URL
+    /// (ex.: https://host/plex + library/sections).
+    /// </summary>
+    public static Uri BuildUrl(string plexUrl, string relativePath) =>
+        new(plexUrl.TrimEnd('/') + "/" + relativePath.TrimStart('/'), UriKind.Absolute);
+
+    private async Task<Uri> BuildUrlAsync(string relativePath)
+    {
+        var settings = await _settings.GetAsync();
+        return BuildUrl(settings.PlexUrl, relativePath);
     }
 
     public async Task<PlexLibrariesResult> GetLibrariesAsync()
@@ -38,7 +53,7 @@ public partial class PlexApiClient : IPlexApiClient
 
         try
         {
-            var response = await _httpClient.GetAsync("/library/sections");
+            var response = await _httpClient.GetAsync(await BuildUrlAsync("library/sections"));
 
             if (!response.IsSuccessStatusCode)
             {
@@ -83,7 +98,7 @@ public partial class PlexApiClient : IPlexApiClient
 
         try
         {
-            var response = await _httpClient.GetAsync($"/library/sections/{{sectionKey}}/all?type=4");
+            var response = await _httpClient.GetAsync(await BuildUrlAsync($"library/sections/{sectionKey}/all?type=4"));
 
             if (!response.IsSuccessStatusCode)
             {
@@ -128,8 +143,9 @@ public partial class PlexApiClient : IPlexApiClient
 
         try
         {
-            using var request = new HttpRequestMessage(HttpMethod.Get, plexUrl.TrimEnd('/') + "/identity");
+            using var request = new HttpRequestMessage(HttpMethod.Get, BuildUrl(plexUrl, "identity"));
             request.Headers.Add("X-Plex-Token", plexToken);
+            request.Headers.Accept.ParseAdd("application/xml");
             var response = await _httpClient.SendAsync(request);
 
             if (!response.IsSuccessStatusCode)
