@@ -18,15 +18,18 @@ O sistema SHALL expor um endpoint que liste as séries de uma biblioteca do tipo
 - **THEN** a lista ainda inclui a série, com a capa ausente (o frontend deve tratar casos sem capa).
 
 ### Requirement: Paginação server-side do catálogo
-O sistema SHALL aceitar parâmetros de página e tamanho de página no endpoint de listagem de séries e SHALL delegar a paginação ao Plex via cabeçalhos de container (X-Plex-Container-Start/Size), retornando também a informação de total de itens para a UI paginar.
+
+O sistema SHALL aceitar parâmetros de página e tamanho de página no endpoint de listagem de séries e SHALL realizar a paginação no banco local via SQL, retornando também a informação de total de itens para a UI paginar, sem chamar a API do Plex para cada requisição.
 
 #### Scenario: Página solicitada
-- **WHEN** infinite scroll solicita próxima página com pageSize=24
-- **THEN** o sistema retorna no máximo 24 séries correspondentes ao intervalo paginado e um total para habilitar controles de paginação
+
+- **WHEN** o frontend solicita a página 2 com 24 itens por página
+- **THEN** o sistema retorna no máximo 24 séries do banco correspondentes ao intervalo paginado e um total para habilitar controles de paginação.
 
 #### Scenario: Consulta grande não congela a UI
+
 - **WHEN** uma biblioteca possui milhares de séries
-- **THEN** cada resposta carrega apenas a página solicitada, nunca a biblioteca inteira.
+- **THEN** cada resposta carrega apenas a página solicitada do banco, nunca a biblioteca inteira.
 
 ### Requirement: Buscar séries por nome
 O sistema SHALL aceitar um termo de busca (query) no endpoint de listagem de séries e SHALL filtrar as séries por correspondência de título, mantendo a paginação aplicada se possível. **A busca deve funcionar em tempo real (debounced) na view de página completa de séries.**

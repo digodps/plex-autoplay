@@ -1,41 +1,17 @@
 <script setup>
 import { computed, onMounted } from "vue";
-import { useRoute, useRouter } from "vue-router";
+import { useRoute } from "vue-router";
 import DefaultLayout from "@/components/layouts/DefaultLayout.vue";
 import AppIcon from "@/components/AppIcon.vue";
-import BreadcrumbDefault from "@/components/Breadcrumbs/BreadcrumbDefault.vue";
 import MarkerRow from "@/components/MarkerRow.vue";
 import { useMarkerStore } from "@/stores/markers";
 
 const route = useRoute();
-const router = useRouter();
 const store = useMarkerStore();
 const seriesKey = computed(() => route.params.seriesKey);
 
 onMounted(() => {
   store.fetchSeries(seriesKey.value);
-});
-
-const seriesTitleFromQuery = computed(() => route.query.seriesTitle ? String(route.query.seriesTitle) : "");
-const libraryTitleFromQuery = computed(() => route.query.libraryTitle ? String(route.query.libraryTitle) : "");
-const libraryKeyFromQuery = computed(() => route.query.libraryKey ? String(route.query.libraryKey) : "");
-
-const breadcrumbItems = computed(() => {
-  const items = [
-    { label: "Bibliotecas", to: { name: "libraries" } },
-  ];
-  if (libraryTitleFromQuery.value) {
-    items.push({
-      label: libraryTitleFromQuery.value,
-      to: libraryKeyFromQuery.value ? { name: "series", params: { key: libraryKeyFromQuery.value } } : { name: "libraries" },
-      isCurrent: false,
-    });
-  }
-  items.push({
-    label: seriesTitleFromQuery.value || "Série",
-    isCurrent: true,
-  });
-  return items;
 });
 
 const seasons = computed(() => {
@@ -53,11 +29,6 @@ const seasons = computed(() => {
 
 <template>
   <DefaultLayout>
-    <BreadcrumbDefault
-      :items="breadcrumbItems"
-      @select="(to) => to && router.push(to)"
-    />
-
     <div class="mb-6 flex flex-wrap items-start gap-4">
       <div>
         <h1 class="text-title-md font-bold text-black dark:text-white">Marcadores da série</h1>
