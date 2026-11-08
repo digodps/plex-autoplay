@@ -21,23 +21,24 @@ O sistema SHALL navegar para a rota `/libraries/{key}/series` quando o usuário 
 
 ### Requirement: Breadcrumb de navegação
 
-O sistema SHALL exibir a trilha completa da rota no topo da página de séries,
-permitindo retorno à lista de bibliotecas e à biblioteca ativa com um clique, sem
-depender do botão "voltar" do navegador.
+O sistema SHALL exibir a trilha dos níveis abaixo da home no topo da página de
+séries, permitindo retorno à lista de bibliotecas com um clique, sem depender
+do botão "voltar" do navegador. O acesso à home fica com o logo do cabeçalho,
+conforme `web-ui`.
 
 #### Scenario: Breadcrumb exibe hierarquia e permite retorno
 
 - **WHEN** usuário está na página `/libraries/{key}/series`
-- **THEN** breadcrumb mostra `Início > Bibliotecas > {Título da Biblioteca}`
-- **AND** clicar em "Início" navega para `/dashboard`
+- **THEN** breadcrumb mostra `Bibliotecas > {Título da Biblioteca}`
 - **AND** clicar em "Bibliotecas" navega para `/libraries`
 - **AND** título da biblioteca ativa é exibido sem link (estado atual)
 
 #### Scenario: Breadcrumb acessível
 
 - **WHEN** leitor de tela navega pelo breadcrumb
-- **THEN** estrutura semântica `<nav aria-label="Breadcrumb">` com `<ol>` e `<li>`
-  é usada
+- **THEN** estrutura semântica `<nav aria-label="Breadcrumb">` com `<ol>` e
+  `<li>` é usada
+- **AND** o link de retorno tem nome acessível "Bibliotecas"
 - **AND** o item atual tem `aria-current="page"`
 
 ### Requirement: Catálogo de séries em página completa
@@ -56,3 +57,25 @@ O sistema SHALL exibir o grid de séries ocupando toda a largura da área de con
 - **THEN** mensagem de erro com botão "Tentar novamente" é exibida
 - **WHEN** catálogo está vazio
 - **THEN** estado vazio com ícone e mensagem é exibido
+
+### Requirement: Destaque da miniatura no hover e foco
+
+O sistema SHALL destacar visualmente a miniatura do card de série quando o usuário passa o mouse sobre o card ou o foca via teclado, mantendo a navegação e o layout do grid inalterados.
+
+#### Scenario: Hover destaca a miniatura
+
+- **WHEN** o usuário posiciona o mouse sobre um card de série em `/libraries/{key}/series`
+- **THEN** a miniatura da série recebe realce visual (leve zoom e/ou overlay)
+- **AND** o card continua clicável e navega para `/series/{seriesKey}/markers`
+
+#### Scenario: Foco por teclado destaca a miniatura
+
+- **WHEN** o usuário navega com Tab até um card de série
+- **THEN** a miniatura apresenta o mesmo realce visual do hover
+- **AND** o indicador de foco permanece visível
+
+#### Scenario: Movimento reduzido
+
+- **WHEN** o usuário tem `prefers-reduced-motion: reduce`
+- **THEN** o realce não usa zoom animado
+- **AND** o destaque (overlay/borda) continua perceptível
