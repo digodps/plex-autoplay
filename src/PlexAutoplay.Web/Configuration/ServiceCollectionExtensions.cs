@@ -4,6 +4,7 @@ using PlexAutoplay.Domain;
 using PlexAutoplay.Domain.Ports;
 using PlexAutoplay.Infrastructure.Auth;
 using PlexAutoplay.Infrastructure.AutoSkip;
+using PlexAutoplay.Infrastructure.Persistence.Repositories;
 using PlexAutoplay.Infrastructure.Cache;
 using PlexAutoplay.Infrastructure;
 using PlexAutoplay.Infrastructure.Detection;
@@ -92,6 +93,10 @@ public static class ServiceCollectionExtensions
 
         // Marker detector
         services.AddSingleton<IMarkerDetector, PlexAutoplay.Infrastructure.Detection.FfmpegMarkerDetector>();
+
+        // Authentication services
+        services.AddSingleton<IAuthCredentialStore>(sp => new SqliteAuthCredentialStore(sqliteConnectionString));
+        services.AddSingleton<IPasswordHasher, Pbkdf2PasswordHasher>();
 
         // In-memory scan job tracking
         services.AddSingleton<IScanJobStore, ScanJobStore>();

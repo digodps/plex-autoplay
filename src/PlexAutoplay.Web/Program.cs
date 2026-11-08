@@ -47,7 +47,11 @@ Log.Information("Serviços de aplicação adicionados.");
 var adminPassword = Environment.GetEnvironmentVariable("ADMIN_PASSWORD") ?? "admin";
 Log.Information("Admin password set.");
 builder.Services.AddSingleton(sp =>
-    new PlexAutoplay.Application.UseCases.LoginUseCase(sp.GetRequiredService<PlexAutoplay.Application.ITokenService>(), adminPassword));
+    new PlexAutoplay.Application.UseCases.LoginUseCase(
+        sp.GetRequiredService<PlexAutoplay.Application.ITokenService>(),
+        sp.GetRequiredService<PlexAutoplay.Application.IAuthCredentialStore>(),
+        sp.GetRequiredService<PlexAutoplay.Application.IPasswordHasher>(),
+        adminPassword));
 
 // Media root for resolving local media file paths
 var mediaRoot = Environment.GetEnvironmentVariable("MEDIA_ROOT") ?? "/media";

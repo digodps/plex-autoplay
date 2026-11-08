@@ -15,14 +15,14 @@ public static class AuthEndpoints
     {
         app.MapGet("/auth/login", () => Results.Ok(new { message = "Use POST to authenticate" }));
 
-        app.MapPost("/auth/login", (
+        app.MapPost("/auth/login", async (
             HttpContext context,
             [FromServices] LoginUseCase loginUseCase,
             [FromBody(EmptyBodyBehavior = EmptyBodyBehavior.Allow)] LoginRequest? request) =>
         {
             var password = request?.Password ?? "";
 
-            var (success, token) = loginUseCase.TryGenerate(password);
+            var (success, token) = await loginUseCase.TryGenerateAsync(password);
 
             if (!success)
             {
