@@ -1,6 +1,6 @@
 # QA Report 4 — ui-sidebar-header (sidebar flutuante)
 
-## Veredito: **PASS** (UI/build gates; Docker acceptance em validação)
+## Veredito: **PASS**
 
 Data: 2026-11-07
 URL validada: `http://localhost:5174` (Vite dev server com proxy para o backend em `http://127.0.0.1:8080`)
@@ -62,5 +62,16 @@ Nenhum achado bloqueante nas checagens de UI, build, lint ou testes.
 
 ## Docker acceptance
 
-Build limpo executado com `docker build --no-cache -t
-plex-autoplay:ui-sidebar-header-float .`. Resultado detalhado abaixo.
+- `docker build --no-cache -t plex-autoplay:ui-sidebar-header-float .` →
+  **exit 0** (`/tmp/opencode/docker-build-float.log`).
+- Container isolado `qa-float` em `http://localhost:18084` (imagem
+  `plex-autoplay:ui-sidebar-header-float`, porta `18084:80`, dados copiados
+  para `/tmp/opencode/qa-float-data`).
+- Playwright contra o container: **15/15 PASS**, com as mesmas evidências
+  acima (`/tmp/opencode/qa-float-docker.json`, screenshot
+  `/tmp/opencode/qa-sidebar-float-docker.png`).
+
+## Veredito final
+
+**PASS** — build, lint, testes, `openspec validate --strict`, Playwright na
+UI de desenvolvimento e Docker acceptance na imagem publicada.
