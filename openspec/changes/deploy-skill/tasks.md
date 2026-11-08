@@ -10,6 +10,7 @@
 - [x] 1.6 Manter recriação do container e health check configurável por `DEPLOY_HEALTH_URL`.
 - [x] 1.7 Imprimir a URL final com IP do servidor e porta publicada.
 - [x] 1.8 Criar comando `/deploy` em `.agent-source/commands/deploy.md`.
+- [x] 1.9 Resolver a raiz git do diretório corrente, atualizar o branch com `git fetch` + `git merge --ff-only` e remover o container com `docker compose down --remove-orphans` antes de recriar.
 
 ## 2. Skill
 

@@ -10,12 +10,13 @@ Uso:
 ```
 
 Comportamento:
-1. Valida branch/commit e working tree (bloqueia alterações rastreadas não commitadas).
-2. Executa `./build.sh`.
-3. Frontend: `npm ci` + `npm run build`; substitui `wwwroot`.
-4. Compila `PlexAutoplay.slnx -c Release` e publica DLLs via Docker.
-5. Recria o container e valida `/settings`.
-6. Mostra a URL final no formato `URL: http://<IP-do-servidor>:<porta>`.
+1. Valida branch/commit do projeto no diretório corrente e working tree (bloqueia alterações rastreadas não commitadas).
+2. Atualiza o branch atual: `git fetch --prune origin` + `git merge --ff-only` do upstream.
+3. Executa `./build.sh`.
+4. Frontend: `npm ci` + `npm run build`; substitui `wwwroot`.
+5. Compila `PlexAutoplay.slnx -c Release` e publica DLLs via Docker.
+6. Remove o container (`docker compose down --remove-orphans`), recria com a imagem do branch atualizado e valida `/settings`.
+7. Mostra a URL final no formato `URL: http://<IP-do-servidor>:<porta>`.
 
 Opções:
 ```

@@ -8,12 +8,22 @@ Garantir que o container em execução contenha frontend Vue, DLLs .NET e pacote
 
 ### Requirement: Build vinculado ao branch atual
 
-O deploy SHALL identificar branch e commit, SHALL recusar working tree com alterações rastreadas não commitadas e SHALL permitir override somente com `ALLOW_DIRTY=1`.
+O deploy SHALL operar na raiz git do diretório corrente, SHALL identificar branch e commit do branch atual, SHALL atualizar o branch via `git fetch --prune origin` e `git merge --ff-only` do upstream quando existir, SHALL recusar working tree com alterações rastreadas não commitadas e SHALL permitir override somente com `ALLOW_DIRTY=1`.
 
 #### Scenario: Working tree limpo
 
 - WHEN o deploy roda em branch com working tree limpo
 - THEN o script imprime branch e commit e prossegue.
+
+#### Scenario: Branch atualizado
+
+- WHEN o branch atual tem upstream remoto
+- THEN o script faz `git fetch --prune origin` e `git merge --ff-only` antes de compilar, e o container recebe a imagem do commit atualizado.
+
+#### Scenario: Diretório fora de repositório git
+
+- WHEN o diretório corrente não pertence a um repositório git
+- THEN o script aborta com erro.
 
 #### Scenario: Alterações não commitadas
 
@@ -31,7 +41,7 @@ O deploy SHALL executar `npm ci` e `npm run build` em `vue/plex-frontend` e SHAL
 
 ### Requirement: Solução compilada e imagem publicada
 
-O deploy SHALL compilar `PlexAutoplay.slnx` em `Release`, SHALL publicar a aplicação via estágio de build do Docker e SHALL recriar o container com a nova imagem.
+O deploy SHALL compilar `PlexAutoplay.slnx` em `Release`, SHALL publicar a aplicação via estágio de build do Docker, SHALL remover o container anterior com `docker compose down --remove-orphans` e SHALL recriá-lo com a nova imagem.
 
 #### Scenario: Publicação .NET
 
