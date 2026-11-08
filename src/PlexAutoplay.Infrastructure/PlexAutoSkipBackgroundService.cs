@@ -4,6 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using PlexAutoplay.Application;
 using PlexAutoplay.Domain.Ports;
+using PlexAutoplay.Infrastructure.AutoSkip;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
@@ -15,14 +16,20 @@ public class PlexAutoSkipBackgroundService : BackgroundService
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly IAppSettingsStore _settings;
     private readonly IMarkerRepository _markerRepository;
+    private readonly IClientSeekStrategyProvider _strategyProvider;
 
-    public PlexAutoSkipBackgroundService(ILogger<PlexAutoSkipBackgroundService> logger,
-        IHttpClientFactory httpClientFactory, IAppSettingsStore settings, IMarkerRepository markerRepository)
+    public PlexAutoSkipBackgroundService(
+        ILogger<PlexAutoSkipBackgroundService> logger,
+        IHttpClientFactory httpClientFactory,
+        IAppSettingsStore settings,
+        IMarkerRepository markerRepository,
+        IClientSeekStrategyProvider strategyProvider)
     {
         _logger = logger;
         _httpClientFactory = httpClientFactory;
         _settings = settings;
         _markerRepository = markerRepository;
+        _strategyProvider = strategyProvider;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -79,7 +86,7 @@ public class PlexAutoSkipBackgroundService : BackgroundService
         }
     }
 
-    private static PlexSessionInfo? ParsePlayingSession(string xml)
+    private PlexSessionInfo? ParsePlayingSession(string xml)
     {
         try
         {
@@ -97,25 +104,15 @@ public class PlexAutoSkipBackgroundService : BackgroundService
             var player = video.Elements("Player").FirstOrDefault(p => p.Attribute("state")?.Value == "playing");
             if (player == null) return null;
 
-            string clientIp = player.Attribute("address")?.Value ?? string.Empty;
-            string machineId = player.Attribute("machineIdentifier")?.Value ?? string.Empty;
-            string product = player.Attribute("product")?.Value ?? string.Empty;
-            string platform = player.Attribute("platform")?.Value ?? string.Empty;
-            string version = player.Attribute("version")?.Value ?? string.Empty;
-
-            // Map known client products to their companion control ports (from PlexAutoSkip)
-            int clientPort = GetClientPort(product);
-
             return new PlexSessionInfo
             {
                 PositionMs = viewOffset,
                 RatingKey = ratingKey,
-                ClientIp = clientIp,
-                ClientPort = clientPort,
-                MachineIdentifier = machineId,
-                Product = product,
-                Platform = platform,
-                Version = version
+                ClientIp = player.Attribute("address")?.Value ?? string.Empty,
+                MachineIdentifier = player.Attribute("machineIdentifier")?.Value ?? string.Empty,
+                Product = player.Attribute("product")?.Value ?? string.Empty,
+                Platform = player.Attribute("platform")?.Value ?? string.Empty,
+                Version = player.Attribute("version")?.Value ?? string.Empty,
             };
         }
         catch (Exception ex)
@@ -125,115 +122,117 @@ public class PlexAutoSkipBackgroundService : BackgroundService
         }
     }
 
-    private static int GetClientPort(string product)
+    /// <summary>
+    /// Verifica se uma resposta seek foi bem-sucedida. Trata respostas não-XML
+    /// (corpo vazio, "OK" ou XML parcial com code="200"), comum em clientes modernos
+    /// como Samsung, Android e Plexamp que não retornam XML completo em comandos OK.
+    /// </summary>
+    internal static async Task<bool> IsSeekSuccessAsync(HttpResponseMessage response, CancellationToken ct = default)
     {
-        return product switch
-        {
-            "Plex for Roku" => 8324,
-            "Plex for Android (TV)" => 32500,
-            "Plex for Android (Mobile)" => 32500,
-            "Plex for iOS" => 32500,
-            "Plex for Apple TV" => 32500,
-            "Plex for Windows" => 32700,
-            "Plex for Mac" => 32700,
-            _ => 0 // Unknown client — will use PMS proxy
-        };
-    }
+        if (!response.IsSuccessStatusCode) return false;
 
-    private static bool IsBrokenClient(string product, string version)
-    {
-        // PlexAutoSkip: these clients removed "Advertise as Player" / Plex Companion functionality
-        if (string.IsNullOrEmpty(product) || string.IsNullOrEmpty(version)) return false;
-        var v = version.Split('-')[0]; // strip build suffix
-        return product switch
-        {
-            "Plex Web" => VersionCompare(v, "4.83.2") >= 0,
-            "Plex for Windows" => VersionCompare(v, "1.46.1") >= 0,
-            "Plex for Mac" => VersionCompare(v, "1.46.1") >= 0,
-            "Plex for Linux" => VersionCompare(v, "1.46.1") >= 0,
-            _ => false
-        };
-    }
+        var body = await response.Content.ReadAsStringAsync(ct);
+        if (string.IsNullOrEmpty(body)) return true;
 
-    private static int VersionCompare(string v1, string v2)
-    {
-        try
+        var trimmed = body.Trim();
+        if (trimmed.StartsWith("<", StringComparison.Ordinal))
         {
-            var a = new Version(v1);
-            var b = new Version(v2);
-            return a.CompareTo(b);
+            return trimmed.Contains("code=\"200\"", StringComparison.OrdinalIgnoreCase)
+                   || trimmed.Contains("status=\"OK\"", StringComparison.OrdinalIgnoreCase)
+                   || trimmed.Contains("code=\"OK\"", StringComparison.OrdinalIgnoreCase);
         }
-        catch { return 0; }
+
+        return trimmed == "OK"
+               || trimmed.Length > 4 && trimmed.StartsWith("OK;", StringComparison.OrdinalIgnoreCase);
     }
 
     private async Task SeekToEndOfMarkerAsync(PlexSessionInfo session, MarkerInfo marker, string plexUrl, string plexToken, CancellationToken ct)
     {
         string commandId = Guid.NewGuid().ToString("N")[..12];
+        var strategy = _strategyProvider.Detect(session.Product, session.Platform, session.Version);
 
-        // Skip known-broken clients (no Plex Companion support) — don't spam errors
-        if (IsBrokenClient(session.Product, session.Version))
+        // 1) Direto no cliente (LegacyCompanion com porta conhecida)
+        if (strategy.SupportsDirectConnection
+            && !string.IsNullOrEmpty(session.ClientIp)
+            && strategy.DirectPort > 0)
         {
-            _logger.LogInformation("Auto-skip: client {Product} {Version} lacks Plex Companion support, skipping seek (marker {Kind} ->{Ms}ms)",
-                session.Product, session.Version, marker.Kind, marker.EndMs);
-            return;
+            _logger.LogDebug("Trying direct seek for {Product} ({Ip}:{Port})", session.Product, session.ClientIp, strategy.DirectPort);
+            var success = await SeekDirectAsync(session, marker, plexToken, commandId, strategy, ct);
+            if (success) return;
         }
 
-        // 1) Direct client HTTP (preferred — works for Android, iOS, AppleTV, Roku, Windows/Mac desktop)
-        if (!string.IsNullOrEmpty(session.ClientIp) && session.ClientPort > 0)
+        // 2) PMS proxy (apenas para Smart TVs e demais clientes que anunciam Player)
+        if (strategy.SupportsPmsProxy
+            && !string.IsNullOrEmpty(session.MachineIdentifier))
         {
-            try
-            {
-                using var httpClient = _httpClientFactory.CreateClient();
-                var seekUrl = $"http://{session.ClientIp}:{session.ClientPort}/player/playback/seekTo?offset={marker.EndMs}&commandID={commandId}&X-Plex-Token={Uri.EscapeDataString(plexToken)}";
-                var response = await httpClient.GetAsync(seekUrl, ct);
-                if (response.IsSuccessStatusCode)
-                {
-                    _logger.LogInformation("Seek via direct client ok ({Product} {Ip}:{Port}, ->{Ms}ms)", session.Product, session.ClientIp, session.ClientPort, marker.EndMs);
-                    return;
-                }
-                _logger.LogDebug("Direct client seek returned {StatusCode} ({Product} {Ip}:{Port})", response.StatusCode, session.Product, session.ClientIp, session.ClientPort);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogDebug(ex, "Direct client seek failed ({Product} {Ip}:{Port})", session.Product, session.ClientIp, session.ClientPort);
-            }
+            _logger.LogDebug("Trying PMS proxy seek for {Product} (machineId={Mid})", session.Product, session.MachineIdentifier);
+            var success = await SeekViaPmsProxyAsync(session, marker, plexUrl, plexToken, commandId, strategy, ct);
+            if (success) return;
         }
 
-        // 2) PMS proxy with X-Plex-Target-Client-Identifier (fallback for clients that proxy through server)
-        if (!string.IsNullOrEmpty(session.MachineIdentifier))
-        {
-            try
-            {
-                using var httpClient = _httpClientFactory.CreateClient();
-                var proxyUrl = $"{plexUrl}/player/playback/seekTo?offset={marker.EndMs}&commandID={commandId}&type=video";
-                var req = new HttpRequestMessage(HttpMethod.Get, proxyUrl);
-                req.Headers.Add("X-Plex-Token", plexToken);
-                req.Headers.Add("X-Plex-Target-Client-Identifier", session.MachineIdentifier);
-                var response = await httpClient.SendAsync(req, ct);
-                if (response.IsSuccessStatusCode)
-                {
-                    _logger.LogInformation("Seek via PMS proxy ok (machineId={Mi}, ->{Ms}ms)", session.MachineIdentifier, marker.EndMs);
-                    return;
-                }
-                _logger.LogDebug("PMS proxy seek returned {StatusCode} (machineId={Mi})", response.StatusCode, session.MachineIdentifier);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogDebug(ex, "PMS proxy seek failed (machineId={Mi})", session.MachineIdentifier);
-            }
-        }
+        // Cliente web/desktop moderno não anuncia Player → Plex API não controla
+        if (!strategy.SupportsDirectConnection && !strategy.SupportsPmsProxy)
+            _logger.LogInformation("Skip não suportado para {Product} — {Platform} ({Version}): cliente não expõe Player nem PMS proxy.", session.Product, session.Platform, session.Version);
+        else
+            _logger.LogWarning("All seek strategies failed for {Product} {Version}", session.Product, session.Version);
+    }
 
-        _logger.LogWarning("No viable seek path for {Product} (ip={Ip}, port={Port}, machineId={Mi})",
-            session.Product, session.ClientIp, session.ClientPort, session.MachineIdentifier);
+    private async Task<bool> SeekDirectAsync(PlexSessionInfo session, MarkerInfo marker, string plexToken, string commandId, ClientSeekStrategy strategy, CancellationToken ct)
+    {
+        try
+        {
+            using var httpClient = _httpClientFactory.CreateClient();
+            var seekUrl = $"http://{session.ClientIp}:{strategy.DirectPort}/player/playback/seekTo?offset={marker.EndMs}&commandID={commandId}&X-Plex-Token={Uri.EscapeDataString(plexToken)}";
+            var response = await httpClient.GetAsync(seekUrl, ct);
+
+            if (await IsSeekSuccessAsync(response))
+            {
+                _logger.LogInformation("Seek via direct client ok ({Product} {Ip}:{Port}, ->{Ms}ms)", session.Product, session.ClientIp, strategy.DirectPort, marker.EndMs);
+                return true;
+            }
+
+            _logger.LogDebug("Direct client seek returned {StatusCode} ({Product} {Ip}:{Port})", response.StatusCode, session.Product, session.ClientIp, strategy.DirectPort);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogDebug(ex, "Direct client seek failed ({Product} {Ip}:{Port})", session.Product, session.ClientIp, strategy.DirectPort);
+        }
+        return false;
+    }
+
+    private async Task<bool> SeekViaPmsProxyAsync(PlexSessionInfo session, MarkerInfo marker, string plexUrl, string plexToken, string commandId, ClientSeekStrategy strategy, CancellationToken ct)
+    {
+        try
+        {
+            using var httpClient = _httpClientFactory.CreateClient();
+            var seekUrl = $"{plexUrl}/player/playback/seekTo?offset={marker.EndMs}&commandID={commandId}&type=video";
+            var req = new HttpRequestMessage(HttpMethod.Get, seekUrl);
+            req.Headers.Add("X-Plex-Token", plexToken);
+            req.Headers.Add("X-Plex-Target-Client-Identifier", session.MachineIdentifier);
+
+            var response = await httpClient.SendAsync(req, ct);
+
+            if (await IsSeekSuccessAsync(response))
+            {
+                _logger.LogInformation("Seek via PMS proxy ok ({Product} {Mid}, ->{Ms}ms)", session.Product, session.MachineIdentifier, marker.EndMs);
+                return true;
+            }
+
+            _logger.LogDebug("PMS proxy seek returned {StatusCode} ({Product} {Mid})", response.StatusCode, session.Product, session.MachineIdentifier);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogDebug(ex, "PMS proxy seek failed ({Product} {Mid})", session.Product, session.MachineIdentifier);
+        }
+        return false;
     }
 }
 
-public class PlexSessionInfo
+internal class PlexSessionInfo
 {
     public int PositionMs { get; set; }
     public int RatingKey { get; set; }
     public string ClientIp { get; set; } = string.Empty;
-    public int ClientPort { get; set; }
     public string MachineIdentifier { get; set; } = string.Empty;
     public string Product { get; set; } = string.Empty;
     public string Platform { get; set; } = string.Empty;

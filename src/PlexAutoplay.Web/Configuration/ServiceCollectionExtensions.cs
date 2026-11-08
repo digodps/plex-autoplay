@@ -80,6 +80,9 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IPlexAutoSkipService>(sp =>
             new PlexAutoSkipService(sp.GetRequiredService<IMarkerRepository>()));
 
+        // Modern client seek strategy
+        services.AddSingleton<IClientSeekStrategyProvider, PlexModernClientDetector>();
+
         // Use cases (application boundary)
         services.AddSingleton<LibraryScanUseCase>();
         services.AddSingleton<SaveMarkerUseCase>();
