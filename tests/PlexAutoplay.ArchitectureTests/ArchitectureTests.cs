@@ -15,7 +15,7 @@ public class LayerDependencyTests
         typeof(IPlexApiClient).Assembly;
 
     private static readonly System.Reflection.Assembly WebAssembly =
-        typeof(ConfigEndpoints).Assembly;
+        typeof(SettingsEndpoints).Assembly;
 
     private static void AssertPass(TestResult result, string what)
     {
@@ -76,7 +76,7 @@ public class LayerDependencyTests
             typeof(IUserThemeRepository),
             typeof(IPlexApiClient),
             typeof(IImageProxyService),
-            typeof(IPlexConfigStore),
+            typeof(IAppSettingsStore),
             typeof(IScanJobStore),
             typeof(IPathResolver)
         };

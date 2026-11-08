@@ -2,6 +2,7 @@ using System;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
+using PlexAutoplay.Application;
 using PlexAutoplay.Domain.Ports;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -12,17 +13,15 @@ public class PlexAutoSkipBackgroundService : BackgroundService
 {
     private readonly ILogger<PlexAutoSkipBackgroundService> _logger;
     private readonly IHttpClientFactory _httpClientFactory;
-    private readonly string _plexUrl;
-    private readonly string _plexToken;
+    private readonly IAppSettingsStore _settings;
     private readonly IMarkerRepository _markerRepository;
 
     public PlexAutoSkipBackgroundService(ILogger<PlexAutoSkipBackgroundService> logger,
-        IHttpClientFactory httpClientFactory, IMarkerRepository markerRepository)
+        IHttpClientFactory httpClientFactory, IAppSettingsStore settings, IMarkerRepository markerRepository)
     {
         _logger = logger;
         _httpClientFactory = httpClientFactory;
-        _plexUrl = Environment.GetEnvironmentVariable("PLEX_URL") ?? "";
-        _plexToken = Environment.GetEnvironmentVariable("PLEX_TOKEN") ?? "";
+        _settings = settings;
         _markerRepository = markerRepository;
     }
 
@@ -47,8 +46,10 @@ public class PlexAutoSkipBackgroundService : BackgroundService
 
     private async Task PollAndSkipAsync(CancellationToken ct)
     {
+        var settings = await _settings.GetAsync();
+        var plexUrl = settings.PlexUrl.TrimEnd('/');
         using var http = _httpClientFactory.CreateClient();
-        var resp = await http.GetAsync($"{_plexUrl}/status/stream", ct);
+        var resp = await http.GetAsync($"{plexUrl}/status/stream", ct);
 
         if (!resp.IsSuccessStatusCode) return;
 
@@ -71,7 +72,7 @@ public class PlexAutoSkipBackgroundService : BackgroundService
                     ClientIp = ExtractClientIp(xml),
                     ClientPort = ExtractClientPort(xml),
                     MachineIdentifier = ExtractMachineIdentifier(xml)
-                }, marker, ct);
+                }, marker, plexUrl, settings.PlexToken, ct);
 
                 break;
             }
@@ -143,7 +144,7 @@ public class PlexAutoSkipBackgroundService : BackgroundService
         return string.Empty;
     }
 
-    private async Task SeekToEndOfMarkerAsync(PlexSessionInfo session, MarkerInfo marker, CancellationToken ct)
+    private async Task SeekToEndOfMarkerAsync(PlexSessionInfo session, MarkerInfo marker, string plexUrl, string plexToken, CancellationToken ct)
     {
         _logger.LogInformation(
             "Auto-skip: position={Pos}ms within marker [{Start}ms, {End}ms] ({Reason}) for ratingKey={RK}",
@@ -156,7 +157,7 @@ public class PlexAutoSkipBackgroundService : BackgroundService
             {
                 using var httpClient = _httpClientFactory.CreateClient();
                 var commandId = Guid.NewGuid().ToString();
-                var proxyUrl = $"{_plexUrl}/players/{session.MachineIdentifier}/commands/seek?offset={marker.EndMs}&commandID={commandId}";
+                var proxyUrl = $"{plexUrl}/players/{session.MachineIdentifier}/commands/seek?offset={marker.EndMs}&commandID={commandId}";
 
                 var response = await httpClient.GetAsync(proxyUrl, ct);
 
@@ -172,7 +173,7 @@ public class PlexAutoSkipBackgroundService : BackgroundService
                     {
                         using var httpClient2 = _httpClientFactory.CreateClient();
                         var commandId2 = Guid.NewGuid().ToString();
-                        var seekUrl = $"http://{session.ClientIp}:{session.ClientPort}/player/playback/seekTo?offset={marker.EndMs}&commandID={commandId2}&X-Plex-Token={_plexToken}";
+                        var seekUrl = $"http://{session.ClientIp}:{session.ClientPort}/player/playback/seekTo?offset={marker.EndMs}&commandID={commandId2}&X-Plex-Token={plexToken}";
 
                         var response2 = await httpClient2.GetAsync(seekUrl, ct);
                         if (response2.IsSuccessStatusCode)
@@ -190,7 +191,7 @@ public class PlexAutoSkipBackgroundService : BackgroundService
                     {
                         using var httpClient2 = _httpClientFactory.CreateClient();
                         var commandId2 = Guid.NewGuid().ToString();
-                        var seekUrl = $"http://{session.ClientIp}:{session.ClientPort}/player/playback/seekTo?offset={marker.EndMs}&commandID={commandId2}&X-Plex-Token={_plexToken}";
+                        var seekUrl = $"http://{session.ClientIp}:{session.ClientPort}/player/playback/seekTo?offset={marker.EndMs}&commandID={commandId2}&X-Plex-Token={plexToken}";
 
                         var response2 = await httpClient2.GetAsync(seekUrl, ct);
                         if (response2.IsSuccessStatusCode)
@@ -210,7 +211,7 @@ public class PlexAutoSkipBackgroundService : BackgroundService
             {
                 using var httpClient = _httpClientFactory.CreateClient();
                 var commandId = Guid.NewGuid().ToString();
-                var seekUrl = $"http://{session.ClientIp}:{session.ClientPort}/player/playback/seekTo?offset={marker.EndMs}&commandID={commandId}&X-Plex-Token={_plexToken}";
+                var seekUrl = $"http://{session.ClientIp}:{session.ClientPort}/player/playback/seekTo?offset={marker.EndMs}&commandID={commandId}&X-Plex-Token={plexToken}";
 
                 var response = await httpClient.GetAsync(seekUrl, ct);
 
@@ -241,9 +242,11 @@ public class PlexAutoSkipBackgroundService : BackgroundService
         {
             if (string.IsNullOrEmpty(session.MachineIdentifier)) return;
 
+            var settings = await _settings.GetAsync();
+            var plexUrl = settings.PlexUrl.TrimEnd('/');
             using var httpClient = _httpClientFactory.CreateClient();
             var commandId = Guid.NewGuid().ToString();
-            var proxyUrl = $"{_plexUrl}/players/{session.MachineIdentifier}/commands/seek?offset={targetMs}&commandID={commandId}";
+            var proxyUrl = $"{plexUrl}/players/{session.MachineIdentifier}/commands/seek?offset={targetMs}&commandID={commandId}";
 
             var response = await httpClient.GetAsync(proxyUrl, ct);
 

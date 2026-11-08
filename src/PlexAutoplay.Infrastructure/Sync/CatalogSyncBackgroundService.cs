@@ -2,7 +2,6 @@ namespace PlexAutoplay.Infrastructure.Sync;
 
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Configuration;
 using PlexAutoplay.Application;
 using PlexAutoplay.Domain.Entities;
 using PlexAutoplay.Domain.Ports;
@@ -17,7 +16,7 @@ public class CatalogSyncBackgroundService : BackgroundService
     private readonly IPlexApiClient _plexClient;
     private readonly ILibraryRepository _libraryRepository;
     private readonly ISeriesRepository _seriesRepository;
-    private readonly int _intervalMinutes;
+    private readonly IAppSettingsStore _settings;
     private static readonly Meter SyncMeter = new("PlexAutoplay.CatalogSync");
     private static readonly Counter<int> SyncCounter = SyncMeter.CreateCounter<int>("plex_catalog_sync_total");
     private static readonly Histogram<double> SyncDurationHistogram = SyncMeter.CreateHistogram<double>("plex_catalog_sync_duration_ms");
@@ -27,21 +26,22 @@ public class CatalogSyncBackgroundService : BackgroundService
         IPlexApiClient plexClient,
         ILibraryRepository libraryRepository,
         ISeriesRepository seriesRepository,
-        IConfiguration configuration)
+        IAppSettingsStore settings)
     {
         _logger = logger;
         _plexClient = plexClient;
         _libraryRepository = libraryRepository;
         _seriesRepository = seriesRepository;
-        _intervalMinutes = configuration.GetValue("SYNC_CATALOG_INTERVAL_MINUTES", 30);
+        _settings = settings;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        _logger.LogInformation("Catalog sync service starting with {IntervalMinutes} minute interval", _intervalMinutes);
+        var initial = await _settings.GetAsync();
+        _logger.LogInformation("Catalog sync service starting with {IntervalMinutes} minute interval", initial.SyncCatalogIntervalMinutes);
 
         // Initial delay before first sync
-        await Task.Delay(TimeSpan.FromMinutes(_intervalMinutes), stoppingToken);
+        await Task.Delay(TimeSpan.FromMinutes(initial.SyncCatalogIntervalMinutes), stoppingToken);
 
         while (!stoppingToken.IsCancellationRequested)
         {
@@ -67,7 +67,8 @@ public class CatalogSyncBackgroundService : BackgroundService
                 SyncDurationHistogram.Record(syncDurationMs);
             }
 
-            await Task.Delay(TimeSpan.FromMinutes(_intervalMinutes), stoppingToken);
+            var settings = await _settings.GetAsync();
+            await Task.Delay(TimeSpan.FromMinutes(settings.SyncCatalogIntervalMinutes), stoppingToken);
         }
 
         _logger.LogInformation("Catalog sync service stopping");
