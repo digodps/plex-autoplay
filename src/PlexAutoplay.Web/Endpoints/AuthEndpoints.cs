@@ -22,9 +22,9 @@ public static class AuthEndpoints
         {
             var password = request?.Password ?? "";
 
-            var (success, token) = await loginUseCase.TryGenerateAsync(password);
+            var result = await loginUseCase.TryGenerateAsync(password);
 
-            if (!success)
+            if (!result.Success)
             {
                 return Results.Unauthorized();
             }
@@ -32,7 +32,7 @@ public static class AuthEndpoints
             // Cookie legível pelo frontend: o guarda do Vue lê o token em
             // document.cookie e o envia como Bearer.
             var cookieSecure = !disableHttp; // Secure only when HTTPS is enabled
-            context.Response.Cookies.Append("auth_token", token!, new CookieOptions
+            context.Response.Cookies.Append("auth_token", result.Token!, new CookieOptions
             {
                 HttpOnly = false,
                 Secure = cookieSecure,
@@ -41,7 +41,7 @@ public static class AuthEndpoints
                 IsEssential = true
             });
 
-            return Results.Ok(new { success = true, token });
+            return Results.Ok(new { success = true, token = result.Token! });
         });
     }
 }

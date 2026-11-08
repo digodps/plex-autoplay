@@ -1,40 +1,49 @@
 namespace PlexAutoplay.Application.UseCases;
 
+public class LoginResult
+{
+    public bool Success { get; set; }
+    public string? Token { get; set; }
+}
+
 public class LoginUseCase
 {
     private readonly ITokenService _tokenService;
-    private readonly IAuthCredentialStore _credentialStore;
+    private readonly IAuthCredentialStore _credentials;
     private readonly IPasswordHasher _hasher;
-    private readonly string _adminPassword;
 
-    public LoginUseCase(ITokenService tokenService, IAuthCredentialStore credentialStore, IPasswordHasher hasher, string adminPassword = "")
+    public LoginUseCase(
+        ITokenService tokenService,
+        IAuthCredentialStore credentials,
+        IPasswordHasher hasher)
     {
         _tokenService = tokenService;
-        _credentialStore = credentialStore;
+        _credentials = credentials;
         _hasher = hasher;
-        _adminPassword = adminPassword;
     }
 
-    public async Task<(bool Success, string? Token)> TryGenerateAsync(string password)
+    public async Task<LoginResult> TryGenerateAsync(string password)
     {
-        var hash = await _credentialStore.GetHashAsync();
-
-        if (string.IsNullOrEmpty(hash))
+        var result = new LoginResult();
+        
+        var isConfigured = await _credentials.IsConfiguredAsync();
+        if (!isConfigured)
         {
-            return (false, null);
+            return result;
         }
-
-        if (password == _adminPassword)
+        
+        var hash = await _credentials.GetHashAsync();
+        if (hash is null)
         {
-            return (true, _tokenService.GenerateToken());
+            return result;
         }
-
-        var verify = await _hasher.VerifyAsync(password, hash);
-        if (verify)
+        
+        if (_hasher.Verify(password, hash))
         {
-            return (true, _tokenService.GenerateToken());
+            result.Success = true;
+            result.Token = _tokenService.GenerateToken();
         }
-
-        return (false, null);
+        
+        return result;
     }
 }
