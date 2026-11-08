@@ -5,6 +5,7 @@ import { useSidebarStore } from "@/stores/sidebar";
 import { useThemeStore } from "@/stores/theme";
 import { useAuthStore } from "@/stores/auth";
 import AppIcon from "@/components/AppIcon.vue";
+import AppLogo from "@/components/AppLogo.vue";
 import PasswordModal from "@/components/PasswordModal.vue";
 
 defineProps({
@@ -40,6 +41,19 @@ function openPassword() {
   <header
     class="sticky top-0 z-30 flex items-center gap-2 border-b border-gray-300 bg-white px-4 py-2 text-sm dark:border-gray-700 dark:bg-gray-900"
   >
+    <RouterLink
+      to="/"
+      class="flex shrink-0 items-center gap-2 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+      aria-label="Plex Autoplay — início"
+    >
+      <AppLogo :size="28" />
+      <span class="hidden font-semibold text-black sm:inline dark:text-white">
+        Plex Autoplay
+      </span>
+    </RouterLink>
+
+    <span class="h-5 w-px bg-gray-300 dark:bg-gray-700" aria-hidden="true"></span>
+
     <button
       :class="iconButton"
       type="button"
