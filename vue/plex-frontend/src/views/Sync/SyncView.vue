@@ -14,11 +14,11 @@ const logEntries = ref([]);
 
 const logLevelIcons = { info: "▶", success: "✔", skip: "⏭", warning: "⚠", error: "✖" };
 const logLevelColors = {
-  info: "text-meta-5",
-  success: "text-meta-3",
-  skip: "text-bodydark2",
-  warning: "text-meta-6",
-  error: "text-meta-1",
+  info: "text-gray-500 dark:text-gray-400",
+  success: "text-gray-600 dark:text-gray-300",
+  skip: "text-gray-500 dark:text-gray-400",
+  warning: "text-gray-600 dark:text-gray-300",
+  error: "text-meta-1 dark:text-gray-200",
 };
 
 const statusClass = {
@@ -30,7 +30,7 @@ const statusClass = {
 };
 
 const formatLogTimestamp = (date) =>
-  date.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+  date.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "digit" });
 
 async function startScan() {
   const response = await apiFetch("/api/plex/scan", { method: "POST" });
@@ -86,89 +86,110 @@ onUnmounted(() => {
 
 <template>
   <DefaultLayout>
-    <div class="mb-6 flex flex-wrap items-end justify-between gap-4">
-      <div>
-        <h1 class="text-title-md font-bold text-black dark:text-white">Sincronização</h1>
-        <p class="mt-1 text-sm font-medium text-body dark:text-bodydark">
-          Execução e log em tempo real do último escaneamento.
-        </p>
-      </div>
-      <div class="flex items-center gap-3">
-        <button
-          v-if="status !== 'running'"
-          class="flex items-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-white transition hover:bg-opacity-90"
-          @click="startScan"
-        >
-          <AppIcon name="play" size="sm" />
-          Iniciar Escaneamento
-        </button>
-        <button
-          v-else
-          class="rounded-lg border border-meta-1/40 bg-meta-1/10 px-4 py-2.5 text-sm font-medium text-meta-1 transition hover:bg-meta-1/20"
-          @click="cancelScan"
-        >
-          Cancelar
-        </button>
-      </div>
-    </div>
-
-    <div class="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-      <div class="rounded-sm border border-stroke bg-white px-5 py-4 shadow-default dark:border-strokedark dark:bg-boxdark">
-        <p class="text-xs font-medium uppercase tracking-wide text-body dark:text-bodydark">Status</p>
-        <span
-          class="mt-2 inline-flex rounded-full px-2.5 py-0.5 text-sm font-semibold capitalize"
-          :class="statusClass[status] ?? statusClass.idle"
-        >
-          {{ status }}
-        </span>
-      </div>
-      <div class="rounded-sm border border-stroke bg-white px-5 py-4 shadow-default dark:border-strokedark dark:bg-boxdark">
-        <p class="text-xs font-medium uppercase tracking-wide text-body dark:text-bodydark">Processados</p>
-        <p class="mt-1 text-title-sm font-bold text-black dark:text-white">{{ processed }}</p>
-      </div>
-      <div class="rounded-sm border border-stroke bg-white px-5 py-4 shadow-default dark:border-strokedark dark:bg-boxdark">
-        <p class="text-xs font-medium uppercase tracking-wide text-body dark:text-bodydark">Pulados</p>
-        <p class="mt-1 text-title-sm font-bold text-black dark:text-white">{{ skipped }}</p>
-      </div>
-      <div class="rounded-sm border border-stroke bg-white px-5 py-4 shadow-default dark:border-strokedark dark:bg-boxdark">
-        <p class="text-xs font-medium uppercase tracking-wide text-body dark:text-bodydark">Erros</p>
-        <p class="mt-1 text-title-sm font-bold" :class="errors > 0 ? 'text-meta-1' : 'text-black dark:text-white'">
-          {{ errors }}
-        </p>
-      </div>
-    </div>
-
-    <div class="rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark">
-      <div class="flex items-center justify-between border-b border-stroke px-6 py-4 dark:border-strokedark">
-        <h2 class="text-title-sm font-semibold text-black dark:text-white">Console de Log</h2>
-        <button
-          class="rounded-lg border border-stroke px-3 py-1.5 text-sm font-medium text-body transition hover:border-primary hover:text-primary dark:border-strokedark dark:text-bodydark"
-          @click="clearConsole"
-        >
-          Limpar Console
-        </button>
-      </div>
-
-      <div class="max-h-550 min-h-70 overflow-y-auto p-4 font-mono text-sm">
-        <div
-          v-if="logEntries.length === 0"
-          class="flex h-full min-h-35 items-center justify-center px-6 text-center text-body dark:text-bodydark"
-        >
-          Nenhum log disponível. Inicie uma varredura para ver as linhas de log.
+    <div class="bg-gray-50 dark:bg-gray-900 min-h-screen">
+      <div class="border-b border-gray-200 dark:border-gray-800 sticky top-0 z-20 bg-gray-50 dark:bg-gray-900">
+        <div class="max-w-2xl mx-auto px-4 py-3 flex items-center gap-2">
+          <h1 class="text-28 font-bold text-gray-900 dark:text-gray-100">Sincronização</h1>
+          <p class="text-sm text-gray-500 dark:text-gray-400">Execução e log em tempo real do último escaneamento.</p>
         </div>
-        <div v-else class="space-y-1">
-          <div v-for="(entry, index) in logEntries" :key="index" class="flex flex-wrap gap-2 leading-relaxed">
-            <span class="flex-none text-xs text-body dark:text-bodydark">{{ formatLogTimestamp(entry.timestamp) }}</span>
-            <span class="flex-none" :class="logLevelColors[entry.level] || 'text-body'">
-              {{ logLevelIcons[entry.level] || "▶" }}
-            </span>
-            <span class="text-black dark:text-white">{{ entry.message }}</span>
-            <div v-if="entry.suggestion" class="w-full pl-14 text-xs text-meta-6">
-              <strong>Sugestão:</strong> {{ entry.suggestion }}
+      </div>
+
+      <div class="p-4 md:p-6 lg:p-8">
+        <!-- Status e controles -->
+        <div class="rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 p-4 mb-4">
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <p class="text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">Status</p>
+              <span
+                class="mt-1 inline-flex rounded-full px-2.5 py-0.5 text-sm font-semibold capitalize"
+                :class="statusClass[status] ?? statusClass.idle"
+              >
+                {{ status }}
+              </span>
+            </div>
+            <div>
+              <p class="text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">Processados</p>
+              <p class="mt-1 text-title-sm font-bold text-gray-900 dark:text-gray-100">{{ processed }}</p>
+            </div>
+            <div>
+              <p class="text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">Pulados</p>
+              <p class="mt-1 text-title-sm font-bold text-gray-900 dark:text-gray-100">{{ skipped }}</p>
+            </div>
+            <div>
+              <p class="text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">Erros</p>
+              <p class="mt-1 text-title-sm font-bold" :class="errors > 0 ? 'text-meta-1' : 'text-gray-900 dark:text-gray-100'">
+                {{ errors }}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Controles -->
+        <div class="rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 p-4 mb-6">
+          <div class="flex items-center gap-3">
+            <button
+              v-if="status !== 'running'"
+              class="flex items-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-white transition hover:bg-opacity-90"
+              @click="startScan"
+            >
+              <AppIcon name="play" size="sm" />
+              Iniciar Escaneamento
+            </button>
+            <button
+              v-else
+              class="rounded-lg border border-meta-1/40 bg-meta-1/10 px-4 py-2.5 text-sm font-medium text-meta-1 transition hover:bg-meta-1/20"
+              @click="cancelScan"
+            >
+              Cancelar
+            </button>
+            <button
+              class="rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 px-4 py-2.5 text-sm font-medium text-gray-800 dark:text-gray-100 transition hover:border-gray-400 dark:hover:bg-gray-600"
+              @click="clearConsole"
+            >
+              Limpar Console
+            </button>
+          </div>
+        </div>
+
+        <!-- Console de Log -->
+        <div class="rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800">
+          <div class="flex items-center justify-between border-b border-gray-200 dark:border-gray-600 px-6 py-4">
+            <h2 class="text-title-sm font-semibold text-gray-900 dark:text-gray-100">Console de Log</h2>
+            <button
+              class="rounded-lg border border-stroke px-3 py-1.5 text-sm font-medium text-gray-500 dark:text-gray-400 transition hover:border-primary hover:text-primary dark:border-strokedark dark:text-bodydark"
+              @click="clearConsole"
+            >
+              Limpar Console
+            </button>
+          </div>
+
+          <div class="max-h-550 min-h-70 overflow-y-auto p-4 font-mono text-sm">
+            <div
+              v-if="logEntries.length === 0"
+              class="flex h-full min-h-35 items-center justify-center px-6 text-center text-gray-500 dark:text-gray-400"
+            >
+              Nenhum log disponível. Inicie uma varredura para ver as linhas de log.
+            </div>
+            <div v-else class="space-y-1">
+              <div
+                v-for="(entry, index) in logEntries" :key="index"
+                class="flex flex-wrap gap-2 leading-relaxed text-sm"
+              >
+                <span class="flex-none text-xs text-gray-500 dark:text-gray-400">{{ formatLogTimestamp(entry.timestamp) }}</span>
+                <span
+                  class="flex-none text-xs capitalize"
+                  :class="logLevelColors[entry.level] || 'text-gray-500 dark:text-gray-400'"
+                >
+                  {{ logLevelIcons[entry.level] || "▶" }}
+                </span>
+                <span class="text-gray-900 dark:text-gray-100">{{ entry.message }}</span>
+                <div v-if="entry.suggestion" class="w-full pl-14 text-xs text-gray-600 dark:text-gray-300">
+                  <strong>Sugestão:</strong> {{ entry.suggestion }}
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
-  </DefaultLayout>
-</template>
+    </DefaultLayout>
+  </template>

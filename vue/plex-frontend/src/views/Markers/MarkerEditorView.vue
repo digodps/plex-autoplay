@@ -3,7 +3,6 @@ import { computed, onMounted } from "vue";
 import { useRoute } from "vue-router";
 import DefaultLayout from "@/components/layouts/DefaultLayout.vue";
 import AppIcon from "@/components/AppIcon.vue";
-import MarkerRow from "@/components/MarkerRow.vue";
 import { useMarkerStore } from "@/stores/markers";
 
 const route = useRoute();
@@ -29,82 +28,88 @@ const seasons = computed(() => {
 
 <template>
   <DefaultLayout>
-    <div class="mb-6 flex flex-wrap items-start gap-4">
-      <div>
-        <h1 class="text-title-md font-bold text-black dark:text-white">Marcadores da série</h1>
-        <p class="mt-1 text-sm font-medium text-body dark:text-bodydark">
-          Selecione um campo de intro ou créditos para editar ou adicionar.
-        </p>
-      </div>
-    </div>
-
-    <div
-      v-if="store.error"
-      class="mb-6 flex items-center gap-3 rounded-sm border border-meta-1/30 bg-meta-1/10 px-5 py-4 text-sm font-medium text-meta-1"
-      role="alert"
-    >
-      <AppIcon name="warning" size="sm" />
-      <span class="flex-1">{{ store.error }}</span>
-      <button class="rounded p-1 transition hover:bg-meta-1/10" @click="store.clearError()">
-        <AppIcon name="close" size="sm" />
-      </button>
-    </div>
-
-    <div v-if="store.loading" class="space-y-4">
-      <div v-for="n in 3" :key="n" class="h-32 animate-pulse rounded-sm border border-stroke bg-white dark:border-strokedark dark:bg-boxdark"></div>
-    </div>
-
-    <div v-else class="space-y-6">
-      <section
-        v-for="{ season, list } in seasons"
-        :key="season"
-        class="rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark"
-      >
-        <h2 class="border-b border-stroke px-6 py-4 text-title-sm font-semibold text-black dark:border-strokedark dark:text-white">
-          Temporada {{ season }}
-        </h2>
-
-        <div class="divide-y divide-stroke dark:divide-strokedark">
-          <article v-for="ep in list" :key="ep.rating_key" class="flex items-start gap-4 px-6 py-4">
-            <div class="aspect-video w-64 shrink-0 overflow-hidden rounded-sm bg-gray-2 dark:bg-meta-4">
-              <img
-                v-if="ep.thumb"
-                :src="ep.thumb"
-                :alt="ep.title"
-                loading="lazy"
-                class="h-full w-full object-cover"
-              />
-              <div v-else class="flex h-full w-full items-center justify-center text-body dark:text-bodydark">
-                <AppIcon name="tv" size="sm" />
-              </div>
-            </div>
-            <div class="min-w-0 flex-1">
-              <div class="mb-3 flex flex-wrap items-center gap-2">
-                <span class="inline-flex rounded-full bg-meta-2 px-2.5 py-0.5 text-xs font-semibold text-body dark:bg-meta-4 dark:text-bodydark">
-                  T{{ ep.season }} · E{{ ep.episode }}
-                </span>
-                <h3 class="text-sm font-semibold text-black dark:text-white">{{ ep.title }}</h3>
-              </div>
-              <div class="space-y-1">
-                <MarkerRow
-                  v-for="kind in ['intro', 'credits']"
-                  :key="kind"
-                  :rating-key="ep.rating_key"
-                  :kind="kind"
-                />
-              </div>
-            </div>
-          </article>
+    <div class="bg-gray-50 dark:bg-gray-900 min-h-screen">
+      <div class="border-b border-gray-200 dark:border-gray-800 sticky top-0 z-20 bg-gray-50 dark:bg-gray-900">
+        <div class="max-w-2xl mx-auto px-4 py-3 flex items-center gap-2">
+          <h1 class="text-28 font-bold text-gray-900 dark:text-gray-100">
+            Marcadores da série
+          </h1>
+          <p class="text-sm text-gray-500 dark:text-gray-400">
+            Selecione um campo de intro ou créditos para editar ou adicionar.
+          </p>
         </div>
-      </section>
-
-      <div
-        v-if="seasons.length === 0"
-        class="rounded-sm border border-stroke bg-white px-6 py-11 text-center dark:border-strokedark dark:bg-boxdark"
-      >
-        <AppIcon name="tv" size="lg" class="mx-auto text-body dark:text-bodydark" />
-        <p class="mt-3 text-sm font-medium text-body dark:text-bodydark">Nenhum episódio nesta série.</p>
       </div>
-    </div>
-  </DefaultLayout>
-</template>
+
+      <div class="p-4 md:p-6 lg:p-8 flex flex-col gap-6">
+        <div
+          v-if="store.error"
+          class="rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-900 dark:bg-gray-800 p-4 text-sm"
+          role="alert"
+        >
+          <svg
+            class="w-4 h-4 text-gray-400 dark:text-gray-600"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M12 9v2m0 4h.01m-6.938 4h13.856c1.535-3 0-3.506 0-5 0-1.506.376-2.926 1.029-4.2m-6.938 4L12 9m-6.938 4h13.856c1.535-3 0-3.506 0-5 0-1.506.376-2.926 1.029-4.2"
+            />
+          </svg>
+          <span class="ml-2">{{ store.error }}</span>
+        </div>
+
+        <div v-if="store.loading" class="space-y-4 animate-pulse">
+          <div class="h-24 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-800"></div>
+          <div class="h-20 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-800"></div>
+          <div class="h-16 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-800"></div>
+        </div>
+
+        <div v-else class="space-y-6">
+          <section v-for="{ season, list } in seasons" :key="season" class="rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800">
+            <h2 class="border-b border-gray-200 dark:border-gray-600 px-6 py-3 text-title-sm font-semibold text-gray-900 dark:text-gray-100">
+              Temporada {{ season }}
+            </h2>
+
+            <div class="divide-y divide-gray-200 dark:divide-gray-600">
+              <article v-for="ep in list" :key="ep.rating_key" class="flex items-start gap-4 px-6 py-4">
+                <div class="flex-1 min-w-0">
+                  <div class="mb-2 flex flex-wrap items-center gap-2">
+                    <span
+                      class="inline-flex rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-semibold text-gray-700 dark:bg-gray-800 dark:text-gray-200"
+                    >
+                      T{{ ep.season }} · E{{ ep.episode }}
+                    </span>
+                    <h3 class="text-title-sm font-semibold text-gray-900 dark:text-gray-100">{{ ep.title }}</h3>
+                  </div>
+
+                  <div class="space-y-1">
+                    <!---->
+                    <MarkerRow
+                      v-for="kind in ['intro', 'credits']"
+                      :key="kind"
+                      :rating-key="ep.rating_key"
+                      :kind="kind"
+                    />
+                  </div>
+                </div>
+              </article>
+            </div>
+          </section>
+
+          <div
+            v-if="seasons.length === 0"
+            class="rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-900 dark:bg-gray-800 p-8 text-center"
+          >
+            <AppIcon name="tv" size="lg" class="mx-auto text-gray-400 dark:text-gray-600" />
+            <p class="mt-3 text-sm font-medium text-gray-300 dark:text-gray-400">
+              Nenhum episódio nesta série.
+            </p>
+          </div>
+        </div>
+      </div>
+    </DefaultLayout>
+  </template>

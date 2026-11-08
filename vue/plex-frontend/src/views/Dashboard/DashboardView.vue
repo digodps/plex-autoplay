@@ -3,13 +3,14 @@ import { onMounted, onUnmounted } from "vue";
 import { useRouter } from "vue-router";
 import DefaultLayout from "@/components/layouts/DefaultLayout.vue";
 import DataStatsOne from "@/components/DataStats/DataStatsOne.vue";
-import AppIcon from "@/components/AppIcon.vue";
 import { useDashboardStore } from "@/stores/dashboard";
 import { useDashboardActions } from "@/composables/useDashboardActions";
+import { cycleMode, useThemeStore } from "@/stores/theme";
 
 const router = useRouter();
 const store = useDashboardStore();
 const { startScan } = useDashboardActions();
+const { mode, cycleMode: cycleTheme } = useThemeStore();
 
 onMounted(() => {
   store.fetchAll();
@@ -29,68 +30,76 @@ async function handleStartScan() {
 
 <template>
   <DefaultLayout>
-    <div class="mb-6 flex flex-wrap items-end justify-between gap-4">
-      <div>
-        <h1 class="text-title-md font-bold text-black dark:text-white">Visão geral</h1>
-        <p class="mt-1 text-sm font-medium text-body dark:text-bodydark">
-          Saúde do serviço, sincronização, bibliotecas e marcadores.
-        </p>
+    <div class="bg-gray-50 dark:bg-gray-900 min-h-screen">
+      <div class="border-b border-gray-200 dark:border-gray-800 sticky top-0 z-20 bg-gray-50 dark:bg-gray-900">
+        <div class="max-w-2xl mx-auto px-4 py-3 flex items-center gap-2">
+          <h1 class="text-28 font-bold text-gray-900 dark:text-gray-100">Visão geral</h1>
+          <p class="text-sm text-gray-500 dark:text-gray-400">
+            Saúde do serviço, sincronização, bibliotecas e marcadores.
+          </p>
+        </div>
       </div>
-      <div class="flex flex-wrap items-center gap-3">
-        <button
-          class="rounded-lg border border-stroke bg-white px-4 py-2.5 text-sm font-medium text-body transition hover:border-primary hover:text-primary dark:border-strokedark dark:bg-boxdark dark:text-bodydark"
-          :disabled="store.isLoading"
-          @click="router.push('/sync')"
+
+      <div class="p-4 md:p-6 lg:p-8 flex flex-col gap-6">
+        <DataStatsOne />
+
+        <div
+          v-if="store.isTotalFailure"
+          class="rounded-lg border border-gray-200 dark:border-gray-800 bg-gray-900 dark:bg-gray-800 p-4 text-sm"
+          role="alert"
         >
-          Ver Log Completo
-        </button>
-        <button
-          class="flex items-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-white transition hover:bg-opacity-90 disabled:opacity-60"
-          :disabled="store.isLoading"
-          @click="handleStartScan"
+          <svg
+            class="w-5 h-5 text-gray-400 dark:text-gray-600"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M12 9v2m0 4h.01m-6.938 4h13.856c1.535-3 0-3.506 0-5 0-1.506.376-2.926 1.029-4.2m-6.938 4L12 9m-6.938 4h13.856c1.535-3 0-3.506 0-5 0-1.506.376-2.926 1.029-4.2m6.938-4H3m6.938 4h13.856c1.535-3 0-3.506 0-5 0-1.506.376-2.926 1.029-4.2"
+            />
+          </svg>
+          <span class="ml-2">{{ store.error }}</span>
+          <button
+            class="mt-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-800 px-3 py-1.5 text-sm font-medium text-gray-800 dark:text-gray-100 transition hover:bg-gray-200 dark:hover:bg-gray-700"
+            @click="store.retry"
+          >
+            Tentar novamente
+          </button>
+        </div>
+
+        <div
+          v-else-if="store.libraryError"
+          class="rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-900 dark:bg-gray-800 p-4 text-sm"
+          role="alert"
         >
-          <AppIcon name="play" size="sm" />
-          Iniciar Escaneamento
-        </button>
+          <svg
+            class="w-5 h-5 text-gray-400 dark:text-gray-600"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M12 9v2m0 4h.01m-6.938 4h13.856c1.535-3 0-3.506 0-5 0-1.506.376-2.926 1.029-4.2m-6.938 4L12 9m-6.938 4h13.856c1.535-3 0-3.506 0-5 0-1.506.376-2.926 1.029-4.2"
+            />
+          </svg>
+          <span class="ml-2 font-medium text-gray-300 dark:text-gray-400">{{ store.libraryError }}</span>
+          <button
+            class="mt-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-800 px-3 py-1.5 text-sm font-medium text-gray-800 dark:text-gray-100 transition hover:bg-gray-200 dark:hover:bg-gray-700"
+            @click="store.retry"
+          >
+            Tentar novamente
+          </button>
+          <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">
+            Verifique se o servidor Plex está acessível, se a URL e o token (X-Plex-Token) estão
+            configurados corretamente e se há conectividade de rede.
+          </p>
+        </div>
       </div>
-    </div>
-
-    <DataStatsOne />
-
-    <div
-      v-if="store.isTotalFailure"
-      class="mt-6 flex flex-wrap items-center gap-3 rounded-sm border border-meta-1/30 bg-meta-1/10 px-5 py-4 text-sm text-meta-1"
-      role="alert"
-    >
-      <AppIcon name="warning" size="lg" />
-      <p class="flex-1">{{ store.error }}</p>
-      <button
-        class="rounded-lg border border-meta-1/40 px-3 py-1.5 font-medium transition hover:bg-meta-1/10"
-        @click="store.retry"
-      >
-        Tentar novamente
-      </button>
-    </div>
-
-    <div
-      v-else-if="store.libraryError"
-      class="mt-6 rounded-sm border border-meta-6/30 bg-meta-6/10 px-5 py-4 text-sm text-body dark:text-bodydark"
-      role="alert"
-    >
-      <div class="flex flex-wrap items-center gap-3">
-        <AppIcon name="warning" size="lg" class="text-meta-6" />
-        <p class="flex-1 font-medium text-meta-6">{{ store.libraryError }}</p>
-        <button
-          class="rounded-lg border border-meta-6/40 px-3 py-1.5 font-medium text-meta-6 transition hover:bg-meta-6/10"
-          @click="store.retry"
-        >
-          Tentar novamente
-        </button>
-      </div>
-      <p class="mt-2 text-xs text-body dark:text-bodydark">
-        Verifique se o servidor Plex está acessível, se a URL e o token (X-Plex-Token) estão
-        configurados corretamente e se há conectividade de rede.
-      </p>
-    </div>
-  </DefaultLayout>
-</template>
+    </DefaultLayout>
+  </template>
