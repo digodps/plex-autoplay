@@ -122,8 +122,17 @@ function openMarkers(series) {
               class="group flex flex-col rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-4 shadow-sm transition-colors hover:border-primary dark:hover:text-primary"
               @click="openMarkers(series)"
             >
-              <div class="flex h-20 w-20 items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-700 text-primary transition group-hover:bg-primary dark:group-hover:text-white mb-3">
-                <AppIcon name="tv" size="lg" />
+              <div class="mb-3 aspect-[2/3] w-full overflow-hidden rounded-lg bg-gray-100 dark:bg-gray-700">
+                <img
+                  v-if="series.thumb"
+                  :src="series.thumb"
+                  :alt="series.title"
+                  loading="lazy"
+                  class="h-full w-full object-cover"
+                />
+                <div v-else class="flex h-full w-full items-center justify-center text-gray-400 dark:text-gray-500">
+                  <AppIcon name="tv" size="lg" />
+                </div>
               </div>
               <h4 class="truncate text-title-sm font-semibold text-gray-900 dark:text-gray-100">
                 {{ series.title }}

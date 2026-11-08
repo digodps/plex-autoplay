@@ -3,6 +3,7 @@ import { computed, onMounted } from "vue";
 import { useRoute } from "vue-router";
 import DefaultLayout from "@/components/layouts/DefaultLayout.vue";
 import AppIcon from "@/components/AppIcon.vue";
+import MarkerRow from "@/components/MarkerRow.vue";
 import { useMarkerStore } from "@/stores/markers";
 
 const route = useRoute();
@@ -76,6 +77,18 @@ const seasons = computed(() => {
 
             <div class="divide-y divide-gray-200 dark:divide-gray-600">
               <article v-for="ep in list" :key="ep.rating_key" class="flex items-start gap-4 px-6 py-4">
+                <div class="aspect-video w-48 shrink-0 overflow-hidden rounded-lg bg-gray-100 dark:bg-gray-700">
+                  <img
+                    v-if="ep.thumb"
+                    :src="ep.thumb"
+                    :alt="ep.title"
+                    loading="lazy"
+                    class="h-full w-full object-cover"
+                  />
+                  <div v-else class="flex h-full w-full items-center justify-center text-gray-400 dark:text-gray-500">
+                    <AppIcon name="tv" size="sm" />
+                  </div>
+                </div>
                 <div class="flex-1 min-w-0">
                   <div class="mb-2 flex flex-wrap items-center gap-2">
                     <span
