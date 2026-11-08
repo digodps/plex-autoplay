@@ -2,9 +2,9 @@
 
 ## 1. Implementar marca discreta
 
-- [ ] 1.1 Reescrever `src/components/AppLogo.vue` removendo `rect` de fundo gradiente, borda e preenchimento sólido; usar `fill="none"`, `stroke="currentColor"`, `stroke-width="3"`. Verificar que não resta `rect` de fundo e que `stroke` existe.
-- [ ] 1.2 Atualizar `public/favicon.svg` com mesma marca em traço e cor neutra `#8B949E` sobre fundo transparente. Verificar sem `rect` de fundo.
-- [ ] 1.3 Rodar `npm run build` em `vue/plex-frontend` e verificar saída sem erros. Artefato de build em `dist`.
+- [x] 1.1 Reescrever `src/components/AppLogo.vue` removendo `rect` de fundo gradiente, borda e preenchimento sólido; usar `fill="none"`, `stroke="currentColor"`, `stroke-width="3"`. Verificar que não resta `rect` de fundo e que `stroke` existe.
+- [x] 1.2 Atualizar `public/favicon.svg` com mesma marca em traço e cor neutra `#8B949E` sobre fundo transparente. Verificar sem `rect` de fundo.
+- [x] 1.3 Rodar `npm run build` em `vue/plex-frontend` e verificar saída sem erros. Artefato de build em `dist`.
 
 ## 2. Verificação visual/funcional
 
