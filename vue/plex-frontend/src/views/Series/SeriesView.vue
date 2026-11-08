@@ -119,20 +119,30 @@ function openMarkers(series) {
               v-for="series in seriesList"
               :key="series.ratingKey"
               type="button"
-              class="group flex flex-col rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-4 shadow-sm transition-colors hover:border-primary dark:hover:text-primary"
+              data-testid="series-card"
+              class="group flex flex-col rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-4 shadow-sm transition-colors hover:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900"
               @click="openMarkers(series)"
             >
-              <div class="mb-3 aspect-[2/3] w-full overflow-hidden rounded-lg bg-gray-100 dark:bg-gray-700">
-                <img
-                  v-if="series.thumb"
-                  :src="series.thumb"
-                  :alt="series.title"
-                  loading="lazy"
-                  class="h-full w-full object-cover"
-                />
-                <div v-else class="flex h-full w-full items-center justify-center text-gray-400 dark:text-gray-500">
-                  <AppIcon name="tv" size="lg" />
+              <div class="relative mb-3 aspect-[2/3] w-full overflow-hidden rounded-lg bg-gray-100 dark:bg-gray-700">
+                <div
+                  data-testid="series-thumb-inner"
+                  class="h-full w-full transition-transform duration-300 motion-safe:group-hover:scale-105 motion-safe:group-focus-visible:scale-105 motion-reduce:transition-none"
+                >
+                  <img
+                    v-if="series.thumb"
+                    :src="series.thumb"
+                    :alt="series.title"
+                    loading="lazy"
+                    class="h-full w-full object-cover"
+                  />
+                  <div v-else class="flex h-full w-full items-center justify-center text-gray-400 dark:text-gray-500">
+                    <AppIcon name="tv" size="lg" />
+                  </div>
                 </div>
+                <div
+                  aria-hidden="true"
+                  class="pointer-events-none absolute inset-0 bg-black/0 transition-colors group-hover:bg-black/25 group-focus-visible:bg-black/25 motion-reduce:transition-none"
+                ></div>
               </div>
               <h4 class="truncate text-title-sm font-semibold text-gray-900 dark:text-gray-100">
                 {{ series.title }}

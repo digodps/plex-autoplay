@@ -12,7 +12,7 @@ Lista literal de classes (fonte de verdade):
 
 - `<button>` (card, já tem `group`): adicionar `focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900`; remover `dark:hover:text-primary` (sem par claro, sem efeito nos filhos).
 - wrapper da miniatura: `relative mb-3 aspect-[2/3] w-full overflow-hidden rounded-lg bg-gray-100 dark:bg-gray-700`.
-- wrapper interno comum aos dois ramos (img e placeholder): `h-full w-full transition-transform duration-300 group-hover:scale-105 group-focus-visible:scale-105 motion-reduce:scale-100 motion-reduce:transition-none`.
+- wrapper interno comum aos dois ramos (img e placeholder): `h-full w-full transition-transform duration-300 motion-safe:group-hover:scale-105 motion-safe:group-focus-visible:scale-105 motion-reduce:transition-none`.
 - overlay (irmão do wrapper interno, sobre img/placeholder): `pointer-events-none absolute inset-0 bg-black/0 transition-colors group-hover:bg-black/25 group-focus-visible:bg-black/25 motion-reduce:transition-none` com `aria-hidden="true"`.
 - `<img>`: `h-full w-full object-cover` (sem transição própria).
 
