@@ -32,7 +32,24 @@
 | Build Vue | `npm run build` em `vue/plex-frontend` | PASS |
 | Validação OpenSpec | `openspec validate setup-midias-multiplas --strict` | PASS |
 
+## CRUD de marcadores (execução complementar)
+
+`tests/e2e/qa-crud.mjs` — **14/14 checks OK** (`http://127.0.0.1:8091`):
+
+| Operação | Evidência | Resultado |
+| --- | --- | --- |
+| Read inicial | `GET /api/markers/5001` → `[]` | PASS |
+| Create (API) | `POST /api/markers` → 201 e `intro 1000-5000` persistido | PASS |
+| Update (API) | `PUT /api/markers/5001/intro` → `intro 2000-6000` persistido | PASS |
+| Delete (API) | `DELETE` → 200 e marcador ausente no GET | PASS |
+| Create (UI) | linha `5002/credits`, `Adicionar marcador` → `00:03.00 → 00:09.00` | PASS |
+| Update (UI) | editar para `00:04.00 → 00:10.00`, persistido no banco | PASS |
+| Delete (UI) | remover → linha volta a `--:--` e banco sem marcador | PASS |
+| Runtime | `pageerror` vazio | PASS |
+
+Suíte e2e existente: `markers.spec.js`, `libraries.spec.js`, `auth.spec.js`, `images.spec.js` → **10/10 passed** contra o app local.
+
 ## Observações
 
-- CRUD completo não foi exercitado (fora do escopo de QA de UI).
+- CRUD de configurações (múltiplos diretórios) exercitado no QA de UI; CRUD de marcadores na execução complementar acima.
 - `docker build --no-cache` não executado nesta iteração: a imagem publica `wwwroot` já construído e o artefato foi regenerado/copiado. Registrado como risco residual.
