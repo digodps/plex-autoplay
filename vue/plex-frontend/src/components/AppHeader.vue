@@ -1,7 +1,6 @@
 <script setup>
 import { computed, ref } from "vue";
 import { useRouter } from "vue-router";
-import { useSidebarStore } from "@/stores/sidebar";
 import { useThemeStore } from "@/stores/theme";
 import { useAuthStore } from "@/stores/auth";
 import AppIcon from "@/components/AppIcon.vue";
@@ -13,7 +12,6 @@ defineProps({
 });
 
 const router = useRouter();
-const sidebar = useSidebarStore();
 const theme = useThemeStore();
 const auth = useAuthStore();
 
@@ -51,18 +49,6 @@ function openPassword() {
         Plex Autoplay
       </span>
     </RouterLink>
-
-    <span class="h-5 w-px bg-gray-300 dark:bg-gray-700" aria-hidden="true"></span>
-
-    <button
-      :class="iconButton"
-      type="button"
-      :aria-label="sidebar.isCollapsed ? 'Expandir menu' : 'Recolher menu'"
-      :aria-expanded="!sidebar.isCollapsed"
-      @click="sidebar.toggleCollapsed"
-    >
-      <AppIcon name="menu" size="sm" />
-    </button>
 
     <span class="h-5 w-px bg-gray-300 dark:bg-gray-700" aria-hidden="true"></span>
 
