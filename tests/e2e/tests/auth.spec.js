@@ -5,7 +5,7 @@ loadEnv();
 
 const BASE_URL =
   process.env.PLAYWRIGHT_BASE_URL || "https://plex-autoplay.dns.podman:443";
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
+const ADMIN_PASSWORD = process.env.OPERATOR_PASSWORD || process.env.ADMIN_PASSWORD;
 
 test.describe("Autenticação JWT", () => {
   test("login com senha correta retorna token JWT e redireciona para dashboard", async ({

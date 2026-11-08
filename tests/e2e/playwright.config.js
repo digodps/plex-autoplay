@@ -8,6 +8,8 @@ module.exports = defineConfig({
   workers: process.env.CI ? 2 : undefined,
   reporter: "html",
 
+  globalSetup: require.resolve("./global-setup.js"),
+
   // Timeout global de 5 minutos para a suíte
   timeout: 5 * 60 * 1000,
 
