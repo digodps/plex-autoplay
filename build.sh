@@ -1,11 +1,15 @@
 #!/usr/bin/env bash
-# Deploy do branch atual: frontend + solução .NET + imagem Docker + health.
+# Deploy do branch atual do projeto: git update + frontend + solução .NET + imagem Docker + health.
 set -euo pipefail
-cd "$(dirname "$0")"
+
+ROOT=$(git rev-parse --show-toplevel 2>/dev/null) || {
+  echo "ERRO: diretório atual não pertence a um repositório git." >&2
+  exit 1
+}
+cd "$ROOT"
+echo "==> projeto $ROOT"
 
 BRANCH=$(git rev-parse --abbrev-ref HEAD)
-GIT_COMMIT=$(git rev-parse HEAD)
-COMMIT=$(git rev-parse --short HEAD)
 
 DIRTY=$(git status --porcelain --untracked-files=no -- . ':(exclude)src/PlexAutoplay.Web/wwwroot')
 if [ -n "$DIRTY" ] && [ "${ALLOW_DIRTY:-0}" != "1" ]; then
@@ -14,6 +18,19 @@ if [ -n "$DIRTY" ] && [ "${ALLOW_DIRTY:-0}" != "1" ]; then
   printf '%s\n' "$DIRTY" >&2
   exit 1
 fi
+
+echo "==> git update"
+git fetch --prune origin
+UPSTREAM=$(git rev-parse --abbrev-ref --symbolic-full-name '@{u}' 2>/dev/null || true)
+if [ -n "$UPSTREAM" ]; then
+  git merge --ff-only "$UPSTREAM"
+else
+  echo "AVISO: branch '$BRANCH' sem upstream; usando estado local."
+fi
+
+BRANCH=$(git rev-parse --abbrev-ref HEAD)
+GIT_COMMIT=$(git rev-parse HEAD)
+COMMIT=$(git rev-parse --short HEAD)
 
 echo "==> branch $BRANCH @ $COMMIT"
 export GIT_COMMIT
@@ -49,8 +66,9 @@ fi
 echo "imagem: plex-autoplay:latest @ ${IMAGE_REV:0:7}"
 
 echo "==> restart"
-docker rm -f plex-autoplay >/dev/null 2>&1 || true
+docker compose down --remove-orphans
 docker compose up -d --no-build
+docker ps --filter name=plex-autoplay --format 'container: {{.Names}} {{.Status}}'
 
 echo "==> health"
 HEALTH_URL=${DEPLOY_HEALTH_URL:-http://127.0.0.1:8080/settings}

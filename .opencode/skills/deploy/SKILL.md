@@ -14,25 +14,29 @@ Deploy reproduzível do branch atual. `build.sh` é a fonte de verdade: a skill 
 
 ## Fluxo
 
-1. Confirmar contexto:
+1. Entrar no projeto corrente (o diretório da sessão OpenCode) e confirmar contexto:
    ```bash
+   git rev-parse --show-toplevel
    git branch --show-current
    git status --short
    ```
-   Working tree com alterações rastreadas não commitadas bloqueia o deploy. Para publicar estado local conscientemente: `ALLOW_DIRTY=1 ./build.sh`.
+   O deploy usa o repositório e o branch do diretório corrente. Working tree com alterações rastreadas não commitadas bloqueia o deploy. Para publicar estado local conscientemente: `ALLOW_DIRTY=1 ./build.sh`.
 
 2. Executar o pipeline:
    ```bash
    ./build.sh
    ```
    O script:
-   - imprime branch e commit e recusa working tree sujo;
+   - resolve a raiz do repositório a partir do diretório corrente e imprime branch e commit;
+   - recusa working tree sujo;
+   - roda `git fetch --prune origin` e `git merge --ff-only` do upstream do branch atual, para compilar o branch atualizado; sem upstream, avisa e usa o estado local;
    - roda `npm ci` em `vue/plex-frontend` (pacotes exatos do `package-lock.json`);
    - roda `npm run build` e substitui `src/PlexAutoplay.Web/wwwroot` pelo `dist` novo, sem assets antigos;
    - compila `PlexAutoplay.slnx -c Release`;
    - roda `docker compose build`, cujo estágio `dotnet publish` gera as DLLs a partir do contexto atual (sem `bin`/`obj` do host, ignorados pelo `.dockerignore`);
    - confere o label `org.opencontainers.image.revision` da imagem contra o commit do branch;
-   - recria o container `plex-autoplay` e valida HTTP 200 em `/settings`;
+   - remove o container com `docker compose down --remove-orphans`;
+   - recria o container `plex-autoplay` a partir da imagem do branch atualizado e valida HTTP 200 em `/settings`;
    - imprime no final `URL: http://<IP-do-servidor>:<porta>` usando o IP primário da máquina e a porta publicada.
 
 3. Confirmar resultado:
@@ -60,6 +64,8 @@ Deploy reproduzível do branch atual. `build.sh` é a fonte de verdade: a skill 
 ## Falhas comuns
 
 - **Working tree sujo**: commitar ou usar `ALLOW_DIRTY=1`. A imagem não representará o branch se houver diff pendente.
+- **Branch divergente do upstream**: `git merge --ff-only` falha; rebase/merge manual antes do deploy.
+- **Diretório errado**: rodar `/deploy` no projeto desejado; o script usa a raiz git do diretório corrente.
 - **Label divergente**: `docker compose build` rodou sem `GIT_COMMIT` exportado. Rodar via `./build.sh`.
 - **Health 200 ausente**: o script imprime `docker logs plex-autoplay --tail 20`. Verificar `.env`, portas e volume `./data`.
 - **Porta duplicada**: remover `docker-compose.override.yml` ou ajustar o mapeamento antes do deploy.
