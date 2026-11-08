@@ -84,7 +84,7 @@
 
 - [x] 11.1 `git add -A`
 - [x] 11.2 Commit de reorganização
-- [ ] 11.3 Push branch `feature/spec-clean-architecture-reorg`
+- [x] 11.3 Push branch `feature/spec-clean-architecture-reorg`
 
 ## 12. EGM
 
