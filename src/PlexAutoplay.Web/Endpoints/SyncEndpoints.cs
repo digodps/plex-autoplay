@@ -40,7 +40,10 @@ public static class SyncEndpoints
                 var job = scanJobs.Get(jobId);
                 if (job != null)
                 {
-                    await context.Response.WriteAsync($"data: {System.Text.Json.JsonSerializer.Serialize(new { status = job.Status, processed = job.Processed, skipped = job.Skipped, errors = job.Errors, logs = job.Logs.ToArray() })}\n\n");
+                    var payload = System.Text.Json.JsonSerializer.Serialize(
+                        new { status = job.Status, processed = job.Processed, skipped = job.Skipped, errors = job.Errors, logs = job.Logs.ToArray() },
+                        System.Text.Json.JsonSerializerOptions.Web);
+                    await context.Response.WriteAsync($"data: {payload}\n\n");
                     await context.Response.Body.FlushAsync();
 
                     if (job.Status == "completed" || job.Status == "failed" || job.Status == "cancelled")
