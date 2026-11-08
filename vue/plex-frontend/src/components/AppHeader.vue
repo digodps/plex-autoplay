@@ -112,11 +112,11 @@ function logout() {
         class="absolute right-0 mt-2 w-44 rounded-lg border border-gray-300 bg-white p-1 shadow-lg dark:border-gray-700 dark:bg-gray-800"
       >
         <router-link
-          to="/settings"
+          to="/change-password"
           class="block rounded px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700"
           @click="showProfile = false"
         >
-          Configurações
+          Alterar senha
         </router-link>
         <button
           type="button"

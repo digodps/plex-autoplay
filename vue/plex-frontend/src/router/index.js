@@ -46,6 +46,12 @@ const routes = [
     component: () => import("../views/Pages/SettingsView.vue"),
     meta: { title: "Ajustes" },
   },
+  {
+    path: "/change-password",
+    name: "change-password",
+    component: () => import("../views/Authentication/ChangePasswordView.vue"),
+    meta: { title: "Alterar senha" },
+  },
   { path: "/ajustes", redirect: "/settings" },
 ];
 
