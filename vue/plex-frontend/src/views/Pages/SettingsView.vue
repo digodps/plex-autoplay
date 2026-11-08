@@ -127,19 +127,13 @@ function saveInterval() {
         />
       </div>
 
-      <div v-if="!tokenFetched" class="setting-group rounded-sm border border-stroke bg-white px-5 py-4 shadow-default dark:border-strokedark dark:bg-boxdark">
+      <div v-if="!tokenFetched" class="setting-group rounded-sm border border-stroke bg-white px-5 py-4 shadow-default dark:border-strokedark dark:bg-form-input dark:text-white">
         <label class="block text-sm font-medium text-body dark:text-bodydark mb-2">Token do Plex</label>
         <input
           v-model="plexToken"
           type="text"
           class="settings-input rounded border border-stroke bg-white text-black focus:border-primary dark:border-form-strokedark dark:bg-form-input dark:text-white"
         />
-        <button
-          class="mt-3 rounded-lg border border-stroke bg-primary px-4 py-2.5 text-sm font-medium text-white transition hover:bg-opacity-90 disabled:opacity-60"
-          @click="fetchPlexIdentity"
-        >
-          Buscar token
-        </button>
       </div>
 
       <div v-if="tokenFetched" class="setting-group rounded-sm border border-stroke bg-white px-5 py-4 shadow-default dark:border-strokedark dark:bg-boxdark">
