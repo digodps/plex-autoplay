@@ -73,6 +73,57 @@ if (libCount > 0) {
   }
   check("miniatura das séries carrega", cardLoaded > 0, `${cardLoaded}/${cardCount}`);
 
+  // hover/focus destaca miniatura
+  const card = page.locator('main [data-testid="series-card"]').first();
+  const thumb = card.locator('[data-testid="series-thumb-inner"]');
+  const overlayBg = () =>
+    card.locator("[aria-hidden='true']").last().evaluate((el) => getComputedStyle(el).backgroundColor);
+  const transformOf = () => thumb.evaluate((el) => getComputedStyle(el).transform);
+  const tRest = await transformOf();
+  const bgRest = await overlayBg();
+  await card.hover();
+  await page.waitForTimeout(450);
+  const tHover = await transformOf();
+  const bgHover = await overlayBg();
+  check("hover destaca miniatura (zoom)", tHover !== tRest && tHover !== "none", `${tRest} -> ${tHover}`);
+  check("hover aplica overlay de realce", bgHover !== bgRest, `${bgRest} -> ${bgHover}`);
+  await page.screenshot({ path: "/tmp/opencode/qa-series-hover-light.png" });
+
+  await page.getByRole("button", { name: /Tema (claro|escuro)/ }).click();
+  await page.waitForTimeout(350);
+  const darkMode = await page.evaluate(() => document.documentElement.dataset.theme);
+  await card.hover();
+  await page.waitForTimeout(450);
+  check("tema escuro aplicado na página de séries", darkMode === "dark", darkMode);
+  check("tema escuro mantém realce no hover", (await overlayBg()) === bgHover, await overlayBg());
+  await page.screenshot({ path: "/tmp/opencode/qa-series-hover-dark.png" });
+  await page.getByRole("button", { name: /Tema (claro|escuro)/ }).click();
+  await page.waitForTimeout(350);
+
+  await page.mouse.move(0, 0);
+  await page.waitForTimeout(450);
+  await page.locator("main h1").first().click();
+  for (let i = 0; i < 40; i++) {
+    await page.keyboard.press("Tab");
+    if (await card.evaluate((el) => el === document.activeElement).catch(() => false)) break;
+  }
+  await page.waitForTimeout(450);
+  check("foco por teclado alcança o card", await card.evaluate((el) => el === document.activeElement));
+  check("foco destaca miniatura", (await transformOf()) !== "none", await transformOf());
+  check("foco mantém indicador visível", (await card.evaluate((el) => getComputedStyle(el).boxShadow)) !== "none");
+
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.locator("main h1").first().click();
+  await page.mouse.move(0, 0);
+  await page.waitForTimeout(200);
+  const bgReducedRest = await overlayBg();
+  await card.hover();
+  await page.waitForTimeout(450);
+  check("reduced-motion: sem zoom", (await transformOf()) === "none", await transformOf());
+  check("reduced-motion: overlay continua", (await overlayBg()) !== bgReducedRest, `${bgReducedRest} -> ${await overlayBg()}`);
+  await page.emulateMedia({ reducedMotion: "no-preference" });
+  await page.mouse.move(0, 0);
+
   await page.locator("main button:has(img)").first().click();
   await page.waitForURL("**/markers*", { timeout: 15000 });
   await page.waitForLoadState("networkidle");
