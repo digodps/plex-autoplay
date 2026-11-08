@@ -1,4 +1,3 @@
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using PlexAutoplay.Application;
@@ -15,8 +14,7 @@ public class SyncBackgroundService : BackgroundService
     private readonly ILogger<SyncBackgroundService> _logger;
     private readonly IPlexApiClient _plexClient;
     private readonly LibraryScanUseCase _libraryScan;
-    private readonly string _mediaRoot;
-    private int _intervalMinutes;
+    private readonly IAppSettingsStore _settings;
     private static readonly Meter SyncMeter = new("PlexAutoplay.Sync");
     private static readonly Counter<int> ScanCounter = SyncMeter.CreateCounter<int>("plex_scans_total");
     private static readonly Histogram<double> ScanDurationHistogram = SyncMeter.CreateHistogram<double>("plex_scan_duration_ms");
@@ -25,29 +23,30 @@ public class SyncBackgroundService : BackgroundService
         ILogger<SyncBackgroundService> logger,
         IPlexApiClient plexClient,
         LibraryScanUseCase libraryScan,
-        IConfiguration configuration)
+        IAppSettingsStore settings)
     {
         _logger = logger;
         _plexClient = plexClient;
         _libraryScan = libraryScan;
-        _mediaRoot = configuration["MEDIA_ROOT"] ?? "/media";
-        _intervalMinutes = configuration.GetValue("SYNC_INTERVAL_MINUTES", 5);
+        _settings = settings;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        _logger.LogInformation("Sync service starting with {IntervalMinutes} minute interval", _intervalMinutes);
+        var initial = await _settings.GetAsync();
+        _logger.LogInformation("Sync service starting with {IntervalMinutes} minute interval", initial.SyncIntervalMinutes);
 
         // Initial delay before first scan
-        await Task.Delay(TimeSpan.FromMinutes(_intervalMinutes), stoppingToken);
+        await Task.Delay(TimeSpan.FromMinutes(initial.SyncIntervalMinutes), stoppingToken);
 
         while (!stoppingToken.IsCancellationRequested)
         {
+            var settings = await _settings.GetAsync();
             _logger.LogInformation("Starting scheduled sync scan");
             var scanStart = DateTime.UtcNow;
             try
             {
-                await RunScanAsync();
+                await RunScanAsync(settings);
                 ScanCounter.Add(1, new KeyValuePair<string, object?>("status", "success"));
             }
             catch (OperationCanceledException)
@@ -65,14 +64,15 @@ public class SyncBackgroundService : BackgroundService
                 ScanDurationHistogram.Record(scanDurationMs);
             }
 
-            // Wait for next interval
-            await Task.Delay(TimeSpan.FromMinutes(_intervalMinutes), stoppingToken);
+            // Wait for next interval, reread so UI changes apply next cycle
+            settings = await _settings.GetAsync();
+            await Task.Delay(TimeSpan.FromMinutes(settings.SyncIntervalMinutes), stoppingToken);
         }
 
         _logger.LogInformation("Sync service stopping");
     }
 
-    private async Task RunScanAsync()
+    private async Task RunScanAsync(AppSettingsSnapshot settings)
     {
         var librariesResult = await _plexClient.GetLibrariesAsync();
         if (librariesResult.Failed)
@@ -99,7 +99,7 @@ public class SyncBackgroundService : BackgroundService
                 }
 
                 var seeds = episodesResult.Episodes.Select(e => new EpisodeSeed(e.RatingKey, e.FilePath));
-                var summary = await _libraryScan.ScanLibraryAsync(seeds, _mediaRoot);
+                var summary = await _libraryScan.ScanLibraryAsync(seeds, settings.MediaRoot);
 
                 processed += summary.Processed;
                 skipped += summary.Skipped;

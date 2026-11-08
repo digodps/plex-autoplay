@@ -128,11 +128,9 @@ public partial class PlexApiClient : IPlexApiClient
 
         try
         {
-            _httpClient.DefaultRequestHeaders.Clear();
-            _httpClient.DefaultRequestHeaders.Add("X-Plex-Token", plexToken);
-
-            var url = plexUrl.TrimEnd('/') + "/identity";
-            var response = await _httpClient.GetAsync(url);
+            using var request = new HttpRequestMessage(HttpMethod.Get, plexUrl.TrimEnd('/') + "/identity");
+            request.Headers.Add("X-Plex-Token", plexToken);
+            var response = await _httpClient.SendAsync(request);
 
             if (!response.IsSuccessStatusCode)
             {

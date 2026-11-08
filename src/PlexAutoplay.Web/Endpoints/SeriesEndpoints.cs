@@ -9,7 +9,7 @@ namespace PlexAutoplay.Web.Endpoints;
 /// </summary>
 public static class SeriesEndpoints
 {
-    public static void MapSeriesEndpoints(this IEndpointRouteBuilder app, string mediaRoot)
+    public static void MapSeriesEndpoints(this IEndpointRouteBuilder app)
     {
         app.MapGet("/api/series/{sectionKey}", async (
             string sectionKey,
@@ -44,7 +44,8 @@ public static class SeriesEndpoints
         app.MapGet("/api/series/{sectionKey}/{seriesKey}/episodes", async (
             string seriesKey,
             [FromServices] IPlexApiClient plexClient,
-            [FromServices] IPathResolver pathResolver) =>
+            [FromServices] IPathResolver pathResolver,
+            [FromServices] IAppSettingsStore settings) =>
         {
             var episodesResult = await plexClient.GetSeriesEpisodesAsync(seriesKey);
 
@@ -55,13 +56,14 @@ public static class SeriesEndpoints
                     statusCode: 502);
             }
 
+            var current = await settings.GetAsync();
             var result = episodesResult.Episodes.Select(e => new
             {
                 rating_key = e.RatingKey,
                 title = e.Title,
                 season = e.ParentIndex,
                 episode = e.Index,
-                local_path = pathResolver.Resolve(mediaRoot, e.FilePath),
+                local_path = pathResolver.Resolve(current.MediaRoot, e.FilePath),
                 thumb = string.IsNullOrEmpty(e.Thumb) ? null : "/api/images/" + e.Thumb.TrimStart('/')
             });
             return Results.Ok(result);

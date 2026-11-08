@@ -9,7 +9,7 @@ namespace PlexAutoplay.Web.Endpoints;
 /// <summary>Endpoints de integração com o Plex: bibliotecas, varredura de marcadores e episódios.</summary>
 public static class PlexEndpoints
 {
-    public static void MapPlexEndpoints(this IEndpointRouteBuilder app, string mediaRoot)
+    public static void MapPlexEndpoints(this IEndpointRouteBuilder app)
     {
         app.MapGet("/api/plex/libraries", async ([FromServices] IPlexApiClient plexClient) =>
         {
@@ -22,7 +22,8 @@ public static class PlexEndpoints
             [FromServices] IPlexApiClient plexClient,
             [FromServices] LibraryScanUseCase libraryScan,
             [FromServices] IScanJobStore scanJobs,
-            [FromServices] IPathResolver pathResolver) =>
+            [FromServices] IPathResolver pathResolver,
+            [FromServices] IAppSettingsStore settings) =>
         {
             var jobId = Guid.NewGuid().ToString();
             var job = new ScanJob { JobId = jobId, Status = "queued" };
@@ -65,7 +66,8 @@ public static class PlexEndpoints
                             }
 
                             var seeds = episodesResult.Episodes.Select(e => new EpisodeSeed(e.RatingKey, e.FilePath));
-                            var summary = await libraryScan.ScanLibraryAsync(seeds, mediaRoot, origin: "detected");
+                            var current = await settings.GetAsync();
+                            var summary = await libraryScan.ScanLibraryAsync(seeds, current.MediaRoot, origin: "detected");
 
                             processed += summary.Processed;
                             skipped += summary.Skipped;
@@ -99,10 +101,11 @@ public static class PlexEndpoints
             return Results.Ok(new { job_id = jobId });
         });
 
-        app.MapGet("/library/{section_key}", async (string section_key, [FromServices] IPlexApiClient plexClient, [FromServices] IPathResolver pathResolver) =>
+        app.MapGet("/library/{section_key}", async (string section_key, [FromServices] IPlexApiClient plexClient, [FromServices] IPathResolver pathResolver, [FromServices] IAppSettingsStore settings) =>
         {
             var episodesResult = await plexClient.GetEpisodesAsync(section_key);
             if (episodesResult.Failed) return Results.Problem(episodesResult.ErrorMessage ?? "Não foi possível consultar os episódios no Plex. Verifique a conexão com o servidor e tente novamente.", statusCode: 502);
+            var current = await settings.GetAsync();
             var result = episodesResult.Episodes.Select(e => new
             {
                 rating_key = e.RatingKey,
@@ -110,7 +113,7 @@ public static class PlexEndpoints
                 season = e.ParentIndex,
                 episode = e.Index,
                 file_path = e.FilePath,
-                local_path = pathResolver.Resolve(mediaRoot, e.FilePath)
+                local_path = pathResolver.Resolve(current.MediaRoot, e.FilePath)
             });
             return Results.Ok(result);
         });
