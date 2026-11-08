@@ -21,17 +21,22 @@ public static class AuthEndpoints
             [FromServices] CompleteSetupUseCase setupUseCase,
             [FromBody(EmptyBodyBehavior = EmptyBodyBehavior.Allow)] SetupRequest? request) =>
         {
-            var result = await setupUseCase.ExecuteAsync(request?.Token, request?.NewPassword);
+            var result = await setupUseCase.ExecuteAsync(new CompleteSetupRequest(
+                request?.Token,
+                request?.NewPassword,
+                request?.PlexUrl,
+                request?.PlexToken,
+                request?.MediaRoots));
 
-            return result switch
+            return result.Status switch
             {
-                CompleteSetupResult.Success => Results.NoContent(),
-                CompleteSetupResult.InvalidToken => Results.Json(
+                SetupStatus.Success => Results.NoContent(),
+                SetupStatus.InvalidToken => Results.Json(
                     new { message = "Token de setup inválido ou já utilizado" },
                     statusCode: StatusCodes.Status401Unauthorized),
-                CompleteSetupResult.InvalidPassword => Results.BadRequest(
-                    new { message = $"A senha deve ter entre {PasswordPolicy.MinLength} e {PasswordPolicy.MaxLength} caracteres" }),
-                CompleteSetupResult.AlreadyConfigured => Results.Json(
+                SetupStatus.InvalidPassword => Results.BadRequest(new { errors = result.Errors }),
+                SetupStatus.InvalidSettings => Results.BadRequest(new { errors = result.Errors }),
+                SetupStatus.AlreadyConfigured => Results.Json(
                     new { message = "Configuração inicial já concluída" },
                     statusCode: StatusCodes.Status409Conflict),
                 _ => Results.StatusCode(StatusCodes.Status500InternalServerError)

@@ -40,14 +40,22 @@ O sistema SHALL, quando não houver credencial de operador configurada, exigir u
 
 ### Requirement: Interface de primeiro acesso
 
-O sistema SHALL apresentar a página `/setup` com seções de credencial do operador, conexão com o Plex (URL e token) e diretórios de mídia, exibindo os erros retornados pelo backend sem perder os valores preenchidos.
+O sistema SHALL apresentar a página `/setup` como fluxo sequencial de três passos — (1) token de setup e senha, (2) URL e token do Plex, (3) diretórios de mídia — com navegação para voltar e avançar, exibindo os erros retornados pelo backend sem perder os valores preenchidos.
 
 #### Scenario: Erro de validação exibido
 - **WHEN** o backend responde `400` com `errors`
 - **THEN** a página mostra cada erro e mantém URL, listas de diretórios e demais campos preenchidos
 
-#### Scenario: Setup concluído redireciona para login
+#### Scenario: Teste de conexão no passo do Plex
+- **WHEN** o operador aciona "Testar conexão" no passo 2
+- **THEN** a página chama `POST /api/plex/identity` sem sessão (permitido enquanto o setup está pendente) e mostra sucesso ou a mensagem de erro do Plex
+
+#### Scenario: Setup concluído entra autenticado
 - **WHEN** o backend responde `204`
+- **THEN** a página autentica com a senha recém-criada e abre o dashboard sem passar pela tela de login
+
+#### Scenario: Setup já concluído antes do último passo
+- **WHEN** o backend responde `409`
 - **THEN** a página redireciona para `/login`
 
 #### Scenario: Diretório escolhido pelo navegador antes de existir sessão

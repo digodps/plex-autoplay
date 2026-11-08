@@ -21,7 +21,16 @@ module.exports = async () => {
   const res = await fetch(`${base}/api/auth/setup`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ token, newPassword: password }),
+    body: JSON.stringify({
+      token,
+      newPassword: password,
+      plexUrl: process.env.PLEX_URL || "http://plex-mock:32400",
+      plexToken: process.env.PLEX_TOKEN || "e2e-token",
+      mediaRoots: (process.env.MEDIA_ROOTS || process.env.MEDIA_ROOT || "/media")
+        .split(/[\n,]/)
+        .map((path) => path.trim())
+        .filter(Boolean),
+    }),
   });
 
   if (res.status !== 204 && res.status !== 409) {

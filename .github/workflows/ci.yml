@@ -53,6 +53,7 @@ jobs:
       OPERATOR_PASSWORD: ci-e2e-admin-password
       DISABLE_HTTP: false
       MEDIA_ROOT: /tmp/plex-media
+      MEDIA_ROOTS: /media
       PLAYWRIGHT_BASE_URL: http://plex-autoplay-test:80
     steps:
       - name: Checkout
@@ -68,6 +69,7 @@ jobs:
           SETUP_TOKEN=ci-e2e-setup-token
           OPERATOR_PASSWORD=ci-e2e-admin-password
           MEDIA_ROOT=/tmp/plex-media
+          MEDIA_ROOTS=/media
           EOF
 
       - name: Create media root directory

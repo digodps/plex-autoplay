@@ -17,6 +17,7 @@ services:
       - ADMIN_PASSWORD=${ADMIN_PASSWORD}
       - SETUP_TOKEN=${SETUP_TOKEN}
       - MEDIA_ROOT=${MEDIA_ROOT}
+      - MEDIA_ROOTS=${MEDIA_ROOTS:-/media}
       - APP_HOST=${APP_HOST:-plex-autoplay.dns.podman}
       - PLAYWRIGHT_BASE_URL=${PLAYWRIGHT_BASE_URL:-http://${APP_HOST:-plex-autoplay.dns.podman}:80}
       - OPERATOR_PASSWORD=${OPERATOR_PASSWORD}
@@ -60,7 +61,7 @@ services:
     environment:
       - PLEX_URL=http://plex-mock:32400
       - PLEX_TOKEN=${PLEX_TOKEN}
-      - MEDIA_ROOT=/media
+      - MEDIA_ROOTS=/media
       - JWT_SECRET=${JWT_SECRET}
       - ADMIN_PASSWORD=${ADMIN_PASSWORD}
       - SETUP_TOKEN=${SETUP_TOKEN}

@@ -55,7 +55,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<SetupTokenService>();
         services.AddSingleton<ISetupTokenValidator>(sp => sp.GetRequiredService<SetupTokenService>());
         services.AddSingleton<LoginUseCase>();
-        services.AddSingleton<CompleteSetupUseCase>();
+        services.AddTransient<CompleteSetupUseCase>();
         services.AddSingleton<ChangePasswordUseCase>();
 
         // JWT token service

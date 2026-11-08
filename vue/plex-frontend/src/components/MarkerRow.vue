@@ -51,6 +51,7 @@ async function removeMarker() {
   <div
     class="flex flex-wrap items-center gap-3 rounded-md border border-transparent px-2 py-1.5 transition hover:border-stroke hover:bg-gray-2 dark:hover:border-strokedark dark:hover:bg-meta-4"
     :class="{ 'opacity-60': isSaving }"
+    :data-testid="`marker-row-${ratingKey}-${kind}`"
   >
     <span class="inline-flex w-28 flex-none items-center gap-1.5 text-xs font-semibold text-body dark:text-bodydark">
       <AppIcon :name="kind === 'intro' ? 'play' : 'bookmark'" size="xs" />
@@ -67,6 +68,7 @@ async function removeMarker() {
             type="number"
             min="0"
             step="10"
+            data-testid="marker-start"
           />
         </label>
         <label class="flex flex-col gap-1 text-[11px] text-body dark:text-bodydark">
@@ -77,6 +79,7 @@ async function removeMarker() {
             type="number"
             min="0"
             step="10"
+            data-testid="marker-end"
           />
         </label>
       </div>
@@ -84,6 +87,7 @@ async function removeMarker() {
         <button
           class="inline-flex items-center gap-1 rounded bg-primary px-3 py-1.5 text-xs font-medium text-white transition hover:bg-opacity-90 disabled:opacity-60"
           :disabled="isSaving"
+          data-testid="marker-save"
           @click="saveEdit"
         >
           <AppIcon :name="isSaving ? 'spinner' : 'check'" size="xs" :class="{ 'animate-spin': isSaving }" />
@@ -114,6 +118,7 @@ async function removeMarker() {
           v-if="marker"
           class="flex h-8 w-8 items-center justify-center rounded text-body transition hover:bg-gray-2 hover:text-primary dark:text-bodydark dark:hover:bg-meta-4"
           title="Editar"
+          data-testid="marker-edit"
           @click="startEdit"
         >
           <AppIcon name="edit" size="sm" />
@@ -122,6 +127,7 @@ async function removeMarker() {
           v-else
           class="flex h-8 w-8 items-center justify-center rounded text-body transition hover:bg-meta-3/10 hover:text-meta-3 dark:text-bodydark"
           title="Adicionar marcador"
+          data-testid="marker-add"
           @click="startEdit"
         >
           <AppIcon name="plus" size="sm" />
@@ -130,6 +136,7 @@ async function removeMarker() {
           v-if="marker"
           class="flex h-8 w-8 items-center justify-center rounded text-body transition hover:bg-meta-1/10 hover:text-meta-1 dark:text-bodydark"
           title="Remover"
+          data-testid="marker-remove"
           @click="removeMarker"
         >
           <AppIcon name="trash" size="sm" />
