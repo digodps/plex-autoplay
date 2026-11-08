@@ -1,52 +1,49 @@
 <script setup>
-import { useSidebarStore } from "@/stores/sidebar";
-import SidebarItem from "./SidebarItem.vue";
+import AppIcon from "@/components/AppIcon.vue";
+import { isPathActive } from "@/lib/navigation";
 
-const menuGroups = [
-  {
-    name: "MENU",
-    menuItems: [
-      { label: "Início", to: "/dashboard", icon: "home" },
-      { label: "Bibliotecas", to: "/libraries", icon: "library" },
-      { label: "Sincronização", to: "/sync", icon: "sync" },
-      { label: "Configurações", to: "/settings", icon: "settings" },
-    ],
-  },
-];
+const props = defineProps({
+  items: { type: Array, default: () => [] },
+  collapsed: { type: Boolean, default: false },
+  activePath: { type: String, default: "" },
+  error: { type: String, default: "" },
+});
 
-const sidebar = useSidebarStore();
+const itemClass =
+  "flex min-h-[44px] items-center gap-2 rounded-md px-3 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-100 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary motion-reduce:transition-none dark:text-bodydark dark:hover:bg-gray-800 dark:hover:text-primary";
+const activeClass = "bg-gray-100 font-medium text-primary dark:bg-gray-800";
 </script>
 
 <template>
-  <div class="sidebar w-64 flex h-screen flex-col bg-gray-50 dark:bg-gray-900 text-body text-sm border-r dark:border-gray-800">
-    <button
-      class="flex w-full items-center gap-3 rounded-lg px-3 py-3 text-body hover:text-primary dark:hover:text-bodydark hover:bg-stroke dark:hover:bg-strokedark"
-      type="button"
-      @click="sidebar.toggleSidebar"
+  <aside
+    class="sidebar flex min-h-0 flex-col border-r bg-gray-50 text-sm text-gray-700 dark:border-gray-800 dark:bg-gray-900 dark:text-bodydark"
+    :class="collapsed ? 'w-16' : 'w-64 max-[768px]:w-16'"
+  >
+    <p
+      v-if="error"
+      role="alert"
+      class="m-2 rounded-md bg-red-50 px-3 py-2 text-xs text-red-700 dark:bg-red-950 dark:text-red-300"
     >
-      <span class="relative block h-5.5 w-5.5 rounded-sm bg-white dark:bg-boxdark dark:border md:hidden">
-        <span class="relative right-0 h-full w-full">
-          <span class="relative block my-1 rounded-sm bg-gray-700"></span>
-          <span class="relative block my-1 rounded-sm bg-gray-700"></span>
-          <span class="relative block my-1 rounded-sm bg-gray-700"></span>
-        </span>
-        <span class="absolute right-0 h-full w-full rotate-45 bg-gray-700"></span>
-      </span>
-    </button>
-
-    <ul class="flex-1 flex flex-col p-2 pt-2 overflow-y-auto space-y-1" @click="sidebar.closeSidebar">
-      <li v-for="group in menuGroups" :key="group.name" class="flex flex-col space-y-1">
-        <span class="text-xs text-bodydark font-medium uppercase tracking-widest capitalize">{{ group.name }}</span>
-        <div class="flex flex-col space-y-1">
-          <SidebarItem
-            v-for="item in group.menuItems"
-            :key="item.to"
-            :to="item.to"
-            :icon="item.icon"
-            :label="item.label"
-          />
-        </div>
+      {{ error }}
+    </p>
+    <ul v-else class="m-0 flex list-none flex-col gap-1 overflow-y-auto p-2">
+      <li v-for="lib in props.items" :key="lib.key">
+        <RouterLink
+          :to="`/libraries/${lib.key}/series`"
+          :class="[
+            itemClass,
+            isPathActive(props.activePath, `/libraries/${lib.key}`) ? activeClass : '',
+          ]"
+          :aria-current="
+            isPathActive(props.activePath, `/libraries/${lib.key}`) ? 'page' : undefined
+          "
+          :aria-label="lib.title"
+          :title="collapsed ? lib.title : undefined"
+        >
+          <AppIcon name="library" size="sm" />
+          <span v-if="!collapsed" class="truncate max-[768px]:hidden">{{ lib.title }}</span>
+        </RouterLink>
       </li>
     </ul>
-  </div>
+  </aside>
 </template>

@@ -67,7 +67,8 @@ O sistema SHALL escrever marcadores detectados ou criados manualmente em custom.
 - **THEN** o sistema remove do SQLite e reescreve custom.json sem aquela entrada
 
 ### Requirement: Manual marker creation and editing
-O sistema SHALL prover UI e API para usuários criar, atualizar e remover marcadores de intro e créditos por episódio, incluindo um endpoint de atualização (PUT) que altera tempos de um marcador existente sem recriá-lo.
+
+O sistema SHALL prover UI e API para usuários criar, atualizar e remover marcadores de intro e créditos por episódio, incluindo um endpoint de atualização (PUT) que altera tempos de um marcador existente sem recriá-lo. Na interface de marcadores, cada episódio SHALL exibir uma miniatura (thumbnail) do episódio à esquerda, com fallback para ícone quando ausente.
 
 #### Scenario: User creates a manual marker
 - **WHEN** a user submits `{ rating_key, kind: "intro", start_ms: 1000, end_ms: 90000 }` via the API
@@ -100,6 +101,15 @@ O sistema SHALL prover UI e API para usuários criar, atualizar e remover marcad
 #### Scenario: Edição inline por episódio
 - **WHEN** o usuário abre a página de edição de uma série
 - **THEN** o sistema apresenta os episódios da série agrupados por temporada, cada episódio com seus marcadores de intro e créditos, e permite editar os tempos inline com salvamento otimista (a UI não bloqueia durante o salvamento e reflete o estado salvo após a confirmação).
+
+#### Scenario: Episode displayed with thumbnail
+- **WHEN** a página de edição de uma série carrega os episódios
+- **THEN** cada episódio exibe uma `div` à esquerda com a miniatura do episódio via `/api/images/...`
+- **AND** os controles de marcador de intro e créditos ficam alinhados à direita da miniatura
+
+#### Scenario: Episode without thumbnail displays fallback icon
+- **WHEN** um episódio não possui miniatura disponível
+- **THEN** o container à esquerda exibe um ícone de fallback no mesmo espaço reservado
 
 ### Requirement: Query stored markers
 O sistema SHALL expor endpoints para listar todos os marcadores armazenados e recuperar marcadores de um episódio ou biblioteca específico.

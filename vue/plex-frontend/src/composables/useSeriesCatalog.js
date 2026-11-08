@@ -127,8 +127,6 @@ export function useSeriesCatalog(options = {}) {
     { immediate: true }
   );
 
-  if (libraryKey.value) loadInitialSeries(libraryKey.value);
-
   return {
     libraryKey,
     seriesList,

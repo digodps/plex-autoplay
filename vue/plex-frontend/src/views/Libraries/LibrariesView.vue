@@ -26,8 +26,12 @@ async function loadLibraries() {
 
 onMounted(loadLibraries);
 
-function navigateToSeries(libraryKey) {
-  router.push({ name: "series", params: { key: libraryKey } });
+function navigateToSeries(libraryKey, libraryTitle) {
+  router.push({
+    name: "series",
+    params: { key: libraryKey },
+    query: { libraryTitle },
+  });
 }
 </script>
 
