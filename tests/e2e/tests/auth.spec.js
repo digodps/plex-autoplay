@@ -13,15 +13,15 @@ test.describe("Autenticação JWT", () => {
   }) => {
     await page.goto(`${BASE_URL}/login`, { waitUntil: "networkidle" });
 
-    // Aguarda o campo de senha estar visível
-    await page.waitForSelector('input[type="password"]', {
+    // Aguarda o formulário de login estar visível
+    await page.waitForSelector('[data-testid="login-form"]', {
       state: "visible",
       timeout: 10000,
     });
 
     // Preenche o formulário de login
-    await page.fill('input[type="password"]', ADMIN_PASSWORD);
-    await page.click("button");
+    await page.fill('input[data-testid="password-input"]', ADMIN_PASSWORD);
+    await page.click('button[data-testid="login-submit"]');
 
     // Verifica redirecionamento para o dashboard
     await expect(page).toHaveURL(`${BASE_URL}/dashboard`);
@@ -29,13 +29,13 @@ test.describe("Autenticação JWT", () => {
 
   test("token JWT é armazenado no cookie após login", async ({ page, context }) => {
     await page.goto(`${BASE_URL}/login`, { waitUntil: "networkidle" });
-    await page.waitForSelector('input[type="password"]', {
+    await page.waitForSelector('[data-testid="login-form"]', {
       state: "visible",
       timeout: 10000,
     });
 
-    await page.fill('input[type="password"]', ADMIN_PASSWORD);
-    await page.click("button");
+    await page.fill('input[data-testid="password-input"]', ADMIN_PASSWORD);
+    await page.click('button[data-testid="login-submit"]');
 
     // Aguarda navegação e verifica token no cookie
     await page.waitForURL(`${BASE_URL}/dashboard`);
@@ -50,17 +50,17 @@ test.describe("Autenticação JWT", () => {
     page,
   }) => {
     await page.goto(`${BASE_URL}/login`, { waitUntil: "networkidle" });
-    await page.waitForSelector('input[type="password"]', {
+    await page.waitForSelector('[data-testid="login-form"]', {
       state: "visible",
       timeout: 10000,
     });
 
-    await page.fill('input[type="password"]', "senha_errada");
-    await page.click("button");
+    await page.fill('input[data-testid="password-input"]', "senha_errada");
+    await page.click('button[data-testid="login-submit"]');
 
     // Verifica mensagem de erro exibida
     const errorMsg = page.locator(
-      '.error, [data-testid="error"], .alert-error',
+      '[data-testid="error"]',
     );
     await expect(errorMsg.first()).toBeVisible();
     const errorText = await errorMsg.first().textContent();
