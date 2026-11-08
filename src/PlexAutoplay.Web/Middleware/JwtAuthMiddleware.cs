@@ -15,7 +15,7 @@ public class JwtAuthMiddleware
         _tokenService = tokenService;
     }
 
-    public async Task InvokeAsync(HttpContext context)
+    public async Task InvokeAsync(HttpContext context, IAuthCredentialStore credentials)
     {
         var path = context.Request.Path.Value?.ToLowerInvariant() ?? "";
 
@@ -29,6 +29,14 @@ public class JwtAuthMiddleware
         // Public auth endpoints: login, setup e status do setup.
         // A allowlist é exata para não expor /api/auth/password.
         if (path is "/auth/login" or "/api/auth/login" or "/api/auth/setup" or "/api/auth/setup/status")
+        {
+            await _next(context);
+            return;
+        }
+
+        // Seletor de diretórios do setup inicial: liberado apenas enquanto não
+        // existe credencial de operador. Depois disso exige sessão.
+        if (path == "/api/filesystem/directories" && !await credentials.IsConfiguredAsync())
         {
             await _next(context);
             return;

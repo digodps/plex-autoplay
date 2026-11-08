@@ -11,7 +11,7 @@ services:
     environment:
       WEB_PORT: "8081"
       DISABLE_HTTP: "false"
-      MEDIA_ROOT: /home/hermes/media
+      MEDIA_ROOTS: ${MEDIA_ROOTS:-/home/hermes/media}
       SQLITE_CONNECTION_STRING: "Data Source=/data/app.db"
       APP_CONFIG_PATH: /data/app-config.json
       LOG_LEVEL: Information
@@ -20,3 +20,4 @@ services:
     volumes:
       - ./data:/data
       - /home/hermes/media:/home/hermes/media:ro
+      # Monte aqui cada diretório adicional listado em MEDIA_ROOTS.

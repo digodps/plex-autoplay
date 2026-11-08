@@ -97,16 +97,18 @@ public class PasswordAndAuthTests
     {
         var store = new FakeCredentialStore();
         var tokens = new FakeTokenValidator();
-        var useCase = new CompleteSetupUseCase(store, Hasher, tokens);
+        var settings = new FakeSettingsStore();
+        var useCase = new CompleteSetupUseCase(store, Hasher, tokens, settings, new FakePlexClient());
 
-        var result = await useCase.ExecuteAsync("setup-token", "senha-forte");
+        var result = await useCase.ExecuteAsync(ValidSetupRequest());
 
-        Assert.Equal(CompleteSetupResult.Success, result);
+        Assert.Equal(SetupStatus.Success, result.Status);
         Assert.NotNull(store.Hash);
         Assert.Equal(1, tokens.Invalidations);
+        Assert.Single(settings.Settings.MediaRoots);
         Assert.Equal(
-            CompleteSetupResult.AlreadyConfigured,
-            await useCase.ExecuteAsync("setup-token", "outra-senha"));
+            SetupStatus.AlreadyConfigured,
+            (await useCase.ExecuteAsync(ValidSetupRequest())).Status);
     }
 
     [Fact]
@@ -114,15 +116,68 @@ public class PasswordAndAuthTests
     {
         var store = new FakeCredentialStore();
         var tokens = new FakeTokenValidator();
-        var useCase = new CompleteSetupUseCase(store, Hasher, tokens);
+        var useCase = new CompleteSetupUseCase(store, Hasher, tokens, new FakeSettingsStore(), new FakePlexClient());
 
         Assert.Equal(
-            CompleteSetupResult.InvalidToken,
-            await useCase.ExecuteAsync("token-errado", "senha-forte"));
+            SetupStatus.InvalidToken,
+            (await useCase.ExecuteAsync(ValidSetupRequest() with { Token = "token-errado" })).Status);
         Assert.Equal(
-            CompleteSetupResult.InvalidPassword,
-            await useCase.ExecuteAsync("setup-token", "curta"));
+            SetupStatus.InvalidPassword,
+            (await useCase.ExecuteAsync(ValidSetupRequest() with { NewPassword = "curta" })).Status);
         Assert.Null(store.Hash);
+    }
+
+    [Fact]
+    public async Task CompleteSetup_rejects_invalid_plex_and_media_before_creating_credentials()
+    {
+        var store = new FakeCredentialStore();
+        var settings = new FakeSettingsStore();
+        var useCase = new CompleteSetupUseCase(store, Hasher, new FakeTokenValidator(), settings, new FakePlexClient(failed: true));
+
+        var result = await useCase.ExecuteAsync(ValidSetupRequest());
+
+        Assert.Equal(SetupStatus.InvalidSettings, result.Status);
+        Assert.Null(store.Hash);
+        Assert.False(settings.Saved);
+
+        var invalidRoots = await useCase.ExecuteAsync(ValidSetupRequest() with { MediaRoots = ["/nao-existe-" + Guid.NewGuid()] });
+        Assert.Equal(SetupStatus.InvalidSettings, invalidRoots.Status);
+        Assert.Contains(invalidRoots.Errors, error => error.StartsWith("media_roots:"));
+        Assert.Null(store.Hash);
+    }
+
+    private static CompleteSetupRequest ValidSetupRequest() => new(
+        "setup-token",
+        "senha-forte",
+        "http://plex.local:32400",
+        "plex-token",
+        [Path.GetTempPath()]);
+
+    private sealed class FakeSettingsStore : IAppSettingsStore
+    {
+        public AppSettingsSnapshot Settings { get; private set; } = AppSettingsSnapshot.Defaults;
+        public bool Saved { get; private set; }
+
+        public Task<AppSettingsSnapshot> GetAsync() => Task.FromResult(Settings);
+
+        public Task SaveAsync(AppSettingsSnapshot settings)
+        {
+            Settings = settings;
+            Saved = true;
+            return Task.CompletedTask;
+        }
+    }
+
+    private sealed class FakePlexClient(bool failed = false) : IPlexApiClient
+    {
+        public Task<PlexLibrariesResult> GetLibrariesAsync() => Task.FromResult(PlexLibrariesResult.Empty);
+        public Task<PlexEpisodesResult> GetEpisodesAsync(string sectionKey) => Task.FromResult(PlexEpisodesResult.Empty);
+        public Task<PlexSeriesPage> GetSeriesAsync(string sectionKey, int containerStart, int containerSize, string? titleQuery = null) => Task.FromResult(new PlexSeriesPage([], 0));
+        public Task<PlexEpisodesResult> GetSeriesEpisodesAsync(string seriesKey) => Task.FromResult(PlexEpisodesResult.Empty);
+        public Task<PlexIdentityResult> GetIdentityAsync(string plexUrl, string plexToken) =>
+            Task.FromResult(failed
+                ? PlexIdentityResult.FailedResult("conexão recusada")
+                : new PlexIdentityResult("machine", "Plex", "1.0"));
     }
 
     [Fact]

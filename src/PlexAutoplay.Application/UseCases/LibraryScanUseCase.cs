@@ -26,7 +26,10 @@ public class LibraryScanUseCase
         _pathResolver = pathResolver;
     }
 
-    public async Task<ScanSummary> ScanLibraryAsync(IEnumerable<EpisodeSeed> seeds, string mediaRoot, string? origin = null)
+    public async Task<ScanSummary> ScanLibraryAsync(
+        IEnumerable<EpisodeSeed> seeds,
+        IReadOnlyList<string> mediaRoots,
+        string? origin = null)
     {
         var processed = 0;
         var skipped = 0;
@@ -42,7 +45,7 @@ public class LibraryScanUseCase
                 continue;
             }
 
-            var localPath = _pathResolver.Resolve(mediaRoot, seed.FilePath);
+            var localPath = _pathResolver.Resolve(mediaRoots, seed.FilePath);
             if (string.IsNullOrEmpty(localPath) || !File.Exists(localPath))
             {
                 skipped++;

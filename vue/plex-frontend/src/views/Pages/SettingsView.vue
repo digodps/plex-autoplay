@@ -1,11 +1,12 @@
 <script setup>
 import { onMounted, reactive, ref } from "vue";
 import DefaultLayout from "@/components/layouts/DefaultLayout.vue";
-import { apiFetch, extractErrorMessage } from "@/api";
+import MediaRootsField from "@/components/MediaRootsField.vue";
+import { apiFetch, extractErrorMessage, extractErrors } from "@/api";
 
 const form = reactive({
   plex_url: "",
-  media_root: "",
+  media_roots: [],
   sync_interval_minutes: 5,
   sync_catalog_interval_minutes: 30,
 });
@@ -15,10 +16,11 @@ const loading = ref(false);
 const saving = ref(false);
 const message = ref("");
 const error = ref("");
+const errors = ref([]);
 
 function applySettings(data) {
   form.plex_url = data.plex_url ?? "";
-  form.media_root = data.media_root ?? "";
+  form.media_roots = data.media_roots ?? [];
   form.sync_interval_minutes = data.sync_interval_minutes ?? 5;
   form.sync_catalog_interval_minutes = data.sync_catalog_interval_minutes ?? 30;
   plexTokenSet.value = Boolean(data.plex_token_set);
@@ -43,10 +45,11 @@ async function saveSettings() {
   saving.value = true;
   message.value = "";
   error.value = "";
+  errors.value = [];
   try {
     const payload = {
       plex_url: form.plex_url,
-      media_root: form.media_root,
+      media_roots: form.media_roots,
       sync_interval_minutes: Number(form.sync_interval_minutes),
       sync_catalog_interval_minutes: Number(form.sync_catalog_interval_minutes),
     };
@@ -57,12 +60,20 @@ async function saveSettings() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     });
-    if (!res.ok) throw new Error(await extractErrorMessage(res) || "Erro ao salvar configurações");
+    if (!res.ok) {
+      const messages = await extractErrors(res);
+      if (messages.length) {
+        errors.value = messages;
+        return;
+      }
+      error.value = "Erro ao salvar configurações";
+      return;
+    }
 
     applySettings(await res.json());
     message.value = "Configurações salvas com sucesso";
   } catch (err) {
-    error.value = err.message;
+    error.value = err.message || "Erro ao salvar configurações";
   } finally {
     saving.value = false;
   }
@@ -153,24 +164,14 @@ onMounted(loadSettings);
             </div>
 
             <div class="rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 p-4 space-y-3">
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300" for="media-root">
-                Diretório de Mídia (MEDIA_ROOT)
-              </label>
-              <input
-                id="media-root"
-                v-model="form.media_root"
-                type="text"
-                required
-                placeholder="/media"
-                class="w-full rounded border border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 text-black dark:text-white focus:border-primary focus:bg-white focus:text-black"
-              />
-              <p class="text-xs text-gray-500 dark:text-gray-400">
-                Caminho existente dentro do container.
-              </p>
+              <MediaRootsField v-model="form.media_roots" />
             </div>
 
             <p v-if="message" class="text-sm text-green-600 dark:text-green-400">{{ message }}</p>
             <p v-if="error" class="text-sm text-red-600 dark:text-red-400">{{ error }}</p>
+            <ul v-if="errors.length" class="space-y-1 text-sm text-red-600 dark:text-red-400">
+              <li v-for="(item, index) in errors" :key="index">{{ item }}</li>
+            </ul>
 
             <div class="flex items-center justify-end gap-2">
               <button

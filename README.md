@@ -41,7 +41,7 @@ cd plex-autoplay
 
 # 2️⃣  Crie o arquivo .env apenas com bootstrap (JWT_SECRET, portas, certificado)
 cp .env.example .env
-# URL/token do Plex, MEDIA_ROOT e intervalos são configurados em ⚙ Ajustes
+# URL/token do Plex, diretórios de mídia e intervalos são configurados em ⚙ Ajustes
 
 # 3️⃣  Build + up
 ./scripts/start.sh --detach
@@ -71,7 +71,7 @@ cp .env.example .env
 ## ⚙️  Configuração
 
 Configurações operacionais são persistidas no SQLite e editadas em **⚙ Ajustes**:
-`PLEX_URL`, `PLEX_TOKEN`, `MEDIA_ROOT`, `SYNC_INTERVAL_MINUTES` e
+`PLEX_URL`, `PLEX_TOKEN`, `MEDIA_ROOTS` (lista de diretórios), `SYNC_INTERVAL_MINUTES` e
 `SYNC_CATALOG_INTERVAL_MINUTES`. No primeiro start, valores existentes no
 ambiente são copiados para o banco; depois disso, o banco é a fonte de verdade.
 
@@ -116,7 +116,7 @@ O container roda .NET 10 ASP.NET Core Web API + Vue SPA + SQLite em modo HTTPS-o
 - **WebSocket (PlexAutoSkip)** na porta 8081.
 - **HTTP** desabilitado por padrão (`DISABLE_HTTP=true`).
 - **Certificado auto-assinado** gerado automaticamente quando nenhum `CERT_PATH`/`CERT_BASE64` é fornecido.
-- **Volumes**: `plex-data` (`/data` - SQLite, SQLite marker database, certificados) e bind mount `/media` (arquivos de mídia via `MEDIA_ROOT`).
+- **Volumes**: `plex-data` (`/data` - SQLite, SQLite marker database, certificados) e bind mounts de mídia (um ou mais caminhos, configurados em `MEDIA_ROOTS`).
 
 ---
 

@@ -24,12 +24,13 @@ public static class PlexIdentityEndpoint
                     return Results.BadRequest("URL do Plex é obrigatória");
                 }
 
-                if (!request.PlexUrl.StartsWith("http://") && !request.PlexUrl.StartsWith("https://"))
+                var (plexUrl, plexUrlError) = PlexUrlRules.Normalize(request.PlexUrl);
+                if (plexUrlError is not null)
                 {
                     return Results.BadRequest("URL do Plex deve começar com http:// ou https://");
                 }
 
-                var result = await plexClient.GetIdentityAsync(request.PlexUrl, request.PlexToken ?? "");
+                var result = await plexClient.GetIdentityAsync(plexUrl, request.PlexToken ?? "");
 
                 var logger = loggerFactory.CreateLogger("PlexIdentityEndpoint");
                 logger.LogInformation("Plex identity check: URL={Url}, Success={Success}", request.PlexUrl, !result.Failed);
