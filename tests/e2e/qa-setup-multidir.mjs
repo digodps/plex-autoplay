@@ -24,11 +24,25 @@ async function navigatePickerTo(target) {
 await page.goto(`${BASE}/setup`, { waitUntil: "networkidle" });
 check("guard redireciona para /setup", page.url().endsWith("/setup"), page.url());
 
+// ---- Passo 1: senha ----
+check("passo 1 (senha) ativo", await page.isVisible('[data-testid="setup-panel-password"]'));
 await page.fill('[data-testid="setup-token"]', "qa-setup-token");
 await page.fill('[data-testid="setup-password"]', PASSWORD);
 await page.fill('[data-testid="setup-confirm"]', PASSWORD);
+await page.click('[data-testid="setup-next"]');
+await page.waitForSelector('[data-testid="setup-panel-plex"]');
+check("passo 1 avança para passo 2 (Plex)", true);
+
+// ---- Passo 2: Plex ----
 await page.fill('[data-testid="setup-plex-url"]', "http://127.0.0.1:32411");
 await page.fill('[data-testid="setup-plex-token"]', "qa-plex-token");
+await page.click('[data-testid="setup-test-plex"]');
+await page.waitForSelector('[data-testid="plex-test-result"]', { timeout: 15000 });
+const plexResult = await page.locator('[data-testid="plex-test-result"]').innerText();
+check("teste de conexão com Plex em /setup", /Conectado/.test(plexResult), plexResult);
+await page.click('[data-testid="setup-next"]');
+await page.waitForSelector('[data-testid="setup-panel-media"]');
+check("passo 2 avança para passo 3 (mídia)", true);
 
 // Picker: abre, navega por diretórios reais do servidor e seleciona.
 await page.click('[data-testid="media-root-open-picker"]');
@@ -52,14 +66,9 @@ check(
 );
 
 await page.click('[data-testid="setup-submit"]');
-await page.waitForURL("**/login", { timeout: 15000 });
-check("setup conclui e redireciona para /login", page.url().endsWith("/login"));
-
-// ---- Login ----
-await page.fill("#password", PASSWORD);
-await page.click('[data-testid="login-form"] button[type="submit"]');
-await page.waitForURL("**/dashboard", { timeout: 15000 });
-check("login autentica e abre dashboard", page.url().endsWith("/dashboard"));
+await page.waitForURL("**/dashboard", { timeout: 20000 });
+check("setup conclui já autenticado no dashboard", page.url().endsWith("/dashboard"));
+check("sessão criada após setup", (await page.context().cookies()).some((c) => c.name === "auth_token"));
 
 // ---- Tema ----
 const themeOf = () => page.evaluate(() => document.documentElement.dataset.theme);

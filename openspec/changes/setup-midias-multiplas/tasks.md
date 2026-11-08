@@ -20,7 +20,7 @@
 - [x] 3.1 `CompleteSetupUseCase`: ordenar token → senha → `plex_url` → raízes → `GetIdentityAsync` (timeout 10s) → `SaveAsync` → `CreateAsync` → invalidação; retorno com `errors: string[]`.
 - [x] 3.2 `AuthEndpoints` `/api/auth/setup`: payload `{ token, newPassword, plexUrl, plexToken, mediaRoots }`, erros `400/401/409/204`.
 - [x] 3.3 DI: `CompleteSetupUseCase` como `Transient`.
-- [x] 3.4 `SetupView.vue`: seções credencial / Plex / mídia + lista de erros.
+- [x] 3.4 `SetupView.vue`: wizard de 3 passos (senha → Plex → mídia), "Testar conexão" via `/api/plex/identity`, lista de erros e auto-login no dashboard após `204`.
 
 ## 4. Navegador de diretórios
 

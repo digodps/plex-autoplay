@@ -78,7 +78,7 @@ Erros: `401 { message }` token de setup; `400 { errors: string[] }` (prefixo `pl
 
 - `MediaRootsField.vue`: v-model `string[]`; linhas com valor + remover, input + "Adicionar", "Procurar…" abrindo `DirectoryPicker.vue`. `data-testid`: `media-root-add`, `media-root-remove`, `media-root-open-picker`, `media-root-value`.
 - `DirectoryPicker.vue`: modal com caminho atual, lista, "Selecionar este diretório", "Cancelar"; fecha com Esc/backdrop. `data-testid`: `directory-picker`, `directory-picker-entry`, `directory-picker-select`, `directory-picker-cancel`.
-- `SetupView.vue`: seções credencial / Plex / mídia; erros de `errors[]` exibidos como lista, sem limpar campos.
+- `SetupView.vue`: wizard de 3 passos (senha → Plex → mídia) com "Voltar/Continuar", "Testar conexão" no passo do Plex via `POST /api/plex/identity` (liberado sem sessão apenas enquanto `setupRequired`); erros de `errors[]` exibidos como lista, sem limpar campos. Ao receber `204`, faz login com a senha criada (`POST /auth/login`) e entra no dashboard já autenticado.
 - `SettingsView.vue`: `media_roots` via `MediaRootsField`.
 - `api.js`: helper `extractErrors(res) -> string[]` usado por setup e settings.
 

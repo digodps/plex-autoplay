@@ -34,9 +34,10 @@ public class JwtAuthMiddleware
             return;
         }
 
-        // Seletor de diretórios do setup inicial: liberado apenas enquanto não
-        // existe credencial de operador. Depois disso exige sessão.
-        if (path == "/api/filesystem/directories" && !await credentials.IsConfiguredAsync())
+        // Passos do setup inicial (seletor de diretórios e teste do Plex):
+        // liberados apenas enquanto não existe credencial de operador.
+        if (path is "/api/filesystem/directories" or "/api/plex/identity" &&
+            !await credentials.IsConfiguredAsync())
         {
             await _next(context);
             return;
