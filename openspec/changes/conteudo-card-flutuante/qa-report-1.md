@@ -38,3 +38,4 @@ Nenhuma. Build .NET, lint e build do frontend passaram antes do QA.
 - `docker build --no-cache -t plex-autoplay:conteudo-card-flutuante .` concluído.
 - Container isolado `plex-card-qa` executado em `8097` com cópia do banco (`/tmp/opencode/plex-card-data`).
 - `/api/status` respondeu `401` (esperado sem sessão); `/api/auth/setup/status` respondeu `setupRequired=false`.
+- QA revalidado após rebase em `origin/main` (`04e4d91`): 23/23 PASS; screenshots atualizados.
