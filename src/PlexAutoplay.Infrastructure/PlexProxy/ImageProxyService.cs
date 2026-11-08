@@ -1,28 +1,26 @@
 namespace PlexAutoplay.Infrastructure.PlexProxy;
 
-using System.Net;
-using System.Net.Http.Headers;
 using PlexAutoplay.Application;
 using PlexAutoplay.Domain.Ports;
 
 public class ImageProxyService : IImageProxyService
 {
     private readonly HttpClient _httpClient;
-    private readonly string _plexToken;
-    private readonly string _plexUrl;
+    private readonly IAppSettingsStore _settings;
     private readonly ICacheService _cacheService;
 
-    public ImageProxyService(HttpClient httpClient, string plexToken, string plexUrl, ICacheService cacheService)
+    public ImageProxyService(HttpClient httpClient, IAppSettingsStore settings, ICacheService cacheService)
     {
         _httpClient = httpClient;
-        _plexToken = plexToken;
-        _plexUrl = plexUrl.TrimEnd('/');
+        _settings = settings;
         _cacheService = cacheService;
     }
 
     public async Task<byte[]> GetImageAsync(string imagePath)
     {
-        var cacheKey = $"image:{imagePath}";
+        var settings = await _settings.GetAsync();
+        var plexUrl = settings.PlexUrl.TrimEnd('/');
+        var cacheKey = $"image:{plexUrl}:{imagePath}";
 
         var cached = _cacheService.Get(cacheKey);
         if (cached is not null)
@@ -30,9 +28,9 @@ public class ImageProxyService : IImageProxyService
             return cached;
         }
 
-        var url = $"{_plexUrl}{imagePath}";
+        var url = $"{plexUrl}{imagePath}";
         var request = new HttpRequestMessage(HttpMethod.Get, url);
-        request.Headers.Add("X-Plex-Token", _plexToken);
+        request.Headers.Add("X-Plex-Token", settings.PlexToken);
 
         using var response = await _httpClient.SendAsync(request);
         response.EnsureSuccessStatusCode();

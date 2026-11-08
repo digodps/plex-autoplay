@@ -66,6 +66,13 @@ public static class DatabaseInitializer
                 UpdatedAt TEXT NOT NULL DEFAULT (datetime('now'))
             )
             """, false),
+        (7, """
+            CREATE TABLE IF NOT EXISTS AppSetting (
+                Key TEXT NOT NULL PRIMARY KEY,
+                Value TEXT NOT NULL,
+                UpdatedAt TEXT NOT NULL DEFAULT (datetime('now'))
+            )
+            """, false),
     ];
 
     public static async Task InitializeAsync(string connectionString)
@@ -79,6 +86,8 @@ public static class DatabaseInitializer
 
         await using var conn = new SqliteConnection(connectionString);
         await conn.OpenAsync();
+        await conn.ExecuteAsync("PRAGMA journal_mode=WAL");
+        await conn.ExecuteAsync("PRAGMA busy_timeout=5000");
         await conn.ExecuteAsync(
             "CREATE TABLE IF NOT EXISTS _Migrations (Version INTEGER NOT NULL PRIMARY KEY, AppliedAt TEXT NOT NULL DEFAULT (datetime('now')))");
 

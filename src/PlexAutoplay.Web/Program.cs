@@ -43,10 +43,6 @@ Log.Information("Adicionando serviços de aplicação...");
 builder.AddApplicationServices();
 Log.Information("Serviços de aplicação adicionados.");
 
-// Media root for resolving local media file paths
-var mediaRoot = Environment.GetEnvironmentVariable("MEDIA_ROOT") ?? "/media";
-Log.Information("Media root: {MediaRoot}", mediaRoot);
-
 Log.Information("Chamando builder.Build()...");
 WebApplication app;
 try
@@ -81,15 +77,14 @@ app.UseMiddleware<JwtAuthMiddleware>();
 
 // --- Endpoints ---
 app.MapAuthEndpoints(disableHttp);
-app.MapPlexEndpoints(mediaRoot);
-app.MapSeriesEndpoints(mediaRoot);
+app.MapPlexEndpoints();
+app.MapSeriesEndpoints();
 app.MapSyncEndpoints();
 app.MapMarkerEndpoints();
 app.MapImageEndpoints();
 app.MapAutoSkipWebSocketEndpoints();
 app.MapMonitoringEndpoints();
-app.MapConfigEndpoints();
-app.MapPlexSaveEndpoint();
+app.MapSettingsEndpoints();
 app.MapPlexIdentityEndpoint();
 app.MapThemeEndpoints();
 
@@ -102,7 +97,8 @@ app.MapFallbackToFile("index.html");
 // --- Database schema initialization (composition root, before serving) ---
 Log.Information("Inicializando schema do banco...");
 await DatabaseInitializer.InitializeAsync(DatabaseInitializer.DefaultConnectionString);
-Log.Information("Schema do banco inicializado.");
+await PlexAutoplay.Infrastructure.Persistence.Repositories.AppSettingsSeeder.SeedAsync(DatabaseInitializer.DefaultConnectionString);
+Log.Information("Schema do banco inicializado e configurações semeadas.");
 
 // Setup inicial: sem credencial no SQLite, emite um token de uso único no log.
 var credentials = app.Services.GetRequiredService<PlexAutoplay.Application.IAuthCredentialStore>();

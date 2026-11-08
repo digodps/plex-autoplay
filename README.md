@@ -39,9 +39,9 @@
 git clone https://github.com/seu-usuario/plex-autoplay.git
 cd plex-autoplay
 
-# 2️⃣  Crie o arquivo .env com suas credenciais
+# 2️⃣  Crie o arquivo .env apenas com bootstrap (JWT_SECRET, portas, certificado)
 cp .env.example .env
-# edite .env → PLEX_URL=...  PLEX_TOKEN=...  JWT_SECRET=...  ADMIN_PASSWORD=...  MEDIA_ROOT=...
+# URL/token do Plex, MEDIA_ROOT e intervalos são configurados em ⚙ Ajustes
 
 # 3️⃣  Build + up
 ./scripts/start.sh --detach
@@ -50,7 +50,7 @@ cp .env.example .env
 # HTTPS : https://localhost:8443   (certificado auto‑assinado – aceite o aviso)
 # WebSocket (PlexAutoSkip): wss://localhost:8081
 
-# 5️⃣  Crie o usuário admin → Em ⚙ Configuração → salve URL/Token do Plex
+# 5️⃣  Crie o usuário admin → Conclua o setup → Em ⚙ Ajustes salve URL/Token do Plex
 #     → Em ▤ Bibliotecas → veja os cards das bibliotecas do Plex
 ```
 
@@ -62,24 +62,26 @@ cp .env.example .env
 2. Faça login com a conta **Owner** do servidor (ou uma conta *Admin* convidada).
 3. Vá em **Configurações → Conta → Token de autenticação** (ou acesse `https://plex.tv/claim`).
 4. Copie o token (`XXXXXXXXXXXXXXXXXXXX`).
-5. Cole no arquivo `.env` na variável `PLEX_TOKEN`.
+5. Cole o token na página **⚙ Ajustes** (não no `.env`).
 
 > **Importante:** o token **precisa ter permissão de escrita** (`addMarker` / `removeMarker`). Tokens de contas *restritas* (Home, Managed Users) **não funcionam**.
 
 ---
 
-## ⚙️  Configuração (via UI ou `.env`)
+## ⚙️  Configuração
+
+Configurações operacionais são persistidas no SQLite e editadas em **⚙ Ajustes**:
+`PLEX_URL`, `PLEX_TOKEN`, `MEDIA_ROOT`, `SYNC_INTERVAL_MINUTES` e
+`SYNC_CATALOG_INTERVAL_MINUTES`. No primeiro start, valores existentes no
+ambiente são copiados para o banco; depois disso, o banco é a fonte de verdade.
+
+Variáveis abaixo são apenas bootstrap e continuam vindo do `.env`/ambiente:
 
 | Variável | Descrição | Padrão |
 |----------|-----------|--------|
-| `PLEX_URL` | URL base do PMS (ex.: `http://192.168.1.50:32400`) | – |
-| `PLEX_TOKEN` | Token admin (obrigatório) | – |
 | `JWT_SECRET` | Chave secreta para assinar tokens JWT | – |
-| `ADMIN_PASSWORD` | Senha para login no painel administrativo | – |
 | `WEB_PORT` | Porta do dashboard (interno) | 8080 |
 | `WS_PORT` | Porta WebSocket do PlexAutoSkip (interno) | 8081 |
-| `SYNC_INTERVAL_MINUTES` | Intervalo em minutos entre varreduras automáticas das bibliotecas | 5 |
-| `APP_CONFIG_PATH` | Caminho do `app-config.json` | `/data/app-config.json` |
 | `CERT_PATH` | Caminho para arquivo PFX no container | vazio |
 | `CERT_PASSWORD` | Senha do arquivo PFX (opcional) | vazio |
 | `CERT_BASE64` | Conteúdo base64 de um arquivo PFX (alternativa a `CERT_PATH`) | vazio |
@@ -131,7 +133,7 @@ O container roda .NET 10 ASP.NET Core Web API + Vue SPA + SQLite em modo HTTPS-o
 | `GET/POST/DELETE` | `/api/markers` | CRUD de marcadores | Sim |
 | `GET` | `/api/images/thumb/{ratingKey}` | Proxy de imagens do Plex | Sim |
 | `GET` | `/api/status` | Status do último job + métricas | Sim |
-| `GET` | `/config` / `POST /config` | UI de configuração | Sim |
+| `GET/PUT` | `/api/settings` | Configurações operacionais persistidas no banco | Sim |
 | `GET` | `/libraries` | Página “Bibliotecas” – renderiza cards do Plex | Sim |
 | `GET` | `/library/<section_key>` | Visualização de biblioteca com séries e episódios | Sim |
 | `GET` | `/` | Dashboard – visão geral + último job | Sim |

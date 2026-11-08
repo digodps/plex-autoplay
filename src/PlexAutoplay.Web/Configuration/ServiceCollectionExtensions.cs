@@ -44,6 +44,9 @@ public static class ServiceCollectionExtensions
             new PlexAutoplay.Infrastructure.Persistence.Repositories.SqliteLibraryRepository(sqliteConnectionString));
         services.AddSingleton<ISeriesRepository>(
             new PlexAutoplay.Infrastructure.Persistence.Repositories.SqliteSeriesRepository(sqliteConnectionString));
+        services.AddSingleton<IAppSettingsStore>(
+            new PlexAutoplay.Infrastructure.Persistence.Repositories.SqliteAppSettingsStore(sqliteConnectionString));
+        services.AddSingleton<UpdateAppSettingsUseCase>();
 
         // Credencial administrativa, setup inicial e troca de senha
         services.AddSingleton<IAuthCredentialStore>(
@@ -60,28 +63,18 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<JwtTokenService>(sp => new JwtTokenService(jwtSecret, sp.GetRequiredService<ILogger<JwtTokenService>>()));
         services.AddSingleton<ITokenService>(sp => sp.GetRequiredService<JwtTokenService>());
 
-        // Plex configuration
-        var plexUrl = Environment.GetEnvironmentVariable("PLEX_URL") ?? "http://localhost:32400";
-        var plexToken = Environment.GetEnvironmentVariable("PLEX_TOKEN") ?? "";
+        // Plex configuration is resolved per request from the database
+        services.AddTransient<PlexRequestHandler>();
+        services.AddHttpClient<PlexApiClient>()
+            .AddHttpMessageHandler<PlexRequestHandler>();
+        services.AddTransient<IPlexApiClient>(sp => sp.GetRequiredService<PlexApiClient>());
 
         // HttpClient for image proxy
         services.AddSingleton<IImageProxyService>(sp =>
-        {
-            var httpClientFactory = sp.GetRequiredService<IHttpClientFactory>();
-            var httpClient = httpClientFactory.CreateClient();
-            httpClient.BaseAddress = new Uri(plexUrl);
-            httpClient.DefaultRequestHeaders.Add("Accept", "*/*");
-            return new ImageProxyService(httpClient, plexToken, plexUrl, sp.GetRequiredService<ICacheService>());
-        });
-
-        // HttpClient for Plex API calls
-        services.AddHttpClient<PlexApiClient>(client =>
-        {
-            client.BaseAddress = new Uri(plexUrl);
-            client.DefaultRequestHeaders.Add("X-Plex-Token", plexToken);
-            client.DefaultRequestHeaders.Add("Accept", "application/json");
-        });
-        services.AddSingleton<IPlexApiClient>(sp => sp.GetRequiredService<PlexApiClient>());
+            new ImageProxyService(
+                sp.GetRequiredService<IHttpClientFactory>().CreateClient(),
+                sp.GetRequiredService<IAppSettingsStore>(),
+                sp.GetRequiredService<ICacheService>()));
 
         // PlexAutoSkip reads markers from SQLite.
         services.AddSingleton<IPlexAutoSkipService>(sp =>
@@ -112,7 +105,5 @@ public static class ServiceCollectionExtensions
         // Local media path resolver (probes the filesystem)
         services.AddSingleton<IPathResolver, PlexAutoplay.Infrastructure.Platform.PathResolver>();
 
-        // Plex configuration store (reads/writes .env)
-        services.AddSingleton<IPlexConfigStore, PlexAutoplay.Infrastructure.Configuration.PlexConfigStore>();
     }
 }
