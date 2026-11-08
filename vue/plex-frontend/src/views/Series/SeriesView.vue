@@ -42,8 +42,8 @@ function openMarkers(series) {
 
 <template>
   <DefaultLayout>
-    <div class="bg-gray-50 dark:bg-gray-900 min-h-screen">
-      <div class="border-b border-gray-200 dark:border-gray-800 sticky top-0 z-20 bg-gray-50 dark:bg-gray-900">
+    <div>
+      <div>
         <div class="max-w-2xl mx-auto px-4 py-3 flex items-center gap-2">
           <h1 class="text-28 font-bold text-gray-900 dark:text-gray-100">
             Séries {{ libraryTitle ? `→ ${libraryTitle}` : "" }}

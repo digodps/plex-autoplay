@@ -43,6 +43,17 @@ export async function extractErrorMessage(res) {
   }
 }
 
+export async function extractErrors(res) {
+  try {
+    const body = await res.json();
+    if (Array.isArray(body?.errors)) return body.errors;
+    const message = body?.message || body?.detail || body?.title || JSON.stringify(body);
+    return message ? [message] : [];
+  } catch {
+    return [];
+  }
+}
+
 export async function throwHttpError(res, defaultMessage) {
   const detail = await extractErrorMessage(res);
   throw new Error(detail || defaultMessage);
@@ -54,12 +65,17 @@ export async function fetchSetupStatus() {
   return await res.json();
 }
 
-export async function submitSetup(token, newPassword) {
+export async function submitSetup(token, newPassword, plexUrl, plexToken, mediaRoots) {
   return fetch("/api/auth/setup", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ token, newPassword }),
+    body: JSON.stringify({ token, newPassword, plexUrl, plexToken, mediaRoots }),
   });
+}
+
+export async function fetchDirectories(path) {
+  const query = path ? "?path=" + encodeURIComponent(path) : "";
+  return apiFetch("/api/filesystem/directories" + query);
 }
 
 export async function changePassword(currentPassword, newPassword) {

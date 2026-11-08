@@ -4,7 +4,7 @@ namespace PlexAutoplay.Application;
 public sealed record UpdateAppSettingsRequest(
     string? PlexUrl,
     string? PlexToken,
-    string? MediaRoot,
+    IReadOnlyList<string>? MediaRoots,
     int? SyncIntervalMinutes,
     int? SyncCatalogIntervalMinutes);
 
@@ -34,17 +34,18 @@ public sealed class UpdateAppSettingsUseCase
         var errors = new List<string>();
         var current = await _store.GetAsync();
 
-        var plexUrl = (request.PlexUrl ?? current.PlexUrl).Trim().TrimEnd('/');
-        if (!Uri.TryCreate(plexUrl, UriKind.Absolute, out var uri) ||
-            (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps))
+        var (plexUrl, plexUrlError) = PlexUrlRules.Normalize(request.PlexUrl ?? current.PlexUrl);
+        if (plexUrlError is not null)
         {
-            errors.Add("plex_url deve ser uma URL absoluta http:// ou https://");
+            errors.Add(plexUrlError);
         }
 
-        var mediaRoot = (request.MediaRoot ?? current.MediaRoot).Trim();
-        if (!Path.IsPathRooted(mediaRoot) || !Directory.Exists(mediaRoot))
+        var mediaRoots = current.MediaRoots;
+        if (request.MediaRoots is not null)
         {
-            errors.Add("media_root deve ser um diretório absoluto existente");
+            var (roots, rootsErrors) = MediaRoots.Normalize(request.MediaRoots);
+            errors.AddRange(rootsErrors);
+            mediaRoots = roots;
         }
 
         var syncInterval = request.SyncIntervalMinutes ?? current.SyncIntervalMinutes;
@@ -66,7 +67,7 @@ public sealed class UpdateAppSettingsUseCase
 
         var token = request.PlexToken is null ? current.PlexToken : request.PlexToken.Trim();
         await _store.SaveAsync(new AppSettingsSnapshot(
-            plexUrl, token, mediaRoot, syncInterval, catalogInterval));
+            plexUrl, token, mediaRoots, syncInterval, catalogInterval));
 
         return UpdateAppSettingsResult.Ok();
     }

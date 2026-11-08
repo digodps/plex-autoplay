@@ -86,8 +86,8 @@ onUnmounted(() => {
 
 <template>
   <DefaultLayout>
-    <div class="bg-gray-50 dark:bg-gray-900 min-h-screen">
-      <div class="border-b border-gray-200 dark:border-gray-800 sticky top-0 z-20 bg-gray-50 dark:bg-gray-900">
+    <div>
+      <div>
         <div class="max-w-2xl mx-auto px-4 py-3 flex items-center gap-2">
           <h1 class="text-28 font-bold text-gray-900 dark:text-gray-100">Sincronização</h1>
           <p class="text-sm text-gray-500 dark:text-gray-400">Execução e log em tempo real do último escaneamento.</p>
@@ -163,7 +163,7 @@ onUnmounted(() => {
             </button>
           </div>
 
-          <div class="max-h-550 min-h-70 overflow-y-auto p-4 font-mono text-sm">
+          <div class="max-h-550 min-h-70 overflow-y-auto p-4 font-mono text-sm no-scrollbar overscroll-contain">
             <div
               v-if="logEntries.length === 0"
               class="flex h-full min-h-35 items-center justify-center px-6 text-center text-gray-500 dark:text-gray-400"
