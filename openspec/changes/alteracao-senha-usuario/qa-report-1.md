@@ -1,66 +1,59 @@
 # QA Report 1 — alteracao-senha-usuario
 
-**Status:** PASS
-**URL validada:** http://localhost:8096 (container `qa-ui`, imagem `plex-autoplay:alteracao-senha-usuario`, volume `/tmp/qa-ui-data`)
 **Data:** 2026-11-07
-**Método:** curl no backend + Playwright headless (Chromium) na UI final + inspeção do SQLite e dos logs do container.
+**Veredito:** PASS
+**Change:** `alteracao-senha-usuario`
+**Branch/worktree:** `feature/spec-alteracao-senha-usuario`
+**Imagem:** `plex-autoplay:alteracao-senha-usuario` (build `--no-cache`)
+**URL de validação acessada (Playwright):** `http://localhost:18081`
 
-## Ambiente
+## Evidência de execução
 
-- Build: `dotnet build` e `dotnet test` (12 testes) PASS.
-- `npm run lint` e `npm run build` PASS; bundle copiado para `src/PlexAutoplay.Web/wwwroot`.
-- `docker build --no-cache -t plex-autoplay:alteracao-senha-usuario .` PASS.
-- Container isolado com volume novo: `DISABLE_HTTP=false`, `JWT_SECRET` com ≥32 bytes.
+| Gate | Comando | Resultado |
+|---|---|---|
+| Build .NET | `dotnet build PlexAutoplay.slnx` | 0 erros |
+| Testes .NET | `dotnet test PlexAutoplay.slnx` | 12 passados, 0 falhas |
+| Lint frontend | `npm run lint` | exit 0 |
+| Build frontend | `npm run build` | sucesso |
+| Schema OpenSpec | `openspec validate alteracao-senha-usuario --strict` | válido |
+| Docker | `docker build --no-cache -t plex-autoplay:alteracao-senha-usuario .` | sucesso |
+| Playwright | script real de navegador em `http://localhost:18081` | 18/18 asserts PASS |
 
-## Evidências
+## Asserts Playwright (18/18 PASS)
 
-### Token de setup (uso único)
+1. Tela `/setup` exibe instrução de token (`data-testid="setup-token-hint"`).
+2. Setup com token do log conclui e redireciona para `/login`.
+3. Login com senha criada redireciona para `/dashboard`.
+4. Botão de configurações (gear, `aria-label="Configurações"`) removido do header.
+5. Toggle de tema alterna light → dark e aplica `class="dark"` + `data-theme="dark"` no `<html>`.
+6. Menu do usuário abre ao clicar em `aria-label="Menu do usuário"`.
+7. Menu contém `Alterar senha` (`data-testid="change-password-menu"`).
+8. Menu mantém link `Configurações` (`/settings`).
+9. Modal de senha abre com os 3 campos (atual, nova, confirmação).
+10. Confirmação divergente exibe erro local ("As senhas não conferem") sem chamar API.
+11. Troca de senha válida retorna 204 e fecha o modal.
+12. Senha antiga é rejeitada no login após a troca.
+13. Login aceita somente a nova senha.
+14. Navegação do menu para `/settings` funciona.
+15. Tema permanece aplicado após navegação.
+16. Token de setup não é reutilizado (`HTTP 409`).
+17. `GET /api/auth/setup/status` reporta `setupRequired=false` após setup.
+18. `PUT /api/auth/password` sem JWT retorna `401`.
 
-- Primeiro start loga:
-  - `CONFIGURACAO INICIAL - TOKEN DE SETUP (USO UNICO)`
-  - `SETUP_TOKEN=<43 chars base64url>`
-  - aviso: "O token deixa de valer apos a primeira conclusao do setup."
-- `GET /api/auth/setup/status` → `{"setupRequired":true}` antes, `false` após.
-- `POST /api/auth/setup` com token errado → `401`.
-- `POST /api/auth/setup` com token correto → `204`.
-- Reutilização do mesmo token → `409` ("Configuração inicial já concluída"); token também já invalidado em memória.
-- Reinício após setup: nenhum `SETUP_TOKEN=` novo no log; login continua funcionando.
-- Reinício antes do setup: token rotacionado (`t1 != t2`).
+## Verificações de runtime
 
-### Backend (curl)
-
-- `POST /api/auth/login` senha criada → `200` com JWT.
-- `POST /api/auth/login` senha antiga (`admin`) → `401`.
-- `PUT /api/auth/password` sem JWT → `401`.
-- `PUT /api/auth/password` com senha atual errada → `403`.
-- `PUT /api/auth/password` com senha atual correta → `204`.
-- Após a troca: login com senha antiga → `401`, com senha nova → `200`.
-- SQLite: `AuthCredential` contém `admin` com hash `pbkdf2-sha256$210000$...` (90 chars).
-
-### Playwright (UI, http://localhost:8096)
-
-Asserts executados com `node:assert/strict`, todos PASS:
-
-1. `/setup` mostra aviso de token de **uso único** e comando `docker logs`.
-2. Setup com token cria senha e redireciona para `/login`.
-3. Login com senha errada exibe erro.
-4. Login com a senha criada entra no `/dashboard`.
-5. Botão de configurações (engrenagem) ausente no header (`count() === 0`).
-6. Menu do usuário exibe `Alterar senha` e abre o modal.
-7. Modal com senha atual errada exibe "Senha atual incorreta".
-8. Modal com senha atual correta persiste a troca e fecha.
-9. Após logout, senha antiga é rejeitada.
-10. Login com a senha nova funciona.
-11. Toggle de tema aplica `dark` e retorna para `light`.
-12. Menu do usuário abre, item ativo visível, fecha ao clicar fora.
-
-Screenshots: `/tmp/opencode/qa-senha-setup.png`, `qa-senha-modal.png`, `qa-senha-theme.png`, `qa-senha-dashboard.png`.
+- Container limpo emite `SETUP_TOKEN=` no primeiro start.
+- Container reiniciado com credencial persistida **não** emite `SETUP_TOKEN=` (0 ocorrências).
+- Senha em texto puro ausente do banco (`grep` de `NovaSenha456` em `/data/app.db` = 0).
+- Capturas: `qa-evidence/qa-evidence-dashboard.png`, `qa-evidence/qa-evidence-settings.png`.
 
 ## Achados
 
-1. **[CORRIGIDO] Redirect indevido em `/setup`.** `apiFetch` redirecionava para `/login` quando `/api/theme` retornava `401`, impedindo a tela de setup de renderizar. Correção em `vue/plex-frontend/src/api.js`: redirect só fora de `/login` e `/setup`. Revalidado após rebuild da imagem.
-2. Sem demais falhas na iteração 1.
+Nenhum bloqueante. Observações não bloqueantes:
+
+1. **502 em assets de Plex** — esperado no container isolado sem servidor Plex configurado; não relacionado à change.
+2. **401 pré-login** — probe de sessão do bootstrap; esperado.
 
 ## Conclusão
 
-Todos os critérios da change foram validados na UI e na API. Loop de correção encerrado na iteração 1 (1 achado corrigido e revalidado).
+PASS — requisitos do spec atendidos, sem regressões de tema/menu/navegação.
