@@ -12,7 +12,7 @@ O workflow `publish-container.yml` publica a imagem no GHCR apenas com `latest` 
   - cria tag anotada `vX.Y.Z` no commit atual;
   - envia o branch atual e a tag para `origin`;
   - suporta `--dry-run` (mostra versão calculada sem efeitos) e `--help`.
-- Workflow `publish-container.yml` passa a rodar também em push de tags `v*.*.*` e a publicar a imagem com tags de versão (`X.Y.Z`, `X.Y`, `latest`) além das tags de branch já existentes.
+- Workflow `publish-container.yml` passa a rodar também em push de tags `v*.*.*` e a publicar a imagem com tags de versão (`X.Y.Z`, `X.Y`, `latest`); pushes em `main` publicam apenas a tag de sha.
 - Nome da imagem deixa de ser hardcoded (`digodps/plex-autoplay`) e passa a usar `${{ github.repository }}`.
 
 ## Scope
