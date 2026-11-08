@@ -37,8 +37,8 @@ export GIT_COMMIT
 
 export PATH="/app/hermes-agent-src/tools/node-26.12.1-linux-x64/bin:$PATH"
 
-if [ -f docker-compose.override.yml ]; then
-  echo "AVISO: docker-compose.override.yml existe e pode duplicar a porta 8080"
+if [ -f infra/docker-compose.override.yml ]; then
+  echo "AVISO: infra/docker-compose.override.yml existe e pode duplicar a porta 8080"
 fi
 
 echo "==> frontend"
@@ -56,7 +56,7 @@ echo "==> solução"
 dotnet build PlexAutoplay.slnx -c Release --nologo
 
 echo "==> docker build"
-docker compose build
+docker compose -f infra/docker-compose.yml build
 
 IMAGE_REV=$(docker inspect --format '{{ index .Config.Labels "org.opencontainers.image.revision" }}' plex-autoplay:latest)
 if [ "$IMAGE_REV" != "$GIT_COMMIT" ]; then
@@ -66,8 +66,8 @@ fi
 echo "imagem: plex-autoplay:latest @ ${IMAGE_REV:0:7}"
 
 echo "==> restart"
-docker compose down --remove-orphans
-docker compose up -d --no-build
+docker compose -f infra/docker-compose.yml down --remove-orphans
+docker compose -f infra/docker-compose.yml up -d --no-build
 docker ps --filter name=plex-autoplay --format 'container: {{.Names}} {{.Status}}'
 
 echo "==> health"

@@ -55,7 +55,7 @@ REQUIRED_VARS=(PLEX_URL PLEX_TOKEN JWT_SECRET ADMIN_PASSWORD MEDIA_ROOT)
 # --- 1. Validar .env ---
 if [[ ! -f .env ]]; then
   error "Arquivo .env não encontrado na raiz do projeto."
-  error "Copie .env.example para .env e preencha com seus valores."
+  error "Copie infra/.env.example para .env e preencha com seus valores."
   exit 1
 fi
 
@@ -166,8 +166,8 @@ if [[ -d tests/e2e/test-results ]]; then
 fi
 
 # Capturar stdout/stderr do container se disponível
-if command -v docker >/dev/null 2>&1 && docker compose ps --services --filter status=running 2>/dev/null | grep -q plex-autoplay; then
-  docker compose logs --tail=100 plex-autoplay > "$ARTIFACTS_DIR/app-logs.txt" 2>/dev/null || true
+if command -v docker >/dev/null 2>&1 && docker compose -f infra/docker-compose.test.yml ps --services --filter status=running 2>/dev/null | grep -q plex-autoplay; then
+  docker compose -f infra/docker-compose.test.yml logs --tail=100 plex-autoplay > "$ARTIFACTS_DIR/app-logs.txt" 2>/dev/null || true
   log "Logs da aplicação: $ARTIFACTS_DIR/app-logs.txt"
 fi
 

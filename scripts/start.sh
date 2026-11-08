@@ -49,8 +49,8 @@ done
 # Verifica se o .env existe
 if [[ ! -f .env ]]; then
   echo "⚠️  Arquivo .env não encontrado."
-  echo "   Copie .env.example para .env e preencha com seus valores."
-  echo "   Exemplo: cp .env.example .env"
+  echo "   Copie infra/.env.example para .env e preencha com seus valores."
+  echo "   Exemplo: cp infra/.env.example .env"
   exit 1
 fi
 
@@ -96,18 +96,18 @@ dotnet publish src/PlexAutoplay.Web/PlexAutoplay.Web.csproj -c Release \
 
 if [[ "$BUILD" == true ]]; then
   echo "🔨 Fazendo build da imagem Docker..."
-  docker compose build
+  docker compose -f infra/docker-compose.yml build
 fi
 
 if [[ "$ATTACH" == true ]]; then
   echo "🚀 Subindo container (anexado - pressione Ctrl+C para parar)..."
-  docker compose up
+  docker compose -f infra/docker-compose.yml up
   exit 0
 fi
 
 # --- Modo padrão: sobe, espera responder, mostra o link e sai ---
 echo "🚀 Subindo container em segundo plano..."
-docker compose up -d
+docker compose -f infra/docker-compose.yml up -d
 echo ""
 
 echo -n "⏳ Aguardando a aplicação responder"

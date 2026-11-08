@@ -1,13 +1,14 @@
 services:
   plex-autoplay:
     build:
-      context: .
+      context: ..
+      dockerfile: infra/Dockerfile
       args:
         GIT_COMMIT: ${GIT_COMMIT:-local}
     image: plex-autoplay:latest
     container_name: plex-autoplay
     restart: unless-stopped
-    env_file: .env
+    env_file: ../.env
     environment:
       WEB_PORT: "8081"
       DISABLE_HTTP: "false"
@@ -18,6 +19,6 @@ services:
     ports:
       - "8080:8081"
     volumes:
-      - ./data:/data
+      - ../data:/data
       - /home/hermes/media:/home/hermes/media
       # Monte aqui cada diretório adicional listado em MEDIA_ROOTS.

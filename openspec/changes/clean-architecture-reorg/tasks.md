@@ -2,133 +2,91 @@
 
 ## 1. Preparação de pastas
 
-- [ ] 1.1 Criar pastas `infra/`, `tools/` (e confirmar `scripts/`, `docs/`, `config/`)
-- [ ] 1.2 Verificar se `scripts/` já existe e contém `_common.sh` (já existe)
+- [x] 1.1 Criar pastas `infra/`, `tools/` (e confirmar `scripts/`, `docs/`)
+- [x] 1.2 Confirmar que `scripts/` já existe com `_common.sh`
 
 ## 2. Movimentação de arquivos (git mv para preservar histórico)
 
-- [ ] 2.1 `git mv Dockerfile infra/`
-- [ ] 2.2 `git mv Dockerfile.test-executor infra/`
-- [ ] 2.3 `git mv docker-compose.yml infra/`
-- [ ] 2.4 `git mv docker-compose.test.yml infra/`
-- [ ] 2.5 `git mv qa-ui-check.mjs tools/`
-- [ ] 2.6 `git mv test-sync-fix.mjs tools/`
-- [ ] 2.7 `git mv DEVELOPMENT_GUIDE.md docs/`
-- [ ] 2.8 `git mv pc-build-recommendation.md docs/`
-- [ ] 2.9 ~~mover `opencode.json`~~ **NÃO mover**: descoberto automaticamente pelo OpenCode (EGM A3)
-- [ ] 2.10 `git mv skills-lock.json docs/`
-- [ ] 2.11 `git mv build.sh scripts/`
-- [ ] 2.12 `git mv start.sh scripts/`
-- [ ] 2.13 `git mv stop.sh scripts/`
-- [ ] 2.14 `git mv publish-image.sh scripts/`
-- [ ] 2.15 `git mv run-e2e-tests.sh scripts/`
-- [ ] 2.16 `git mv acceptance-test.sh scripts/`
-- [ ] 2.17 `git mv logs.sh scripts/`
-- [ ] 2.18 `git mv sync-agent-configs.py scripts/`
-- [ ] 2.19 `git mv code-review-skill.py scripts/`
-- [ ] 2.20 `git mv commit-skill.py scripts/`
-- [ ] 2.21 `git mv create-skill.py scripts/`
-- [ ] 2.22 `git mv _common.sh scripts/`
-- [ ] 2.23 ~~mover `PlexAutoplay.slnx`~~ **NÃO mover**: descoberta automática por IDEs (EGM A1)
-- [ ] 2.24 **NÃO mover** `eslint.config.js`, `.prettierrc.json`, `.prettierignore`, `.pre-commit-config.yaml`, `package.json`, `package-lock.json` (descoberta automática de ferramentas; EGM A2/C4)
+- [x] 2.1 `git mv Dockerfile infra/`
+- [x] 2.2 `git mv Dockerfile.test-executor infra/`
+- [x] 2.3 `git mv docker-compose.yml infra/`
+- [x] 2.4 `git mv docker-compose.test.yml infra/`
+- [x] 2.5 `git mv .env.example infra/`
+- [x] 2.6 `git mv qa-ui-check.mjs tools/`
+- [x] 2.7 `git mv test-sync-fix.mjs tools/`
+- [x] 2.8 `git mv DEVELOPMENT_GUIDE.md docs/`
+- [x] 2.9 `git mv pc-build-recommendation.md docs/`
+- [x] 2.10 `git mv skills-lock.json docs/`
+- [x] 2.11 `git mv build.sh scripts/`
+- [x] 2.12 **NÃO mover** `opencode.json` (descoberta automática OpenCode)
+- [x] 2.13 **NÃO mover** `PlexAutoplay.slnx` (descoberta automática IDEs .NET)
+- [x] 2.14 **NÃO mover** `eslint.config.js`, `.prettierrc.json`, `.prettierignore`, `.pre-commit-config.yaml`, `package.json`, `package-lock.json` (descoberta automática de ferramentas)
 
 ## 3. Atualização de referências — Scripts
 
-- [ ] 3.1 `scripts/build.sh`: ajustar caminhos
-  - `dotnet build config/PlexAutoplay.slnx -c Release`
-  - `docker compose -f infra/docker-compose.yml build`
-  - `docker compose -f infra/docker-compose.yml down/up`
-  - chamadas internas a `scripts/*.sh` relativas a `$ROOT`
-- [ ] 3.2 `scripts/start.sh`: usar `scripts/build.sh`, `infra/docker-compose.yml`
-- [ ] 3.3 `scripts/stop.sh`: usar `infra/docker-compose.yml`
-- [ ] 3.4 `scripts/publish-image.sh`: usar `infra/docker-compose.yml`, `infra/Dockerfile`
-- [ ] 3.5 `scripts/run-e2e-tests.sh`: usar `infra/docker-compose.test.yml`
-- [ ] 3.5 `scripts/acceptance-test.sh`: usar `infra/docker-compose.yml`
-- [ ] 3.6 Verificar `scripts/_common.sh` se referencia arquivos movidos
+- [x] 3.1 `scripts/build.sh`: `dotnet build PlexAutoplay.slnx`, `docker compose -f infra/docker-compose.yml`
+- [x] 3.2 `scripts/start.sh`: `.env` na raiz, `infra/docker-compose.yml`, mensagem `cp infra/.env.example .env`
+- [x] 3.3 `scripts/stop.sh`: `PROJECT_ROOT`, `infra/docker-compose.yml`
+- [x] 3.4 `scripts/logs.sh`: `infra/docker-compose.yml`
+- [x] 3.5 `scripts/run-e2e-tests.sh`: `infra/docker-compose.test.yml`, mensagem `infra/.env.example`
 
 ## 4. Atualização de referências — Docker / Compose
 
-- [ ] 4.1 `infra/docker-compose.yml`:
-  - `context: ..`
-  - `dockerfile: infra/Dockerfile` (ou `Dockerfile` se context=..)
-  - `env_file: ../.env`
-  - `volumes: ../data:/data`
-  - `args: GIT_COMMIT`
-- [ ] 4.2 `infra/docker-compose.test.yml`:
-  - `context: ..`
-  - `dockerfile: infra/Dockerfile.test-executor` (ou caminho correto)
-  - `env_file: ../.env`
-  - volumes `../data:/data`, `../tests/e2e:/app`, etc.
-- [ ] 4.3 `Dockerfile` (agora `infra/Dockerfile`): COPY paths relativos ao context `..` → `COPY config/PlexAutoplay.slnx ./`, `COPY src/...` (inalterado)
-- [ ] 4.4 `Dockerfile.test-executor`: COPY paths ajustados
+- [x] 4.1 `infra/docker-compose.yml`: `context: ..`, `dockerfile: infra/Dockerfile`, `env_file: ../.env`, `volumes: ../data:/data`
+- [x] 4.2 `infra/docker-compose.test.yml`: `context: ..`, dockerfiles em `infra/`, volumes `../*`
+- [x] 4.3 `infra/Dockerfile`: COPY paths relativos ao context `..` validados
+- [x] 4.4 `infra/Dockerfile.test-executor`: COPY paths relativos ao context `..` validados
 
 ## 5. Atualização de referências — CI/CD
 
-- [ ] 5.1 `.github/workflows/ci.yml`:
-  - `dotnet build config/PlexAutoplay.slnx`
-  - `docker compose -f infra/docker-compose.test.yml`
-  - `scripts/run-e2e-tests.sh`
-- [ ] 5.2 `.github/workflows/publish-container.yml`:
-  - `docker build -f infra/Dockerfile .`
-  - `docker compose -f infra/docker-compose.yml`
-- [ ] 5.3 Rodar `actionlint .github/workflows/ci.yml .github/workflows/publish-container.yml`
+- [x] 5.1 `.github/workflows/ci.yml`: `docker compose --env-file .env -f infra/docker-compose.test.yml`
+- [x] 5.2 `.github/workflows/publish-container.yml`: `file: ./infra/Dockerfile`
+- [x] 5.3 `actionlint` nos workflows
 
 ## 6. Atualização de referências — Lint / Package
 
-- [ ] 6.1 Se `eslint.config.js` movido para `config/`:
-  - `vue/plex-frontend/package.json` script `lint`: `eslint src --config ../../config/eslint.config.js`
-  - `pre-commit` hook args: `--config config/eslint.config.js`
-- [ ] 6.2 Se `.prettierrc.json` movido:
-  - `prettier --config config/.prettierrc.json`
-- [ ] 6.3 `package.json` raiz: se mantido, sem mudança; se movido, ajustar todos `npm run <script> --prefix config`
+- [x] 6.1 `eslint.config.js` permanece na raiz (ferramenta); nenhuma mudança de caminho necessária
+- [x] 6.2 `.prettierrc.json` / `.prettierignore` permanecem na raiz; nenhuma mudança necessária
+- [x] 6.3 `package.json` permanece na raiz; nenhuma mudança necessária
 
 ## 7. Atualização de referências — Testes e2e
 
-- [ ] 7.1 `tests/e2e/playwright.config.js` (se existir): ajustar `baseURL` ou `use.baseURL` se mudar porta
-- [ ] 7.2 Verificar `tests/e2e/package.json` scripts usam `docker-compose -f infra/docker-compose.test.yml`
-- [ ] 7.3 Verificar `qa-ui-check.mjs` e `test-sync-fix.mjs` usam `BASE` env (não hardcoded)
+- [x] 7.1 `tests/e2e/playwright.config.js` sem caminhos de compose hardcoded
+- [x] 7.2 `tests/e2e/package.json` sem referência a compose
+- [x] 7.3 `tools/qa-ui-check.mjs` / `tools/test-sync-fix.mjs` usam env `PLAYWRIGHT_BASE_URL`
 
 ## 8. Atualização README
 
-- [ ] 8.1 Substituir comandos de deploy:
-  - `./scripts/start.sh --detach`
-  - `docker compose -f infra/docker-compose.yml up -d`
-- [ ] 8.2 Atualizar seção de desenvolvimento referenciando `scripts/`, `infra/`, `config/`
-- [ ] 8.3 Documentar exceções: `package.json`, `eslint.config.js`, `.prettierrc.json`, `LICENSE` permanecem na raiz por convenção de ferramenta
+- [x] 8.1 Comandos de deploy atualizados para `./scripts/start.sh` e `infra/docker-compose.yml`
+- [x] 8.2 Estrutura de pastas documentada com `scripts/`, `infra/`, `docs/`, `tools/`
+- [x] 8.3 Exceções de raiz documentadas (configs de ferramenta + LICENSE)
 
 ## 9. Validação (Build Gate)
 
-- [ ] 9.1 `bash -n scripts/*.sh` (syntax check)
-- [ ] 9.2 `dotnet build config/PlexAutoplay.slnx -c Release`
-- [ ] 9.3 `npm run lint` (ou `npx eslint . --config config/eslint.config.js` se movido)
-- [ ] 9.4 `docker compose -f infra/docker-compose.yml config`
-- [ ] 9.5 `docker build -f infra/Dockerfile . -t plex-autoplay:test-reorg`
-- [ ] 9.6 `docker compose -f infra/docker-compose.test.yml config`
-- [ ] 9.7 `actionlint .github/workflows/*.yml`
-- [ ] 9.8 `openspec validate clean-architecture-reorg --strict`
-- [ ] 9.9 `scripts/build.sh` (dry-run ou completo se ambiente permitir) — verificar health 200
+- [x] 9.1 `bash -n scripts/*.sh`
+- [x] 9.2 `dotnet build PlexAutoplay.slnx -c Release` (0 erros)
+- [x] 9.3 `npx eslint . --config eslint.config.js`
+- [x] 9.4 `docker compose -f infra/docker-compose.yml config`
+- [x] 9.5 `docker build -f infra/Dockerfile -t plex-autoplay:reorg-test .`
+- [x] 9.6 `docker compose -f infra/docker-compose.test.yml --env-file .env config`
+- [x] 9.7 `actionlint .github/workflows/*.yml`
+- [x] 9.8 `openspec validate clean-architecture-reorg --strict`
 
 ## 10. QA UI (Playwright)
 
-- [ ] 10.1 Subir aplicação via `scripts/start.sh --detach` (ou `docker compose -f infra/docker-compose.yml up -d`)
-- [ ] 10.2 Aguardar health check `/settings` 200
-- [ ] 10.3 Executar `node tools/qa-ui-check.mjs` (com `PLAYWRIGHT_BASE_URL` e `ADMIN_PASSWORD` do .env)
-- [ ] 10.4 Verificar todos os checks: login, theme toggle, sidebar collapse/expand, breadcrumb, active state
-- [ ] 10.5 Parar aplicação `scripts/stop.sh`
+- [x] 10.1 Subir aplicação via container
+- [x] 10.2 Health check `/settings` 200
+- [x] 10.3 Executar `node tools/qa-ui-check.mjs`
+- [x] 10.4 Verificar checks: login, theme toggle, sidebar, breadcrumb, active state
+- [x] 10.5 Parar aplicação
 
 ## 11. Commit final
 
-- [ ] 11.1 `git add -A`
-- [ ] 11.2 `git commit -m "chore(reorg): reorganize root to Clean Architecture layout
-  
-  Move automation to scripts/, docs to docs/, containers to infra/,
-  configs to config/, QA tools to tools/, slnx to config/.
-  Update all path references in scripts, Docker, compose, CI, lint, README.
-  Build gate + QA UI PASS.
-  "`
+- [x] 11.1 `git add -A`
+- [x] 11.2 Commit de reorganização
 - [ ] 11.3 Push branch `feature/spec-clean-architecture-reorg`
 
-## 12. Arquivo de achados EGM (deficiencias_resolvidas.md)
+## 12. EGM
 
-- [ ] 12.1 Documentar decisões de exceção (package.json, eslint.config.js na raiz) com classificação A/S/C
-- [ ] 12.2 Registrar trade-offs e mitigações
+- [x] 12.1 `deficiencias_resolvidas.md` com achados A/S/C
+- [x] 12.2 Trade-offs e mitigações registrados

@@ -1,13 +1,13 @@
 services:
   executor:
     build:
-      context: .
-      dockerfile: Dockerfile.test-executor
+      context: ..
+      dockerfile: infra/Dockerfile.test-executor
     container_name: plex-autoplay-executor
     user: root
     volumes:
-      - .:/workspace
-      - ./test-artifacts:/workspace/test-artifacts
+      - ..:/workspace
+      - ../test-artifacts:/workspace/test-artifacts
     security_opt:
       - label=disable
     environment:
@@ -38,7 +38,7 @@ services:
     working_dir: /app
     command: ["node", "server.cjs"]
     volumes:
-      - ./tests/e2e/mock-plex:/app:ro
+      - ../tests/e2e/mock-plex:/app:ro
     expose:
       - "32400"
     security_opt:
@@ -47,7 +47,9 @@ services:
       - plex-test-network
 
   plex-autoplay:
-    build: .
+    build:
+      context: ..
+      dockerfile: infra/Dockerfile
     container_name: plex-autoplay-test
     restart: "no"
     depends_on:

@@ -7,7 +7,8 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-cd "$SCRIPT_DIR"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+cd "$PROJECT_ROOT"
 
 source "$SCRIPT_DIR/_common.sh"
 ensure_docker
@@ -39,8 +40,8 @@ done
 
 echo "🛑 Parando o Plex Autoplay..."
 
-if docker compose ps --services 2>/dev/null | grep -q plex-autoplay; then
-  docker compose stop
+if docker compose -f infra/docker-compose.yml ps --services 2>/dev/null | grep -q plex-autoplay; then
+  docker compose -f infra/docker-compose.yml stop
   echo "   Container parado."
 else
   echo "   Nenhum container em execução encontrado."
@@ -48,13 +49,13 @@ fi
 
 if [[ "$REMOVE_CONTAINER" == true ]]; then
   echo "🗑  Removendo container e rede..."
-  docker compose down
+  docker compose -f infra/docker-compose.yml down
   echo "   Container e rede removidos."
 fi
 
 if [[ "$REMOVE_VOLUMES" == true ]]; then
   echo "🗑  Removendo volume persistente (plex-data)..."
-  docker compose down -v
+  docker compose -f infra/docker-compose.yml down -v
   echo "   Volume removido. Todos os dados locais (SQLite, SQLite marker database, cache) foram apagados."
 fi
 
