@@ -29,23 +29,24 @@ async function handleStartScan() {
 
 <template>
   <DefaultLayout>
-    <div class="mb-6 flex flex-wrap items-end justify-between gap-4">
+    <div class="mb-6 flex flex-col sm:flex-row sm:items-end justify-between gap-6">
       <div>
-        <h1 class="text-title-md font-bold text-black dark:text-white">Visão geral</h1>
-        <p class="mt-1 text-sm font-medium text-body dark:text-bodydark">
+        <h1 class="text-2xl font-bold text-black dark:text-white">Visão geral</h1>
+        <p class="mt-2 text-sm font-medium text-gray-600 dark:text-bodydark">
           Saúde do serviço, sincronização, bibliotecas e marcadores.
         </p>
       </div>
-      <div class="flex flex-wrap items-center gap-3">
+
+      <div class="flex flex-col sm:flex-row items-end gap-3">
         <button
-          class="rounded-lg border border-stroke bg-white px-4 py-2.5 text-sm font-medium text-body transition hover:border-primary hover:text-primary dark:border-strokedark dark:bg-boxdark dark:text-bodydark"
+          class="rounded-xl border border-stroke bg-white px-5 py-2.5 text-sm font-medium text-gray-600 transition hover:border-primary hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:opacity-60 dark:border-gray-700 dark:bg-boxdark dark:text-bodydark dark:focus-visible:ring-offset-gray-900"
           :disabled="store.isLoading"
           @click="router.push('/sync')"
         >
           Ver Log Completo
         </button>
         <button
-          class="flex items-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-white transition hover:bg-opacity-90 disabled:opacity-60"
+          class="flex items-center justify-center rounded-xl bg-primary px-5 py-2.5 text-sm font-medium text-white transition hover:bg-opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:opacity-60 dark:focus-visible:ring-offset-gray-900"
           :disabled="store.isLoading"
           @click="handleStartScan"
         >
@@ -59,13 +60,13 @@ async function handleStartScan() {
 
     <div
       v-if="store.isTotalFailure"
-      class="mt-6 flex flex-wrap items-center gap-3 rounded-sm border border-meta-1/30 bg-meta-1/10 px-5 py-4 text-sm text-meta-1"
+      class="mt-8 rounded-2xl border border-meta-1/30 bg-meta-1/10 px-6 py-4 text-sm text-meta-1"
       role="alert"
     >
-      <AppIcon name="warning" size="lg" />
+      <AppIcon name="warning" size="lg" class="mr-3" />
       <p class="flex-1">{{ store.error }}</p>
       <button
-        class="rounded-lg border border-meta-1/40 px-3 py-1.5 font-medium transition hover:bg-meta-1/10"
+        class="rounded-xl border border-meta-1/40 px-4 py-2 font-medium transition hover:bg-meta-1/10"
         @click="store.retry"
       >
         Tentar novamente
@@ -74,20 +75,20 @@ async function handleStartScan() {
 
     <div
       v-else-if="store.libraryError"
-      class="mt-6 rounded-sm border border-meta-6/30 bg-meta-6/10 px-5 py-4 text-sm text-body dark:text-bodydark"
+      class="mt-8 rounded-2xl rounded-tl-0 rounded-tr-0 border border-meta-6/30 bg-meta-6/10 px-6 py-4 text-sm text-body dark:text-bodydark"
       role="alert"
     >
       <div class="flex flex-wrap items-center gap-3">
         <AppIcon name="warning" size="lg" class="text-meta-6" />
         <p class="flex-1 font-medium text-meta-6">{{ store.libraryError }}</p>
         <button
-          class="rounded-lg border border-meta-6/40 px-3 py-1.5 font-medium text-meta-6 transition hover:bg-meta-6/10"
+          class="rounded-xl border border-meta-6/40 px-4 py-2 font-medium text-meta-6 transition hover:bg-meta-6/10"
           @click="store.retry"
         >
           Tentar novamente
         </button>
       </div>
-      <p class="mt-2 text-xs text-body dark:text-bodydark">
+      <p class="mt-3 text-xs text-body dark:text-bodydark">
         Verifique se o servidor Plex está acessível, se a URL e o token (X-Plex-Token) estão
         configurados corretamente e se há conectividade de rede.
       </p>
