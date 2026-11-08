@@ -8,10 +8,10 @@
 
 ## 2. Verificação visual/funcional
 
-- [ ] 2.1 Iniciar app localmente (`npm run dev` ou `preview`) e abrir `http://localhost:<port>`.
-- [ ] 2.2 Confirmar o logo do cabeçalho renderiza como traço fino sem fundo sólido (fundo transparente) tanto no tema claro quanto escuro.
-- [ ] 2.3 Confirmar navegação do menu do usuário (abrir/fechar/ir para Ajustes) ainda funciona.
-- [ ] 2.4 Confirmar o toggle de tema (claro/escuro) continua alternando e aplicando `data-theme`.
+- [x] 2.1 Iniciar app localmente (`npm run dev` ou `preview`) e abrir `http://localhost:<port>`.
+- [x] 2.2 Confirmar o logo do cabeçalho renderiza como traço fino sem fundo sólido (fundo transparente) tanto no tema claro quanto escuro.
+- [x] 2.3 Confirmar navegação do menu do usuário (abrir/fechar/ir para Ajustes) ainda funciona.
+- [x] 2.4 Confirmar o toggle de tema (claro/escuro) continua alternando e aplicando `data-theme`.
 
 ## Workflow follow-up
 

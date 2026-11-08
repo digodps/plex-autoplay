@@ -140,3 +140,12 @@ O shell autenticado SHALL renderizar uma top bar fixa com marca, breadcrumb, tog
 #### Scenario: Top bar mantém ações
 - **WHEN** o usuário abre o menu do usuário na top bar
 - **THEN** as ações Configurações, Alterar senha e Sair continuam disponíveis, e o toggle de tema permanece visível
+
+### Requirement: Marca da aplicação discreta com fundo transparente
+O `AppHeader` SHALL renderizar a marca da aplicação como um traço fino com
+fundo transparente, nunca como um bloco sólido preenchido com gradiente.
+
+#### Scenario: Marca é um traço fino com fundo transparente
+- **WHEN** o cabeçalho autenticado é renderizado
+- **THEN** a marca (`AppLogo`) é um SVG de contorno (traço) sem `rect` de
+  fundo preenchido e sem cor de fundo sólida.
