@@ -108,24 +108,27 @@ function openPassword() {
       >
         <router-link
           to="/settings"
-          class="block rounded px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700"
+          class="flex items-center gap-2 rounded px-3 py-2 text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700"
           @click="showProfile = false"
         >
+          <AppIcon name="settings" size="sm" />
           Configurações
         </router-link>
         <button
           type="button"
-          class="block w-full rounded px-3 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-700"
+          class="flex w-full items-center gap-2 rounded px-3 py-2 text-left text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700"
           data-testid="change-password-menu"
           @click="openPassword"
         >
+          <AppIcon name="edit" size="sm" />
           Alterar senha
         </button>
         <button
           type="button"
-          class="block w-full rounded px-3 py-2 text-left text-red hover:bg-gray-100 dark:hover:bg-gray-700"
+          class="flex w-full items-center gap-2 rounded px-3 py-2 text-left text-red hover:bg-gray-100 dark:hover:bg-gray-700"
           @click="logout"
         >
+          <AppIcon name="logout" size="sm" />
           Sair
         </button>
       </div>
