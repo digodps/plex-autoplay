@@ -128,8 +128,13 @@ cd tests/e2e
 
 # Garante que as dependências do Playwright estão instaladas no container
 if [[ ! -d node_modules ]]; then
-  log "Instalando dependências do Playwright (npm install)..."
-  npm install
+  if [[ -f package-lock.json ]]; then
+    log "Instalando dependências do Playwright (npm ci)..."
+    npm ci
+  else
+    log "Instalando dependências do Playwright (npm install)..."
+    npm install
+  fi
 fi
 
 npx playwright test --reporter=html || TEST_EXIT_CODE=$?

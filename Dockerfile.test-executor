@@ -4,8 +4,11 @@ FROM node:20-slim
 # Install curl for health checks and Playwright system dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends curl && rm -rf /var/lib/apt/lists/*
 
-# Install Playwright and its system dependencies
-RUN npx playwright install --with-deps chromium
+# Install Playwright browsers pinned to tests/e2e lockfile version.
+# Using bare `npx playwright` fetched latest CLI -> browser revision mismatch.
+WORKDIR /opt/e2e
+COPY tests/e2e/package.json tests/e2e/package-lock.json ./
+RUN npm ci && npx playwright install --with-deps chromium && npm cache clean --force
 
 WORKDIR /workspace
 
