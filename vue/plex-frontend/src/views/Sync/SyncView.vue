@@ -30,7 +30,7 @@ const statusClass = {
 };
 
 const formatLogTimestamp = (date) =>
-  date.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "digit" });
+  date.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
 
 async function startScan() {
   const response = await apiFetch("/api/plex/scan", { method: "POST" });
@@ -40,6 +40,8 @@ async function startScan() {
     connectSSE(data.job_id);
   }
 }
+
+const terminalStatuses = ["completed", "failed", "cancelled"];
 
 function connectSSE(jobId) {
   if (eventSource.value) eventSource.value.close();
@@ -53,19 +55,20 @@ function connectSSE(jobId) {
     errors.value = data.errors || 0;
 
     if (data.logs && data.logs.length > 0) {
-      const newLogs = data.logs.map((log) => ({
+      logEntries.value = data.logs.slice(-100).map((log) => ({
         timestamp: new Date(log.timestamp),
         level: log.level,
         message: log.message,
         suggestion: log.suggestion || null,
       }));
-      logEntries.value = [...logEntries.value, ...newLogs].slice(-100);
     }
+
+    if (terminalStatuses.includes(data.status)) eventSource.value?.close();
   };
 
   eventSource.value.onerror = () => {
     eventSource.value?.close();
-    status.value = "failed";
+    if (!terminalStatuses.includes(status.value)) status.value = "failed";
   };
 }
 
