@@ -1,4 +1,4 @@
-const HOME = { label: "Início", to: { name: "dashboard" } };
+// ponytail: acesso à home fica com o logo do AppHeader; a trilha começa abaixo dela.
 const LIBRARIES = { label: "Bibliotecas", to: { name: "libraries" } };
 
 function text(value) {
@@ -16,7 +16,9 @@ export function buildBreadcrumb(route, libraries = [], { loading = false } = {})
   const query = route?.query ?? {};
   const key = params.key ?? query.libraryKey;
   const lib = libraryTitle(libraries, key) || text(query.libraryTitle);
-  const items = [{ ...HOME }];
+  const items = [];
+
+  if (name === "dashboard") return [];
 
   if (name === "libraries") {
     items.push({ ...LIBRARIES });
@@ -32,7 +34,7 @@ export function buildBreadcrumb(route, libraries = [], { loading = false } = {})
       });
     }
     items.push({ label: text(query.seriesTitle) || "Série" });
-  } else if (name !== "dashboard") {
+  } else {
     items.push({ label: route?.meta?.title || "Página" });
   }
 
