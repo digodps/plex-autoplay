@@ -25,7 +25,7 @@ import sys
 from pathlib import Path
 from typing import Optional
 
-REQUIRED_ENV_VARS = ["PLEX_URL", "PLEX_TOKEN", "JWT_SECRET", "ADMIN_PASSWORD", "MEDIA_ROOT"]
+REQUIRED_ENV_VARS = ["PLEX_URL", "PLEX_TOKEN", "JWT_SECRET", "MEDIA_ROOT"]
 CHANGES_DIR = Path("openspec/changes")
 
 

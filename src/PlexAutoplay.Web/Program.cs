@@ -43,12 +43,6 @@ Log.Information("Adicionando serviços de aplicação...");
 builder.AddApplicationServices();
 Log.Information("Serviços de aplicação adicionados.");
 
-// Admin password for auth endpoints
-var adminPassword = Environment.GetEnvironmentVariable("ADMIN_PASSWORD") ?? "admin";
-Log.Information("Admin password set.");
-builder.Services.AddSingleton(sp =>
-    new PlexAutoplay.Application.UseCases.LoginUseCase(sp.GetRequiredService<PlexAutoplay.Application.ITokenService>(), adminPassword));
-
 // Media root for resolving local media file paths
 var mediaRoot = Environment.GetEnvironmentVariable("MEDIA_ROOT") ?? "/media";
 Log.Information("Media root: {MediaRoot}", mediaRoot);
@@ -86,7 +80,7 @@ app.UseMiddleware<CorrelationIdMiddleware>();
 app.UseMiddleware<JwtAuthMiddleware>();
 
 // --- Endpoints ---
-app.MapAuthEndpoints(adminPassword, disableHttp);
+app.MapAuthEndpoints(disableHttp);
 app.MapPlexEndpoints(mediaRoot);
 app.MapSeriesEndpoints(mediaRoot);
 app.MapSyncEndpoints();
@@ -109,5 +103,19 @@ app.MapFallbackToFile("index.html");
 Log.Information("Inicializando schema do banco...");
 await DatabaseInitializer.InitializeAsync(DatabaseInitializer.DefaultConnectionString);
 Log.Information("Schema do banco inicializado.");
+
+// Setup inicial: sem credencial no SQLite, emite um token de uso único no log.
+var credentials = app.Services.GetRequiredService<PlexAutoplay.Application.IAuthCredentialStore>();
+if (!await credentials.IsConfiguredAsync())
+{
+    var setupToken = app.Services.GetRequiredService<PlexAutoplay.Infrastructure.Auth.SetupTokenService>().EnsureGenerated();
+    Console.Out.WriteLine("============================================================");
+    Console.Out.WriteLine("CONFIGURACAO INICIAL - TOKEN DE SETUP (USO UNICO)");
+    Console.Out.WriteLine($"SETUP_TOKEN={setupToken}");
+    Console.Out.WriteLine("Informe este token em /setup para criar a senha do operador.");
+    Console.Out.WriteLine("O token deixa de valer apos a primeira conclusao do setup.");
+    Console.Out.WriteLine("============================================================");
+    Console.Out.Flush();
+}
 
 app.Run();

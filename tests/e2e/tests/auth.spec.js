@@ -5,7 +5,7 @@ loadEnv();
 
 const BASE_URL =
   process.env.PLAYWRIGHT_BASE_URL || "https://plex-autoplay.dns.podman:443";
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
+const OPERATOR_PASSWORD = process.env.OPERATOR_PASSWORD;
 
 test.describe("Autenticação JWT", () => {
   test("login com senha correta retorna token JWT e redireciona para dashboard", async ({
@@ -20,7 +20,7 @@ test.describe("Autenticação JWT", () => {
     });
 
     // Preenche o formulário de login
-    await page.fill('input[type="password"]', ADMIN_PASSWORD);
+    await page.fill('input[type="password"]', OPERATOR_PASSWORD);
     await page.click("button");
 
     // Verifica redirecionamento para o dashboard
@@ -34,7 +34,7 @@ test.describe("Autenticação JWT", () => {
       timeout: 10000,
     });
 
-    await page.fill('input[type="password"]', ADMIN_PASSWORD);
+    await page.fill('input[type="password"]', OPERATOR_PASSWORD);
     await page.click("button");
 
     // Aguarda navegação e verifica token no cookie

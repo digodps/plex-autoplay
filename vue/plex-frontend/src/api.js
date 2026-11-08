@@ -21,7 +21,9 @@ export async function apiFetch(url, options = {}) {
 
   const res = await fetch(url, { ...options, headers });
 
-  if (res.status === 401 && url.startsWith("/api/") && window.location.pathname !== "/login") {
+  const publicPage =
+    window.location.pathname === "/login" || window.location.pathname === "/setup";
+  if (res.status === 401 && url.startsWith("/api/") && !publicPage) {
     redirectToLoginPreservingRoute();
   }
   return res;
@@ -44,6 +46,28 @@ export async function extractErrorMessage(res) {
 export async function throwHttpError(res, defaultMessage) {
   const detail = await extractErrorMessage(res);
   throw new Error(detail || defaultMessage);
+}
+
+export async function fetchSetupStatus() {
+  const res = await fetch("/api/auth/setup/status");
+  if (!res.ok) return null;
+  return await res.json();
+}
+
+export async function submitSetup(token, newPassword) {
+  return fetch("/api/auth/setup", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ token, newPassword }),
+  });
+}
+
+export async function changePassword(currentPassword, newPassword) {
+  return apiFetch("/api/auth/password", {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ currentPassword, newPassword }),
+  });
 }
 
 export async function fetchTheme() {

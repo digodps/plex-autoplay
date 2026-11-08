@@ -28,7 +28,6 @@ public class PlexConfigStore : IPlexConfigStore
                 "",
                 "# Auth",
                 "JWT_SECRET=7f3c9b1e5a2d48c6b0e94f17ad63c852e1b47d90f3a6c28e5b1d704f9a3c6e21",
-                "ADMIN_PASSWORD=admin",
                 "",
                 "# Ports",
                 "WEB_PORT=8080",

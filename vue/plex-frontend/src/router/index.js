@@ -10,6 +10,12 @@ const routes = [
     meta: { title: "Entrar" },
   },
   {
+    path: "/setup",
+    name: "setup",
+    component: () => import("../views/Authentication/SetupView.vue"),
+    meta: { title: "Configuração inicial" },
+  },
+  {
     path: "/dashboard",
     name: "dashboard",
     component: () => import("../views/Dashboard/DashboardView.vue"),
@@ -58,9 +64,23 @@ const router = createRouter({
 });
 
 router.beforeEach(async (to) => {
-  if (to.name !== "login") document.title = `${to.meta.title ?? "Plex Autoplay"} | Plex Autoplay`;
+  if (to.name !== "login" && to.name !== "setup") {
+    document.title = `${to.meta.title ?? "Plex Autoplay"} | Plex Autoplay`;
+  }
 
-  if (to.name === "login") return true;
+  // Setup inicial é público e tem prioridade sobre o guard de sessão.
+  const setupStatus = await fetch("/api/auth/setup/status")
+    .then((res) => (res.ok ? res.json() : null))
+    .catch(() => null);
+
+  if (setupStatus?.setupRequired && to.name !== "setup") {
+    return { name: "setup" };
+  }
+  if (setupStatus && !setupStatus.setupRequired && to.name === "setup") {
+    return { name: "login" };
+  }
+
+  if (to.name === "login" || to.name === "setup") return true;
 
   // Session cookie is HttpOnly on the backend; ask the API whether we're logged in.
   const res = await fetch("/api/status", { credentials: "include" });

@@ -61,7 +61,7 @@ set +a
 
 # Valida variáveis obrigatórias
 MISSING_VARS=()
-for var in PLEX_URL PLEX_TOKEN MEDIA_ROOT JWT_SECRET ADMIN_PASSWORD; do
+for var in PLEX_URL PLEX_TOKEN MEDIA_ROOT JWT_SECRET; do
   if [[ -z "${!var:-}" ]]; then
     MISSING_VARS+=("$var")
   fi

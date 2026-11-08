@@ -1,15 +1,15 @@
 namespace PlexAutoplay.Web.Middleware;
 
 using Microsoft.AspNetCore.Http;
-using PlexAutoplay.Infrastructure.Auth;
+using PlexAutoplay.Application;
 using System.Threading.Tasks;
 
 public class JwtAuthMiddleware
 {
     private readonly RequestDelegate _next;
-    private readonly JwtTokenService _tokenService;
+    private readonly ITokenService _tokenService;
 
-    public JwtAuthMiddleware(RequestDelegate next, JwtTokenService tokenService)
+    public JwtAuthMiddleware(RequestDelegate next, ITokenService tokenService)
     {
         _next = next;
         _tokenService = tokenService;
@@ -26,8 +26,9 @@ public class JwtAuthMiddleware
             return;
         }
 
-        // Allow API auth endpoint without authentication
-        if (path == "/auth/login")
+        // Public auth endpoints: login, setup e status do setup.
+        // A allowlist é exata para não expor /api/auth/password.
+        if (path is "/auth/login" or "/api/auth/login" or "/api/auth/setup" or "/api/auth/setup/status")
         {
             await _next(context);
             return;
