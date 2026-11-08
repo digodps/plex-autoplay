@@ -65,14 +65,17 @@
   `deficiencias_resolvidas.md`.
 - [x] **Specs** — `web-ui` atualizada: sidebar flutuante com margem em todos os
   lados, raio > 0, borda completa e superfície distinta do fundo.
-- [ ] **SidebarArea** — aplicar `rounded-lg`, `border`, `my-2 mx-2`,
+- [x] **SidebarArea** — aplicado `rounded-lg`, `border`, `my-2 mx-2`,
   `overflow-y-auto overflow-x-hidden` e superfície dark `gray-800`.
-- [ ] **Build/lint/testes** — `npm run build`, `npm run lint`,
-  `npm run test:sidebar`, `npm run test:breadcrumb`, `npm run test:tokens`.
-- [ ] **QA Playwright** — validar margens >= 8px em todos os lados,
-  `border-radius > 0`, borda e superfície em light/dark, navegação e estado
-  ativo.
-- [ ] **Docker acceptance** — `docker build --no-cache` e execução isolada.
+- [x] **Build/lint/testes** — `npm run build`, `npm run lint`,
+  `npm run test:sidebar`, `npm run test:breadcrumb`, `npm run test:tokens`
+  passam.
+- [x] **QA Playwright** — margens 8px (topo/esquerda/direita/base),
+  `border-radius: 8px`, borda `1px`, superfície dark distinta, navegação e
+  estado ativo validados em `http://localhost:5174`.
+- [x] **Docker acceptance** — `docker build --no-cache -t
+  plex-autoplay:ui-sidebar-header-float .` (exit 0) e execução isolada em
+  `http://localhost:18084`; Playwright 15/15 PASS.
 
 ## Pendências (fora do escopo)
 

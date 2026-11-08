@@ -10,13 +10,13 @@ const props = defineProps({
 });
 
 const itemClass =
-  "flex min-h-[44px] items-center gap-2 rounded-md px-3 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-100 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary motion-reduce:transition-none dark:text-bodydark dark:hover:bg-gray-800 dark:hover:text-primary";
+  "flex min-h-[44px] items-center gap-2 rounded-lg px-3 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-100 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary motion-reduce:transition-none dark:text-bodydark dark:hover:bg-gray-800 dark:hover:text-primary";
 const activeClass = "bg-gray-100 font-medium text-primary dark:bg-gray-800";
 </script>
 
 <template>
   <aside
-    class="sidebar flex min-h-0 flex-col border-r bg-gray-50 text-sm text-gray-700 dark:border-gray-800 dark:bg-gray-900 dark:text-bodydark"
+    class="sidebar my-2 mx-2 flex min-h-0 flex-col overflow-y-auto overflow-x-hidden rounded-lg border border-gray-300 bg-gray-50 text-sm text-gray-700 dark:border-gray-700 dark:bg-gray-800 dark:text-bodydark"
     :class="collapsed ? 'w-16' : 'w-64 max-[768px]:w-16'"
   >
     <p
