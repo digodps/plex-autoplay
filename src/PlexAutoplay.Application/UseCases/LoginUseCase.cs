@@ -1,23 +1,49 @@
 namespace PlexAutoplay.Application.UseCases;
 
+public class LoginResult
+{
+    public bool Success { get; set; }
+    public string? Token { get; set; }
+}
+
 public class LoginUseCase
 {
     private readonly ITokenService _tokenService;
-    private readonly string _adminPassword;
+    private readonly IAuthCredentialStore _credentials;
+    private readonly IPasswordHasher _hasher;
 
-    public LoginUseCase(ITokenService tokenService, string adminPassword)
+    public LoginUseCase(
+        ITokenService tokenService,
+        IAuthCredentialStore credentials,
+        IPasswordHasher hasher)
     {
         _tokenService = tokenService;
-        _adminPassword = adminPassword;
+        _credentials = credentials;
+        _hasher = hasher;
     }
 
-    public (bool Success, string? Token) TryGenerate(string password)
+    public async Task<LoginResult> TryGenerateAsync(string password)
     {
-        if (password == _adminPassword)
+        var result = new LoginResult();
+        
+        var isConfigured = await _credentials.IsConfiguredAsync();
+        if (!isConfigured)
         {
-            return (true, _tokenService.GenerateToken());
+            return result;
         }
-
-        return (false, null);
+        
+        var hash = await _credentials.GetHashAsync();
+        if (hash is null)
+        {
+            return result;
+        }
+        
+        if (_hasher.Verify(password, hash))
+        {
+            result.Success = true;
+            result.Token = _tokenService.GenerateToken();
+        }
+        
+        return result;
     }
 }
