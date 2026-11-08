@@ -12,11 +12,19 @@ test("dashboard mostra só Início", () => {
   assert.deepEqual(items.map((i) => [i.label, i.isCurrent]), [["Início", true]]);
 });
 
-test("séries da biblioteca: Início > título dinâmico", () => {
-  const items = buildBreadcrumb({ name: "series", params: { key: "1" } }, libraries);
-  assert.deepEqual(items.map((i) => i.label), ["Início", "Animes"]);
-  assert.deepEqual(items[0].to, { name: "dashboard" });
+test("bibliotecas: Início > Bibliotecas atual", () => {
+  const items = buildBreadcrumb({ name: "libraries" }, libraries);
+  assert.deepEqual(items.map((i) => i.label), ["Início", "Bibliotecas"]);
   assert.equal(items[1].isCurrent, true);
+});
+
+test("séries: Início > Bibliotecas > biblioteca atual", () => {
+  const items = buildBreadcrumb({ name: "series", params: { key: "1" } }, libraries);
+  assert.deepEqual(items.map((i) => i.label), ["Início", "Bibliotecas", "Animes"]);
+  assert.deepEqual(items[0].to, { name: "dashboard" });
+  assert.deepEqual(items[1].to, { name: "libraries" });
+  assert.equal(items[2].isCurrent, true);
+  assert.equal(items[2].to, undefined);
 });
 
 test("fallback para query quando biblioteca não carregou", () => {
@@ -24,34 +32,40 @@ test("fallback para query quando biblioteca não carregou", () => {
     { name: "series", params: { key: "9" }, query: { libraryTitle: "Animes" } },
     [],
   );
-  assert.deepEqual(items.map((i) => i.label), ["Início", "Animes"]);
+  assert.deepEqual(items.map((i) => i.label), ["Início", "Bibliotecas", "Animes"]);
 });
 
-test("biblioteca desconhecida após loading", () => {
+test("biblioteca desconhecida mantém Bibliotecas e rótulo genérico", () => {
   const items = buildBreadcrumb({ name: "series", params: { key: "9" } }, []);
-  assert.equal(items.at(-1).label, "Biblioteca indisponível");
+  assert.deepEqual(items.map((i) => i.label), ["Início", "Bibliotecas", "Biblioteca"]);
+  assert.deepEqual(items[1].to, { name: "libraries" });
 });
 
-test("loading não inventa título", () => {
-  const items = buildBreadcrumb({ name: "series", params: { key: "9" } }, [], { loading: true });
-  assert.deepEqual(items.map((i) => i.label), ["Início"]);
-});
-
-test("marcadores: Início > biblioteca > série, biblioteca linkável", () => {
+test("marcadores: Início > Bibliotecas > biblioteca linkável > série atual", () => {
   const items = buildBreadcrumb(
     {
       name: "series-markers",
       params: { seriesKey: "42" },
-      query: { libraryKey: "1", libraryTitle: "Animes", seriesTitle: "One Piece" },
+      query: { libraryKey: "1", seriesTitle: "One Piece" },
     },
     libraries,
   );
-  assert.deepEqual(items.map((i) => i.label), ["Início", "Animes", "One Piece"]);
-  assert.deepEqual(items[1].to, { name: "series", params: { key: "1" } });
-  assert.equal(items.at(-1).isCurrent, true);
+  assert.deepEqual(items.map((i) => i.label), ["Início", "Bibliotecas", "Animes", "One Piece"]);
+  assert.deepEqual(items[1].to, { name: "libraries" });
+  assert.deepEqual(items[2].to, { name: "series", params: { key: "1" } });
+  assert.equal(items[3].isCurrent, true);
 });
 
-test("sem separador pendurado: nenhum item vazio", () => {
-  const items = buildBreadcrumb({ name: "series", params: { key: "9" } }, [], { loading: true });
-  assert.ok(items.every((i) => i.label));
+test("marcadores sem biblioteca ainda mostram Bibliotecas", () => {
+  const items = buildBreadcrumb(
+    { name: "series-markers", params: { seriesKey: "42" } },
+    [],
+  );
+  assert.deepEqual(items.map((i) => i.label), ["Início", "Bibliotecas", "Série"]);
+  assert.deepEqual(items[1].to, { name: "libraries" });
+});
+
+test("rotas genéricas usam o título da rota", () => {
+  const items = buildBreadcrumb({ name: "sync", meta: { title: "Sincronizar" } }, libraries);
+  assert.deepEqual(items.map((i) => i.label), ["Início", "Sincronizar"]);
 });

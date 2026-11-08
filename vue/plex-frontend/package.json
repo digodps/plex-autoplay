@@ -15,7 +15,7 @@
     "lint": "eslint src --config ../../eslint.config.js",
     "test:tokens": "node --test tests/tokens.contrast.test.mjs",
     "test:breadcrumb": "node --test tests/breadcrumb.test.mjs",
-    "test:sidebar": "node --test tests/sidebar-collapsed.test.mjs"
+    "test:ui": "node --test tests/no-sidebar.test.mjs"
   },
   "repository": {
     "type": "git",
@@ -28,7 +28,6 @@
     "url": "https://github.com/digodps/plex-autoplay/issues"
   },
   "homepage": "https://github.com/digodps/plex-autoplay#readme",
-  "private": "true",
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "eslint": "^10.13.0",
@@ -40,7 +39,6 @@
     "autoprefixer": "^10.6.2",
     "esbuild": "^0.28.2",
     "postcss": "^8.5.32",
-    "prettier": "^3.9.10",
     "tailwindcss": "^3.4.19",
     "vite": "^8.3.5"
   },
