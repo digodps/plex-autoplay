@@ -1,7 +1,6 @@
 <script setup>
 import { computed } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import DefaultLayout from "@/components/layouts/DefaultLayout.vue";
 import AppIcon from "@/components/AppIcon.vue";
 import { useSeriesCatalog } from "@/composables/useSeriesCatalog";
 import { useLibraryTitle } from "@/composables/useLibraryTitle";
@@ -41,7 +40,7 @@ function openMarkers(series) {
 </script>
 
 <template>
-  <DefaultLayout>
+  <div class="page">
     <div class="bg-gray-50 dark:bg-gray-900 min-h-screen">
       <div class="border-b border-gray-200 dark:border-gray-800 sticky top-0 z-20 bg-gray-50 dark:bg-gray-900">
         <div class="max-w-2xl mx-auto px-4 py-3 flex items-center gap-2">
@@ -163,5 +162,5 @@ function openMarkers(series) {
         </div>
       </div>
       </div>
-    </DefaultLayout>
+    </div>
   </template>
