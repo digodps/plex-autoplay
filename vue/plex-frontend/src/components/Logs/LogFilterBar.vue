@@ -42,7 +42,7 @@ function onGroupingChange(event) {
           type="search"
           placeholder="Filtrar mensagens..."
           data-testid="log-filter-text"
-          class="w-full rounded-md border border-gray-300 bg-gray-50 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
+          class="w-full h-10 rounded-md border border-gray-300 bg-gray-50 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
           @input="onTextInput"
         />
       </label>
@@ -51,7 +51,7 @@ function onGroupingChange(event) {
         <select
           :value="logsStore.filters.level"
           data-testid="log-filter-level"
-          class="w-full rounded-md border border-gray-300 bg-gray-50 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
+          class="w-full h-10 rounded-md border border-gray-300 bg-gray-50 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
           @change="onLevelChange"
         >
           <option value="">Todos</option>
@@ -63,7 +63,7 @@ function onGroupingChange(event) {
         <input
           v-model="fromInput"
           type="date"
-          class="w-full rounded-md border border-gray-300 bg-gray-50 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
+          class="w-full h-10 rounded-md border border-gray-300 bg-gray-50 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
           @change="onDateChange"
         />
       </label>
@@ -72,7 +72,7 @@ function onGroupingChange(event) {
         <input
           v-model="toInput"
           type="date"
-          class="w-full rounded-md border border-gray-300 bg-gray-50 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
+          class="w-full h-10 rounded-md border border-gray-300 bg-gray-50 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
           @change="onDateChange"
         />
       </label>
