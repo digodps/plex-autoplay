@@ -18,7 +18,7 @@ const auth = useAuthStore();
 const showProfile = ref(false);
 const showPassword = ref(false);
 
-const isDark = computed(() => theme.mode === "dark");
+const isDark = computed(() => theme.effective === "dark");
 
 const iconButton =
   "flex items-center gap-2 rounded-lg p-2 text-gray-700 hover:text-primary hover:bg-gray-100 dark:text-bodydark dark:hover:bg-gray-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary";
@@ -82,7 +82,7 @@ function openPassword() {
       type="button"
       :aria-label="isDark ? 'Tema claro' : 'Tema escuro'"
       :title="isDark ? 'Tema claro' : 'Tema escuro'"
-      @click="theme.toggle"
+      @click="theme.cycleMode"
     >
       <AppIcon :name="isDark ? 'sun' : 'moon'" size="sm" />
     </button>
