@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Concurrent;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
@@ -17,6 +18,11 @@ public class PlexAutoSkipBackgroundService : BackgroundService
     private readonly IAppSettingsStore _settings;
     private readonly IMarkerRepository _markerRepository;
     private readonly IClientSeekStrategyProvider _strategyProvider;
+
+    // Cooldown: evita loop de re-seek no mesmo marcador.
+    // Key = "ratingKey|kind", Value = EndMs que pulamos.
+    // Se position <= EndMs registrado, não re-seeka (já pulamos este marcador).
+    private static readonly ConcurrentDictionary<string, long> _lastSkipEndMs = new();
 
     public PlexAutoSkipBackgroundService(
         ILogger<PlexAutoSkipBackgroundService> logger,
@@ -54,6 +60,11 @@ public class PlexAutoSkipBackgroundService : BackgroundService
     private async Task PollAndSkipAsync(CancellationToken ct)
     {
         var settings = await _settings.GetAsync();
+        if (!settings.AutoSkipAuthorized)
+        {
+            _logger.LogDebug("Auto-skip disabled — awaiting explicit authorization from user.");
+            return;
+        }
         var plexUrl = settings.PlexUrl.TrimEnd('/');
         using var http = _httpClientFactory.CreateClient();
         var req = new HttpRequestMessage(HttpMethod.Get, $"{plexUrl}/status/sessions");
@@ -76,12 +87,29 @@ public class PlexAutoSkipBackgroundService : BackgroundService
 
         foreach (var marker in markers)
         {
-            if (session.PositionMs >= marker.StartMs && session.PositionMs <= marker.EndMs)
+            var cooldownKey = $"{session.RatingKey}|{marker.Kind}";
+            var inMarker = session.PositionMs >= marker.StartMs && session.PositionMs <= marker.EndMs;
+
+            if (!inMarker)
             {
-                _logger.LogInformation("Auto-skip trigger: pos={Pos}ms in marker [{Start},{End}] {Kind} ratingKey={RK}",
-                    session.PositionMs, marker.StartMs, marker.EndMs, marker.Kind, session.RatingKey);
-                await SeekToEndOfMarkerAsync(session, marker, plexUrl, settings.PlexToken, ct);
-                break;
+                // Fora do marcador (passou do fim ou voltou antes do início) → nova passagem permitida
+                _lastSkipEndMs.TryRemove(cooldownKey, out _);
+                continue;
+            }
+
+            // Cooldown: já pulamos este marcador nesta passagem → não re-seeka
+            if (_lastSkipEndMs.ContainsKey(cooldownKey))
+            {
+                continue;
+            }
+
+            _logger.LogInformation("Auto-skip trigger: pos={Pos}ms in marker [{Start},{End}] {Kind} ratingKey={RK}",
+                session.PositionMs, marker.StartMs, marker.EndMs, marker.Kind, session.RatingKey);
+            var success = await SeekToEndOfMarkerAsync(session, marker, plexUrl, settings.PlexToken, ct);
+            if (success)
+            {
+                _lastSkipEndMs[cooldownKey] = marker.EndMs;
+                break; // apenas um skip por ciclo
             }
         }
     }
@@ -146,7 +174,7 @@ public class PlexAutoSkipBackgroundService : BackgroundService
                || trimmed.Length > 4 && trimmed.StartsWith("OK;", StringComparison.OrdinalIgnoreCase);
     }
 
-    private async Task SeekToEndOfMarkerAsync(PlexSessionInfo session, MarkerInfo marker, string plexUrl, string plexToken, CancellationToken ct)
+    private async Task<bool> SeekToEndOfMarkerAsync(PlexSessionInfo session, MarkerInfo marker, string plexUrl, string plexToken, CancellationToken ct)
     {
         string commandId = Guid.NewGuid().ToString("N")[..12];
         var strategy = _strategyProvider.Detect(session.Product, session.Platform, session.Version);
@@ -158,7 +186,7 @@ public class PlexAutoSkipBackgroundService : BackgroundService
         {
             _logger.LogDebug("Trying direct seek for {Product} ({Ip}:{Port})", session.Product, session.ClientIp, strategy.DirectPort);
             var success = await SeekDirectAsync(session, marker, plexToken, commandId, strategy, ct);
-            if (success) return;
+            if (success) return true;
         }
 
         // 2) PMS proxy (apenas para Smart TVs e demais clientes que anunciam Player)
@@ -167,7 +195,7 @@ public class PlexAutoSkipBackgroundService : BackgroundService
         {
             _logger.LogDebug("Trying PMS proxy seek for {Product} (machineId={Mid})", session.Product, session.MachineIdentifier);
             var success = await SeekViaPmsProxyAsync(session, marker, plexUrl, plexToken, commandId, strategy, ct);
-            if (success) return;
+            if (success) return true;
         }
 
         // Cliente web/desktop moderno não anuncia Player → Plex API não controla
@@ -175,6 +203,8 @@ public class PlexAutoSkipBackgroundService : BackgroundService
             _logger.LogInformation("Skip não suportado para {Product} — {Platform} ({Version}): cliente não expõe Player nem PMS proxy.", session.Product, session.Platform, session.Version);
         else
             _logger.LogWarning("All seek strategies failed for {Product} {Version}", session.Product, session.Version);
+
+        return false;
     }
 
     private async Task<bool> SeekDirectAsync(PlexSessionInfo session, MarkerInfo marker, string plexToken, string commandId, ClientSeekStrategy strategy, CancellationToken ct)

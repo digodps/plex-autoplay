@@ -2,6 +2,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\PlexAutoplay.Domain\PlexAutoplay.Domain.csproj" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.14" />
   </ItemGroup>
 
   <PropertyGroup>

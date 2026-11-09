@@ -8,13 +8,16 @@ TBD - created by archiving change configuracoes-banco. Update Purpose after arch
 ### Requirement: API de configurações persistidas
 
 O sistema SHALL expor `GET /api/settings` e `PUT /api/settings`, protegidos
-por JWT, para ler e gravar configurações operacionais no SQLite.
+por JWT, para ler e gravar configurações operacionais no SQLite. O intervalo de
+sincronização é **único** (`sync_interval_minutes`); não existe mais
+`sync_catalog_interval_minutes`.
 
 #### Scenario: Leitura autenticada
 
 - **WHEN** uma requisição autenticada `GET /api/settings` é recebida
-- **THEN** o sistema retorna `plex_url`, `plex_token_set`, `media_root`,
-  `sync_interval_minutes` e `sync_catalog_interval_minutes`
+- **THEN** o sistema retorna `plex_url`, `plex_token_set`, `media_root` e
+  `sync_interval_minutes`
+- **AND** não retorna `sync_catalog_interval_minutes`
 - **AND** os valores vêm da tabela `AppSetting`
 - **AND** o token do Plex nunca é retornado
 
@@ -35,7 +38,7 @@ por JWT, para ler e gravar configurações operacionais no SQLite.
 
 - **WHEN** `plex_url` não é uma URL absoluta `http://` ou `https://`
 - **THEN** o sistema retorna HTTP 400 sem gravar nada
-- **WHEN** um intervalo está fora de `1..1440`
+- **WHEN** `sync_interval_minutes` está fora de `1..1440`
 - **THEN** o sistema retorna HTTP 400 sem gravar nada
 - **WHEN** `media_root` não é absoluto ou não existe
 - **THEN** o sistema retorna HTTP 400 sem gravar nada
@@ -49,8 +52,8 @@ por JWT, para ler e gravar configurações operacionais no SQLite.
 ### Requirement: Página de ajustes orientada ao banco
 
 A página `/settings` SHALL carregar as configurações de `/api/settings`,
-exibir URL do Plex, token, `MEDIA_ROOT`, intervalo de sincronização e
-intervalo de sincronização de catálogo, e SHALL salvar as alterações via
+exibir URL do Plex, token, `MEDIA_ROOT` e o **único** intervalo de
+sincronização (`sync_interval_minutes`), e SHALL salvar as alterações via
 `PUT /api/settings`.
 
 #### Scenario: Abertura da página
@@ -59,6 +62,7 @@ intervalo de sincronização de catálogo, e SHALL salvar as alterações via
 - **THEN** os campos são preenchidos com os valores persistidos no banco
 - **AND** o navegador não usa `localStorage` como fonte de configuração
 - **AND** o campo de token aparece como senha e vazio quando já configurado
+- **AND** existe apenas um campo de intervalo, sem o campo de catálogo
 
 #### Scenario: Salvamento bem-sucedido
 

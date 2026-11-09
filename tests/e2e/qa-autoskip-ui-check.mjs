@@ -56,7 +56,7 @@ try {
   const menuClosed = !(await page.isVisible('text=Alterar senha'));
   check("Menu de usuário fecha", menuClosed);
 
-  // --- Navegação (breadcrumb) + estado ativo ---
+  // --- Navegação (breadcrumb) ---
   await page.goto(`${BASE}/settings`, { waitUntil: "networkidle" });
   await page.waitForTimeout(400);
   const breadcrumbActive = page.locator('[aria-label="Breadcrumb"] [aria-current="page"]');
@@ -68,6 +68,38 @@ try {
   } catch {
     check("Navegação via breadcrumb (sem links na rota atual)", true, "sem link no breadcrumb");
   }
+
+  // --- Configurações: toggle Netflix de autorização ---
+  const api = page.request;
+  await api.put(`${BASE}/api/settings`, { data: { auto_skip_authorized: false } });
+  await page.goto(`${BASE}/settings`, { waitUntil: "networkidle" });
+  await page.waitForTimeout(400);
+
+  const authCheckbox = page.locator("input#auto-skip-authorized");
+  check("Checkbox 'Autorizar skip automático' presente", await authCheckbox.isVisible());
+  check("Toggle começa OFF", !(await authCheckbox.isChecked()));
+
+  await authCheckbox.click({ force: true });
+  await page.waitForTimeout(500);
+  const modal1 = await page.locator("text=Autorizar skip automático?").isVisible();
+  check("Modal Netflix aparece ao tentar ligar o toggle", modal1);
+  await page.locator('button:has-text("Cancelar")').click();
+  await page.waitForTimeout(300);
+  check("Cancelar mantém toggle OFF", !(await authCheckbox.isChecked()));
+  const offResp = await api.get(`${BASE}/api/settings`);
+  const offJson = await offResp.json();
+  check("GET /api/settings mantém auto_skip_authorized=false", offJson.auto_skip_authorized === false);
+
+  await authCheckbox.click({ force: true });
+  await page.waitForTimeout(500);
+  const modal2 = await page.locator("text=Autorizar skip automático?").isVisible();
+  check("Modal Netflix reaparece ao tentar ligar de novo", modal2);
+  await page.locator('button:has-text("Autorizar")').click();
+  await page.waitForTimeout(1000);
+  check("Confirmar faz toggle virar ON", await authCheckbox.isChecked());
+  const onResp = await api.get(`${BASE}/api/settings`);
+  const onJson = await onResp.json();
+  check("GET /api/settings retorna auto_skip_authorized=true", onJson.auto_skip_authorized === true);
 
   await browser.close();
 
