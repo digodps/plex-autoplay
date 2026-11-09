@@ -1,15 +1,56 @@
 using Microsoft.AspNetCore.Mvc;
+using PlexAutoplay.Application.UseCases;
 using PlexAutoplay.Domain.Ports;
 
 namespace PlexAutoplay.Web.Endpoints;
 
 /// <summary>
-/// Endpoints de acompanhamento de jobs de varredura: status, log em streaming (SSE) e cancelamento.
+/// Endpoints de sincronização e acompanhamento de jobs: execução forçada,
+/// status, log em streaming (SSE) e cancelamento.
 /// </summary>
 public static class SyncEndpoints
 {
     public static void MapSyncEndpoints(this IEndpointRouteBuilder app)
     {
+        app.MapPost("/api/sync/run", (
+            [FromServices] IScanJobStore scanJobs,
+            [FromServices] SynchronizationOrchestrator orchestrator,
+            [FromServices] ILoggerFactory loggerFactory) =>
+        {
+            var jobId = Guid.NewGuid().ToString();
+            scanJobs.Add(new ScanJob { JobId = jobId, Status = "queued" });
+
+            _ = Task.Run(async () =>
+            {
+                var logger = loggerFactory.CreateLogger("SynchronizationRun");
+                var job = scanJobs.Get(jobId)!;
+                job.Status = "running";
+                job.UpdatedAt = DateTime.UtcNow;
+
+                try
+                {
+                    var result = await orchestrator.RunAsync(jobId, CancellationToken.None);
+                    job.Status = result.Success ? "completed" : "failed";
+                    job.Processed = result.Stage2Processed;
+                    job.Skipped = result.Stage2Skipped;
+                    job.Errors = result.Stage2Errors;
+                    job.ErrorMessage = result.ErrorMessage;
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(ex, "Falha ao executar sincronização forçada");
+                    job.Status = "failed";
+                    job.ErrorMessage = ex.Message;
+                }
+                finally
+                {
+                    job.UpdatedAt = DateTime.UtcNow;
+                }
+            });
+
+            return Results.Ok(new { job_id = jobId });
+        });
+
         app.MapGet("/api/sync/status/{jobId}", (string jobId, [FromServices] IScanJobStore scanJobs) =>
         {
             var job = scanJobs.Get(jobId);
