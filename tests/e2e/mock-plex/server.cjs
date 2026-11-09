@@ -165,6 +165,19 @@ const server = http.createServer((req, res) => {
     return;
   }
 
+  // Sessões ativas (usado pelo autoskip). Retorna um episódio playing se
+  // a sessão estiver criada via POST /mock/session/play, senão vazio.
+  if (path === "/status/sessions" && req.method === "GET") {
+    const playing = mockPlayingSession();
+    res.writeHead(200, { "Content-Type": "application/xml" });
+    res.end(
+      `<?xml version="1.0" encoding="UTF-8"?>\n<MediaContainer size="${playing ? 1 : 0}">${
+        playing ?? ""
+      }</MediaContainer>`,
+    );
+    return;
+  }
+
   res.writeHead(404, { "Content-Type": "text/plain" });
   res.end("Not found");
 });
