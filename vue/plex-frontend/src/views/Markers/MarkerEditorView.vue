@@ -75,8 +75,8 @@ const seasons = computed(() => {
             </h2>
 
             <div class="divide-y divide-gray-200 dark:divide-gray-600">
-              <article v-for="ep in list" :key="ep.rating_key" class="flex items-start gap-4 px-6 py-4">
-                <div class="aspect-video w-48 shrink-0 overflow-hidden rounded-lg bg-gray-100 dark:bg-gray-700">
+              <article v-for="ep in list" :key="ep.rating_key" class="flex flex-col items-stretch gap-4 px-6 py-4 sm:flex-row sm:items-start">
+                <div class="aspect-video w-full shrink-0 overflow-hidden rounded-lg bg-gray-100 dark:bg-gray-700 sm:w-48">
                   <img
                     v-if="ep.thumb"
                     :src="ep.thumb"
