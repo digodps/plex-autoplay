@@ -105,9 +105,9 @@ public sealed class SqliteScanJobRepository : IScanJobRepository
     {
         JobId = row.JobId,
         Status = row.Status,
-        Processed = row.Processed,
-        Skipped = row.Skipped,
-        Errors = row.Errors,
+        Processed = (int)(long)row.Processed,
+        Skipped = (int)(long)row.Skipped,
+        Errors = (int)(long)row.Errors,
         ErrorMessage = row.ErrorMessage,
         CreatedAt = DateTime.Parse(row.CreatedAt),
         UpdatedAt = DateTime.Parse(row.UpdatedAt)
