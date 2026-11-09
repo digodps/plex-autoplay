@@ -10,6 +10,7 @@ const menuGroups = [
       { name: "Bibliotecas", to: "libraries", icon: "library" },
       { name: "Séries", to: "libraries", icon: "tv" },
       { name: "Sincronizar", to: "sync", icon: "sync" },
+      { name: "Logs", to: "logs", icon: "terminal" },
       { name: "Ajustes", to: "settings", icon: "settings" },
     ],
   },

@@ -47,6 +47,12 @@ const routes = [
     meta: { title: "Sincronizar" },
   },
   {
+    path: "/logs",
+    name: "logs",
+    component: () => import("../views/Logs/LogsView.vue"),
+    meta: { title: "Logs de processamento" },
+  },
+  {
     path: "/settings",
     name: "settings",
     component: () => import("../views/Pages/SettingsView.vue"),

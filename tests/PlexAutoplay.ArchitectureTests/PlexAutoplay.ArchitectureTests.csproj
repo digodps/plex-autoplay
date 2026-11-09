@@ -20,6 +20,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Include="..\unit\*.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\..\src\PlexAutoplay.Domain\PlexAutoplay.Domain.csproj" />
     <ProjectReference Include="..\..\src\PlexAutoplay.Application\PlexAutoplay.Application.csproj" />
     <ProjectReference Include="..\..\src\PlexAutoplay.Infrastructure\PlexAutoplay.Infrastructure.csproj" />
