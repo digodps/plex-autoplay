@@ -1,5 +1,5 @@
 import { defineStore } from "pinia";
-import { ref } from "vue";
+import { ref, computed } from "vue";
 import { apiFetch } from "../api";
 
 const MODES = ["light", "dark", "system"];
@@ -13,12 +13,13 @@ function resolveTheme(mode) {
 
 export const useThemeStore = defineStore("theme", () => {
   const mode = ref(localStorage.getItem(STORAGE_KEY) || "system");
+  const effective = computed(() => resolveTheme(mode.value));
 
   function applyTheme() {
-    const effective = resolveTheme(mode.value);
-    document.documentElement.dataset.theme = effective;
-    document.documentElement.classList.toggle("dark", effective === "dark");
-    document.documentElement.style.colorScheme = effective;
+    const resolved = effective.value;
+    document.documentElement.dataset.theme = resolved;
+    document.documentElement.classList.toggle("dark", resolved === "dark");
+    document.documentElement.style.colorScheme = resolved;
   }
 
   function setMode(next) {
@@ -29,8 +30,8 @@ export const useThemeStore = defineStore("theme", () => {
     saveTheme().catch((e) => console.warn("Theme save error:", e));
   }
 
-  function toggle() {
-    mode.value === "dark" ? enterLight() : enterDark();
+  function cycleMode() {
+    setMode(MODES[(MODES.indexOf(mode.value) + 1) % MODES.length]);
   }
 
   function enterDark() {
@@ -78,11 +79,12 @@ export const useThemeStore = defineStore("theme", () => {
 
   return {
     mode,
+    effective,
     applyTheme,
     loadTheme,
     saveTheme,
     setMode,
-    toggle,
+    cycleMode,
     enterDark,
     enterLight,
   };
