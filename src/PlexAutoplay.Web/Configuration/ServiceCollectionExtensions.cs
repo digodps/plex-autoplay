@@ -26,13 +26,6 @@ public static class ServiceCollectionExtensions
         services.AddOpenApi();
         services.AddOpenTelemetryTelemetry(builder.Configuration);
 
-        // Sincronização unificada: catálogo → marcadores (background + orquestrador)
-        services.AddSingleton<CatalogSyncUseCase>();
-        services.AddSingleton<EpisodeMarkerSyncUseCase>();
-        services.AddSingleton<SynchronizationOrchestrator>();
-        services.AddHostedService<SynchronizationBackgroundService>();
-        services.AddHostedService<PlexAutoSkipBackgroundService>();
-
         // In-memory cache and the generic cache port (pluggable backend)
         services.AddMemoryCache();
         services.AddSingleton<ICacheService, ImageCacheService>();
