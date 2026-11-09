@@ -42,7 +42,7 @@ function onGroupingChange(event) {
           type="search"
           placeholder="Filtrar mensagens..."
           data-testid="log-filter-text"
-          class="w-full h-10 rounded-md border border-gray-300 bg-gray-50 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
+          class="log-filter-input w-full max-w-full h-10 box-border rounded-md border border-gray-300 bg-gray-50 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
           @input="onTextInput"
         />
       </label>
@@ -51,7 +51,7 @@ function onGroupingChange(event) {
         <select
           :value="logsStore.filters.level"
           data-testid="log-filter-level"
-          class="w-full h-10 rounded-md border border-gray-300 bg-gray-50 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
+          class="log-filter-input w-full max-w-full h-10 box-border appearance-none rounded-md border border-gray-300 bg-gray-50 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
           @change="onLevelChange"
         >
           <option value="">Todos</option>
@@ -63,7 +63,7 @@ function onGroupingChange(event) {
         <input
           v-model="fromInput"
           type="date"
-          class="w-full h-10 rounded-md border border-gray-300 bg-gray-50 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
+          class="log-filter-input w-full max-w-full h-10 box-border appearance-none rounded-md border border-gray-300 bg-gray-50 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
           @change="onDateChange"
         />
       </label>
@@ -72,7 +72,7 @@ function onGroupingChange(event) {
         <input
           v-model="toInput"
           type="date"
-          class="w-full h-10 rounded-md border border-gray-300 bg-gray-50 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
+          class="log-filter-input w-full max-w-full h-10 box-border appearance-none rounded-md border border-gray-300 bg-gray-50 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
           @change="onDateChange"
         />
       </label>
@@ -97,3 +97,20 @@ function onGroupingChange(event) {
     </div>
   </div>
 </template>
+
+<style scoped>
+/* Normaliza inputs de data e selects no iOS/Safari, que renderizam com altura/largura nativas diferentes */
+.log-filter-input {
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box;
+  -webkit-appearance: none;
+  appearance: none;
+}
+.log-filter-input::-webkit-datetime-edit,
+.log-filter-input::-webkit-date-and-time-value {
+  width: 100% !important;
+  min-width: 100%;
+  text-align: left;
+}
+</style>
