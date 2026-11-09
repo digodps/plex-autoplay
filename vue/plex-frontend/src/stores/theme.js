@@ -12,7 +12,7 @@ function resolveTheme(mode) {
 }
 
 export const useThemeStore = defineStore("theme", () => {
-  const mode = ref(localStorage.getItem(STORAGE_KEY) || "system");
+  const mode = ref(localStorage.getItem(STORAGE_KEY) || "light");
   const effective = computed(() => resolveTheme(mode.value));
 
   function applyTheme() {
@@ -40,12 +40,6 @@ export const useThemeStore = defineStore("theme", () => {
 
   function enterLight() {
     setMode("light");
-  }
-
-  function cycleMode() {
-    const idx = MODES.indexOf(mode.value);
-    const next = MODES[(idx + 1) % MODES.length];
-    setMode(next);
   }
 
   async function loadTheme() {
@@ -93,6 +87,5 @@ export const useThemeStore = defineStore("theme", () => {
     cycleMode,
     enterDark,
     enterLight,
-    cycleMode,
   };
 });
