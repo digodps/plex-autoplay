@@ -84,3 +84,30 @@ body {
 .bg-primary {
   color: var(--accent-contrast);
 }
+
+@layer components {
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:opacity-60 disabled:cursor-not-allowed;
+    @apply dark:focus-visible:ring-offset-gray-900;
+  }
+
+  .btn-md {
+    @apply px-4 py-2 min-h-10;
+  }
+
+  .btn-primary {
+    @apply bg-primary text-white hover:bg-opacity-90;
+  }
+
+  .btn-secondary {
+    @apply border border-stroke bg-white text-gray-600 dark:border-gray-700 dark:bg-boxdark dark:text-bodydark hover:bg-opacity-90;
+  }
+
+  .btn-danger {
+    @apply border border-meta-1/40 text-meta-1 hover:bg-meta-1/10;
+  }
+
+  .btn-warning {
+    @apply border border-meta-6/40 text-meta-6 hover:bg-meta-6/10;
+  }
+}
