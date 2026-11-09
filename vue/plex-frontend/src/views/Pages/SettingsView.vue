@@ -9,9 +9,11 @@ const form = reactive({
   media_roots: [],
   sync_interval_minutes: 5,
   sync_catalog_interval_minutes: 30,
+  auto_skip_authorized: false,
 });
 const plexToken = ref("");
 const plexTokenSet = ref(false);
+const showAuthModal = ref(false);
 const loading = ref(false);
 const saving = ref(false);
 const message = ref("");
@@ -23,6 +25,7 @@ function applySettings(data) {
   form.media_roots = data.media_roots ?? [];
   form.sync_interval_minutes = data.sync_interval_minutes ?? 5;
   form.sync_catalog_interval_minutes = data.sync_catalog_interval_minutes ?? 30;
+  form.auto_skip_authorized = data.auto_skip_authorized ?? false;
   plexTokenSet.value = Boolean(data.plex_token_set);
   plexToken.value = "";
 }
@@ -52,6 +55,7 @@ async function saveSettings() {
       media_roots: form.media_roots,
       sync_interval_minutes: Number(form.sync_interval_minutes),
       sync_catalog_interval_minutes: Number(form.sync_catalog_interval_minutes),
+      auto_skip_authorized: form.auto_skip_authorized,
     };
     if (plexToken.value) payload.plex_token = plexToken.value;
 
@@ -77,6 +81,24 @@ async function saveSettings() {
   } finally {
     saving.value = false;
   }
+}
+
+async function toggleAutoSkip() {
+  if (form.auto_skip_authorized) return; // already true, proceed
+  // trying to turn ON → show confirmation modal Netflix-style
+  showAuthModal.value = true;
+  // revert checkbox; user must confirm
+  form.auto_skip_authorized = false;
+}
+
+function confirmAutoSkip() {
+  showAuthModal.value = false;
+  form.auto_skip_authorized = true;
+  saveSettings();
+}
+
+function cancelAutoSkip() {
+  showAuthModal.value = false;
 }
 
 onMounted(loadSettings);
@@ -133,6 +155,22 @@ onMounted(loadSettings);
             </div>
 
             <div class="rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 p-4 space-y-3">
+              <label class="flex items-center gap-3 cursor-pointer">
+                <input
+                  id="auto-skip-authorized"
+                  type="checkbox"
+                  :checked="form.auto_skip_authorized"
+                  @change="toggleAutoSkip"
+                  class="w-5 h-5 text-primary border-gray-300 rounded focus:ring-primary"
+                />
+                <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Autorizar skip automático</span>
+              </label>
+              <p class="text-xs text-gray-500 dark:text-gray-400 ml-8">
+                Quando habilitado, o Plex pulará introduções e créditos automaticamente. Requer confirmação.
+              </p>
+            </div>
+
+            <div class="rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 p-4 space-y-3">
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300" for="plex-url">
                 URL do Plex
               </label>
@@ -167,6 +205,22 @@ onMounted(loadSettings);
               <MediaRootsField v-model="form.media_roots" />
             </div>
 
+            <div class="rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 p-4 space-y-3">
+              <label class="flex items-center gap-3 cursor-pointer">
+                <input
+                  id="auto-skip-authorized"
+                  type="checkbox"
+                  :checked="form.auto_skip_authorized"
+                  @change="toggleAutoSkip"
+                  class="w-5 h-5 text-primary border-gray-300 rounded focus:ring-primary"
+                />
+                <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Autorizar skip automático</span>
+              </label>
+              <p class="text-xs text-gray-500 dark:text-gray-400 ml-8">
+                Quando habilitado, o Plex pulará introduções e créditos automaticamente.
+              </p>
+            </div>
+
             <p v-if="message" class="text-sm text-green-600 dark:text-green-400">{{ message }}</p>
             <p v-if="error" class="text-sm text-red-600 dark:text-red-400">{{ error }}</p>
             <ul v-if="errors.length" class="space-y-1 text-sm text-red-600 dark:text-red-400">
@@ -195,4 +249,38 @@ onMounted(loadSettings);
       </div>
     </div>
   </DefaultLayout>
+
+  <!-- Modal estilo Netflix para autorização auto-skip -->
+  <Teleport to="body">
+    <Transition name="fade">
+      <div v-if="showAuthModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" @click.self="cancelAutoSkip">
+        <div class="bg-white dark:bg-gray-800 rounded-xl p-6 max-w-md w-full shadow-2xl animate-in slide-in-from-top-4 duration-200">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="w-12 h-12 bg-orange-100 dark:bg-orange-900/30 rounded-full flex items-center justify-center">
+              <svg class="w-6 h-6 text-orange-600 dark:text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            </div>
+            <h2 class="text-xl font-semibold text-gray-900 dark:text-gray-100">Autorizar skip automático?</h2>
+          </div>
+          <p class="text-gray-600 dark:text-gray-300 mb-6">
+            Ao autorizar, o sistema <strong>pulará automaticamente introduções e créditos</strong> 
+            durante a reprodução, sem pedir confirmação a cada episódio.
+          </p>
+          <div class="flex gap-3 justify-end">
+            <button 
+              @click="cancelAutoSkip"
+              class="px-4 py-2 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg font-medium transition-colors"
+            >
+              Cancelar
+            </button>
+            <button 
+              @click="confirmAutoSkip"
+              class="px-4 py-2 bg-orange-500 text-white hover:bg-orange-600 rounded-lg font-medium transition-colors"
+            >
+              Autorizar
+            </button>
+          </div>
+        </div>
+      </div>
+    </Transition>
+  </Teleport>
 </template>
