@@ -59,33 +59,31 @@ async function removeMarker() {
     </span>
 
     <template v-if="editing">
-      <div class="flex flex-1 flex-wrap gap-3">
-        <label class="flex flex-col gap-1 text-[11px] text-body dark:text-bodydark">
-          Início (ms)
-          <input
-            v-model="editing.startMs"
-            class="w-32 rounded border border-stroke bg-transparent px-2 py-1 text-sm text-black outline-none focus:border-primary dark:border-form-strokedark dark:bg-form-input dark:text-white"
-            type="number"
-            min="0"
-            step="10"
-            data-testid="marker-start"
-          />
-        </label>
-        <label class="flex flex-col gap-1 text-[11px] text-body dark:text-bodydark">
-          Fim (ms)
-          <input
-            v-model="editing.endMs"
-            class="w-32 rounded border border-stroke bg-transparent px-2 py-1 text-sm text-black outline-none focus:border-primary dark:border-form-strokedark dark:bg-form-input dark:text-white"
-            type="number"
-            min="0"
-            step="10"
-            data-testid="marker-end"
-          />
-        </label>
-      </div>
-      <div class="ml-auto flex gap-2">
+      <div class="flex flex-1 flex-wrap items-center gap-2">
+        <label class="sr-only" for="marker-start">Início (ms)</label>
+        <input
+          id="marker-start"
+          v-model="editing.startMs"
+          class="w-24 min-h-[44px] min-w-[44px] rounded border border-stroke bg-transparent px-2 py-1.5 text-sm text-black outline-none focus:border-primary dark:border-form-strokedark dark:bg-form-input dark:text-white"
+          type="number"
+          min="0"
+          step="10"
+          aria-label="Início (ms)"
+          data-testid="marker-start"
+        />
+        <label class="sr-only" for="marker-end">Fim (ms)</label>
+        <input
+          id="marker-end"
+          v-model="editing.endMs"
+          class="w-24 min-h-[44px] min-w-[44px] rounded border border-stroke bg-transparent px-2 py-1.5 text-sm text-black outline-none focus:border-primary dark:border-form-strokedark dark:bg-form-input dark:text-white"
+          type="number"
+          min="0"
+          step="10"
+          aria-label="Fim (ms)"
+          data-testid="marker-end"
+        />
         <button
-          class="inline-flex items-center gap-1 rounded bg-primary px-3 py-1.5 text-xs font-medium text-white transition hover:bg-opacity-90 disabled:opacity-60"
+          class="inline-flex items-center gap-1 min-h-[44px] min-w-[44px] rounded bg-primary px-3 py-1.5 text-xs font-medium text-white transition hover:bg-opacity-90 disabled:opacity-60"
           :disabled="isSaving"
           data-testid="marker-save"
           @click="saveEdit"
@@ -94,7 +92,7 @@ async function removeMarker() {
           Salvar
         </button>
         <button
-          class="rounded border border-stroke px-3 py-1.5 text-xs font-medium text-body transition hover:border-primary hover:text-primary dark:border-strokedark dark:text-bodydark"
+          class="min-h-[44px] min-w-[44px] rounded border border-stroke px-3 py-1.5 text-xs font-medium text-body transition hover:border-primary hover:text-primary dark:border-strokedark dark:text-bodydark"
           @click="cancelEdit"
         >
           Descartar
