@@ -33,7 +33,7 @@ const formatLogTimestamp = (date) =>
   date.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
 
 async function startScan() {
-  const response = await apiFetch("/api/plex/scan", { method: "POST" });
+  const response = await apiFetch("/api/sync/run", { method: "POST" });
   if (response.ok) {
     const data = await response.json();
     currentJobId.value = data.job_id;

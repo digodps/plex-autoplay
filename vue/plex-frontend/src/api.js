@@ -109,3 +109,7 @@ export async function fetchMarkers() {
   if (!res.ok) await throwHttpError(res, "Falha ao buscar marcadores");
   return res.json();
 }
+
+export async function syncRun() {
+  return apiFetch("/api/sync/run", { method: "POST" });
+}

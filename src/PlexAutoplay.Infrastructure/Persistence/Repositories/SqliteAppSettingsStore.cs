@@ -35,7 +35,6 @@ public sealed class SqliteAppSettingsStore : IAppSettingsStore
             Get(values, AppSettingKeys.PlexToken, defaults.PlexToken),
             mediaRoots,
             GetInt(values, AppSettingKeys.SyncIntervalMinutes, defaults.SyncIntervalMinutes),
-            GetInt(values, AppSettingKeys.SyncCatalogIntervalMinutes, defaults.SyncCatalogIntervalMinutes),
             GetBool(values, AppSettingKeys.AutoSkipAuthorized, defaults.AutoSkipAuthorized));
     }
 
@@ -51,7 +50,6 @@ public sealed class SqliteAppSettingsStore : IAppSettingsStore
             [AppSettingKeys.PlexToken] = settings.PlexToken,
             [AppSettingKeys.MediaRoots] = MediaRoots.Serialize(settings.MediaRoots),
             [AppSettingKeys.SyncIntervalMinutes] = settings.SyncIntervalMinutes.ToString(),
-            [AppSettingKeys.SyncCatalogIntervalMinutes] = settings.SyncCatalogIntervalMinutes.ToString(),
             [AppSettingKeys.AutoSkipAuthorized] = settings.AutoSkipAuthorized.ToString().ToLowerInvariant()
         };
 
@@ -107,7 +105,6 @@ public static class AppSettingsSeeder
                     AppSettingKeys.PlexToken => AppSettingDefaults.PlexToken,
                     AppSettingKeys.MediaRoots => MediaRoots.Serialize(MediaRootsFromEnvironment()),
                     AppSettingKeys.SyncIntervalMinutes => AppSettingDefaults.SyncIntervalMinutes.ToString(),
-                    AppSettingKeys.SyncCatalogIntervalMinutes => AppSettingDefaults.SyncCatalogIntervalMinutes.ToString(),
                     AppSettingKeys.AutoSkipAuthorized => AppSettingDefaults.AutoSkipAuthorized.ToString().ToLowerInvariant(),
                     _ => ""
                 };

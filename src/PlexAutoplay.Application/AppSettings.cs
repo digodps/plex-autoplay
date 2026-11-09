@@ -1,6 +1,8 @@
+using System.Collections.Generic;
+
 namespace PlexAutoplay.Application;
 
-/// <summary>Chaves persistidas na tabela AppSetting.</summary>
+/// <summary>Chaves das configurações operacionais salvas no SQLite.</summary>
 public static class AppSettingKeys
 {
     public const string PlexUrl = "PLEX_URL";
@@ -11,7 +13,6 @@ public static class AppSettingKeys
 
     public const string MediaRoots = "MEDIA_ROOTS";
     public const string SyncIntervalMinutes = "SYNC_INTERVAL_MINUTES";
-    public const string SyncCatalogIntervalMinutes = "SYNC_CATALOG_INTERVAL_MINUTES";
     public const string AutoSkipAuthorized = "AUTO_SKIP_AUTHORIZED";
 
     public static readonly string[] All =
@@ -20,7 +21,6 @@ public static class AppSettingKeys
         PlexToken,
         MediaRoots,
         SyncIntervalMinutes,
-        SyncCatalogIntervalMinutes,
         AutoSkipAuthorized
     ];
 }
@@ -32,7 +32,6 @@ public static class AppSettingDefaults
     public const string PlexToken = "";
     public const string MediaRoot = "/media";
     public const int SyncIntervalMinutes = 5;
-    public const int SyncCatalogIntervalMinutes = 30;
     public const bool AutoSkipAuthorized = false;
 
     public static IReadOnlyList<string> MediaRoots => [MediaRoot];
@@ -44,7 +43,6 @@ public sealed record AppSettingsSnapshot(
     string PlexToken,
     IReadOnlyList<string> MediaRoots,
     int SyncIntervalMinutes,
-    int SyncCatalogIntervalMinutes,
     bool AutoSkipAuthorized = AppSettingDefaults.AutoSkipAuthorized)
 {
     public bool PlexTokenSet => !string.IsNullOrEmpty(PlexToken);
@@ -54,7 +52,6 @@ public sealed record AppSettingsSnapshot(
         AppSettingDefaults.PlexToken,
         AppSettingDefaults.MediaRoots,
         AppSettingDefaults.SyncIntervalMinutes,
-        AppSettingDefaults.SyncCatalogIntervalMinutes,
         AppSettingDefaults.AutoSkipAuthorized);
 }
 

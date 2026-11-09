@@ -1,92 +1,49 @@
-namespace PlexAutoplay.Infrastructure.Sync;
-
-using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using PlexAutoplay.Application;
 using PlexAutoplay.Domain.Entities;
 using PlexAutoplay.Domain.Ports;
-using System.Diagnostics.Metrics;
-using System.Threading;
-using System.Threading.Tasks;
 
-/// <summary>Serviço em segundo plano para sincronização incremental do catálogo do Plex (bibliotecas e séries).</summary>
-public class CatalogSyncBackgroundService : BackgroundService
+namespace PlexAutoplay.Application.UseCases;
+
+/// <summary>
+/// Etapa 1: sincronização do catálogo (bibliotecas e séries do Plex → banco).
+/// </summary>
+public sealed class CatalogSyncUseCase
 {
-    private readonly ILogger<CatalogSyncBackgroundService> _logger;
     private readonly IPlexApiClient _plexClient;
     private readonly ILibraryRepository _libraryRepository;
     private readonly ISeriesRepository _seriesRepository;
-    private readonly IAppSettingsStore _settings;
-    private static readonly Meter SyncMeter = new("PlexAutoplay.CatalogSync");
-    private static readonly Counter<int> SyncCounter = SyncMeter.CreateCounter<int>("plex_catalog_sync_total");
-    private static readonly Histogram<double> SyncDurationHistogram = SyncMeter.CreateHistogram<double>("plex_catalog_sync_duration_ms");
+    private readonly ILogger<CatalogSyncUseCase> _logger;
 
-    public CatalogSyncBackgroundService(
-        ILogger<CatalogSyncBackgroundService> logger,
+    public CatalogSyncUseCase(
         IPlexApiClient plexClient,
         ILibraryRepository libraryRepository,
         ISeriesRepository seriesRepository,
-        IAppSettingsStore settings)
+        ILogger<CatalogSyncUseCase> logger)
     {
-        _logger = logger;
         _plexClient = plexClient;
         _libraryRepository = libraryRepository;
         _seriesRepository = seriesRepository;
-        _settings = settings;
+        _logger = logger;
     }
 
-    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
-    {
-        var initial = await _settings.GetAsync();
-        _logger.LogInformation("Catalog sync service starting with {IntervalMinutes} minute interval", initial.SyncCatalogIntervalMinutes);
-
-        // Initial delay before first sync
-        await Task.Delay(TimeSpan.FromMinutes(initial.SyncCatalogIntervalMinutes), stoppingToken);
-
-        while (!stoppingToken.IsCancellationRequested)
-        {
-            _logger.LogInformation("Starting scheduled catalog sync");
-            var syncStart = DateTime.UtcNow;
-            try
-            {
-                await RunSyncAsync(stoppingToken);
-                SyncCounter.Add(1, new KeyValuePair<string, object?>("status", "success"));
-            }
-            catch (OperationCanceledException)
-            {
-                break;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Catalog sync failed");
-                SyncCounter.Add(1, new KeyValuePair<string, object?>("status", "error"));
-            }
-            finally
-            {
-                var syncDurationMs = (DateTime.UtcNow - syncStart).TotalMilliseconds;
-                SyncDurationHistogram.Record(syncDurationMs);
-            }
-
-            var settings = await _settings.GetAsync();
-            await Task.Delay(TimeSpan.FromMinutes(settings.SyncCatalogIntervalMinutes), stoppingToken);
-        }
-
-        _logger.LogInformation("Catalog sync service stopping");
-    }
-
-    private async Task RunSyncAsync(CancellationToken stoppingToken)
+    /// <summary>
+    /// Executa upsert de bibliotecas e séries; hard delete do que sumiu no Plex.
+    /// </summary>
+    /// <returns>Contagens: inserted/updated/removed bibliotecas e séries.</returns>
+    public async Task<CatalogSyncResult> RunAsync(CancellationToken ct)
     {
         var librariesResult = await _plexClient.GetLibrariesAsync();
         if (librariesResult.Failed)
         {
-            _logger.LogWarning("Failed to fetch libraries from Plex: {ErrorMessage}", librariesResult.ErrorMessage);
-            return;
+            _logger.LogWarning("Falha ao buscar bibliotecas do Plex: {ErrorMessage}", librariesResult.ErrorMessage);
+            return CatalogSyncResult.Fail(librariesResult.ErrorMessage ?? "Falha ao buscar bibliotecas do Plex");
         }
 
         var seriesLibraries = librariesResult.Libraries.Where(l => l.Type == "show").ToList();
-        _logger.LogInformation("Found {Count} series libraries in Plex", seriesLibraries.Count);
+        _logger.LogInformation("Encontradas {Count} bibliotecas de séries no Plex", seriesLibraries.Count);
 
-        // Step 1: Sync libraries - upsert and remove orphans
+        // Bibliotecas
         var plexLibraryKeys = new HashSet<string>(seriesLibraries.Select(l => l.Key));
         var localLibraries = await _libraryRepository.GetAllAsync();
         var localLibraryKeys = new HashSet<string>(localLibraries.Select(l => l.RatingKey));
@@ -95,10 +52,9 @@ public class CatalogSyncBackgroundService : BackgroundService
         int librariesUpdated = 0;
         int librariesRemoved = 0;
 
-        // Upsert libraries from Plex
         foreach (var plexLib in seriesLibraries)
         {
-            stoppingToken.ThrowIfCancellationRequested();
+            ct.ThrowIfCancellationRequested();
             var existing = await _libraryRepository.GetByRatingKeyAsync(plexLib.Key);
             if (existing == null)
             {
@@ -124,28 +80,27 @@ public class CatalogSyncBackgroundService : BackgroundService
             }
         }
 
-        // Remove libraries not in Plex anymore
         var orphanLibraries = localLibraryKeys.Except(plexLibraryKeys).ToList();
         foreach (var orphanKey in orphanLibraries)
         {
-            stoppingToken.ThrowIfCancellationRequested();
+            ct.ThrowIfCancellationRequested();
             await _libraryRepository.DeleteAsync(orphanKey);
             librariesRemoved++;
         }
 
-        // Step 2: Sync series for each library
+        // Séries
         int seriesInserted = 0;
         int seriesUpdated = 0;
         int seriesRemoved = 0;
 
         foreach (var lib in seriesLibraries)
         {
-            stoppingToken.ThrowIfCancellationRequested();
+            ct.ThrowIfCancellationRequested();
 
             var seriesResult = await _plexClient.GetSeriesAsync(lib.Key, 0, int.MaxValue);
             if (seriesResult.Failed)
             {
-                _logger.LogWarning("Failed to fetch series for library {LibKey}", lib.Key);
+                _logger.LogWarning("Falha ao buscar séries para a biblioteca {LibKey}", lib.Key);
                 continue;
             }
 
@@ -153,10 +108,9 @@ public class CatalogSyncBackgroundService : BackgroundService
             var (localSeries, _) = await _seriesRepository.GetByLibraryAsync(lib.Key, 0, int.MaxValue, null);
             var localSeriesKeys = new HashSet<string>(localSeries.Select(s => s.RatingKey));
 
-            // Upsert series from Plex
             foreach (var plexSeries in seriesResult.Items)
             {
-                stoppingToken.ThrowIfCancellationRequested();
+                ct.ThrowIfCancellationRequested();
                 var existing = await _seriesRepository.GetByRatingKeyAsync(plexSeries.RatingKey);
                 if (existing == null)
                 {
@@ -184,19 +138,40 @@ public class CatalogSyncBackgroundService : BackgroundService
                 }
             }
 
-            // Remove series not in Plex anymore for this library
             var orphanSeries = localSeriesKeys.Except(plexSeriesKeys).ToList();
             foreach (var orphanKey in orphanSeries)
             {
-                stoppingToken.ThrowIfCancellationRequested();
+                ct.ThrowIfCancellationRequested();
                 await _seriesRepository.DeleteAsync(orphanKey);
                 seriesRemoved++;
             }
         }
 
         _logger.LogInformation(
-            "Catalog sync completed: libraries {Inserted} inserted, {Updated} updated, {Removed} removed; series {SeriesInserted} inserted, {SeriesUpdated} updated, {SeriesRemoved} removed",
+            "Sincronização de catálogo concluída: bibliotecas {Ins} inseridas, {Upd} atualizadas, {Rem} removidas; séries {SIns} inseridas, {SUpd} atualizadas, {SRem} removidas",
+            librariesInserted, librariesUpdated, librariesRemoved,
+            seriesInserted, seriesUpdated, seriesRemoved);
+
+        return CatalogSyncResult.Ok(
             librariesInserted, librariesUpdated, librariesRemoved,
             seriesInserted, seriesUpdated, seriesRemoved);
     }
+}
+
+/// <summary>Resultado da etapa 1 (catálogo).</summary>
+public sealed record CatalogSyncResult(
+    bool Success,
+    int LibrariesInserted,
+    int LibrariesUpdated,
+    int LibrariesRemoved,
+    int SeriesInserted,
+    int SeriesUpdated,
+    int SeriesRemoved,
+    string? ErrorMessage)
+{
+    public static CatalogSyncResult Ok(int li, int lu, int lr, int si, int su, int sr) =>
+        new(true, li, lu, lr, si, su, sr, null);
+
+    public static CatalogSyncResult Fail(string error) =>
+        new(false, 0, 0, 0, 0, 0, 0, error);
 }
