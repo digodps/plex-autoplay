@@ -1,7 +1,6 @@
 <script setup>
 import { ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
-import DefaultLayout from "@/components/layouts/DefaultLayout.vue";
 import AppIcon from "@/components/AppIcon.vue";
 import { apiFetch } from "@/api";
 
@@ -36,7 +35,7 @@ function navigateToSeries(libraryKey, libraryTitle) {
 </script>
 
 <template>
-  <DefaultLayout>
+  <div class="page">
     <div class="bg-gray-50 dark:bg-gray-900 min-h-screen">
       <div class="border-b border-gray-200 dark:border-gray-800 sticky top-0 z-20 bg-gray-50 dark:bg-gray-900">
         <div class="max-w-2xl mx-auto px-4 py-3 flex items-center gap-2">
@@ -119,5 +118,5 @@ function navigateToSeries(libraryKey, libraryTitle) {
         </div>
       </div>
       </div>
-    </DefaultLayout>
+    </div>
   </template>
