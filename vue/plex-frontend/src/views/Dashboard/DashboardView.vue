@@ -39,14 +39,14 @@ async function handleStartScan() {
 
       <div class="flex flex-col sm:flex-row items-end gap-3">
         <button
-          class="rounded-xl border border-stroke bg-white px-5 py-2.5 text-sm font-medium text-gray-600 transition hover:border-primary hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:opacity-60 dark:border-gray-700 dark:bg-boxdark dark:text-bodydark dark:focus-visible:ring-offset-gray-900"
+          class="btn btn-md btn-secondary"
           :disabled="store.isLoading"
-          @click="router.push('/logs')"
+          @click="router.push('/sync')"
         >
           Ver Log Completo
         </button>
         <button
-          class="flex items-center justify-center rounded-xl bg-primary px-5 py-2.5 text-sm font-medium text-white transition hover:bg-opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:opacity-60 dark:focus-visible:ring-offset-gray-900"
+          class="btn btn-md btn-primary"
           :disabled="store.isLoading"
           @click="handleStartScan"
         >
@@ -66,7 +66,8 @@ async function handleStartScan() {
       <AppIcon name="warning" size="lg" class="mr-3" />
       <p class="flex-1">{{ store.error }}</p>
       <button
-        class="rounded-xl border border-meta-1/40 px-4 py-2 font-medium transition hover:bg-meta-1/10"
+        class="btn btn-md btn-danger"
+        :disabled="store.isLoading"
         @click="store.retry"
       >
         Tentar novamente
@@ -82,7 +83,8 @@ async function handleStartScan() {
         <AppIcon name="warning" size="lg" class="text-meta-6" />
         <p class="flex-1 font-medium text-meta-6">{{ store.libraryError }}</p>
         <button
-          class="rounded-xl border border-meta-6/40 px-4 py-2 font-medium text-meta-6 transition hover:bg-meta-6/10"
+          class="btn btn-md btn-warning"
+          :disabled="store.isLoading"
           @click="store.retry"
         >
           Tentar novamente

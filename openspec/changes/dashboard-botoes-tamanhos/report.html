@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="pt-BR"><head><meta charset="utf-8">
+<title>Relatório OpenSpec — dashboard-botoes-tamanhos</title>
+<style>
+body{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;margin:24px;line-height:1.5;color:#1f2937}
+h1{font-size:22px;margin-bottom:4px} h2{font-size:18px;margin-top:28px;border-bottom:1px solid #e5e7eb;padding-bottom:6px}
+h3{font-size:16px;margin-top:20px}
+.badge{font-size:11px;padding:2px 7px;border-radius:99px;color:#fff;font-weight:600}
+.badge.pass{background:#16a34a}.badge.fail{background:#dc2626}.badge.unk{background:#64748b}
+.summary{display:flex;gap:16px;margin:16px 0;border:1px solid #e5e7eb;border-radius:8px;padding:12px;background:#f9fafb}
+.summary div{flex:1}
+.summary .big{font-size:20px;font-weight:700;color:#111827}
+.tree{font-size:13px;line-height:1.6}
+.details>summary,details>summary{font-weight:600;cursor:pointer;list-style:none}
+details>summary::marker{content:"▸"}
+.file{margin-left:14px;padding:2px 0;border-left:2px solid #e5e7eb}
+.stat{color:#6b7280;font-size:11.5px}
+.tag{font-size:10px;padding:1px 5px;border-radius:3px;color:#fff;margin-left:6px}
+.emptydir{color:#9ca3af;font-style:italic;margin-left:14px}
+code{background:#f3f4f6;padding:1px 4px;border-radius:4px;font-size:0.9em}
+pre{background:#1f2937;color:#e5e7eb;padding:10px;border-radius:6px;overflow:auto}
+a{color:#2563eb;text-decoration:none} a:hover{text-decoration:underline}
+.meta{color:#6b7280;font-size:12.5px;margin-top:8px}
+</style></head>
+<body>
+<h1>Relatório OpenSpec — dashboard-botoes-tamanhos</h1>
+<div class="meta">Worktree: /home/hermes/plex-autoplay-dashboard-botoes-tamanhos &nbsp;|&nbsp; Base do diff: 16390c4db7e6aa1c9135ac169a58ce92d0f80607 &nbsp;|&nbsp; Relatório: <b>/home/hermes/plex-autoplay-dashboard-botoes-tamanhos/openspec/changes/dashboard-botoes-tamanhos/report.html</b></div>
+
+<div class="summary">
+ <div><span class="big">41</span> arquivos alterados</div>
+ <div><span class="big" style="color:#16a34a">+2214</span> linhas adicionadas</div>
+ <div><span class="big" style="color:#dc2626">-19</span> linhas removidas</div>
+ <div><span class="big">3</span> rodada(s) de QA</div>
+ <div><span class="big">0</span> evidência(s)</div>
+</div>
+
+<h2>🌳 Árvore de alterações (adicionado / modificado / removido)</h2>
+<div class="tree"><details class="dir"><summary>openspec/ <span class="stat">+2156 -0</span></summary>
+<details class="dir"><summary>changes/ <span class="stat">+2156 -0</span></summary>
+<details class="dir"><summary>dashboard-botoes-tamanhos/ <span class="stat">+2156 -0</span></summary>
+<div class="file" style="color:#16a34a">✅ <b>.openspec.yaml</b> <span class="stat">+2 -0</span> <span class="tag">A</span></div>
+<div class="file" style="color:#16a34a">✅ <b>deficiencias_resolvidas.md</b> <span class="stat">+55 -0</span> <span class="tag">A</span></div>
+<div class="file" style="color:#16a34a">✅ <b>design.md</b> <span class="stat">+29 -0</span> <span class="tag">A</span></div>
+<div class="file" style="color:#16a34a">✅ <b>proposal.md</b> <span class="stat">+33 -0</span> <span class="tag">A</span></div>
+<div class="file" style="color:#16a34a">✅ <b>qa-report-1.md</b> <span class="stat">+148 -0</span> <span class="tag">A</span></div>
+<div class="file" style="color:#16a34a">✅ <b>qa-report-2.md</b> <span class="stat">+194 -0</span> <span class="tag">A</span></div>
+<div class="file" style="color:#16a34a">✅ <b>qa-report-3.md</b> <span class="stat">+70 -0</span> <span class="tag">A</span></div>
+<div class="file" style="color:#16a34a">✅ <b>tasks.md</b> <span class="stat">+32 -0</span> <span class="tag">A</span></div>
+<details class="dir"><summary>qa-evidence/ <span class="stat">+1553 -0</span></summary>
+<div class="file" style="color:#16a34a">✅ <b>01-dashboard-loaded.png</b> <span class="stat">+321 -0</span> <span class="tag">A</span></div>
+<div class="file" style="color:#16a34a">✅ <b>02-theme-toggled.png</b> <span class="stat">+285 -0</span> <span class="tag">A</span></div>
+<div class="file" style="color:#16a34a">✅ <b>03-libraries.png</b> <span class="stat">+241 -0</span> <span class="tag">A</span></div>
+<div class="file" style="color:#16a34a">✅ <b>04-sync.png</b> <span class="stat">+227 -0</span> <span class="tag">A</span></div>
+<div class="file" style="color:#16a34a">✅ <b>05-dashboard-buttons.png</b> <span class="stat">+269 -0</span> <span class="tag">A</span></div>
+<div class="file" style="color:#16a34a">✅ <b>qa-dashboard.spec.ts</b> <span class="stat">+210 -0</span> <span class="tag">A</span></div>
+</details>
+<details class="dir"><summary>specs/ <span class="stat">+40 -0</span></summary>
+<details class="dir"><summary>dashboard/ <span class="stat">+40 -0</span></summary>
+<div class="file" style="color:#16a34a">✅ <b>spec.md</b> <span class="stat">+40 -0</span> <span class="tag">A</span></div>
+</details>
+</details>
+</details>
+</details>
+</details>
+<details class="dir"><summary>src/ <span class="stat">+15 -15</span></summary>
+<details class="dir"><summary>PlexAutoplay.Web/ <span class="stat">+15 -15</span></summary>
+<details class="dir"><summary>wwwroot/ <span class="stat">+15 -15</span></summary>
+<div class="file" style="color:#d97706">🛠️ <b>index.html</b> <span class="stat">+2 -2</span> <span class="tag">M</span></div>
+<details class="dir"><summary>assets/ <span class="stat">+13 -13</span></summary>
+<div class="file" style="color:#16a34a">✅ <b>DashboardView-CbpMqULU.js</b> <span class="stat">+1 -0</span> <span class="tag">A</span></div>
+<div class="file" style="color:#dc2626">❌ <b>DashboardView-Dv8t96Hb.js</b> <span class="stat">+0 -1</span> <span class="tag">D</span></div>
+<div class="file" style="color:#16a34a">✅ <b>DefaultLayout-CuIbPG_h.js</b> <span class="stat">+1 -0</span> <span class="tag">A</span></div>
+<div class="file" style="color:#dc2626">❌ <b>DefaultLayout-DN7T7Ee3.js</b> <span class="stat">+0 -1</span> <span class="tag">D</span></div>
+<div class="file" style="color:#16a34a">✅ <b>LibrariesView-D77WqdUc.js</b> <span class="stat">+1 -0</span> <span class="tag">A</span></div>
+<div class="file" style="color:#dc2626">❌ <b>LibrariesView-U8zfndEc.js</b> <span class="stat">+0 -1</span> <span class="tag">D</span></div>
+<div class="file" style="color:#16a34a">✅ <b>MarkerEditorView-HNq9V8a_.js</b> <span class="stat">+1 -0</span> <span class="tag">A</span></div>
+<div class="file" style="color:#dc2626">❌ <b>MarkerEditorView-oTGrbHiw.js</b> <span class="stat">+0 -1</span> <span class="tag">D</span></div>
+<div class="file" style="color:#dc2626">❌ <b>MediaRootsField-CJl3s74L.js</b> <span class="stat">+0 -1</span> <span class="tag">D</span></div>
+<div class="file" style="color:#16a34a">✅ <b>MediaRootsField-CkbEiTxh.js</b> <span class="stat">+1 -0</span> <span class="tag">A</span></div>
+<div class="file" style="color:#dc2626">❌ <b>SeriesView-6ph9-nWY.js</b> <span class="stat">+0 -1</span> <span class="tag">D</span></div>
+<div class="file" style="color:#16a34a">✅ <b>SeriesView-Cn_QNSgt.js</b> <span class="stat">+1 -0</span> <span class="tag">A</span></div>
+<div class="file" style="color:#16a34a">✅ <b>SettingsView-CdyLFp8L.js</b> <span class="stat">+1 -0</span> <span class="tag">A</span></div>
+<div class="file" style="color:#dc2626">❌ <b>SettingsView-DVVQ62NR.js</b> <span class="stat">+0 -1</span> <span class="tag">D</span></div>
+<div class="file" style="color:#dc2626">❌ <b>SetupView-B2ZvrQlc.js</b> <span class="stat">+0 -1</span> <span class="tag">D</span></div>
+<div class="file" style="color:#16a34a">✅ <b>SetupView-CJ0ge3lI.js</b> <span class="stat">+1 -0</span> <span class="tag">A</span></div>
+<div class="file" style="color:#dc2626">❌ <b>SyncView-C8lOKGMp.js</b> <span class="stat">+0 -1</span> <span class="tag">D</span></div>
+<div class="file" style="color:#16a34a">✅ <b>SyncView-DkASGC23.js</b> <span class="stat">+1 -0</span> <span class="tag">A</span></div>
+<div class="file" style="color:#dc2626">❌ <b>index-BaubdT6G.css</b> <span class="stat">+0 -1</span> <span class="tag">D</span></div>
+<div class="file" style="color:#dc2626">❌ <b>index-CEVfF8ua.js</b> <span class="stat">+0 -3</span> <span class="tag">D</span></div>
+<div class="file" style="color:#16a34a">✅ <b>index-CWFajzru.js</b> <span class="stat">+3 -0</span> <span class="tag">A</span></div>
+<div class="file" style="color:#16a34a">✅ <b>index-DpAOv7g_.css</b> <span class="stat">+1 -0</span> <span class="tag">A</span></div>
+</details>
+</details>
+</details>
+</details>
+<details class="dir"><summary>vue/ <span class="stat">+43 -4</span></summary>
+<details class="dir"><summary>plex-frontend/ <span class="stat">+43 -4</span></summary>
+<div class="file" style="color:#16a34a">✅ <b>playwright.config.ts</b> <span class="stat">+10 -0</span> <span class="tag">A</span></div>
+<details class="dir"><summary>src/ <span class="stat">+33 -4</span></summary>
+<details class="dir"><summary>styles/ <span class="stat">+27 -0</span></summary>
+<div class="file" style="color:#d97706">🛠️ <b>style.css</b> <span class="stat">+27 -0</span> <span class="tag">M</span></div>
+</details>
+<details class="dir"><summary>views/ <span class="stat">+6 -4</span></summary>
+<details class="dir"><summary>Dashboard/ <span class="stat">+6 -4</span></summary>
+<div class="file" style="color:#d97706">🛠️ <b>DashboardView.vue</b> <span class="stat">+6 -4</span> <span class="tag">M</span></div>
+</details>
+</details>
+</details>
+</details>
+</details></div>
+<p class="meta">Totais: A=27 M=3 D=11 R=0 &nbsp;•&nbsp; +2214 / -19</p>
+
+<h2>🧪 Relatórios QA e rodadas de correção</h2>
+<details><summary>📋 qa-report-1.md — <span class="badge unk">?</span></summary><h1>QA Report: Dashboard Button Size Standardization</h1>
+<p><strong>Change</strong>: <code>dashboard-botoes-tamanhos</code><br><strong>Date</strong>: 2026-11-09<br><strong>Test URL</strong>: http://localhost:8080 (Docker container <code>plex-autoplay</code>)<br><strong>Playwright Version</strong>: 1.65.0<br><strong>Evidence Directory</strong>: <code>openspec/changes/dashboard-botoes-tamanhos/qa-evidence/</code></p>
+<p>---</p>
+<h2>Overall Result: <strong>FAIL</strong></h2>
+<p>| Criterion | Status | Notes |<br>|-----------|--------|-------|<br>| 1. Theme Toggle (light/dark) | ❌ FAIL | Single click does not update <code>data-theme</code>/<code>.dark</code>; requires 2 clicks |<br>| 2. Menu Navigation | ✅ PASS | URLs change, breadcrumb active state works, return to dashboard works |<br>| 3. Button Size Standardization | ❌ FAIL | Running app uses old ad-hoc Tailwind classes; no <code>btn</code>/<code>btn-md</code> classes |<br>| Lint (<code>npm run lint</code>) | ✅ PASS | 0 errors, 8 warnings (vue/attributes-order) |<br>| Openspec Validate | ✅ PASS | <code>openspec validate dashboard-botoes-tamanhos --strict</code> passes |</p>
+<p>---</p>
+<h2>Detailed Findings</h2>
+<h3>1. Theme Toggle — FAIL</h3>
+<p><strong>URL</strong>: http://localhost:8080/dashboard</p>
+<p><strong>Expected</strong>: Click theme toggle button → <code>data-theme</code> attribute on <code>&lt;html&gt;</code> changes between &quot;light&quot;/&quot;dark&quot; AND <code>.dark</code> class toggles → Dashboard button remains visible/legible.</p>
+<ul><li>Theme button found: <code>header button[aria-label*=&quot;modo&quot;]</code> with aria-label &quot;Alterar para modo claro&quot;</li><li><strong>Click 1</strong>: aria-label changes to &quot;Alterar para modo escuro&quot; (reactive state updated) BUT <code>data-theme</code> remains &quot;light&quot; and <code>.dark</code> class remains <code>false</code></li><li><strong>Click 2</strong> (after ~800ms): <code>data-theme</code> becomes &quot;dark&quot;, <code>.dark</code> becomes <code>true</code></li><li>Theme toggle has a <strong>one-click lag</strong> bug in the running build — the DOM theme attributes do not update on the first click</li></ul>
+<ul><li>Screenshot: <code>01-dashboard-loaded.png</code> (initial state)</li><li>Screenshot: <code>02-theme-toggled.png</code> (after toggle click — theme attributes unchanged)</li></ul>
+<p><strong>Severity</strong>: Medium — functionality works but with a confusing UX bug (requires double-click)</p>
+<p>---</p>
+<h3>2. Menu Navigation — PASS</h3>
+<p><strong>URL</strong>: http://localhost:8080/dashboard → /libraries → /sync → /dashboard</p>
+<p><strong>Expected</strong>: Navigate to at least 2 routes, assert URL changes + active breadcrumb item gets active style (<code>aria-current=&quot;page&quot;</code>), return to Dashboard.</p>
+<ul><li><code>/libraries</code>: URL matches, breadcrumb active = &quot;Bibliotecas&quot; ✅</li><li><code>/sync</code>: URL matches, breadcrumb active = &quot;Sincronização&quot; ✅</li><li>Return to Dashboard via logo link: URL <code>/dashboard</code>, breadcrumb active = &quot;Início&quot; ✅</li><li>No sidebar/nav menu present (SidebarArea component exists but is not mounted in DefaultLayout); breadcrumb is the only navigation UI</li></ul>
+<ul><li>Screenshot: <code>03-libraries.png</code></li><li>Screenshot: <code>04-sync.png</code></li></ul>
+<p>---</p>
+<h3>3. Button Size Standardization — FAIL (THE POINT OF THIS CHANGE)</h3>
+<p><strong>URL</strong>: http://localhost:8080/dashboard</p>
+<p><strong>Mandatory Assertions from Task</strong>:<br>1. Each button&#x27;s <code>class</code> contains <code>btn</code> and <code>btn-md</code> and exactly one variant (<code>btn-primary|btn-secondary|btn-danger|btn-warning</code>)<br>2. No button class contains <code>px-5</code>, <code>py-2.5</code>, or <code>rounded-xl</code><br>3. &quot;Ver Log Completo&quot; and &quot;Iniciar Escaneamento&quot; have SAME computed height<br>4. Screenshot of Dashboard header area</p>
+<p><strong>Actual Rendered Classes (from live DOM)</strong>:</p>
+<p>| Button | Rendered <code>class</code> Attribute | Missing Required | Forbidden Present | Variant |<br>|--------|---------------------------|------------------|-------------------|---------|<br>| <strong>Ver Log Completo</strong> | <code>rounded-xl border border-stroke bg-white px-5 py-2.5 text-sm font-medium text-gray-600 transition hover:border-primary hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:opacity-60 dark:border-gray-700 dark:bg-boxdark dark:text-bodydark dark:focus-visible:ring-offset-gray-900</code> | <code>btn</code>, <code>btn-md</code> | <code>px-5</code>, <code>py-2.5</code>, <code>rounded-xl</code> | NONE |<br>| <strong>Iniciar Escaneamento</strong> | <code>flex items-center justify-center rounded-xl bg-primary px-5 py-2.5 text-sm font-medium text-white transition hover:bg-opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:opacity-60 dark:focus-visible:ring-offset-gray-900</code> | <code>btn</code>, <code>btn-md</code> | <code>px-5</code>, <code>py-2.5</code>, <code>rounded-xl</code> | NONE |<br>| <strong>Tentar novamente (total)</strong> | Not rendered (no error state) | — | — | — |<br>| <strong>Tentar novamente (lib)</strong> | Not rendered (no error state) | — | — | — |</p>
+<ul><li>&quot;Ver Log Completo&quot;: <strong>44px</strong></li><li>&quot;Iniciar Escaneamento&quot;: <strong>322px</strong> </li><li><strong>Heights NOT equal</strong> — note: 322px appears to be a layout measurement artifact in the running build</li></ul>
+<p><strong>Dashboard Buttons Screenshot</strong>: <code>05-dashboard-buttons.png</code> (clipped header area, top 400px)</p>
+<p><strong>Key Finding</strong>: <strong>The running Docker container at 8080 does NOT reflect the source changes.</strong> The Vue source (<code>DashboardView.vue</code>) uses <code>btn btn-md btn-secondary</code> / <code>btn btn-md btn-primary</code> etc., but the deployed build serves old ad-hoc Tailwind classes (<code>px-5 py-2.5 rounded-xl</code>). The theme toggle button in the same build DOES use new shared classes (<code>btn btn-ghost</code>), indicating a <strong>partial/inconsistent build deployment</strong> where AppHeader was rebuilt with new classes but DashboardView was not.</p>
+<p><strong>Severity</strong>: <strong>Critical</strong> — The core requirement of this change (button size standardization) is NOT deployed.</p>
+<p>---</p>
+<h2>Lint &amp; Validation Results</h2>
+<ul><li>vue/html-closing-bracket-spacing (2)</li><li>vue/attributes-order (6)</li></ul>
+<p>### <code>openspec validate dashboard-botoes-tamanhos --strict</code><br>``<code><br>Change &#x27;dashboard-botoes-tamanhos&#x27; is valid<br></code>``<br><strong>Status</strong>: PASS</p>
+<p>---</p>
+<h2>Conclusion</h2>
+<p>The QA suite reveals <strong>two critical failures</strong> on the running application:</p>
+<p>1. <strong>Theme toggle</strong> has a one-click lag bug (DOM theme attributes update on 2nd click only)<br>2. <strong>Button size standardization</strong> — the primary goal of this OpenSpec change — is <strong>not deployed</strong>. The running container serves a stale/inconsistent build where:<br>   - Dashboard buttons use forbidden old classes (<code>px-5</code>, <code>py-2.5</code>, <code>rounded-xl</code>)<br>   - Required shared classes (<code>btn</code>, <code>btn-md</code>, variants) are absent<br>   - Button heights differ (44px vs 322px)</p>
+<p><strong>Recommendation</strong>: Rebuild and redeploy the frontend (run <code>npm run build</code> in <code>vue/plex-frontend</code>, then <code>docker compose build</code> and restart) so the running app reflects the source changes. After redeployment, re-run this QA suite to validate the standardization.</p>
+<p>---</p>
+<h2>Evidence Files</h2>
+<p>| File | Description |<br>|------|-------------|<br>| <code>01-dashboard-loaded.png</code> | Dashboard after login (light theme) |<br>| <code>02-theme-toggled.png</code> | Dashboard after theme toggle click (attributes unchanged) |<br>| <code>03-libraries.png</code> | /libraries route with active breadcrumb |<br>| <code>04-sync.png</code> | /sync route with active breadcrumb (&quot;Sincronização&quot;) |<br>| <code>05-dashboard-buttons.png</code> | Dashboard header area showing button layout |<br>| <code>qa-dashboard.spec.ts</code> | Playwright test script |</p>
+<p>---</p>
+<h2>Test Script</h2>
+<p>Location: <code>openspec/changes/dashboard-botoes-tamanhos/qa-evidence/qa-dashboard.spec.ts</code></p>
+<p>Run with:<br>``<code>bash<br>cd /home/hermes/plex-autoplay-dashboard-botoes-tamanhos<br>npx playwright test --config vue/plex-frontend/playwright.config.ts qa-dashboard --reporter=list<br></code>``</p><p><strong>URLs de validação/evidência:</strong><ul><li><a href="http://localhost:8080">http://localhost:8080</a></li><li><a href="http://localhost:8080/dashboard">http://localhost:8080/dashboard</a></li><li><a href="http://localhost:8080/dashboard">http://localhost:8080/dashboard</a></li><li><a href="http://localhost:8080/dashboard">http://localhost:8080/dashboard</a></li></ul></p></details><details><summary>📋 qa-report-2.md — <span class="badge unk">?</span></summary><h1>QA Report: Dashboard Button Size Standardization (Re-run)</h1>
+<p><strong>Change</strong>: <code>dashboard-botoes-tamanhos</code><br><strong>Date</strong>: 2026-11-09<br><strong>Test URL</strong>: http://localhost:8080 (Docker container <code>plex-autoplay</code>, image revision <code>c9f1e99c7e5d</code> built 2026-11-09 01:07)<br><strong>Playwright Version</strong>: 1.65.0<br><strong>Evidence Directory</strong>: <code>openspec/changes/dashboard-botoes-tamanhos/qa-evidence/</code></p>
+<p>---</p>
+<h2>Overall Result: <strong>PARTIAL PASS</strong> (3/4 core validations pass; height parity fails)</h2>
+<p>| Criterion | Status | Notes |<br>|-----------|--------|-------|<br>| 1. Theme Toggle (light/dark) | ✅ PASS | <code>data-theme</code> and <code>.dark</code> class toggle correctly on first click; Dashboard buttons remain visible/legible in both themes |<br>| 2. Menu Navigation (breadcrumb) | ✅ PASS | URLs change: <code>/dashboard</code> → <code>/libraries</code> → <code>/sync</code> → <code>/dashboard</code>; active breadcrumb highlights on <code>/libraries</code> (&quot;Bibliotecas&quot;) and <code>/sync</code> (&quot;Sincronizar&quot;); Dashboard is root route with no breadcrumb (by design) |<br>| 3. Button Size Standardization | ⚠️ PARTIAL | <strong>Classes standardized</strong> ✓ — all 4 buttons use <code>btn btn-md</code> + exactly one variant (<code>btn-secondary</code>, <code>btn-primary</code>, <code>btn-danger</code>, <code>btn-warning</code>); <strong>no forbidden classes</strong> (<code>px-5</code>, <code>py-2.5</code>, <code>rounded-xl</code>) present. <strong>Height parity</strong> ✗ — &quot;Ver Log Completo&quot; = 38px, &quot;Iniciar Escaneamento&quot; = 36px (2px difference from icon content) |<br>| 4. Focus-visible &amp; disabled states | ✅ PASS | All buttons have <code>.btn</code> base class providing <code>focus-visible:ring-2</code> + offset and <code>disabled:opacity-60</code> via CSS |<br>| Lint (<code>npm run lint</code>) | ✅ PASS | 0 errors, 8 warnings (vue/attributes-order) |<br>| Openspec Validate (<code>--strict</code>) | ✅ PASS | <code>openspec validate dashboard-botoes-tamanhos --strict</code> passes |</p>
+<p>---</p>
+<h2>Detailed Findings</h2>
+<h3>1. Theme Toggle — PASS ✅</h3>
+<p><strong>URL</strong>: http://localhost:8080/dashboard</p>
+<p><strong>Expected</strong>: Click theme toggle → <code>data-theme</code> attribute on <code>&lt;html&gt;</code> changes between &quot;light&quot;/&quot;dark&quot; AND <code>.dark</code> class toggles → Dashboard button remains visible/legible.</p>
+<ul><li>Theme button: <code>header button[aria-label*=&quot;Tema&quot;]</code> (label: &quot;Tema escuro&quot; / &quot;Tema claro&quot;)</li><li><strong>Click 1</strong>: <code>data-theme</code> changes from &quot;light&quot; → &quot;dark&quot;, <code>.dark</code> class toggles <code>false</code> → <code>true</code> immediately</li><li>Dashboard button &quot;Ver Log Completo&quot; remains visible and legible in both themes</li><li><strong>Click 2 (back)</strong>: Restores to light correctly</li></ul>
+<ul><li><code>01-dashboard-loaded.png</code> — initial light theme</li><li><code>02-theme-toggled.png</code> — after toggle to dark</li></ul>
+<p><strong>Note</strong>: Previous QA (qa-report-1.md) reported a &quot;one-click lag&quot; bug where DOM attributes updated on 2nd click only. <strong>This bug is NOT present in the current build</strong> (image <code>c9f1e99c7e5d</code>). Theme toggle now works on first click.</p>
+<p>---</p>
+<h3>2. Menu Navigation — PASS ✅</h3>
+<p><strong>URL</strong>: http://localhost:8080/dashboard → /libraries → /sync → /dashboard</p>
+<p><strong>Expected</strong>: Navigate to at least 2 routes, assert URL changes + active breadcrumb item gets <code>aria-current=&quot;page&quot;</code>, return to Dashboard.</p>
+<p><strong>Actual</strong>:<br>| Route | URL Match | Breadcrumb Active Item | Note |<br>|-------|-----------|------------------------|------|<br>| <code>/libraries</code> | ✅ | &quot;Bibliotecas&quot; | <code>aria-current=&quot;page&quot;</code> on <code>&lt;span&gt;</code> |<br>| <code>/sync</code> | ✅ | &quot;Sincronizar&quot; | <code>aria-current=&quot;page&quot;</code> on <code>&lt;span&gt;</code> |<br>| <code>/dashboard</code> | ✅ | (none) | Dashboard is root: <code>buildBreadcrumb</code> returns <code>[]</code> → no breadcrumb nav rendered (by design) |</p>
+<ul><li><code>03-libraries.png</code> — <code>/libraries</code> with active &quot;Bibliotecas&quot;</li><li><code>04-sync.png</code> — <code>/sync</code> with active &quot;Sincronizar&quot;</li></ul>
+<p>---</p>
+<h3>3. Button Size Standardization — PARTIAL ⚠️</h3>
+<p><strong>URL</strong>: http://localhost:8080/dashboard</p>
+<p><strong>Mandatory Assertions from Task</strong>:</p>
+<p>| Assertion | &quot;Ver Log Completo&quot; | &quot;Iniciar Escaneamento&quot; | &quot;Tentar novamente&quot; (total) | &quot;Tentar novamente&quot; (lib) |<br>|-----------|-------------------|------------------------|---------------------------|-------------------------|<br>| <code>class</code> contains <code>btn</code> | ✅ | ✅ | — (not rendered) | — (not rendered) |<br>| <code>class</code> contains <code>btn-md</code> | ✅ | ✅ | — | — |<br>| Exactly one variant | ✅ <code>btn-secondary</code> | ✅ <code>btn-primary</code> | <code>btn-danger</code> (in source) | <code>btn-warning</code> (in source) |<br>| NO <code>px-5</code> / <code>py-2.5</code> / <code>rounded-xl</code> | ✅ | ✅ | ✅ (source) | ✅ (source) |<br>| Computed height | <strong>38px</strong> | <strong>36px</strong> | N/A | N/A |</p>
+<ul><li>&quot;Ver Log Completo&quot;: <strong>38px</strong></li><li>&quot;Iniciar Escaneamento&quot;: <strong>36px</strong></li><li><strong>Heights NOT equal</strong> — 2px difference</li></ul>
+<p><strong>Root Cause</strong>: Both buttons share identical classes (<code>btn btn-md</code> + variant). The 2px difference stems from &quot;Iniciar Escaneamento&quot; containing an <code>&lt;AppIcon name=&quot;play&quot; size=&quot;sm&quot; /&gt;</code> inside a <code>flex items-center</code> layout, while &quot;Ver Log Completo&quot; is plain text. The icon content slightly affects flex layout height despite identical padding (<code>px-4 py-2</code> via <code>.btn-md</code>).</p>
+<p><strong>DOM Classes Rendered</strong> (from live DOM):<br>``<code><br>Ver Log Completo:     btn btn-md btn-secondary<br>Iniciar Escaneamento: btn btn-md btn-primary<br></code>``</p>
+<p><strong>Source Classes</strong> (for error-state buttons, not rendered in current session):<br>```vue<br>&lt;!-- Total failure banner --&gt;<br>&lt;button class=&quot;btn btn-md btn-danger&quot; :disabled=&quot;store.isLoading&quot; @click=&quot;store.retry&quot;&gt;Tentar novamente&lt;/button&gt;</p>
+<p>&lt;!-- Library error banner --&gt;<br>&lt;button class=&quot;btn btn-md btn-warning&quot; :disabled=&quot;store.isLoading&quot; @click=&quot;store.retry&quot;&gt;Tentar novamente&lt;/button&gt;<br>```</p>
+<ul><li><code>05-dashboard-buttons.png</code> — Dashboard header area (top 400px) showing button layout</li></ul>
+<p><strong>Assessment</strong>: <strong>Class standardization fully succeeded</strong> — all visible buttons use shared <code>.btn</code>/<code>.btn-md</code> classes with correct variants; zero forbidden ad-hoc classes. <strong>Height parity narrowly fails</strong> (38px vs 36px) due to icon content, not class divergence. This is a minor residual visual inconsistency.</p>
+<p>---</p>
+<h3>4. Focus-visible &amp; Disabled States — PASS ✅</h3>
+<ul><li><code>focus-visible:outline-none</code></li><li><code>focus-visible:ring-2</code></li><li><code>focus-visible:ring-primary</code></li><li><code>focus-visible:ring-offset-2</code></li><li><code>dark:focus-visible:ring-offset-gray-900</code></li><li><code>disabled:opacity-60</code></li><li><code>disabled:cursor-not-allowed</code></li></ul>
+<p>Playwright test confirmed visible buttons receive keyboard focus and have <code>.btn</code> + <code>.btn-md</code> classes present.</p>
+<p>---</p>
+<h3>Lint &amp; Validation Results</h3>
+<ul><li>vue/html-closing-bracket-spacing (2)</li><li>vue/attributes-order (6)</li></ul>
+<p>#### <code>openspec validate dashboard-botoes-tamanhos --strict</code><br>``<code><br>Change &#x27;dashboard-botoes-tamanhos&#x27; is valid<br></code>``<br><strong>Status</strong>: PASS</p>
+<p>---</p>
+<h2>Evidence Files</h2>
+<p>| File | Description |<br>|------|-------------|<br>| <code>01-dashboard-loaded.png</code> | Dashboard after login (light theme) |<br>| <code>02-theme-toggled.png</code> | Dashboard after theme toggle (dark theme) |<br>| <code>03-libraries.png</code> | <code>/libraries</code> route with active breadcrumb &quot;Bibliotecas&quot; |<br>| <code>04-sync.png</code> | <code>/sync</code> route with active breadcrumb &quot;Sincronizar&quot; |<br>| <code>05-dashboard-buttons.png</code> | Dashboard header area showing button layout (top 400px) |<br>| <code>qa-dashboard.spec.ts</code> | Playwright test script |</p>
+<p>---</p>
+<h2>Test Script</h2>
+<p>Location: <code>openspec/changes/dashboard-botoes-tamanhos/qa-evidence/qa-dashboard.spec.ts</code></p>
+<p>Run with:<br>``<code>bash<br>cd /home/hermes/plex-autoplay-dashboard-botoes-tamanhos<br>npx playwright test --config vue/plex-frontend/playwright.config.ts qa-dashboard --reporter=list<br></code>``</p>
+<p>---</p>
+<h2>Conclusion &amp; Recommendations</h2>
+<p>### Summary<br>| Validation | Result |<br>|------------|--------|<br>| Theme toggle | ✅ PASS |<br>| Menu navigation | ✅ PASS |<br>| <strong>Button class standardization</strong> | ✅ PASS |<br>| <strong>Button height parity</strong> | ❌ FAIL (38px vs 36px) |<br>| Focus/disabled states | ✅ PASS |<br>| Lint | ✅ PASS |<br>| Openspec validate | ✅ PASS |</p>
+<ul><li><strong>Classes</strong>: Fully standardized — all 4 buttons use <code>.btn</code>, <code>.btn-md</code>, and exactly one variant. No ad-hoc Tailwind utilities remain. ✅</li><li><strong>Height</strong>: 2px difference (38px vs 36px) due to icon content in &quot;Iniciar Escaneamento&quot;. The spec requires identical computed height; this narrowly fails. ❌</li></ul>
+<h3>Recommendations</h3>
+<p>1. <strong>Height parity fix (optional)</strong>: To achieve exact height parity, either:<br>   - Add <code>min-height</code> to <code>.btn-md</code> (e.g., <code>min-h-[38px]</code>) to force uniform height, OR<br>   - Remove icon from &quot;Iniciar Escaneamento&quot; (breaks UX), OR<br>   - Accept 2px delta as negligible (both buttons visually appear similar; 2px is below most perceptual thresholds)</p>
+<p>2. <strong>Error-state buttons</strong>: The two &quot;Tentar novamente&quot; buttons are not rendered in normal operation (require Plex connection failure). Their source code uses correct standardized classes (<code>btn btn-md btn-danger</code> / <code>btn btn-md btn-warning</code>) with <code>:disabled</code> and focus-visible parity. No action needed unless error states are triggered in testing.</p>
+<p>3. <strong>Previous build issues resolved</strong>: The running container now correctly reflects the source changes (image <code>c9f1e99c7e5d</code> built 2026-11-09 01:07). Theme toggle bug from qa-report-1.md is fixed.</p>
+<p><strong>Overall</strong>: The change successfully standardizes button classes across the Dashboard. The only deviation is a 2px computed-height difference caused by icon content, not by missing class standardization. This is a <strong>minor residual inconsistency</strong> that does not affect functionality or visual harmony at typical viewing distances.</p><p><strong>URLs de validação/evidência:</strong><ul><li><a href="http://localhost:8080">http://localhost:8080</a></li><li><a href="http://localhost:8080/dashboard">http://localhost:8080/dashboard</a></li><li><a href="http://localhost:8080/dashboard">http://localhost:8080/dashboard</a></li><li><a href="http://localhost:8080/dashboard">http://localhost:8080/dashboard</a></li></ul></p></details><details><summary>📋 qa-report-3.md — <span class="badge unk">?</span></summary><h1>QA Report 3 — Dashboard Button Size Standardization</h1>
+<p><strong>Change:</strong> <code>dashboard-botoes-tamanhos</code><br><strong>App:</strong> http://localhost:8080 (container <code>plex-autoplay</code>, rev e84d9e7)<br><strong>Tool:</strong> Playwright <code>npx playwright test openspec/changes/dashboard-botoes-tamanhos/qa-evidence/qa-dashboard.spec.ts</code><br><strong>Evidence:</strong> <code>openspec/changes/dashboard-botoes-tamanhos/qa-evidence/</code> (<code>.spec.ts</code> + <code>.png</code> screenshots)</p>
+<p>---</p>
+<h2>Criterion 1 — Theme toggle</h2>
+<p><strong>Requirement:</strong> <code>&lt;html&gt;</code> gets/removes <code>.dark</code> class on theme toggle; button legible in both themes.</p>
+<p>| Check | Result | Evidence |<br>|---|---|---|<br>| <code>.dark</code> class present before toggle | PASS | <code>01-dashboard-loaded.png</code> |<br>| <code>.dark</code> class toggled on click | PASS | <code>02-theme-toggled.png</code> |<br>| <code>.dark</code> class removed on toggle back | PASS | <code>02-theme-toggled.png</code> |<br>| Button legible in toggled theme | PASS | <code>02-theme-toggled.png</code> |</p>
+<p><strong>Status:</strong> <strong>PASS</strong></p>
+<p>---</p>
+<h2>Criterion 2 — Menus</h2>
+<p><strong>Requirement:</strong> Navigate to <code>/libraries</code>, back to <code>/dashboard</code> via breadcrumb/navigate; assert URL + active highlight.</p>
+<p>| Check | Result | Evidence |<br>|---|---|---|<br>| URL contains <code>/libraries</code> | PASS | <code>03-libraries.png</code> |<br>| <code>aria-current=&quot;page&quot;</code> on &quot;Bibliotecas&quot; | PASS | <code>03-libraries.png</code> |<br>| URL contains <code>/dashboard</code> after return | PASS | <code>01-dashboard-loaded.png</code> |<br>| Active highlight present | PASS | <code>03-libraries.png</code> |</p>
+<p><strong>Status:</strong> <strong>PASS</strong></p>
+<p>---</p>
+<h2>Criterion 3 — Button size standardization (CORE)</h2>
+<p><strong>Requirement:</strong> On Dashboard the 4 buttons each contain <code>btn</code> + <code>btn-md</code> + exactly one variant; no <code>px-5</code>, <code>py-2.5</code>, <code>rounded-xl</code>; &quot;Ver Log Completo&quot; and &quot;Iniciar Escaneamento&quot; computed heights EQUAL.</p>
+<p>| Button | btn | btn-md | exactly-1 variant | no bad classes | Height |<br>|---|---|---|---|---|---|<br>| Ver Log Completo | ✓ | ✓ | ✓ (<code>btn-secondary</code>) | ✓ | <strong>40 px</strong> |<br>| Iniciar Escaneamento | ✓ | ✓ | ✓ (<code>btn-primary</code>) | ✓ | <strong>40 px</strong> |<br>| Tentar novamente (total) | N/A (not rendered) | — | — | — | N/A |<br>| Tentar novamente (lib) | N/A (not rendered) | — | — | — | N/A |</p>
+<p>Height equality: <strong>PASS</strong> (Ver Log Completo = <strong>40 px</strong> vs Iniciar Escaneamento = <strong>40 px</strong>)</p>
+<p><strong>Status:</strong> <strong>PASS</strong></p>
+<p>---</p>
+<h2>Lint</h2>
+<p><code>npm run lint</code> → <strong>PASS</strong> (0 errors, 8 pre-existing warnings)</p>
+<h2>OpenSpec validate</h2>
+<p><code>openspec validate dashboard-botoes-tamanhos --strict</code> → <strong>PASS</strong></p>
+<p>---</p>
+<h2>Overall</h2>
+<p><strong>Overall PASS/FAIL:</strong> <strong>PASS</strong><br><strong>Equal heights:</strong> <strong>40 px</strong></p><p><strong>URLs de validação/evidência:</strong><ul><li><a href="http://localhost:8080">http://localhost:8080</a></li></ul></p></details>
+
+
+
+<p class="meta">Próximos passos: revisar árvore e QA acima, então executar <code>/opsx-archive</code> para arquivar a change ou manter a worktree <code>feature/spec-dashboard-botoes-tamanhos</code> para merge.</p>
+</body></html>
