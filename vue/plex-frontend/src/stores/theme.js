@@ -41,6 +41,12 @@ export const useThemeStore = defineStore("theme", () => {
     setMode("light");
   }
 
+  function cycleMode() {
+    const idx = MODES.indexOf(mode.value);
+    const next = MODES[(idx + 1) % MODES.length];
+    setMode(next);
+  }
+
   async function loadTheme() {
     try {
       const res = await apiFetch("/api/theme");
@@ -85,5 +91,6 @@ export const useThemeStore = defineStore("theme", () => {
     toggle,
     enterDark,
     enterLight,
+    cycleMode,
   };
 });
