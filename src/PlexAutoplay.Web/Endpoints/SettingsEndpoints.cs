@@ -28,7 +28,8 @@ public static class SettingsEndpoints
                 request.PlexToken,
                 request.MediaRoots,
                 request.SyncIntervalMinutes,
-                request.SyncCatalogIntervalMinutes));
+                request.SyncCatalogIntervalMinutes,
+                request.AutoSkipAuthorized));
 
             if (!result.Success)
             {
@@ -45,7 +46,8 @@ public static class SettingsEndpoints
         plex_token_set = settings.PlexTokenSet,
         media_roots = settings.MediaRoots,
         sync_interval_minutes = settings.SyncIntervalMinutes,
-        sync_catalog_interval_minutes = settings.SyncCatalogIntervalMinutes
+        sync_catalog_interval_minutes = settings.SyncCatalogIntervalMinutes,
+        auto_skip_authorized = settings.AutoSkipAuthorized
     };
 
     public sealed class SettingsRequest
@@ -64,5 +66,8 @@ public static class SettingsEndpoints
 
         [JsonPropertyName("sync_catalog_interval_minutes")]
         public int? SyncCatalogIntervalMinutes { get; set; }
+
+        [JsonPropertyName("auto_skip_authorized")]
+        public bool? AutoSkipAuthorized { get; set; }
     }
 }

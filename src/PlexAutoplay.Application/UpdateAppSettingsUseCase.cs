@@ -6,7 +6,8 @@ public sealed record UpdateAppSettingsRequest(
     string? PlexToken,
     IReadOnlyList<string>? MediaRoots,
     int? SyncIntervalMinutes,
-    int? SyncCatalogIntervalMinutes);
+    int? SyncCatalogIntervalMinutes,
+    bool? AutoSkipAuthorized);
 
 public sealed record UpdateAppSettingsResult(bool Success, IReadOnlyList<string> Errors)
 {
@@ -65,9 +66,11 @@ public sealed class UpdateAppSettingsUseCase
             return UpdateAppSettingsResult.Invalid([.. errors]);
         }
 
+        var autoSkipAuthorized = request.AutoSkipAuthorized ?? current.AutoSkipAuthorized;
+
         var token = request.PlexToken is null ? current.PlexToken : request.PlexToken.Trim();
         await _store.SaveAsync(new AppSettingsSnapshot(
-            plexUrl, token, mediaRoots, syncInterval, catalogInterval));
+            plexUrl, token, mediaRoots, syncInterval, catalogInterval, autoSkipAuthorized));
 
         return UpdateAppSettingsResult.Ok();
     }

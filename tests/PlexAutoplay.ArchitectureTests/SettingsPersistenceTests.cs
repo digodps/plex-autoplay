@@ -23,7 +23,7 @@ public class SettingsPersistenceTests
             var store = new SqliteAppSettingsStore(connectionString);
 
             await store.SaveAsync(new AppSettingsSnapshot(
-                "http://plex.local:32400", "token-123", [dir, "/media/extra"], 7, 42));
+                "http://plex.local:32400", "token-123", [dir, "/media/extra"], 7, 42, false));
 
             var loaded = await store.GetAsync();
 
@@ -78,7 +78,7 @@ public class SettingsPersistenceTests
             var useCase = new UpdateAppSettingsUseCase(store);
 
             var result = await useCase.ExecuteAsync(new UpdateAppSettingsRequest(
-                "ftp://invalid", "new-token", [dir], 0, 5000));
+                "ftp://invalid", "new-token", [dir], 0, 5000, null));
 
             Assert.False(result.Success);
             Assert.Equal(3, result.Errors.Count);
@@ -106,7 +106,7 @@ public class SettingsPersistenceTests
             var useCase = new UpdateAppSettingsUseCase(store);
 
             var result = await useCase.ExecuteAsync(new UpdateAppSettingsRequest(
-                "https://plex.local:32400", null, [dir], 10, 60));
+                "https://plex.local:32400", null, [dir], 10, 60, null));
 
             Assert.True(result.Success);
             Assert.Equal("existing-token", (await store.GetAsync()).PlexToken);
