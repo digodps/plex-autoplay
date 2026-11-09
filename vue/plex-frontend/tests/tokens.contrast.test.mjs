@@ -1,5 +1,5 @@
 // Teste de contraste dos tokens de tema (WCAG 1.4.3 / 1.4.11).
-// Fonte única: src/styles/style.css (:root e .dark).
+// Fonte única: src/styles/tokens.css (:root e [data-theme="dark"]).
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
@@ -7,7 +7,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const css = readFileSync(
-  join(dirname(fileURLToPath(import.meta.url)), "..", "src", "styles", "style.css"),
+  join(dirname(fileURLToPath(import.meta.url)), "..", "src", "styles", "tokens.css"),
   "utf8",
 );
 
@@ -23,7 +23,7 @@ function tokensFrom(selector) {
   return tokens;
 }
 
-const themes = { light: tokensFrom(":root"), dark: tokensFrom(".dark") };
+const themes = { light: tokensFrom(":root"), dark: tokensFrom('[data-theme="dark"]') };
 
 function luminance(hex) {
   const full = hex.replace("#", "");

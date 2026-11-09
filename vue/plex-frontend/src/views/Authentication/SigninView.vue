@@ -68,7 +68,7 @@ async function handleLogin() {
         {{ error }}
       </div>
 
-      <form @submit.prevent="handleLogin" data-testid="login-form">
+      <form data-testid="login-form" @submit.prevent="handleLogin">
         <div class="mb-5">
           <label class="mb-2.5 block font-medium text-black dark:text-white" for="password">
             Senha

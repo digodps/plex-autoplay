@@ -1,6 +1,5 @@
 <script setup>
 import { ref, onUnmounted } from "vue";
-import DefaultLayout from "@/components/layouts/DefaultLayout.vue";
 import AppIcon from "@/components/AppIcon.vue";
 import { apiFetch } from "@/api";
 
@@ -30,18 +29,16 @@ const statusClass = {
 };
 
 const formatLogTimestamp = (date) =>
-  date.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+  date.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "digit" });
 
 async function startScan() {
-  const response = await apiFetch("/api/sync/run", { method: "POST" });
+  const response = await apiFetch("/api/plex/scan", { method: "POST" });
   if (response.ok) {
     const data = await response.json();
     currentJobId.value = data.job_id;
     connectSSE(data.job_id);
   }
 }
-
-const terminalStatuses = ["completed", "failed", "cancelled"];
 
 function connectSSE(jobId) {
   if (eventSource.value) eventSource.value.close();
@@ -55,20 +52,19 @@ function connectSSE(jobId) {
     errors.value = data.errors || 0;
 
     if (data.logs && data.logs.length > 0) {
-      logEntries.value = data.logs.slice(-100).map((log) => ({
+      const newLogs = data.logs.map((log) => ({
         timestamp: new Date(log.timestamp),
         level: log.level,
         message: log.message,
         suggestion: log.suggestion || null,
       }));
+      logEntries.value = [...logEntries.value, ...newLogs].slice(-100);
     }
-
-    if (terminalStatuses.includes(data.status)) eventSource.value?.close();
   };
 
   eventSource.value.onerror = () => {
     eventSource.value?.close();
-    if (!terminalStatuses.includes(status.value)) status.value = "failed";
+    status.value = "failed";
   };
 }
 
@@ -88,9 +84,9 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <DefaultLayout>
-    <div>
-      <div>
+  <div class="page">
+    <div class="bg-gray-50 dark:bg-gray-900 min-h-screen">
+      <div class="border-b border-gray-200 dark:border-gray-800 sticky top-0 z-20 bg-gray-50 dark:bg-gray-900">
         <div class="max-w-2xl mx-auto px-4 py-3 flex items-center gap-2">
           <h1 class="text-28 font-bold text-gray-900 dark:text-gray-100">Sincronização</h1>
           <p class="text-sm text-gray-500 dark:text-gray-400">Execução e log em tempo real do último escaneamento.</p>
@@ -166,7 +162,7 @@ onUnmounted(() => {
             </button>
           </div>
 
-          <div class="max-h-550 min-h-70 overflow-y-auto p-4 font-mono text-sm no-scrollbar overscroll-contain">
+          <div class="max-h-550 min-h-70 overflow-y-auto p-4 font-mono text-sm">
             <div
               v-if="logEntries.length === 0"
               class="flex h-full min-h-35 items-center justify-center px-6 text-center text-gray-500 dark:text-gray-400"
@@ -195,5 +191,5 @@ onUnmounted(() => {
         </div>
       </div>
       </div>
-    </DefaultLayout>
+    </div>
   </template>

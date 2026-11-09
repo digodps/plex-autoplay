@@ -1,7 +1,6 @@
 <script setup>
 import { onMounted, onUnmounted } from "vue";
 import { useRouter } from "vue-router";
-import DefaultLayout from "@/components/layouts/DefaultLayout.vue";
 import DataStatsOne from "@/components/DataStats/DataStatsOne.vue";
 import AppIcon from "@/components/AppIcon.vue";
 import { useDashboardStore } from "@/stores/dashboard";
@@ -28,7 +27,7 @@ async function handleStartScan() {
 </script>
 
 <template>
-  <DefaultLayout>
+  <div class="page">
     <div class="mb-6 flex flex-col sm:flex-row sm:items-end justify-between gap-6">
       <div>
         <h1 class="text-2xl font-bold text-black dark:text-white">Visão geral</h1>
@@ -95,5 +94,5 @@ async function handleStartScan() {
         configurados corretamente e se há conectividade de rede.
       </p>
     </div>
-  </DefaultLayout>
+  </div>
 </template>
