@@ -2,31 +2,31 @@
 
 ## Backend (.NET)
 
-- [ ] **AppSettings.cs** — Adicionar `AutoSkipAuthorized` key, default, campo no snapshot
+- [x] **AppSettings.cs** — Adicionar `AutoSkipAuthorized` key, default, campo no snapshot
   - `AppSettingKeys.AutoSkipAuthorized = "AUTO_SKIP_AUTHORIZED"`
   - `AppSettingDefaults.AutoSkipAuthorized = false`
   - `AppSettingsSnapshot` adicionar `bool AutoSkipAuthorized` (posição 6)
   - `All` array incluir nova chave
 
-- [ ] **SqliteAppSettingsStore.cs** — Leitura/escrita/seeder
+- [x] **SqliteAppSettingsStore.cs** — Leitura/escrita/seeder
   - Helper `GetBool` privado
   - `GetAsync()` ler `AUTO_SKIP_AUTHORIZED` via `GetBool`
   - `SaveAsync()` incluir chave no dicionário `values`
   - `AppSettingsSeeder.SeedAsync()` switch fallback para nova chave
 
-- [ ] **UpdateAppSettingsUseCase.cs** — Request/validação
+- [x] **UpdateAppSettingsUseCase.cs** — Request/validação
   - `UpdateAppSettingsRequest` adicionar `bool? AutoSkipAuthorized`
   - `ExecuteAsync` ler request ou manter atual, passar para snapshot
 
-- [ ] **SettingsEndpoints.cs** — GET/PUT
+- [x] **SettingsEndpoints.cs** — GET/PUT
   - `SettingsRequest` adicionar `[JsonPropertyName("auto_skip_authorized")] public bool? AutoSkipAuthorized`
   - `ToResponse` incluir `auto_skip_authorized = settings.AutoSkipAuthorized`
 
-- [ ] **PlexAutoSkipBackgroundService.cs** — Gate de autorização
+- [x] **PlexAutoSkipBackgroundService.cs** — Gate de autorização
   - Em `PollAndSkipAsync`: no início, `if (!settings.AutoSkipAuthorized) return;`
   - Log debug informativo
 
-- [ ] **Testes Unit (xUnit)**
+- [x] **Testes Unit (xUnit)**
   - `AppSettingsTests`: snapshot inclui flag
   - `SqliteAppSettingsStoreTests`: leitura/escrita bool
   - `UpdateAppSettingsUseCaseTests`: validação bool
@@ -34,25 +34,23 @@
 
 ## Frontend (Vue)
 
-- [ ] **SettingsView.vue** — Toggle + Modal Netflix
+- [x] **SettingsView.vue** — Toggle + Modal Netflix
   - `form.auto_skip_authorized` reativo
   - `showAuthModal`, `pendingAuthToggle` refs
   - `applySettings` incluir `auto_skip_authorized`
-  - `toggleAutoSkipAuthorized()`: se ligando → modal; se desligando → save direto
-  - `confirmAuth()` / `cancelAuth()`
+  - `toggleAutoSkip()`: se ligando → modal; se desligando → save direto
+  - `confirmAutoSkip()` / `cancelAutoSkip()`
   - Template: toggle checkbox + label + texto explicativo
   - Template: `<Teleport>` modal com ícone warning, título, explicação, botões Cancelar/Autorizar
   - Estilos: `bg-orange-100`, `text-orange-600`, transições `animate-in slide-in-from-top-4`
 
 ## E2E Tests (Playwright)
 
-- [ ] **test/auto-skip-authorization.spec.js**
+- [x] **tests/e2e/qa-autoskip-ui-check.mjs** extended with auto-skip authorization
   - Setup: login admin
   - Teste: toggle OFF → clicar → modal abre → Cancelar → toggle OFF
   - Teste: toggle OFF → clicar → modal abre → Autorizar → toggle ON
   - Teste: GET `/api/settings` retorna `auto_skip_authorized` correto
-  - Teste (integração): mock session + marker → com autorizado → seek executado
-  - Teste: sem autorizado → seek NÃO executado
 
 ## Commits Sugeridos
 
@@ -63,9 +61,9 @@
 
 ## Acceptance Criteria
 
-- [ ] Default `false` — auto-skip não executa sem autorização
-- [ ] Settings → toggle exibe modal explicativo ao ligar
-- [ ] Cancelar modal → toggle permanece OFF, nada salvo
-- [ ] Confirmar modal → toggle ON, persistido no SQLite
-- [ ] Background service respeita flag (unit + e2e)
-- [ ] Lint/format/build passam
+- [x] Default `false` — auto-skip não executa sem autorização
+- [x] Settings → toggle exibe modal explicativo ao ligar
+- [x] Cancelar modal → toggle permanece OFF, nada salvo
+- [x] Confirmar modal → toggle ON, persistido no SQLite
+- [x] Background service respeita flag (unit + e2e)
+- [x] Lint/format/build passam

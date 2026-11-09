@@ -83,18 +83,22 @@ async function saveSettings() {
   }
 }
 
-async function toggleAutoSkip() {
-  if (form.auto_skip_authorized) return; // already true, proceed
-  // trying to turn ON → show confirmation modal Netflix-style
+async function toggleAutoSkip(event) {
+  const input = event.target;
+  if (!input.checked) {
+    form.auto_skip_authorized = false;
+    await saveSettings();
+    return;
+  }
+  // tentando ligar → reverte visual até confirmação; mostra modal Netflix
+  input.checked = false;
   showAuthModal.value = true;
-  // revert checkbox; user must confirm
-  form.auto_skip_authorized = false;
 }
 
 function confirmAutoSkip() {
   showAuthModal.value = false;
   form.auto_skip_authorized = true;
-  saveSettings();
+  void saveSettings();
 }
 
 function cancelAutoSkip() {
@@ -203,22 +207,6 @@ onMounted(loadSettings);
 
             <div class="rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 p-4 space-y-3">
               <MediaRootsField v-model="form.media_roots" />
-            </div>
-
-            <div class="rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 p-4 space-y-3">
-              <label class="flex items-center gap-3 cursor-pointer">
-                <input
-                  id="auto-skip-authorized"
-                  type="checkbox"
-                  :checked="form.auto_skip_authorized"
-                  @change="toggleAutoSkip"
-                  class="w-5 h-5 text-primary border-gray-300 rounded focus:ring-primary"
-                />
-                <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Autorizar skip automático</span>
-              </label>
-              <p class="text-xs text-gray-500 dark:text-gray-400 ml-8">
-                Quando habilitado, o Plex pulará introduções e créditos automaticamente.
-              </p>
             </div>
 
             <p v-if="message" class="text-sm text-green-600 dark:text-green-400">{{ message }}</p>
