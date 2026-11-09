@@ -6,7 +6,7 @@ using Serilog;
 
 namespace PlexAutoplay.Web.Endpoints;
 
-/// <summary>Endpoints de integração com o Plex: bibliotecas e sincronização.</summary>
+/// <summary>Endpoints de integração com o Plex: bibliotecas, varredura de marcadores e episódios.</summary>
 public static class PlexEndpoints
 {
     public static void MapPlexEndpoints(this IEndpointRouteBuilder app)
@@ -18,39 +18,88 @@ public static class PlexEndpoints
             return Results.Ok(result.Libraries.Where(l => l.Type == "show").ToList());
         });
 
-        app.MapPost("/api/plex/scan", (
-            [FromServices] IScanJobStore scanJobs,
-            [FromServices] SynchronizationOrchestrator orchestrator,
-            [FromServices] ILoggerFactory loggerFactory) =>
+        app.MapPost("/api/plex/scan", async (
+            [FromServices] IPlexApiClient plexClient,
+            [FromServices] LibraryScanUseCase libraryScan,
+            [FromServices] IScanJobRepository scanJobs,
+            [FromServices] IScanJobLogStore scanJobLogs,
+            [FromServices] IPathResolver pathResolver,
+            [FromServices] IAppSettingsStore settings) =>
         {
             var jobId = Guid.NewGuid().ToString();
-            scanJobs.Add(new ScanJob { JobId = jobId, Status = "queued" });
+            var job = new ScanJob { JobId = jobId, Status = "queued", CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow };
+            await scanJobs.AddAsync(job);
 
             _ = Task.Run(async () =>
             {
-                var logger = loggerFactory.CreateLogger("PlexScanAlias");
-                var job = scanJobs.Get(jobId)!;
-                job.Status = "running";
-                job.UpdatedAt = DateTime.UtcNow;
-
                 try
                 {
-                    var result = await orchestrator.RunAsync(jobId, CancellationToken.None);
-                    job.Status = result.Success ? "completed" : "failed";
-                    job.Processed = result.Stage2Processed;
-                    job.Skipped = result.Stage2Skipped;
-                    job.Errors = result.Stage2Errors;
-                    job.ErrorMessage = result.ErrorMessage;
+                    job.Status = "running";
+                    job.UpdatedAt = DateTime.UtcNow;
+                    await scanJobs.UpdateAsync(job);
+
+                    var librariesResult = await plexClient.GetLibrariesAsync();
+                    if (librariesResult.Failed)
+                    {
+                        job.Status = "failed";
+                        job.ErrorMessage = librariesResult.ErrorMessage ?? "Falha ao buscar bibliotecas do Plex";
+                        job.UpdatedAt = DateTime.UtcNow;
+                        await scanJobs.UpdateAsync(job);
+                        return;
+                    }
+                    var seriesLibraries = librariesResult.Libraries.Where(l => l.Type == "show").ToList();
+                    await scanJobLogs.AddLogAsync(jobId, "info", $"{seriesLibraries.Count} biblioteca(s) encontrada(s)");
+
+                    int processed = 0;
+                    int skipped = 0;
+                    int errors = 0;
+
+                    foreach (var lib in seriesLibraries)
+                    {
+                        if (job.Status == "cancelled") break;
+
+                        try
+                        {
+                            var episodesResult = await plexClient.GetEpisodesAsync(lib.Key);
+                            if (episodesResult.Failed)
+                            {
+                                errors++;
+                                await scanJobLogs.AddLogAsync(jobId, "error", $"Falha ao buscar episódios da biblioteca {lib.Key}", "Verifique conexão com Plex e tente novamente.");
+                                continue;
+                            }
+
+                            var seeds = episodesResult.Episodes.Select(e => new EpisodeSeed(e.RatingKey, e.FilePath));
+                            var current = await settings.GetAsync();
+                            var summary = await libraryScan.ScanLibraryAsync(seeds, current.MediaRoots, origin: "detected");
+
+                            processed += summary.Processed;
+                            skipped += summary.Skipped;
+
+                            if (summary.Skipped > 0)
+                            {
+                                await scanJobLogs.AddLogAsync(jobId, "skip", $"{summary.Skipped} episódio(s) pulado(s) na biblioteca {lib.Key}");
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            Log.Warning(ex, "Error scanning library {LibKey}", lib.Key);
+                            errors++;
+                        }
+                    }
+
+                    job.Status = "completed";
+                    job.Processed = processed;
+                    job.Skipped = skipped;
+                    job.Errors = errors;
+                    job.UpdatedAt = DateTime.UtcNow;
+                    await scanJobs.UpdateAsync(job);
                 }
                 catch (Exception ex)
                 {
-                    logger.LogError(ex, "Falha ao executar sincronização forçada (alias /api/plex/scan)");
                     job.Status = "failed";
                     job.ErrorMessage = ex.Message;
-                }
-                finally
-                {
                     job.UpdatedAt = DateTime.UtcNow;
+                    await scanJobs.UpdateAsync(job);
                 }
             });
 

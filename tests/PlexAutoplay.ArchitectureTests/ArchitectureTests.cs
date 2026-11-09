@@ -77,7 +77,7 @@ public class LayerDependencyTests
             typeof(IPlexApiClient),
             typeof(IImageProxyService),
             typeof(IAppSettingsStore),
-            typeof(IScanJobStore),
+            typeof(IScanJobLogStore),
             typeof(IPathResolver)
         };
 
