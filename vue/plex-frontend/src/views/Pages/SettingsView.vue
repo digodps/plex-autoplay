@@ -8,6 +8,7 @@ const form = reactive({
   plex_url: "",
   media_roots: [],
   sync_interval_minutes: 5,
+  auto_skip_authorized: false,
 });
 const plexToken = ref("");
 const plexTokenSet = ref(false);
@@ -21,6 +22,7 @@ function applySettings(data) {
   form.plex_url = data.plex_url ?? "";
   form.media_roots = data.media_roots ?? [];
   form.sync_interval_minutes = data.sync_interval_minutes ?? 5;
+  form.auto_skip_authorized = data.auto_skip_authorized ?? false;
   plexTokenSet.value = Boolean(data.plex_token_set);
   plexToken.value = "";
 }
@@ -49,6 +51,7 @@ async function saveSettings() {
       plex_url: form.plex_url,
       media_roots: form.media_roots,
       sync_interval_minutes: Number(form.sync_interval_minutes),
+      auto_skip_authorized: form.auto_skip_authorized,
     };
     if (plexToken.value) payload.plex_token = plexToken.value;
 
@@ -74,6 +77,11 @@ async function saveSettings() {
   } finally {
     saving.value = false;
   }
+}
+
+async function toggleAutoSkip(event) {
+  form.auto_skip_authorized = event.target.checked;
+  await saveSettings();
 }
 
 onMounted(loadSettings);
@@ -110,7 +118,23 @@ onMounted(loadSettings);
                 class="w-full rounded border border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 text-black dark:text-white focus:border-primary focus:bg-white focus:text-black"
               />
               <p class="text-xs text-gray-500 dark:text-gray-400">
-                Intervalo entre os ciclos automáticos (catálogo + marcadores).
+                Intervalo entre varreduras automáticas das bibliotecas.
+              </p>
+            </div>
+
+            <div class="rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 p-4 space-y-3">
+              <label class="flex items-center gap-3 cursor-pointer">
+                <input
+                  id="auto-skip-authorized"
+                  type="checkbox"
+                  :checked="form.auto_skip_authorized"
+                  @change="toggleAutoSkip"
+                  class="w-5 h-5 text-primary border-gray-300 rounded focus:ring-primary"
+                />
+                <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Autorizar skip automático</span>
+              </label>
+              <p class="text-xs text-gray-500 dark:text-gray-400 ml-8">
+                Quando habilitado, o Plex pulará automaticamente introduções e créditos.
               </p>
             </div>
 

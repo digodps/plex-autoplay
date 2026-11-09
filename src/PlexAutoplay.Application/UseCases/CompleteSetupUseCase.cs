@@ -111,7 +111,8 @@ public class CompleteSetupUseCase
             plexUrl,
             request.PlexToken.Trim(),
             mediaRoots,
-            current.SyncIntervalMinutes));
+            current.SyncIntervalMinutes,
+            current.AutoSkipAuthorized));
 
         var created = await _credentials.CreateAsync(_hasher.Hash(request.NewPassword!));
         if (!created)
