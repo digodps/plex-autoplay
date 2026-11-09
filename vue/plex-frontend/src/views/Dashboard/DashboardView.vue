@@ -40,7 +40,7 @@ async function handleStartScan() {
         <button
           class="rounded-xl border border-stroke bg-white px-5 py-2.5 text-sm font-medium text-gray-600 transition hover:border-primary hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:opacity-60 dark:border-gray-700 dark:bg-boxdark dark:text-bodydark dark:focus-visible:ring-offset-gray-900"
           :disabled="store.isLoading"
-          @click="router.push('/sync')"
+          @click="router.push('/logs')"
         >
           Ver Log Completo
         </button>

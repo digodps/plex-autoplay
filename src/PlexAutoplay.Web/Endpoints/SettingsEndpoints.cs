@@ -26,9 +26,9 @@ public static class SettingsEndpoints
             var result = await useCase.ExecuteAsync(new UpdateAppSettingsRequest(
                 request.PlexUrl,
                 request.PlexToken,
-                request.MediaRoot,
+                request.MediaRoots,
                 request.SyncIntervalMinutes,
-                request.SyncCatalogIntervalMinutes));
+                request.AutoSkipAuthorized));
 
             if (!result.Success)
             {
@@ -43,9 +43,9 @@ public static class SettingsEndpoints
     {
         plex_url = settings.PlexUrl,
         plex_token_set = settings.PlexTokenSet,
-        media_root = settings.MediaRoot,
+        media_roots = settings.MediaRoots,
         sync_interval_minutes = settings.SyncIntervalMinutes,
-        sync_catalog_interval_minutes = settings.SyncCatalogIntervalMinutes
+        auto_skip_authorized = settings.AutoSkipAuthorized
     };
 
     public sealed class SettingsRequest
@@ -56,13 +56,13 @@ public static class SettingsEndpoints
         [JsonPropertyName("plex_token")]
         public string? PlexToken { get; set; }
 
-        [JsonPropertyName("media_root")]
-        public string? MediaRoot { get; set; }
+        [JsonPropertyName("media_roots")]
+        public IReadOnlyList<string>? MediaRoots { get; set; }
 
         [JsonPropertyName("sync_interval_minutes")]
         public int? SyncIntervalMinutes { get; set; }
 
-        [JsonPropertyName("sync_catalog_interval_minutes")]
-        public int? SyncCatalogIntervalMinutes { get; set; }
+        [JsonPropertyName("auto_skip_authorized")]
+        public bool? AutoSkipAuthorized { get; set; }
     }
 }

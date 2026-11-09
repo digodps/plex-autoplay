@@ -1,9 +1,9 @@
-import { apiFetch } from "../api";
+import { syncRun } from "../api";
 
 export function useDashboardActions() {
   async function startScan() {
     try {
-      const res = await apiFetch("/api/plex/scan", { method: "POST" });
+      const res = await syncRun();
       if (res.ok) {
         const data = await res.json().catch(() => ({}));
         return { ok: true, jobId: data.job_id };

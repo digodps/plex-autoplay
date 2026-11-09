@@ -4,9 +4,9 @@ namespace PlexAutoplay.Application;
 public sealed record UpdateAppSettingsRequest(
     string? PlexUrl,
     string? PlexToken,
-    string? MediaRoot,
+    IReadOnlyList<string>? MediaRoots,
     int? SyncIntervalMinutes,
-    int? SyncCatalogIntervalMinutes);
+    bool? AutoSkipAuthorized);
 
 public sealed record UpdateAppSettingsResult(bool Success, IReadOnlyList<string> Errors)
 {
@@ -34,17 +34,18 @@ public sealed class UpdateAppSettingsUseCase
         var errors = new List<string>();
         var current = await _store.GetAsync();
 
-        var plexUrl = (request.PlexUrl ?? current.PlexUrl).Trim().TrimEnd('/');
-        if (!Uri.TryCreate(plexUrl, UriKind.Absolute, out var uri) ||
-            (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps))
+        var (plexUrl, plexUrlError) = PlexUrlRules.Normalize(request.PlexUrl ?? current.PlexUrl);
+        if (plexUrlError is not null)
         {
-            errors.Add("plex_url deve ser uma URL absoluta http:// ou https://");
+            errors.Add(plexUrlError);
         }
 
-        var mediaRoot = (request.MediaRoot ?? current.MediaRoot).Trim();
-        if (!Path.IsPathRooted(mediaRoot) || !Directory.Exists(mediaRoot))
+        var mediaRoots = current.MediaRoots;
+        if (request.MediaRoots is not null)
         {
-            errors.Add("media_root deve ser um diretório absoluto existente");
+            var (roots, rootsErrors) = MediaRoots.Normalize(request.MediaRoots);
+            errors.AddRange(rootsErrors);
+            mediaRoots = roots;
         }
 
         var syncInterval = request.SyncIntervalMinutes ?? current.SyncIntervalMinutes;
@@ -53,20 +54,15 @@ public sealed class UpdateAppSettingsUseCase
             errors.Add($"sync_interval_minutes deve estar entre {MinInterval} e {MaxInterval}");
         }
 
-        var catalogInterval = request.SyncCatalogIntervalMinutes ?? current.SyncCatalogIntervalMinutes;
-        if (catalogInterval is < MinInterval or > MaxInterval)
-        {
-            errors.Add($"sync_catalog_interval_minutes deve estar entre {MinInterval} e {MaxInterval}");
-        }
-
-        if (errors.Count > 0)
+if (errors.Count > 0)
         {
             return UpdateAppSettingsResult.Invalid([.. errors]);
         }
 
+        var autoSkipAuthorized = request.AutoSkipAuthorized ?? current.AutoSkipAuthorized;
+
         var token = request.PlexToken is null ? current.PlexToken : request.PlexToken.Trim();
-        await _store.SaveAsync(new AppSettingsSnapshot(
-            plexUrl, token, mediaRoot, syncInterval, catalogInterval));
+        await _store.SaveAsync(new AppSettingsSnapshot(plexUrl, token, mediaRoots, syncInterval, autoSkipAuthorized));
 
         return UpdateAppSettingsResult.Ok();
     }

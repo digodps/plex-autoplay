@@ -81,15 +81,6 @@ on invalid input.
 - **WHEN** an endpoint receives an invalid JSON body
 - **THEN** binding validation returns 400 instead of a parse exception
 
-### Requirement: Configuration I/O outside Web
-The system SHALL read/write `.env` configuration through `IPlexConfigStore`
-(Application port, Infrastructure implementation); Web endpoints SHALL call it
-instead of calling `System.IO.File.*`.
-
-#### Scenario: Config change via port
-- **WHEN** an endpoint persists Plex config
-- **THEN** it delegates to `IPlexConfigStore`, no direct file I/O in Web
-
 ### Requirement: No dead code
 The system SHALL remove `PlexWebSaveEndpoint` (never registered) and any
 unreferenced use case.
@@ -114,3 +105,21 @@ checks SHALL move behind an `IPathResolver` port implemented in Infrastructure.
 #### Scenario: Path resolution has no filesystem access in Application
 - **WHEN** the Application code resolves a media path
 - **THEN** it delegates existence checks to `IPathResolver`, and `MediaPathResolver` contains no `File.Exists` call
+
+### Requirement: Configuration persistence outside Web
+
+O sistema SHALL ler/gravar configurações operacionais através da porta
+`IAppSettingsStore` (Application, implementação Infrastructure). Endpoints
+Web SHALL delegar validação e persistência a um caso de uso, sem I/O direto
+de arquivo ou SQL.
+
+#### Scenario: Config change via port
+
+- **WHEN** um endpoint persiste configurações
+- **THEN** delega a `UpdateAppSettingsUseCase` e `IAppSettingsStore`
+- **AND** não executa `System.IO.File.*` nem SQL na camada Web
+
+#### Scenario: Web não implementa persistência
+
+- **WHEN** o build roda o teste de arquitetura
+- **THEN** nenhum tipo de Web implementa `IAppSettingsStore`

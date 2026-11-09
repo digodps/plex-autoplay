@@ -23,15 +23,14 @@ public class SettingsPersistenceTests
             var store = new SqliteAppSettingsStore(connectionString);
 
             await store.SaveAsync(new AppSettingsSnapshot(
-                "http://plex.local:32400", "token-123", dir, 7, 42));
+                "http://plex.local:32400", "token-123", [dir, "/media/extra"], 7, false));
 
             var loaded = await store.GetAsync();
 
             Assert.Equal("http://plex.local:32400", loaded.PlexUrl);
             Assert.Equal("token-123", loaded.PlexToken);
-            Assert.Equal(dir, loaded.MediaRoot);
+            Assert.Equal(new[] { dir, "/media/extra" }, loaded.MediaRoots);
             Assert.Equal(7, loaded.SyncIntervalMinutes);
-            Assert.Equal(42, loaded.SyncCatalogIntervalMinutes);
             Assert.True(loaded.PlexTokenSet);
         }
         finally
@@ -74,14 +73,14 @@ public class SettingsPersistenceTests
         Directory.CreateDirectory(dir);
         try
         {
-            var store = new InMemorySettingsStore(AppSettingsSnapshot.Defaults with { MediaRoot = dir });
+            var store = new InMemorySettingsStore(AppSettingsSnapshot.Defaults with { MediaRoots = [dir] });
             var useCase = new UpdateAppSettingsUseCase(store);
 
             var result = await useCase.ExecuteAsync(new UpdateAppSettingsRequest(
-                "ftp://invalid", "new-token", dir, 0, 5000));
+                "ftp://invalid", "new-token", [dir], 0, null));
 
             Assert.False(result.Success);
-            Assert.Equal(3, result.Errors.Count);
+            Assert.Equal(2, result.Errors.Count);
             Assert.False(store.Saved);
             Assert.Equal(AppSettingDefaults.PlexToken, (await store.GetAsync()).PlexToken);
         }
@@ -101,12 +100,12 @@ public class SettingsPersistenceTests
             var store = new InMemorySettingsStore(AppSettingsSnapshot.Defaults with
             {
                 PlexToken = "existing-token",
-                MediaRoot = dir
+                MediaRoots = [dir]
             });
             var useCase = new UpdateAppSettingsUseCase(store);
 
             var result = await useCase.ExecuteAsync(new UpdateAppSettingsRequest(
-                "https://plex.local:32400", null, dir, 10, 60));
+                "https://plex.local:32400", null, [dir], 10, null));
 
             Assert.True(result.Success);
             Assert.Equal("existing-token", (await store.GetAsync()).PlexToken);

@@ -1,4 +1,5 @@
-const HOME = { label: "Início", to: { name: "dashboard" } };
+// ponytail: acesso à home fica com o logo do AppHeader; a trilha começa abaixo dela.
+const LIBRARIES = { label: "Bibliotecas", to: { name: "libraries" } };
 
 function text(value) {
   return Array.isArray(value) ? String(value[0] ?? "") : value ? String(value) : "";
@@ -10,29 +11,36 @@ function libraryTitle(libraries, key) {
 }
 
 export function buildBreadcrumb(route, libraries = [], { loading = false } = {}) {
-  if (route?.name === "dashboard") return [{ label: HOME.label, isCurrent: true }];
-
+  const name = route?.name;
   const params = route?.params ?? {};
   const query = route?.query ?? {};
   const key = params.key ?? query.libraryKey;
   const lib = libraryTitle(libraries, key) || text(query.libraryTitle);
-  const items = [{ ...HOME }];
+  const items = [];
 
-  if (route?.name === "libraries") {
-    items.push({ label: "Bibliotecas", isCurrent: true });
-  } else if (route?.name === "series") {
-    items.push({ label: loading ? "" : lib || "Biblioteca indisponível", isCurrent: true });
-  } else if (route?.name === "series-markers") {
+  if (name === "dashboard") return [];
+
+  if (name === "libraries") {
+    items.push({ ...LIBRARIES });
+  } else if (name === "series") {
+    items.push({ ...LIBRARIES });
+    if (!loading) items.push({ label: lib || "Biblioteca indisponível" });
+  } else if (name === "series-markers") {
+    items.push({ ...LIBRARIES });
     if (lib) {
       items.push({
         label: lib,
         to: key ? { name: "series", params: { key } } : undefined,
       });
     }
-    items.push({ label: text(query.seriesTitle) || "Série", isCurrent: true });
+    items.push({ label: text(query.seriesTitle) || "Série" });
   } else {
-    items.push({ label: route?.meta?.title ?? "", isCurrent: true });
+    items.push({ label: route?.meta?.title || "Página" });
   }
 
-  return items.filter((item) => item.label);
+  const filtered = items.filter((item) => item.label);
+  return filtered.map((item, index) => ({
+    ...item,
+    isCurrent: index === filtered.length - 1,
+  }));
 }

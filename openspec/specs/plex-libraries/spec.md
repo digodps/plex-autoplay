@@ -41,7 +41,7 @@ O sistema SHALL incluir apenas bibliotecas do tipo "show" (séries) no conjunto 
 
 ### Requirement: Map episodes to local media files
 
-O sistema SHALL listar os episódios de cada biblioteca de séries consultando a API do Plex em `/library/sections/{sectionKey}/all?type=4`, resolver o caminho do arquivo de mídia de cada episódio via `MediaPart.file` + `MEDIA_ROOT` e retornar a miniatura do episódio como URL do proxy `/api/images/{thumb}`.
+O sistema SHALL listar os episódios de cada biblioteca de séries consultando a API do Plex em `/library/sections/{sectionKey}/all?type=4`, resolver o caminho do arquivo de mídia de cada episódio via `MediaPart.file` + lista `MEDIA_ROOTS` e retornar a miniatura do episódio como URL do proxy `/api/images/{thumb}`.
 
 #### Scenario: Episode list retrieved for a series library
 
@@ -56,8 +56,8 @@ O sistema SHALL listar os episódios de cada biblioteca de séries consultando a
 
 #### Scenario: File path resolved via MEDIA_ROOT
 
-- **WHEN** o `MediaPart.file` de um episódio é `/Volumes/Media/Series/Show/Season 1/Episode 1.mkv` e `MEDIA_ROOT=/media`
-- **THEN** o sistema resolve o caminho local como `/media/Volumes/Media/Series/Show/Season 1/Episode 1.mkv`
+- **WHEN** o `MediaPart.file` de um episódio é `/Volumes/Media/Series/Show/Season 1/Episode 1.mkv` e `MEDIA_ROOTS=["/media","/mnt/nas"]`
+- **THEN** o sistema retorna `local_path` do primeiro candidato existente em disco entre as raízes configuradas
 - **AND** o campo `thumb` não é afetado pela resolução de caminho
 
 #### Scenario: Media file not accessible

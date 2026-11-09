@@ -5,9 +5,10 @@ namespace PlexAutoplay.Infrastructure.Persistence;
 
 /// <summary>
 /// Inicializa o schema SQLite de forma assíncrona, aplicando migrações
-/// versionadas cobrindo os 4 repositórios (Library, Series, Markers,
-/// UserThemePreferences). Chamado no composition root (Program.cs) antes do
-/// app.Run(), em vez de cada repositório criar suas tabelas no construtor.
+/// versionadas cobrindo os repositórios (Library, Series, Markers,
+/// UserThemePreferences, AuthCredential, AppSetting, ScanJob, ScanJobLog).
+/// Chamado no composition root (Program.cs) antes do app.Run(), em vez de
+/// cada repositório criar suas tabelas no construtor.
 /// </summary>
 public static class DatabaseInitializer
 {
@@ -73,6 +74,32 @@ public static class DatabaseInitializer
                 UpdatedAt TEXT NOT NULL DEFAULT (datetime('now'))
             )
             """, false),
+        (8, """
+            CREATE TABLE IF NOT EXISTS ScanJob (
+                JobId TEXT NOT NULL PRIMARY KEY,
+                Status TEXT NOT NULL,
+                Processed INTEGER NOT NULL DEFAULT 0,
+                Skipped INTEGER NOT NULL DEFAULT 0,
+                Errors INTEGER NOT NULL DEFAULT 0,
+                ErrorMessage TEXT,
+                CreatedAt TEXT NOT NULL DEFAULT (datetime('now')),
+                UpdatedAt TEXT NOT NULL DEFAULT (datetime('now'))
+            )
+            """, false),
+        (9, """
+            CREATE TABLE IF NOT EXISTS ScanJobLog (
+                Id INTEGER PRIMARY KEY AUTOINCREMENT,
+                JobId TEXT NOT NULL,
+                Timestamp TEXT NOT NULL DEFAULT (datetime('now')),
+                Level TEXT NOT NULL COLLATE NOCASE,
+                Message TEXT NOT NULL COLLATE NOCASE,
+                Suggestion TEXT,
+                FOREIGN KEY (JobId) REFERENCES ScanJob(JobId) ON DELETE CASCADE
+            )
+            """, false),
+        (10, "CREATE INDEX IF NOT EXISTS IX_ScanJobLog_Timestamp ON ScanJobLog(Timestamp)", true),
+        (11, "CREATE INDEX IF NOT EXISTS IX_ScanJobLog_JobId ON ScanJobLog(JobId)", true),
+        (12, "CREATE INDEX IF NOT EXISTS IX_ScanJobLog_Level ON ScanJobLog(Level)", true),
     ];
 
     public static async Task InitializeAsync(string connectionString)

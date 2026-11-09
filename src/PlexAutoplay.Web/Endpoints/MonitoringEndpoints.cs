@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using PlexAutoplay.Domain.Ports;
+using System.Collections.Generic;
 using Serilog;
 
 namespace PlexAutoplay.Web.Endpoints;
@@ -11,11 +12,11 @@ public static class MonitoringEndpoints
 {
     public static void MapMonitoringEndpoints(this IEndpointRouteBuilder app)
     {
-        app.MapGet("/api/status", ([FromServices] IScanJobStore scanJobs, [FromServices] IProcessInfoService processInfo) =>
+        app.MapGet("/api/status", async ([FromServices] IScanJobRepository scanJobs, [FromServices] IProcessInfoService processInfo) =>
         {
             try
             {
-                var lastJob = scanJobs.GetLatest();
+                var lastJob = await scanJobs.GetLatestAsync();
                 var process = processInfo;
 
                 return Results.Ok(new
@@ -64,9 +65,9 @@ public static class MonitoringEndpoints
         });
 
         // Prometheus metrics endpoint (real metrics, not hardcoded)
-        app.MapGet("/metrics", ([FromServices] IScanJobStore scanJobs, [FromServices] IProcessInfoService processInfo) =>
+        app.MapGet("/metrics", async ([FromServices] IScanJobRepository scanJobs, [FromServices] IProcessInfoService processInfo) =>
         {
-            var lastJob = scanJobs.GetLatest();
+            var lastJob = await scanJobs.GetLatestAsync();
             var process = processInfo;
             var lines = new List<string>
             {

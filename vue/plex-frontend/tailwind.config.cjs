@@ -7,7 +7,10 @@ module.exports = {
   darkMode: "class",
   theme: {
     fontFamily: {
-      sans: ["Inter", "sans-serif"],
+      // GitHub sans stack. Override via --fontStack-sansSerif.
+      sans: [
+        'var(--fontStack-sansSerif,-apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji")',
+      ],
     },
     screens: {
       "2xsm": "375px",

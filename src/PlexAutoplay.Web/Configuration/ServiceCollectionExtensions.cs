@@ -6,6 +6,7 @@ using PlexAutoplay.Infrastructure.Auth;
 using PlexAutoplay.Infrastructure.AutoSkip;
 using PlexAutoplay.Infrastructure.Cache;
 using PlexAutoplay.Infrastructure;
+using PlexAutoplay.Infrastructure.Persistence.Repositories;
 using PlexAutoplay.Infrastructure.Detection;
 using PlexAutoplay.Infrastructure.PlexProxy;
 using PlexAutoplay.Infrastructure.Sync;
@@ -25,16 +26,9 @@ public static class ServiceCollectionExtensions
         services.AddOpenApi();
         services.AddOpenTelemetryTelemetry(builder.Configuration);
 
-        // Periodic sync background service
-        services.AddHostedService<SyncBackgroundService>();
-        services.AddHostedService<PlexAutoSkipBackgroundService>();
-        services.AddHostedService<CatalogSyncBackgroundService>();
-
         // In-memory cache and the generic cache port (pluggable backend)
         services.AddMemoryCache();
         services.AddSingleton<ICacheService, ImageCacheService>();
-
-        // SQLite repositories
         var sqliteConnectionString = Environment.GetEnvironmentVariable("SQLITE_CONNECTION_STRING") ?? "Data Source=/data/app.db";
         services.AddSingleton<IMarkerRepository>(
             new PlexAutoplay.Infrastructure.Persistence.Repositories.SqliteMarkerRepository(sqliteConnectionString));
@@ -55,7 +49,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<SetupTokenService>();
         services.AddSingleton<ISetupTokenValidator>(sp => sp.GetRequiredService<SetupTokenService>());
         services.AddSingleton<LoginUseCase>();
-        services.AddSingleton<CompleteSetupUseCase>();
+        services.AddTransient<CompleteSetupUseCase>();
         services.AddSingleton<ChangePasswordUseCase>();
 
         // JWT token service
@@ -80,6 +74,9 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IPlexAutoSkipService>(sp =>
             new PlexAutoSkipService(sp.GetRequiredService<IMarkerRepository>()));
 
+        // Modern client seek strategy
+        services.AddSingleton<IClientSeekStrategyProvider, PlexModernClientDetector>();
+
         // Use cases (application boundary)
         services.AddSingleton<LibraryScanUseCase>();
         services.AddSingleton<SaveMarkerUseCase>();
@@ -96,8 +93,14 @@ public static class ServiceCollectionExtensions
         // Marker detector
         services.AddSingleton<IMarkerDetector, PlexAutoplay.Infrastructure.Detection.FfmpegMarkerDetector>();
 
-        // In-memory scan job tracking
-        services.AddSingleton<IScanJobStore, ScanJobStore>();
+        // Scan persistence (SQLite)
+        services.AddSingleton<IScanJobRepository>(sp =>
+            new SqliteScanJobRepository(sqliteConnectionString));
+        services.AddSingleton<IScanJobLogStore>(sp =>
+            new SqliteScanJobLogStore(sqliteConnectionString));
+
+        // Limpeza automática de logs antigos (executa no startup e a cada 24h)
+        services.AddHostedService<LogCleanupBackgroundService>();
 
         // Process information service
         services.AddSingleton<IProcessInfoService, PlexAutoplay.Infrastructure.Platform.ProcessInfoService>();

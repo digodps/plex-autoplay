@@ -40,8 +40,8 @@ git clone https://github.com/seu-usuario/plex-autoplay.git
 cd plex-autoplay
 
 # 2️⃣  Crie o arquivo .env apenas com bootstrap (JWT_SECRET, portas, certificado)
-cp .env.example .env
-# URL/token do Plex, MEDIA_ROOT e intervalos são configurados em ⚙ Ajustes
+cp infra/.env.example .env
+# URL/token do Plex, diretórios de mídia e intervalos são configurados em ⚙ Ajustes
 
 # 3️⃣  Build + up
 ./scripts/start.sh --detach
@@ -71,7 +71,7 @@ cp .env.example .env
 ## ⚙️  Configuração
 
 Configurações operacionais são persistidas no SQLite e editadas em **⚙ Ajustes**:
-`PLEX_URL`, `PLEX_TOKEN`, `MEDIA_ROOT`, `SYNC_INTERVAL_MINUTES` e
+`PLEX_URL`, `PLEX_TOKEN`, `MEDIA_ROOTS` (lista de diretórios), `SYNC_INTERVAL_MINUTES` e
 `SYNC_CATALOG_INTERVAL_MINUTES`. No primeiro start, valores existentes no
 ambiente são copiados para o banco; depois disso, o banco é a fonte de verdade.
 
@@ -116,7 +116,7 @@ O container roda .NET 10 ASP.NET Core Web API + Vue SPA + SQLite em modo HTTPS-o
 - **WebSocket (PlexAutoSkip)** na porta 8081.
 - **HTTP** desabilitado por padrão (`DISABLE_HTTP=true`).
 - **Certificado auto-assinado** gerado automaticamente quando nenhum `CERT_PATH`/`CERT_BASE64` é fornecido.
-- **Volumes**: `plex-data` (`/data` - SQLite, SQLite marker database, certificados) e bind mount `/media` (arquivos de mídia via `MEDIA_ROOT`).
+- **Volumes**: `plex-data` (`/data` - SQLite, SQLite marker database, certificados) e bind mounts de mídia (um ou mais caminhos, configurados em `MEDIA_ROOTS`).
 
 ---
 
@@ -176,10 +176,10 @@ ls test-artifacts/
 ### Estrutura do executor
 
 ```
-docker-compose.test.yml    # Compose separado para testes (executor + app)
-Dockerfile.test-executor   # Imagem Node + Playwright + Docker CLI
-scripts/run-e2e-tests.sh   # Orquestração: valida .env → compose up → playwright → captura falhas → compose down
-tests/e2e/mock-plex/       # Servidor Plex mock para CI
+infra/docker-compose.test.yml    # Compose separado para testes (executor + app)
+infra/Dockerfile.test-executor   # Imagem Node + Playwright + Docker CLI
+scripts/run-e2e-tests.sh         # Orquestração: valida .env → compose up → playwright → captura falhas → compose down
+tests/e2e/mock-plex/             # Servidor Plex mock para CI
 ```
 
 ### GitHub Actions
@@ -234,14 +234,38 @@ plex-autoplay/
 │   ├── start.sh                   # Sobe o container
 │   ├── stop.sh                    # Para o container
 │   ├── logs.sh                    # Visualiza logs
+│   ├── build.sh                   # Build completo (frontend + .NET + Docker)
 │   └── run-e2e-tests.sh           # Executor de testes e2e dentro do Docker
-├── docker-compose.yml             # Stack de produção
-├── docker-compose.test.yml        # Stack de testes (isolado)
-├── Dockerfile                     # Imagem .NET 10
-├── Dockerfile.test-executor       # Imagem Node + Playwright
-├── .env / .env.example            # Variáveis de ambiente
+├── infra/
+│   ├── docker-compose.yml         # Stack de produção
+│   ├── docker-compose.test.yml    # Stack de testes (isolado)
+│   ├── Dockerfile                 # Imagem .NET 10
+│   ├── Dockerfile.test-executor   # Imagem Node + Playwright
+│   └── .env.example               # Template de variáveis de ambiente
+├── docs/
+│   ├── DEVELOPMENT_GUIDE.md       # Guia de desenvolvimento
+│   ├── designs/                   # Documentos de design
+│   ├── pc-build-recommendation.md # Recomendações de hardware
+│   └── skills-lock.json           # Lock de skills TypeUI
+├── tools/
+│   ├── qa-ui-check.mjs            # Validação UI (tema, menus)
+│   └── test-sync-fix.mjs          # Sincronização de testes
 ├── openspec/                      # Especificações OpenSpec
-└── README.md
+├── README.md
+├── LICENSE
+├── .gitignore
+├── .gitattributes
+├── .dockerignore
+├── .env
+├── .env.example
+├── PlexAutoplay.slnx
+├── package.json
+├── package-lock.json
+├── eslint.config.js
+├── .prettierrc.json
+├── .prettierignore
+├── .pre-commit-config.yaml
+└── opencode.json
 ```
 
 ---

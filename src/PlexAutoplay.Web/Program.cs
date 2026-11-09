@@ -85,6 +85,7 @@ app.MapImageEndpoints();
 app.MapAutoSkipWebSocketEndpoints();
 app.MapMonitoringEndpoints();
 app.MapSettingsEndpoints();
+app.MapFileSystemEndpoints();
 app.MapPlexIdentityEndpoint();
 app.MapThemeEndpoints();
 

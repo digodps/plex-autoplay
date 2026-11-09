@@ -1,0 +1,12 @@
+.git
+.github
+.agents
+.agent-source
+.opencode
+**/bin
+**/obj
+**/node_modules
+vue/plex-frontend/dist
+data
+test-results
+openspec
