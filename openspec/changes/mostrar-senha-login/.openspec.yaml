@@ -1,0 +1,4 @@
+schema: spec-driven
+created: 2026-11-10
+goal: Adicionar icone para exibir/ocultar senha na tela de login e campos
+  type=password
