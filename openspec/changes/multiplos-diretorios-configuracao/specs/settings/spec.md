@@ -1,10 +1,12 @@
-# Spec — Múltiplos diretórios de mídia na página de Ajustes
+# Spec Delta — settings/media-roots
 
-## Requirement: Múltiplos diretórios de mídia em /ajustes
+## ADDED Requirements
 
 ### Requirement: Página de Ajustes exibe MediaRootsField
 
-Quando o usuário acessa `/ajustes`, a tela SHALL exibir o componente `MediaRootsField` permitindo adicionar múltiplos diretórios de mídia (com campo de texto + botão "Procurar…" que abre o DirectoryPicker e botão "Remover" para cada item).
+Quando o usuário acessa `/ajustes`, a tela SHALL exibir o componente `MediaRootsField`
+permitindo adicionar múltiplos diretórios de mídia (com campo de texto, botão
+"Procurar…" que abre o DirectoryPicker e botão "Remover" para cada item).
 
 #### Scenario: Carrega diretórios salvos
 
@@ -23,7 +25,9 @@ Quando o usuário acessa `/ajustes`, a tela SHALL exibir o componente `MediaRoot
 
 ### Requirement: Persistência de media_roots no backend
 
-Ao salvar as configurações, a página SHALL enviar `media_roots` (array de strings) via `PUT /api/settings`. O backend SHALL normalizar a lista (ao menos 1, máximo 32, existente, não é `/`, deduplicado) e persistir em `MEDIA_ROOTS`.
+Ao salvar as configurações, a página SHALL enviar `media_roots` (array de strings)
+via `PUT /api/settings`. O backend SHALL normalizar a lista (ao menos 1, máximo 32,
+existente, não é `/`, deduplicado) e persistir em `MEDIA_ROOTS`.
 
 #### Scenario: Salva múltiplos diretórios
 
