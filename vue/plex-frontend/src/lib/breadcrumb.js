@@ -33,7 +33,7 @@ export function buildBreadcrumb(route, libraries = [], { loading = false } = {})
         to: key ? { name: "series", params: { key } } : undefined,
       });
     }
-    items.push({ label: text(query.seriesTitle) || "Série" });
+    items.push({ label: text(query.seriesTitle) || "Biblioteca" });
   } else {
     items.push({ label: route?.meta?.title || "Página" });
   }

@@ -32,7 +32,7 @@ const routes = [
     name: "series",
     component: () => import("../views/Series/SeriesView.vue"),
     props: true,
-    meta: { title: "Séries" },
+    meta: { title: "Biblioteca" },
   },
   {
     path: "/series/:seriesKey/markers",

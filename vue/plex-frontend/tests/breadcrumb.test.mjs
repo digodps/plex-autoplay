@@ -74,18 +74,18 @@ test("marcadores: Bibliotecas > biblioteca > série", () => {
   ]);
 });
 
-test("deep link de marcadores sem metadados: Bibliotecas > Série", () => {
+test("deep link de marcadores sem metadados: Bibliotecas > Biblioteca", () => {
   const items = buildBreadcrumb(
     { name: "series-markers", params: { seriesKey: "42" } },
     libraries,
   );
   assert.deepEqual(contracts(items), [
     librariesItem,
-    { label: "Série", to: undefined, isCurrent: true },
+    { label: "Biblioteca", to: undefined, isCurrent: true },
   ]);
 });
 
-test("deep link de marcadores com bibliotecas ainda carregando: Bibliotecas > Série", () => {
+test("deep link de marcadores com bibliotecas ainda carregando: Bibliotecas > Biblioteca", () => {
   const items = buildBreadcrumb(
     { name: "series-markers", params: { seriesKey: "42" } },
     [],
@@ -93,7 +93,7 @@ test("deep link de marcadores com bibliotecas ainda carregando: Bibliotecas > S�
   );
   assert.deepEqual(contracts(items), [
     librariesItem,
-    { label: "Série", to: undefined, isCurrent: true },
+    { label: "Biblioteca", to: undefined, isCurrent: true },
   ]);
 });
 
