@@ -38,7 +38,7 @@ function openPassword() {
 <template>
   <header
     data-testid="app-header"
-    class="relative z-30 flex shrink-0 items-center gap-2 px-4 py-2 text-sm"
+    class="relative z-30 flex shrink-0 items-center gap-2 px-4 md:px-6 py-2 text-sm"
   >
     <RouterLink
       to="/"
