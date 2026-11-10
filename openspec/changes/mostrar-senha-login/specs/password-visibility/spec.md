@@ -9,7 +9,7 @@ reduzindo erros de digitação em login, setup, troca de senha e token do Plex.
 
 ### Requirement: password-visibility-toggle
 
-Todo campo `type="password"` da UI SHALL ter um botão de alternância de visibilidade com
+Todo campo `type="password"` da UI deve ter um botão de alternância de visibilidade com
 ícone de olho ao lado do input.
 
 #### Scenario: login exibe e oculta senha
@@ -34,14 +34,9 @@ Todo campo `type="password"` da UI SHALL ter um botão de alternância de visibi
 - **THEN** o campo alterna entre `type="password"` e `type="text"` e o ícone acompanha
   (`eye`/`eye-off`)
 
-#### Scenario: tema light/dark e menus funcionam
-- **WHEN** o usuário alterna o tema (light/dark) e navega pelos menus
-- **THEN** o ícone de senha herda a cor do tema (`currentColor`) e os menus abrem,
-  navegam, fecham e exibem estado ativo
-
 ### Requirement: password-visibility-accessibility
 
-O botão de alternância SHALL ser acessível e testável.
+O botão de alternância deve ser acessível e testável.
 
 #### Scenario: botão acessível e testável
 - **WHEN** o botão de alternância é renderizado
@@ -57,3 +52,10 @@ O botão de alternância SHALL ser acessível e testável.
 - **WHEN** o input Token do Plex em Ajustes é renderizado
 - **THEN** ele possui `id="plex-token"` e `data-testid="plex-token"`, permitindo associação
   `label for` e seleção em testes
+
+### Requirement: password-visibility-toggle
+
+#### Scenario: tema light/dark e menus funcionam
+- **WHEN** o usuário alterna o tema (light/dark) e navega pelos menus
+- **THEN** o ícone de senha herda a cor do tema (`currentColor`) e os menus abrem,
+  navegam, fecham e exibem estado ativo
