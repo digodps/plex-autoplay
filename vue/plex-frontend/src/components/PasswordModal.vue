@@ -13,6 +13,28 @@ const confirmPassword = ref("");
 const error = ref("");
 const loading = ref(false);
 
+const showCurrentPassword = ref(false);
+const showNewPassword = ref(false);
+const showConfirmPassword = ref(false);
+const currentPasswordRef = ref(null);
+const newPasswordRef = ref(null);
+const confirmPasswordRef = ref(null);
+
+function toggleCurrentPassword() {
+  showCurrentPassword.value = !showCurrentPassword.value;
+  currentPasswordRef.value?.focus();
+}
+
+function toggleNewPassword() {
+  showNewPassword.value = !showNewPassword.value;
+  newPasswordRef.value?.focus();
+}
+
+function toggleConfirmPassword() {
+  showConfirmPassword.value = !showConfirmPassword.value;
+  confirmPasswordRef.value?.focus();
+}
+
 function reset() {
   currentPassword.value = "";
   newPassword.value = "";
@@ -85,45 +107,84 @@ onUnmounted(() => document.removeEventListener("keydown", onKeydown));
       <label class="mb-1 block text-sm text-gray-700 dark:text-bodydark" for="password-current">
         Senha atual
       </label>
-      <input
-        id="password-current"
-        v-model="currentPassword"
-        type="password"
-        autocomplete="current-password"
-        class="mb-3 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-black dark:border-gray-700 dark:bg-gray-800 dark:text-white"
-        data-testid="password-current"
-        required
-      />
+      <div class="mb-3 relative">
+        <input
+          id="password-current"
+          ref="currentPasswordRef"
+          v-model="currentPassword"
+          :type="showCurrentPassword ? 'text' : 'password'"
+          autocomplete="current-password"
+          class="mb-3 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-black dark:border-gray-700 dark:bg-gray-800 dark:text-white pr-12"
+          data-testid="password-current"
+          required
+        />
+        <button
+          type="button"
+          class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-black dark:text-bodydark dark:hover:text-white"
+          :aria-label="showCurrentPassword ? 'Ocultar senha' : 'Mostrar senha'"
+          :aria-pressed="showCurrentPassword"
+          data-testid="toggle-password-current"
+          @click="toggleCurrentPassword"
+        >
+          <AppIcon :name="showCurrentPassword ? 'eye-off' : 'eye'" size="sm" />
+        </button>
+      </div>
 
       <label class="mb-1 block text-sm text-gray-700 dark:text-bodydark" for="password-new">
         Nova senha
       </label>
-      <input
-        id="password-new"
-        v-model="newPassword"
-        type="password"
-        autocomplete="new-password"
-        minlength="8"
-        maxlength="128"
-        class="mb-3 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-black dark:border-gray-700 dark:bg-gray-800 dark:text-white"
-        data-testid="password-new"
-        required
-      />
+      <div class="mb-3 relative">
+        <input
+          id="password-new"
+          ref="newPasswordRef"
+          v-model="newPassword"
+          :type="showNewPassword ? 'text' : 'password'"
+          autocomplete="new-password"
+          minlength="8"
+          maxlength="128"
+          class="mb-3 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-black dark:border-gray-700 dark:bg-gray-800 dark:text-white pr-12"
+          data-testid="password-new"
+          required
+        />
+        <button
+          type="button"
+          class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-black dark:text-bodydark dark:hover:text-white"
+          :aria-label="showNewPassword ? 'Ocultar senha' : 'Mostrar senha'"
+          :aria-pressed="showNewPassword"
+          data-testid="toggle-password-new"
+          @click="toggleNewPassword"
+        >
+          <AppIcon :name="showNewPassword ? 'eye-off' : 'eye'" size="sm" />
+        </button>
+      </div>
 
       <label class="mb-1 block text-sm text-gray-700 dark:text-bodydark" for="password-confirm">
         Confirmar nova senha
       </label>
-      <input
-        id="password-confirm"
-        v-model="confirmPassword"
-        type="password"
-        autocomplete="new-password"
-        minlength="8"
-        maxlength="128"
-        class="mb-2 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-black dark:border-gray-700 dark:bg-gray-800 dark:text-white"
-        data-testid="password-confirm"
-        required
-      />
+      <div class="mb-2 relative">
+        <input
+          id="password-confirm"
+          ref="confirmPasswordRef"
+          v-model="confirmPassword"
+          :type="showConfirmPassword ? 'text' : 'password'"
+          autocomplete="new-password"
+          minlength="8"
+          maxlength="128"
+          class="mb-2 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-black dark:border-gray-700 dark:bg-gray-800 dark:text-white pr-12"
+          data-testid="password-confirm"
+          required
+        />
+        <button
+          type="button"
+          class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-black dark:text-bodydark dark:hover:text-white"
+          :aria-label="showConfirmPassword ? 'Ocultar senha' : 'Mostrar senha'"
+          :aria-pressed="showConfirmPassword"
+          data-testid="toggle-password-confirm"
+          @click="toggleConfirmPassword"
+        >
+          <AppIcon :name="showConfirmPassword ? 'eye-off' : 'eye'" size="sm" />
+        </button>
+      </div>
 
       <p v-if="error" class="mb-2 text-sm text-red" data-testid="password-error">{{ error }}</p>
 
