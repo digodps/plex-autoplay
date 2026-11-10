@@ -41,10 +41,15 @@ function clearMessages() {
   errors.value = [];
 }
 
-function togglePassword(showRef, inputRef) {
-  showRef.value = !showRef.value;
-  inputRef.value?.focus();
+function makeTogglePassword(showRef, inputRef) {
+  return () => {
+    showRef.value = !showRef.value;
+    inputRef.value?.focus();
+  };
 }
+const toggleSetupPassword = makeTogglePassword(showSetupPassword, setupPasswordRef);
+const toggleSetupConfirm = makeTogglePassword(showSetupConfirm, setupConfirmRef);
+const toggleSetupPlexToken = makeTogglePassword(showSetupPlexToken, setupPlexTokenRef);
 
 function validateStep() {
   clearMessages();
@@ -246,60 +251,64 @@ async function loginAfterSetup() {
             />
           </div>
 
-          <div class="mb-4 relative">
+          <div class="mb-4">
             <label class="mb-2.5 block font-medium text-black dark:text-white" for="setup-password">
               Nova senha
             </label>
-            <input
-              id="setup-password"
-              ref="setupPasswordRef"
-              v-model="newPassword"
-              :type="showSetupPassword ? 'text' : 'password'"
-              autocomplete="new-password"
-              minlength="8"
-              maxlength="128"
-              class="w-full rounded-lg border border-stroke bg-transparent py-4 pl-5 pr-12 text-black outline-none focus:border-primary focus-visible:shadow-none dark:border-form-strokedark dark:bg-form-input dark:text-white"
-              data-testid="setup-password"
-              required
-            />
-            <button
-              type="button"
-              class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-black dark:text-bodydark dark:hover:text-white"
-              :aria-label="showSetupPassword ? 'Ocultar senha' : 'Mostrar senha'"
-              :aria-pressed="showSetupPassword"
-              data-testid="toggle-password-setup-new"
-              @click="togglePassword(showSetupPassword, setupPasswordRef)"
-            >
-              <AppIcon :name="showSetupPassword ? 'eye-off' : 'eye'" size="sm" />
-            </button>
+            <div class="relative">
+              <input
+                id="setup-password"
+                ref="setupPasswordRef"
+                v-model="newPassword"
+                :type="showSetupPassword ? 'text' : 'password'"
+                autocomplete="new-password"
+                minlength="8"
+                maxlength="128"
+                class="w-full rounded-lg border border-stroke bg-transparent py-4 pl-5 pr-12 text-black outline-none focus:border-primary focus-visible:shadow-none dark:border-form-strokedark dark:bg-form-input dark:text-white"
+                data-testid="setup-password"
+                required
+              />
+              <button
+                type="button"
+                class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-black dark:text-bodydark dark:hover:text-white"
+                :aria-label="showSetupPassword ? 'Ocultar senha' : 'Mostrar senha'"
+                :aria-pressed="showSetupPassword"
+                data-testid="toggle-password-setup-new"
+                @click="toggleSetupPassword"
+              >
+                <AppIcon :name="showSetupPassword ? 'eye-off' : 'eye'" size="sm" />
+              </button>
+            </div>
           </div>
 
-          <div class="mb-5 relative">
+          <div class="mb-5">
             <label class="mb-2.5 block font-medium text-black dark:text-white" for="setup-confirm">
               Confirmar senha
             </label>
-            <input
-              id="setup-confirm"
-              ref="setupConfirmRef"
-              v-model="confirmPassword"
-              :type="showSetupConfirm ? 'text' : 'password'"
-              autocomplete="new-password"
-              minlength="8"
-              maxlength="128"
-              class="w-full rounded-lg border border-stroke bg-transparent py-4 pl-5 pr-12 text-black outline-none focus:border-primary focus-visible:shadow-none dark:border-form-strokedark dark:bg-form-input dark:text-white"
-              data-testid="setup-confirm"
-              required
-            />
-            <button
-              type="button"
-              class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-black dark:text-bodydark dark:hover:text-white"
-              :aria-label="showSetupConfirm ? 'Ocultar senha' : 'Mostrar senha'"
-              :aria-pressed="showSetupConfirm"
-              data-testid="toggle-password-setup-confirm"
-              @click="togglePassword(showSetupConfirm, setupConfirmRef)"
-            >
-              <AppIcon :name="showSetupConfirm ? 'eye-off' : 'eye'" size="sm" />
-            </button>
+            <div class="relative">
+              <input
+                id="setup-confirm"
+                ref="setupConfirmRef"
+                v-model="confirmPassword"
+                :type="showSetupConfirm ? 'text' : 'password'"
+                autocomplete="new-password"
+                minlength="8"
+                maxlength="128"
+                class="w-full rounded-lg border border-stroke bg-transparent py-4 pl-5 pr-12 text-black outline-none focus:border-primary focus-visible:shadow-none dark:border-form-strokedark dark:bg-form-input dark:text-white"
+                data-testid="setup-confirm"
+                required
+              />
+              <button
+                type="button"
+                class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-black dark:text-bodydark dark:hover:text-white"
+                :aria-label="showSetupConfirm ? 'Ocultar senha' : 'Mostrar senha'"
+                :aria-pressed="showSetupConfirm"
+                data-testid="toggle-password-setup-confirm"
+                @click="toggleSetupConfirm"
+              >
+                <AppIcon :name="showSetupConfirm ? 'eye-off' : 'eye'" size="sm" />
+              </button>
+            </div>
           </div>
 
           <button
@@ -329,30 +338,32 @@ async function loginAfterSetup() {
             />
           </div>
 
-          <div class="mb-4 relative">
+          <div class="mb-4">
             <label class="mb-2.5 block font-medium text-black dark:text-white" for="setup-plex-token">
               Token do Plex
             </label>
-            <input
-              id="setup-plex-token"
-              ref="setupPlexTokenRef"
-              v-model="plexToken"
-              :type="showSetupPlexToken ? 'text' : 'password'"
-              autocomplete="off"
-              class="w-full rounded-lg border border-stroke bg-transparent py-4 pl-5 pr-12 text-black outline-none focus:border-primary focus-visible:shadow-none dark:border-form-strokedark dark:bg-form-input dark:text-white"
-              data-testid="setup-plex-token"
-              required
-            />
-            <button
-              type="button"
-              class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-black dark:text-bodydark dark:hover:text-white"
-              :aria-label="showSetupPlexToken ? 'Ocultar token' : 'Mostrar token'"
-              :aria-pressed="showSetupPlexToken"
-              data-testid="toggle-password-setup-plex-token"
-              @click="togglePassword(showSetupPlexToken, setupPlexTokenRef)"
-            >
-              <AppIcon :name="showSetupPlexToken ? 'eye-off' : 'eye'" size="sm" />
-            </button>
+            <div class="relative">
+              <input
+                id="setup-plex-token"
+                ref="setupPlexTokenRef"
+                v-model="plexToken"
+                :type="showSetupPlexToken ? 'text' : 'password'"
+                autocomplete="off"
+                class="w-full rounded-lg border border-stroke bg-transparent py-4 pl-5 pr-12 text-black outline-none focus:border-primary focus-visible:shadow-none dark:border-form-strokedark dark:bg-form-input dark:text-white"
+                data-testid="setup-plex-token"
+                required
+              />
+              <button
+                type="button"
+                class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-black dark:text-bodydark dark:hover:text-white"
+                :aria-label="showSetupPlexToken ? 'Ocultar token' : 'Mostrar token'"
+                :aria-pressed="showSetupPlexToken"
+                data-testid="toggle-password-setup-plex-token"
+                @click="toggleSetupPlexToken"
+              >
+                <AppIcon :name="showSetupPlexToken ? 'eye-off' : 'eye'" size="sm" />
+              </button>
+            </div>
           </div>
 
           <button
