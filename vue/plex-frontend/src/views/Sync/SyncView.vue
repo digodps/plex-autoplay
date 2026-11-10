@@ -32,11 +32,20 @@ const formatLogTimestamp = (date) =>
   date.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "digit" });
 
 async function startScan() {
-  const response = await apiFetch("/api/plex/scan", { method: "POST" });
-  if (response.ok) {
-    const data = await response.json();
-    currentJobId.value = data.job_id;
-    connectSSE(data.job_id);
+  try {
+    const response = await apiFetch("/api/plex/scan", { method: "POST" });
+    if (response.ok) {
+      const data = await response.json();
+      currentJobId.value = data.job_id;
+      connectSSE(data.job_id);
+      status.value = "running";
+    } else {
+      status.value = "failed";
+      errors.value = (errors.value ?? 0) + 1;
+    }
+  } catch {
+    status.value = "failed";
+    errors.value = (errors.value ?? 0) + 1;
   }
 }
 
@@ -45,7 +54,13 @@ function connectSSE(jobId) {
   eventSource.value = new EventSource(`/api/sync/log/stream/${jobId}`);
 
   eventSource.value.onmessage = (event) => {
-    const data = JSON.parse(event.data);
+    let data;
+    try {
+      data = JSON.parse(event.data);
+    } catch {
+      // Ignora mensagens SSE não-JSON (heartbeat/comentários) sem quebrar o componente.
+      return;
+    }
     status.value = data.status;
     processed.value = data.processed;
     skipped.value = data.skipped;
@@ -65,6 +80,7 @@ function connectSSE(jobId) {
   eventSource.value.onerror = () => {
     eventSource.value?.close();
     status.value = "failed";
+    errors.value = (errors.value ?? 0) + 1;
   };
 }
 

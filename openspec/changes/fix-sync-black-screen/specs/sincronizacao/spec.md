@@ -1,53 +1,60 @@
-# Spec — Correção de tela preta na sincronização (scan)
+# sincronizacao Specification (Delta)
 
-## Contexto
+## ADDED Requirements
 
-Na tela de Sincronização (`/sync`), o usuário inicia um escaneamento clicando em "Iniciar Escaneamento". O frontend chama `POST /api/plex/scan`, recebe um `job_id` e conecta um `EventSource` (SSE) em `/api/sync/log/stream/{jobId}` para atualizar status e logs em tempo real.
+### Requirement: Sync screen SHALL initiate scan without going black
 
-Hoje a tela fica preta após iniciar o escaneamento. O status não sai de `idle`, o console não é preenchido e a UI deixa de ser renderizada.
+**The system SHALL** initiate scan without going black: o usuário relatou que, ao clicar em "Iniciar Escaneamento", a tela de `/sync` ficava preta: o status não saía de `idle`, o console de logs não era preenchido e a UI deixava de responder. A causa provável é exceção não tratada no parsing de mensagens SSE (`JSON.parse` sem try/catch), erro 401 silencioso no `apiFetch` redirecionando/descarregando a shell, ou falha do `EventSource` sem feedback.
 
-## Requisitos funcionais
+**Migration**: Nenhuma ação do usuário.
 
-### RF1 — Iniciar escaneamento
-Ao clicar no botão "Iniciar Escaneamento" (quando `status !== 'running'`):
-- Deve chamar `POST /api/plex/scan`.
-- Ao obter `job_id`, deve armazená-lo e conectar o SSE em `/api/sync/log/stream/{jobId}`.
-- O `status` deve passar para `running`.
+#### Scenario: Starting scan SHALL keep UI rendered and status SHALL leave idle
+**- GIVEN** O usuário está autenticado e na tela /sync
+**- WHEN** clica em "Iniciar Escaneamento" com status `idle`
+**- THEN** o frontend chama `POST /api/plex/scan`
+**- THEN** conecta `EventSource` em `/api/sync/log/stream/{jobId}`
+**- THEN** o status passa para `running`
+**- THEN** a página continua renderizando shell (`AppHeader` + `<main>`)
+**- THEN** não há exceção JavaScript não tratada que deixe a tela preta
 
-### RF2 — Receber logs/status via SSE
-O `EventSource` deve:
-- Receber mensagens `data:` com `{ status, processed, skipped, errors, logs }`.
-- Atualizar `status`, `processed`, `skipped`, `errors` reativamente.
-- Acrescentar novos `logEntries` ao console (máximo 100).
-- Ao encerrar (`completed`/`failed`/`cancelled`), fechar o `EventSource` e manter o `status` final.
+#### Scenario: SSE error SHALL NOT break UI
+**- GIVEN** O `EventSource` recebe erro ou mensagem não-JSON
+**- WHEN** o `onerror` é disparado
+**- THEN** o `EventSource` é fechado
+**- THEN** o status passa para `failed` com feedback visível
+**- THEN** a tela continua renderizada (não fica preta)
 
-### RF3 — Tratamento de erro do SSE
-- `eventSource.onerror` deve fechar o `EventSource` e definir `status = "failed"` com feedback visível.
-- Não deve deixar a tela em branco/preta silenciosamente.
+#### Scenario: 401/HTTP error SHALL NOT unmount shell
+**- GIVEN** A chamada à API retorna 401 ou erro de rede
+**- WHEN** `apiFetch` é invocada
+**- THEN** a UI permanece funcional com mensagem/estado de erro visível
+**- THEN** não há redirecionamento silencioso que deixe a tela branca/preta
 
-### RF4 — Tratamento de erro HTTP 401/apiFetch
-- Erros 401 em chamadas de API (`/api/plex/scan`) não devem redirecionar silenciosamente de forma que deixe a tela preta.
-- Deve manter a UI funcional ou exibir mensagem de erro clara.
+### Requirement: Sync screen SHALL respect light/dark theme
 
-### RF5 — Tema aplicado (light/dark)
-- Os componentes da tela de sincronização devem respeitar o tema configurado (classes `dark:` do Tailwind).
-- Fundo, textos, bordas e botões devem renderizar corretamente tanto em light quanto em dark.
+**The system SHALL** respect light/dark theme: garantir que o fundo, textos e botões da tela de sincronização respeitem o tema configurado (classe `dark` / `data-theme`), evitando fundo preto incorreto em modo claro ou texto ilegível em modo escuro.
 
-### RF6 — Menus/navegação funcionando
-- Abertura, navegação, fechamento e estado ativo dos menus devem funcionar antes e depois do escaneamento.
-- O breadcrumb e a top bar (`AppHeader`) devem continuar visíveis e funcionais.
+**Migration**: Padronizar classes do design system nas telas de sincronização.
 
-### RF7 — Sem tela preta
-- Após iniciar o escaneamento, a página `/sync` deve continuar renderizando o shell (`AppHeader` + `<main>` + `router-view`).
-- Nenhuma exceção JavaScript não tratada deve quebrar o componente `SyncView`.
+#### Scenario: Theme SHALL be applied and toggled correctly
+**- GIVEN** O tema configurado é `light`
+**- WHEN** O usuário alterna para `dark`
+**- THEN** `document.documentElement.dataset.theme` passa para `dark`
+**- THEN** A classe `.dark` é aplicada ao elemento raiz
+**- THEN** O fundo/texto da tela de sincronização renderizam conforme o tema escuro
 
-## Critérios de aceitação (QA)
+#### Scenario: Light theme SHALL persist
+**- GIVEN** O tema configurado é `light`
+**- THEN** `document.documentElement.dataset.theme` é `light`
+**- THEN** O fundo/texto da tela de sincronização renderizam conforme o tema claro
 
-- [ ] Build passa: `npm run build` (vue), `dotnet build -c Release`, `docker compose build`.
-- [ ] `npm run lint` passa no `vue/plex-frontend`.
-- [ ] `openspec validate fix-sync-black-screen --strict` passa.
-- [ ] Acessar `http://localhost:<port>/sync` com Playwright:
-  - Tema light/dark toggle aplicado corretamente.
-  - Menus funcionando (abertura/navegação/fechamento/estado ativo).
-  - Clicar "Iniciar Escaneamento" inicia job (status `running`) e não deixa tela preta.
-- [ ] Relatório QA (`qa-report-1.md`) com `PASS` e URL de validação acessada.
+### Requirement: Sync screen menus SHALL work
+
+**The system SHALL** ensure menus work on sync screen: validar que a abertura, navegação, fechamento e estados ativos dos menus/breadcrumb continuam funcionando na tela de sincronização, antes e depois do escaneamento.
+
+**Migration**: Nenhuma.
+
+#### Scenario: Breadcrumb SHALL be visible with Sincronização active
+**- GIVEN** O usuário está na tela /sync
+**- THEN** O breadcrumb da top bar está visível
+**- THEN** O item "Sincronizar" está destacado como ativo
