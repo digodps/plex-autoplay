@@ -44,6 +44,28 @@ public static class MediaPathResolver
         return roots[0] + NormalizeFile(plexFilePath);
     }
 
+    /// <summary>Resolve um caminho local a partir do MediaPart.file do Plex.</summary>
+    public static string Resolve(string mediaRoot, string plexFilePath)
+    {
+        if (string.IsNullOrEmpty(plexFilePath))
+            return "";
+
+        var roots = NormalizeRoots(new[] { mediaRoot });
+        if (roots.Count == 0)
+            return "";
+
+        var segments = NormalizeFile(plexFilePath).Split('/', StringSplitOptions.RemoveEmptyEntries);
+        for (var start = 0; start < segments.Length; start++)
+        {
+            var suffix = string.Join('/', segments.Skip(start));
+            var candidate = roots[0] + "/" + suffix;
+            if (System.IO.File.Exists(candidate))
+                return candidate;
+        }
+
+        return Fallback(roots, plexFilePath);
+    }
+
     private static List<string> NormalizeRoots(IReadOnlyList<string> mediaRoots) =>
         [.. (mediaRoots ?? [])
             .Where(root => !string.IsNullOrWhiteSpace(root))
