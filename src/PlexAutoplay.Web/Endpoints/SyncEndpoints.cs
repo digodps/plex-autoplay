@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using PlexAutoplay.Application.UseCases;
 using PlexAutoplay.Domain.Ports;
 
 namespace PlexAutoplay.Web.Endpoints;
@@ -110,6 +111,24 @@ public static class SyncEndpoints
                 jobId = l.JobId,
                 jobStatus = l.JobStatus
             }));
+        });
+
+        app.MapPost("/api/sync/catalog", async ([FromServices] CatalogSyncUseCase catalogSync) =>
+        {
+            var result = await catalogSync.RunAsync(CancellationToken.None);
+            if (!result.Success)
+            {
+                return Results.Problem(result.ErrorMessage ?? "Falha ao sincronizar catálogo com o Plex. Verifique a conexão com o servidor e tente novamente.", statusCode: 502);
+            }
+            return Results.Ok(new
+            {
+                librariesInserted = result.LibrariesInserted,
+                librariesUpdated = result.LibrariesUpdated,
+                librariesRemoved = result.LibrariesRemoved,
+                seriesInserted = result.SeriesInserted,
+                seriesUpdated = result.SeriesUpdated,
+                seriesRemoved = result.SeriesRemoved
+            });
         });
 
         app.MapPost("/api/sync/logs/clear", async ([FromServices] IScanJobLogStore scanJobLogs) =>
