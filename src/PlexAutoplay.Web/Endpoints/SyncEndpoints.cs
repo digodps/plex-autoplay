@@ -113,9 +113,9 @@ public static class SyncEndpoints
             }));
         });
 
-        app.MapPost("/api/sync/catalog", async ([FromServices] CatalogSyncUseCase catalogSync) =>
+        app.MapPost("/api/sync/catalog", async (HttpContext context, [FromServices] CatalogSyncUseCase catalogSync) =>
         {
-            var result = await catalogSync.RunAsync(CancellationToken.None);
+            var result = await catalogSync.RunAsync(context.RequestAborted);
             if (!result.Success)
             {
                 return Results.Problem(result.ErrorMessage ?? "Falha ao sincronizar catálogo com o Plex. Verifique a conexão com o servidor e tente novamente.", statusCode: 502);
