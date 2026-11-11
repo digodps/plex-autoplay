@@ -10,6 +10,8 @@ const authStore = useAuthStore();
 const route = useRoute();
 const router = useRouter();
 const password = ref("");
+const showPassword = ref(false);
+const passwordRef = ref(null);
 const error = ref("");
 const loading = ref(false);
 
@@ -27,6 +29,11 @@ onMounted(async () => {
   }
   authStore.logout();
 });
+
+function togglePassword() {
+  showPassword.value = !showPassword.value;
+  passwordRef.value?.focus();
+}
 
 async function handleLogin() {
   error.value = "";
@@ -73,16 +80,29 @@ async function handleLogin() {
           <label class="mb-2.5 block font-medium text-black dark:text-white" for="password">
             Senha
           </label>
-          <input
-            id="password"
-            v-model="password"
-            type="password"
-            placeholder="Digite a senha"
-            autocomplete="current-password"
-            class="w-full rounded-lg border border-stroke bg-transparent py-4 pl-5 pr-12 text-black outline-none focus:border-primary focus-visible:shadow-none dark:border-form-strokedark dark:bg-form-input dark:text-white"
-            required
-            data-testid="password-input"
-          />
+          <div class="relative">
+            <input
+              id="password"
+              ref="passwordRef"
+              v-model="password"
+              :type="showPassword ? 'text' : 'password'"
+              placeholder="Digite a senha"
+              autocomplete="current-password"
+              class="w-full rounded-lg border border-stroke bg-transparent py-4 pl-5 pr-12 text-black outline-none focus:border-primary focus-visible:shadow-none dark:border-form-strokedark dark:bg-form-input dark:text-white"
+              required
+              data-testid="password-input"
+            />
+            <button
+              type="button"
+              class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-black dark:text-bodydark dark:hover:text-white"
+              :aria-label="showPassword ? 'Ocultar senha' : 'Mostrar senha'"
+              :aria-pressed="showPassword"
+              data-testid="toggle-password-signin"
+              @click="togglePassword"
+            >
+              <AppIcon :name="showPassword ? 'eye-off' : 'eye'" size="sm" />
+            </button>
+          </div>
         </div>
 
         <button

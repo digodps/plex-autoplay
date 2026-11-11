@@ -1,23 +1,32 @@
 <script setup>
 import { onMounted, reactive, ref } from "vue";
 import { apiFetch, extractErrorMessage } from "@/api";
+import AppIcon from "@/components/AppIcon.vue";
+import MediaRootsField from "@/components/MediaRootsField.vue";
 
 const form = reactive({
   plex_url: "",
-  media_root: "",
   sync_interval_minutes: 5,
   sync_catalog_interval_minutes: 30,
 });
+const mediaRoots = ref([]);
 const plexToken = ref("");
 const plexTokenSet = ref(false);
 const loading = ref(false);
 const saving = ref(false);
 const message = ref("");
 const error = ref("");
+const showPlexToken = ref(false);
+const plexTokenRef = ref(null);
+
+function togglePlexToken() {
+  showPlexToken.value = !showPlexToken.value;
+  plexTokenRef.value?.focus();
+}
 
 function applySettings(data) {
   form.plex_url = data.plex_url ?? "";
-  form.media_root = data.media_root ?? "";
+  mediaRoots.value = data.media_roots ?? [];
   form.sync_interval_minutes = data.sync_interval_minutes ?? 5;
   form.sync_catalog_interval_minutes = data.sync_catalog_interval_minutes ?? 30;
   plexTokenSet.value = Boolean(data.plex_token_set);
@@ -39,13 +48,17 @@ async function loadSettings() {
 }
 
 async function saveSettings() {
+  if (mediaRoots.value.length === 0) {
+    error.value = "Adicione ao menos um diretório de mídia";
+    return;
+  }
   saving.value = true;
   message.value = "";
   error.value = "";
   try {
     const payload = {
       plex_url: form.plex_url,
-      media_root: form.media_root,
+      media_roots: mediaRoots.value,
       sync_interval_minutes: Number(form.sync_interval_minutes),
       sync_catalog_interval_minutes: Number(form.sync_catalog_interval_minutes),
     };
@@ -138,34 +151,35 @@ onMounted(loadSettings);
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300" for="plex-token">
                 Token do Plex
               </label>
-              <input
-                id="plex-token"
-                v-model="plexToken"
-                type="password"
-                autocomplete="new-password"
-                :placeholder="plexTokenSet ? 'Token configurado — deixe vazio para manter' : 'Informe o token do Plex'"
-                class="w-full rounded border border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 text-black dark:text-white focus:border-primary focus:bg-white focus:text-black"
-              />
+              <div class="relative">
+                <input
+                  id="plex-token"
+                  ref="plexTokenRef"
+                  v-model="plexToken"
+                  :type="showPlexToken ? 'text' : 'password'"
+                  autocomplete="new-password"
+                  :placeholder="plexTokenSet ? 'Token configurado — deixe vazio para manter' : 'Informe o token do Plex'"
+                  class="w-full rounded border border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 text-black dark:text-white focus:border-primary focus:bg-white focus:text-black pr-12 py-2 px-3"
+                  data-testid="plex-token"
+                />
+                <button
+                  type="button"
+                  class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-black dark:text-gray-300 dark:hover:text-white"
+                  :aria-label="showPlexToken ? 'Ocultar token' : 'Mostrar token'"
+                  :aria-pressed="showPlexToken"
+                  data-testid="toggle-password-plex-token"
+                  @click="togglePlexToken"
+                >
+                  <AppIcon :name="showPlexToken ? 'eye-off' : 'eye'" size="sm" />
+                </button>
+              </div>
               <p class="text-xs text-gray-500 dark:text-gray-400">
                 {{ plexTokenSet ? "Token já configurado. Preencha apenas para substituir." : "Nenhum token configurado." }}
               </p>
             </div>
 
             <div class="rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 p-4 space-y-3">
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300" for="media-root">
-                Diretório de Mídia (MEDIA_ROOT)
-              </label>
-              <input
-                id="media-root"
-                v-model="form.media_root"
-                type="text"
-                required
-                placeholder="/media"
-                class="w-full rounded border border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 text-black dark:text-white focus:border-primary focus:bg-white focus:text-black"
-              />
-              <p class="text-xs text-gray-500 dark:text-gray-400">
-                Caminho existente dentro do container.
-              </p>
+              <MediaRootsField v-model="mediaRoots" label="Diretórios de Mídia (MEDIA_ROOTS)" />
             </div>
 
             <p v-if="message" class="text-sm text-green-600 dark:text-green-400">{{ message }}</p>
