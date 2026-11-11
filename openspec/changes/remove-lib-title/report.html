@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="pt-BR"><head><meta charset="utf-8">
+<title>Relatório OpenSpec — remove-lib-title</title>
+<style>
+body{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;margin:24px;line-height:1.5;color:#1f2937}
+h1{font-size:22px;margin-bottom:4px} h2{font-size:18px;margin-top:28px;border-bottom:1px solid #e5e7eb;padding-bottom:6px}
+h3{font-size:16px;margin-top:20px}
+.badge{font-size:11px;padding:2px 7px;border-radius:99px;color:#fff;font-weight:600}
+.badge.pass{background:#16a34a}.badge.fail{background:#dc2626}.badge.unk{background:#64748b}
+.summary{display:flex;gap:16px;margin:16px 0;border:1px solid #e5e7eb;border-radius:8px;padding:12px;background:#f9fafb}
+.summary div{flex:1}
+.summary .big{font-size:20px;font-weight:700;color:#111827}
+.tree{font-size:13px;line-height:1.6}
+.details>summary,details>summary{font-weight:600;cursor:pointer;list-style:none}
+details>summary::marker{content:"▸"}
+.file{margin-left:14px;padding:2px 0;border-left:2px solid #e5e7eb}
+.stat{color:#6b7280;font-size:11.5px}
+.tag{font-size:10px;padding:1px 5px;border-radius:3px;color:#fff;margin-left:6px}
+.emptydir{color:#9ca3af;font-style:italic;margin-left:14px}
+code{background:#f3f4f6;padding:1px 4px;border-radius:4px;font-size:0.9em}
+pre{background:#1f2937;color:#e5e7eb;padding:10px;border-radius:6px;overflow:auto}
+a{color:#2563eb;text-decoration:none} a:hover{text-decoration:underline}
+.meta{color:#6b7280;font-size:12.5px;margin-top:8px}
+</style></head>
+<body>
+<h1>Relatório OpenSpec — remove-lib-title</h1>
+<div class="meta">Worktree: /home/hermes/plex-autoplay-remove-lib-title &nbsp;|&nbsp; Base do diff: 1d8fb6ab570aab6d7c4755459c88350fbd6029b3 &nbsp;|&nbsp; Relatório: <b>/home/hermes/plex-autoplay-remove-lib-title/openspec/changes/remove-lib-title/report.html</b></div>
+
+<div class="summary">
+ <div><span class="big">73</span> arquivos alterados</div>
+ <div><span class="big" style="color:#16a34a">+763</span> linhas adicionadas</div>
+ <div><span class="big" style="color:#dc2626">-69</span> linhas removidas</div>
+ <div><span class="big">1</span> rodada(s) de QA</div>
+ <div><span class="big">1</span> evidência(s)</div>
+</div>
+
+<h2>🌳 Árvore de alterações (adicionado / modificado / removido)</h2>
+<div class="tree"><details class="dir"><summary>openspec/ <span class="stat">+666 -0</span></summary>
+<details class="dir"><summary>changes/ <span class="stat">+666 -0</span></summary>
+<details class="dir"><summary>catalog-sync-popular-series/ <span class="stat">+239 -0</span></summary>
+<div class="file" style="color:#16a34a">✅ <b>.openspec.yaml</b> <span class="stat">+3 -0</span> <span class="tag">A</span></div>
+<div class="file" style="color:#16a34a">✅ <b>README.md</b> <span class="stat">+5 -0</span> <span class="tag">A</span></div>
+<div class="file" style="color:#16a34a">✅ <b>deficiencias_resolvidas.md</b> <span class="stat">+24 -0</span> <span class="tag">A</span></div>
+<div class="file" style="color:#16a34a">✅ <b>design.md</b> <span class="stat">+23 -0</span> <span class="tag">A</span></div>
+<div class="file" style="color:#16a34a">✅ <b>proposal.md</b> <span class="stat">+25 -0</span> <span class="tag">A</span></div>
+<div class="file" style="color:#16a34a">✅ <b>qa-report-1.md</b> <span class="stat">+19 -0</span> <span class="tag">A</span></div>
+<div class="file" style="color:#16a34a">✅ <b>report.html</b> <span class="stat">+101 -0</span> <span class="tag">A</span></div>
+<div class="file" style="color:#16a34a">✅ <b>tasks.md</b> <span class="stat">+17 -0</span> <span class="tag">A</span></div>
+<details class="dir"><summary>specs/ <span class="stat">+22 -0</span></summary>
+<details class="dir"><summary>catalog-sync-popular-series/ <span class="stat">+22 -0</span></summary>
+<div class="file" style="color:#16a34a">✅ <b>spec.md</b> <span class="stat">+22 -0</span> <span class="tag">A</span></div>
+</details>
+</details>
+</details>
+<details class="dir"><summary>plex-libraries/ <span class="stat">+303 -0</span></summary>
+<div class="file" style="color:#16a34a">✅ <b>.openspec.yaml</b> <span class="stat">+4 -0</span> <span class="tag">A</span></div>
+<div class="file" style="color:#16a34a">✅ <b>README.md</b> <span class="stat">+3 -0</span> <span class="tag">A</span></div>
+<div class="file" style="color:#16a34a">✅ <b>deficiencias_resolvidas.md</b> <span class="stat">+37 -0</span> <span class="tag">A</span></div>
+<div class="file" style="color:#16a34a">✅ <b>design.md</b> <span class="stat">+45 -0</span> <span class="tag">A</span></div>
+<div class="file" style="color:#16a34a">✅ <b>proposal.md</b> <span class="stat">+25 -0</span> <span class="tag">A</span></div>
+<div class="file" style="color:#16a34a">✅ <b>qa-report-1.md</b> <span class="stat">+46 -0</span> <span class="tag">A</span></div>
+<div class="file" style="color:#16a34a">✅ <b>report.html</b> <span class="stat">+71 -0</span> <span class="tag">A</span></div>
+<div class="file" style="color:#16a34a">✅ <b>tasks.md</b> <span class="stat">+13 -0</span> <span class="tag">A</span></div>
+<details class="dir"><summary>specs/ <span class="stat">+59 -0</span></summary>
+<details class="dir"><summary>plex-libraries/ <span class="stat">+59 -0</span></summary>
+<div class="file" style="color:#16a34a">✅ <b>spec.md</b> <span class="stat">+59 -0</span> <span class="tag">A</span></div>
+</details>
+</details>
+</details>
+<details class="dir"><summary>remove-lib-title/ <span class="stat">+124 -0</span></summary>
+<div class="file" style="color:#16a34a">✅ <b>.openspec.yaml</b> <span class="stat">+3 -0</span> <span class="tag">A</span></div>
+<div class="file" style="color:#16a34a">✅ <b>README.md</b> <span class="stat">+5 -0</span> <span class="tag">A</span></div>
+<div class="file" style="color:#16a34a">✅ <b>deficiencias_resolvidas.md</b> <span class="stat">+23 -0</span> <span class="tag">A</span></div>
+<div class="file" style="color:#16a34a">✅ <b>design.md</b> <span class="stat">+20 -0</span> <span class="tag">A</span></div>
+<div class="file" style="color:#16a34a">✅ <b>proposal.md</b> <span class="stat">+22 -0</span> <span class="tag">A</span></div>
+<div class="file" style="color:#16a34a">✅ <b>qa-report-1.md</b> <span class="stat">+19 -0</span> <span class="tag">A</span></div>
+<div class="file" style="color:#16a34a">✅ <b>tasks.md</b> <span class="stat">+14 -0</span> <span class="tag">A</span></div>
+<details class="dir"><summary>specs/ <span class="stat">+18 -0</span></summary>
+<details class="dir"><summary>remove-lib-title/ <span class="stat">+18 -0</span></summary>
+<div class="file" style="color:#16a34a">✅ <b>spec.md</b> <span class="stat">+18 -0</span> <span class="tag">A</span></div>
+</details>
+</details>
+</details>
+</details>
+</details>
+<details class="dir"><summary>src/ <span class="stat">+35 -38</span></summary>
+<details class="dir"><summary>PlexAutoplay.Web/ <span class="stat">+35 -38</span></summary>
+<details class="dir"><summary>Configuration/ <span class="stat">+1 -0</span></summary>
+<div class="file" style="color:#d97706">🛠️ <b>ServiceCollectionExtensions.cs</b> <span class="stat">+1 -0</span> <span class="tag">M</span></div>
+</details>
+<details class="dir"><summary>Endpoints/ <span class="stat">+19 -0</span></summary>
+<div class="file" style="color:#d97706">🛠️ <b>SyncEndpoints.cs</b> <span class="stat">+19 -0</span> <span class="tag">M</span></div>
+</details>
+<details class="dir"><summary>wwwroot/ <span class="stat">+15 -38</span></summary>
+<div class="file" style="color:#d97706">🛠️ <b>index.html</b> <span class="stat">+2 -2</span> <span class="tag">M</span></div>
+<details class="dir"><summary>assets/ <span class="stat">+13 -36</span></summary>
+<div class="file" style="color:#16a34a">✅ <b>DashboardView-CMnew3It.js</b> <span class="stat">+1 -0</span> <span class="tag">A</span></div>
+<div class="file" style="color:#dc2626">❌ <b>DashboardView-Ccdmsbqx.js</b> <span class="stat">+0 -1</span> <span class="tag">D</span></div>
+<div class="file" style="color:#dc2626">❌ <b>DashboardView-D2KOZ8PM.js</b> <span class="stat">+0 -1</span> <span class="tag">D</span></div>
+<div class="file" style="color:#dc2626">❌ <b>DashboardView-DYRVhfrm.js</b> <span class="stat">+0 -1</span> <span class="tag">D</span></div>
+<div class="file" style="color:#dc2626">❌ <b>LibrariesView-BLGUofxf.js</b> <span class="stat">+0 -1</span> <span class="tag">D</span></div>
+<div class="file" style="color:#dc2626">❌ <b>LibrariesView-C7Z6eFuw.js</b> <span class="stat">+0 -1</span> <span class="tag">D</span></div>
+<div class="file" style="color:#16a34a">✅ <b>LibrariesView-DYX_fCRJ.js</b> <span class="stat">+1 -0</span> <span class="tag">A</span></div>
+<div class="file" style="color:#dc2626">❌ <b>LibrariesView-Dn6aXc9X.js</b> <span class="stat">+0 -1</span> <span class="tag">D</span></div>
+<div class="file" style="color:#16a34a">✅ <b>LogsView-BZz9ul02.js</b> <span class="stat">+1 -0</span> <span class="tag">A</span></div>
+<div class="file" style="color:#dc2626">❌ <b>LogsView-DEe44Cz7.js</b> <span class="stat">+0 -1</span> <span class="tag">D</span></div>
+<div class="file" style="color:#dc2626">❌ <b>LogsView-JpWyyfJy.js</b> <span class="stat">+0 -1</span> <span class="tag">D</span></div>
+<div class="file" style="color:#dc2626">❌ <b>LogsView-sD2olHBI.js</b> <span class="stat">+0 -1</span> <span class="tag">D</span></div>
+<div class="file" style="color:#dc2626">❌ <b>MarkerEditorView-7Or_OPlg.js</b> <span class="stat">+0 -1</span> <span class="tag">D</span></div>
+<div class="file" style="color:#16a34a">✅ <b>MarkerEditorView-BPQuOQ6o.js</b> <span class="stat">+1 -0</span> <span class="tag">A</span></div>
+<div class="file" style="color:#dc2626">❌ <b>MarkerEditorView-CdeKT82q.js</b> <span class="stat">+0 -1</span> <span class="tag">D</span></div>
+<div class="file" style="color:#dc2626">❌ <b>MarkerEditorView-Dqu9gZ8g.js</b> <span class="stat">+0 -1</span> <span class="tag">D</span></div>
+<div class="file" style="color:#dc2626">❌ <b>MediaRootsField-CC59RoxT.js</b> <span class="stat">+0 -1</span> <span class="tag">D</span></div>
+<div class="file" style="color:#16a34a">✅ <b>MediaRootsField-SYNFQoKe.js</b> <span class="stat">+1 -0</span> <span class="tag">A</span></div>
+<div class="file" style="color:#dc2626">❌ <b>SeriesView-BqMfaCRZ.js</b> <span class="stat">+0 -1</span> <span class="tag">D</span></div>
+<div class="file" style="color:#dc2626">❌ <b>SeriesView-CUIoEZ8_.js</b> <span class="stat">+0 -1</span> <span class="tag">D</span></div>
+<div class="file" style="color:#dc2626">❌ <b>SeriesView-DIdINcfD.js</b> <span class="stat">+0 -1</span> <span class="tag">D</span></div>
+<div class="file" style="color:#16a34a">✅ <b>SeriesView-DYTSzlb3.js</b> <span class="stat">+1 -0</span> <span class="tag">A</span></div>
+<div class="file" style="color:#dc2626">❌ <b>SettingsView-BIcdNj9E.js</b> <span class="stat">+0 -1</span> <span class="tag">D</span></div>
+<div class="file" style="color:#dc2626">❌ <b>SettingsView-Cj3wWlKt.js</b> <span class="stat">+0 -1</span> <span class="tag">D</span></div>
+<div class="file" style="color:#16a34a">✅ <b>SettingsView-DUpjhUX7.js</b> <span class="stat">+1 -0</span> <span class="tag">A</span></div>
+<div class="file" style="color:#dc2626">❌ <b>SettingsView-DoOdij2F.js</b> <span class="stat">+0 -1</span> <span class="tag">D</span></div>
+<div class="file" style="color:#dc2626">❌ <b>SetupView-BU3IfNGK.js</b> <span class="stat">+0 -1</span> <span class="tag">D</span></div>
+<div class="file" style="color:#16a34a">✅ <b>SetupView-CFErkVIa.js</b> <span class="stat">+1 -0</span> <span class="tag">A</span></div>
+<div class="file" style="color:#dc2626">❌ <b>SetupView-DBLc6gr0.js</b> <span class="stat">+0 -1</span> <span class="tag">D</span></div>
+<div class="file" style="color:#dc2626">❌ <b>SetupView-DnRhEm5M.js</b> <span class="stat">+0 -1</span> <span class="tag">D</span></div>
+<div class="file" style="color:#dc2626">❌ <b>SyncView-ChPcLoY3.js</b> <span class="stat">+0 -1</span> <span class="tag">D</span></div>
+<div class="file" style="color:#dc2626">❌ <b>SyncView-D2o8AmBz.js</b> <span class="stat">+0 -1</span> <span class="tag">D</span></div>
+<div class="file" style="color:#dc2626">❌ <b>SyncView-K9XVbmRY.js</b> <span class="stat">+0 -1</span> <span class="tag">D</span></div>
+<div class="file" style="color:#16a34a">✅ <b>SyncView-zij5Hctz.js</b> <span class="stat">+1 -0</span> <span class="tag">A</span></div>
+<div class="file" style="color:#16a34a">✅ <b>index-B2ix6tZS.css</b> <span class="stat">+1 -0</span> <span class="tag">A</span></div>
+<div class="file" style="color:#dc2626">❌ <b>index-Br-OaV_Y.css</b> <span class="stat">+0 -1</span> <span class="tag">D</span></div>
+<div class="file" style="color:#dc2626">❌ <b>index-CfAgQ_qa.css</b> <span class="stat">+0 -1</span> <span class="tag">D</span></div>
+<div class="file" style="color:#dc2626">❌ <b>index-DktY_6DN.js</b> <span class="stat">+0 -3</span> <span class="tag">D</span></div>
+<div class="file" style="color:#16a34a">✅ <b>index-Dl43uHlv.js</b> <span class="stat">+3 -0</span> <span class="tag">A</span></div>
+<div class="file" style="color:#dc2626">❌ <b>index-FoN3tmJo.js</b> <span class="stat">+0 -3</span> <span class="tag">D</span></div>
+<div class="file" style="color:#dc2626">❌ <b>index-ulJ5lSpE.js</b> <span class="stat">+0 -3</span> <span class="tag">D</span></div>
+</details>
+</details>
+</details>
+</details>
+<details class="dir"><summary>tests/ <span class="stat">+62 -20</span></summary>
+<details class="dir"><summary>e2e/ <span class="stat">+62 -20</span></summary>
+<details class="dir"><summary>tests/ <span class="stat">+26 -0</span></summary>
+<div class="file" style="color:#16a34a">✅ <b>qa-remove-lib-title.spec.js</b> <span class="stat">+26 -0</span> <span class="tag">A</span></div>
+</details>
+<details class="dir"><summary>{ =&gt; tests}/ <span class="stat">+36 -20</span></summary>
+<div class="file" style="color:#d97706">🛠️ <b>qa-theme-and-navigation.spec.js</b> <span class="stat">+36 -20</span> <span class="tag">M</span></div>
+</details>
+</details>
+</details>
+<details class="dir"><summary>vue/ <span class="stat">+0 -11</span></summary>
+<details class="dir"><summary>plex-frontend/ <span class="stat">+0 -11</span></summary>
+<details class="dir"><summary>src/ <span class="stat">+0 -11</span></summary>
+<details class="dir"><summary>views/ <span class="stat">+0 -11</span></summary>
+<details class="dir"><summary>Series/ <span class="stat">+0 -11</span></summary>
+<div class="file" style="color:#d97706">🛠️ <b>SeriesView.vue</b> <span class="stat">+0 -11</span> <span class="tag">M</span></div>
+</details>
+</details>
+</details>
+</details>
+</details></div>
+<p class="meta">Totais: A=38 M=5 D=30 R=0 &nbsp;•&nbsp; +763 / -69</p>
+
+<h2>🧪 Relatórios QA e rodadas de correção</h2>
+<details><summary>📋 qa-report-1.md — <span class="badge unk">?</span></summary><h1>QA Report — Iteração 1</h1>
+<ul><li><strong>Change:</strong> <code>remove-lib-title</code></li><li><strong>Status:</strong> <strong>PASS</strong></li><li><strong>Data:</strong> 2026-11-11 00:15 UTC</li></ul>
+<h2>Critérios Verificados</h2>
+<p>1. <strong>Remoção do título duplicado da biblioteca</strong>: OK. Página <code>/libraries/1/series</code> não exibe mais o bloco <code>&lt;h1&gt;Biblioteca → {título}&lt;/h1&gt;</code> nem <code>&lt;p&gt;Biblioteca selecionada.&lt;/p&gt;</code>.<br>2. <strong>Migalha de pão do header mantida</strong>: OK. Header (AppHeader) exibe &quot;Bibliotecas &gt; Animes&quot; via <code>buildBreadcrumb</code> intacto.<br>3. <strong>Build gate</strong>: OK. <code>npm run build</code> (frontend) passa; <code>dotnet build</code> passa; <code>docker compose build</code> passa.<br>4. <strong>Validação UI obrigatória (Playwright)</strong>: OK. 3/3 testes originais PASS (tema light/dark toggle, menus usuário, breadcrumb header). Novo teste <code>qa-remove-lib-title.spec.js</code> 1/1 PASS confirmando remoção do título duplicado.<br>5. <strong>Testes de breadcrumb unitários</strong>: OK. 12/12 PASS — <code>buildBreadcrumb</code> não alterado, migalha do header preservada.</p>
+<h2>Evidências</h2>
+<ul><li>URL testada: <code>http://localhost:8080</code></li><li>Página verificada: <code>/libraries/1/series</code> (biblioteca &quot;Animes&quot;, key 1)</li><li>Relatório Playwright: 4/4 testes PASS total</li></ul><p><strong>URLs de validação/evidência:</strong><ul><li><a href="http://localhost:8080`">http://localhost:8080`</a></li></ul></p></details>
+
+<h2>🔎 Evidências de teste</h2><ul><li><a href="../../../tests/e2e/playwright-report/index.html">tests/e2e/playwright-report/index.html</a></li></ul>
+
+<p class="meta">Próximos passos: revisar árvore e QA acima, então executar <code>/opsx-archive</code> para arquivar a change ou manter a worktree <code>feature/spec-remove-lib-title</code> para merge.</p>
+</body></html>
