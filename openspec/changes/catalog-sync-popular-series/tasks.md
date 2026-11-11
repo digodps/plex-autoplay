@@ -13,5 +13,5 @@
 
 - [x] 3.1 `dotnet build PlexAutoplay.slnx -c Release` passa com 0 erros (17 warnings pré-existentes).
 - [x] 3.2 `openspec validate catalog-sync-popular-series --strict` passa.
-- [ ] 3.3 Build do container Docker (`docker compose build`) passa.
+- [x] 3.3 Build do container Docker (`docker compose build`) passa.
 - [x] 3.4 QA UI Playwright contra `http://localhost:8080`: tema toggle e menus 3/3 PASS. Endpoint `POST /api/sync/catalog` 200 e `GET /api/series/1` com 9 séries (antes vazio).
