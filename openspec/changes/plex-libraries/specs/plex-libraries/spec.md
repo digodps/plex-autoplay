@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Defines behavior discovering Plex libraries, filtering series-only libraries, mapping library content local media file paths via MEDIA_ROOT.
+Defines behavior discovering Plex libraries, filtering series-only libraries, mapping library content local media file paths via MEDIA_ROOTS.
 
 ## ADDED Requirements
 
