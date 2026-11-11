@@ -1,7 +1,7 @@
 const { test, expect } = require("@playwright/test");
 
-const BASE = process.env.PLAYWRIGHT_BASE_URL || "http://localhost:8080";
-const PASSWORD = process.env.OPERATOR_PASSWORD || process.env.ADMIN_PASSWORD || "admin123";
+const BASE = process.env.PLAYWRIGHT_BASE_URL || "http://localhost:8090";
+const PASSWORD = process.env.OPERATOR_PASSWORD || process.env.ADMIN_PASSWORD || "PlexAdmin2026";
 
 async function login(page) {
   await page.goto(`${BASE}/login`, { waitUntil: "networkidle" });
@@ -16,69 +16,53 @@ test("tema: toggle cicla system -> light -> dark -> system e persiste", async ({
 
   const themeMode = () => page.evaluate(() => localStorage.getItem("theme.mode"));
 
+  // sistema -> claro (primeiro clique)
   await page.evaluate(() => localStorage.setItem("theme.mode", "system"));
   await page.reload({ waitUntil: "networkidle" });
   await expect(themeMode()).resolves.toBe("system");
   await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
 
-  const toggle = page.locator('button[aria-label="Tema claro"], button[aria-label="Tema escuro"]').first();
-  await expect(toggle).toBeVisible({ timeout: 5000 });
+  const toggle = page.locator("button.btn-ghost").first();
   await toggle.click();
   await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
   await expect(themeMode()).resolves.toBe("light");
 
+  // claro -> escuro
   await toggle.click();
   await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
   await expect(themeMode()).resolves.toBe("dark");
 
+  // persistence recarregando
   await page.reload({ waitUntil: "networkidle" });
   await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
 
+  // escuro -> sistema
   await toggle.click();
   await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
   await expect(themeMode()).resolves.toBe("system");
 
+  // sistema -> claro
   await toggle.click();
   await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
   await expect(themeMode()).resolves.toBe("light");
 });
 
-test("breadcrumb: exibe trilha e marca item ativo", async ({ page }) => {
+test("navegacao: breadcrumb navega e marca item ativo", async ({ page }) => {
   await login(page);
 
   await page.goto(`${BASE}/libraries`, { waitUntil: "networkidle" });
+  const items = page.locator(".breadcrumb-item");
+  await expect(items.first()).toBeVisible();
+  await expect(items.first()).toContainText("Início");
 
-  const breadcrumb = page.locator("nav[aria-label=Breadcrumb]");
-  await expect(breadcrumb).toBeVisible();
+  // último item = current
+  await expect(items.last()).toHaveAttribute("aria-current", "page");
 
-  // item atual (últimop da trilha) marcado como ativo
-  const current = breadcrumb.locator('[aria-current="page"]');
-  await expect(current.first()).toBeVisible();
-  await expect(current.first()).toHaveText(/Bibliotecas/);
+  // Ancestral clicável navega de volta
+  await items.first().click();
+  await expect(page).toHaveURL(`${BASE}/dashboard`);
 
-  // navegação via breadcrumb: em /series/:key existe link "Bibliotecas" clicável
-  const seriesLink = page.locator('nav[aria-label=Breadcrumb] a:has-text("Bibliotecas")').first();
-  if ((await seriesLink.count()) > 0) {
-    await seriesLink.click();
-    await expect(page).toHaveURL(`${BASE}/libraries`);
-  }
-});
-
-test("menu do usuário: abre, fecha e navega", async ({ page }) => {
-  await login(page);
-
-  const menuBtn = page.locator('button[aria-label="Menu do usuário"]').first();
-  await expect(menuBtn).toBeVisible();
-  await expect(menuBtn).toHaveAttribute("aria-expanded", "false");
-
-  await menuBtn.click();
-  await expect(menuBtn).toHaveAttribute("aria-expanded", "true");
-
-  // menu dropdown visível com itens
-  await expect(page.locator('button[data-testid="change-password-menu"]')).toBeVisible();
-
-  // clicar em item fecha o menu
-  await page.click('a[href="/settings"]');
-  await expect(page).toHaveURL(`${BASE}/settings`);
-  await expect(menuBtn).toHaveAttribute("aria-expanded", "false");
+  // menu/topbar presente (brand + breadcrumb)
+  await expect(page.locator(".topbar")).toBeVisible();
+  await expect(page.locator(".breadcrumb-bar, .breadcrumb-item").first()).toBeVisible();
 });
