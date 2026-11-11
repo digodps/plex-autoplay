@@ -20,4 +20,4 @@ O `CatalogSyncUseCase` existe em `src/PlexAutoplay.Application/UseCases/CatalogS
 
 1. **Reutilizar `CatalogSyncUseCase` existente sem modificações** em vez de criar novo serviço. Rationale: o use case já está completo e testado; o gap é apenas exposição via DI + endpoint.
 2. **Expor `POST /api/sync/catalog` dentro de `SyncEndpoints.cs`** (arquivo existente com endpoints de sincronização). Rationale: coesão com endpoints de sincronização existentes (`/api/sync/status`, `/api/sync/cancel`, etc.).
-3. **Registrar `CatalogSyncUseCase` como `AddSingleton`** em `ServiceCollectionExtensions.cs`, alinhado ao registro de outros use cases (ex.: `LibraryScanUseCase`, `GetSeriesQuery`).
+3. **Registrar `CatalogSyncUseCase` como `AddTransient`** em `ServiceCollectionExtensions.cs`. Rationale: evita captive dependency pois `CatalogSyncUseCase` depende de `IPlexApiClient` (registrado como Transient).
