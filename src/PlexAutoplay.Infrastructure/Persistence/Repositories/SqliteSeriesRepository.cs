@@ -42,6 +42,7 @@ public class SqliteSeriesRepository : ISeriesRepository
     {
         using var conn = CreateConnection();
 <<<<<<< HEAD
+<<<<<<< HEAD
         var parameters = new Dictionary<string, object>
         {
             ["LibraryRatingKey"] = libraryRatingKey,
@@ -56,6 +57,15 @@ public class SqliteSeriesRepository : ISeriesRepository
             parameters["Query"] = $"%{query}%";
         }
 >>>>>>> origin/feature/dashboard-redesign-31-10-2026-13-29-43-856
+=======
+        var parameters = new Dictionary<string, object>
+        {
+            ["LibraryRatingKey"] = libraryRatingKey,
+            ["Query"] = string.IsNullOrEmpty(query) ? "%" : $"%{query}%",
+            ["Offset"] = offset,
+            ["Limit"] = limit,
+        };
+>>>>>>> origin/feature/fix-plex-episodes-endpoint-31-10-2026-19-14-11
 
         var items = await conn.QueryAsync<Series>(
             @"SELECT RatingKey, LibraryRatingKey, Title, Summary, Thumb 
@@ -68,14 +78,20 @@ public class SqliteSeriesRepository : ISeriesRepository
 
         var total = await conn.ExecuteScalarAsync<int>(
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> origin/feature/fix-plex-episodes-endpoint-31-10-2026-19-14-11
             @"SELECT COUNT(*) FROM Series 
               WHERE LibraryRatingKey = @LibraryRatingKey 
               AND Title LIKE @Query",
             parameters);
+<<<<<<< HEAD
 =======
             @"SELECT COUNT(*) FROM Series WHERE LibraryRatingKey = @LibraryRatingKey",
             new { LibraryRatingKey = libraryRatingKey });
 >>>>>>> origin/feature/dashboard-redesign-31-10-2026-13-29-43-856
+=======
+>>>>>>> origin/feature/fix-plex-episodes-endpoint-31-10-2026-19-14-11
 
         return (items, total);
     }

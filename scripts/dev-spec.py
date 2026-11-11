@@ -2,8 +2,8 @@
 #
 # dev-spec.py - Script de suporte e orquestração do workflow multi-agente /dev-spec.
 #
-# Valida pré-requisitos (.env, Distrobox, gh CLI, openspec), auxilia na execução
-# dos testes em container, geração de commits convencionais e abertura de Pull Request.
+# Valida pré-requisitos (.env, gh CLI, openspec), auxilia na execução
+# dos testes, geração de commits convencionais e abertura de Pull Request.
 #
 # Uso:
 #   python scripts/dev-spec.py [--change <nome>] [--dry-run] [--skip-tests] [--skip-pr]
@@ -70,11 +70,7 @@ def check_prerequisites() -> tuple[bool, list[str]]:
         if missing:
             errors.append(f"Variáveis obrigatórias ausentes ou vazias no .env: {', '.join(missing)}")
 
-    # 2. Verifica distrobox
-    if not shutil.which("distrobox"):
-        errors.append("CLI 'distrobox' não encontrado no sistema.")
-
-    # 3. Verifica gh CLI e autenticação
+    # 2. Verifica gh CLI e autenticação
     gh_bin = find_gh_cli()
     if not gh_bin:
         errors.append("CLI 'gh' (GitHub CLI) não encontrado no PATH.")
@@ -83,7 +79,7 @@ def check_prerequisites() -> tuple[bool, list[str]]:
         if res.returncode != 0:
             errors.append(f"GitHub CLI ('gh') não está autenticado: {res.stderr or res.stdout}")
 
-    # 4. Verifica openspec CLI
+    # 3. Verifica openspec CLI
     if not shutil.which("openspec"):
         errors.append("CLI 'openspec' não encontrado no PATH.")
 
@@ -110,8 +106,8 @@ def get_active_change(target_name: Optional[str]) -> Optional[str]:
 
 
 def run_unit_tests(dry_run: bool = False) -> bool:
-    """Executa testes unitários .NET dentro do Distrobox."""
-    cmd = ["distrobox", "enter", "fedora", "--", "dotnet", "test", "tests/unit/PlexAutoplay.UnitTests.csproj"]
+    """Executa testes unitários .NET diretamente na máquina do dev."""
+    cmd = ["dotnet", "test", "tests/unit/PlexAutoplay.UnitTests.csproj"]
     print(f"🧪 Executando testes unitários: {' '.join(cmd)}")
     if dry_run:
         print("   [DRY-RUN] Testes unitários simulados com sucesso.")
@@ -121,14 +117,12 @@ def run_unit_tests(dry_run: bool = False) -> bool:
 
 
 def run_e2e_tests(dry_run: bool = False) -> bool:
-    """Executa testes E2E Playwright via Docker Compose no Distrobox."""
+    """Executa testes E2E Playwright via Docker Compose."""
     up_cmd = [
-        "distrobox", "enter", "fedora", "--",
         "docker", "compose", "-f", "docker-compose.test.yml", "up",
         "--build", "--abort-on-container-exit", "--exit-code-from", "executor"
     ]
     down_cmd = [
-        "distrobox", "enter", "fedora", "--",
         "docker", "compose", "-f", "docker-compose.test.yml", "down", "-v"
     ]
     print(f"🐳 Executando stack E2E: {' '.join(up_cmd)}")
@@ -210,8 +204,8 @@ def ensure_branch(change_name: str, dry_run: bool = False) -> str:
     # Fetch do origin/main
     run_cmd(["git", "fetch", "origin"])
 
-    # Cria branch local a partir do origin/main
-    create_res = run_cmd(["git", "checkout", "-b", branch_name, "origin/main"])
+    # Cria branch local a partir do main (local)
+    create_res = run_cmd(["git", "checkout", "-b", branch_name, "main"])
     if create_res.returncode != 0:
         print(f"❌ Falha ao criar branch '{branch_name}': {create_res.stderr}", file=sys.stderr)
         raise RuntimeError(f"Não foi possível criar branch {branch_name}")
@@ -242,7 +236,7 @@ def main() -> int:
         for err in errors:
             print(f"   - {err}")
         return 1
-    print("✅ Pré-requisitos atendidos (.env, Distrobox, gh CLI e openspec).")
+    print("✅ Pré-requisitos atendidos (.env, gh CLI e openspec).")
 
     if args.check_only:
         return 0
@@ -263,7 +257,7 @@ def main() -> int:
             return 1
         print("✅ Testes unitários aprovados com 100% de sucesso.")
 
-        print("\n🐳 [3/5] Executando testes E2E (Container no Distrobox)...")
+        print("\n🐳 [3/5] Executando testes E2E (Container)...")
         if not run_e2e_tests(dry_run=args.dry_run):
             print("❌ Testes E2E falharam.")
             return 1

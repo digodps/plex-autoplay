@@ -111,10 +111,10 @@ series.forEach((s) => {
 });
 
 // ---- Rotas ----
-function episodesResponse(seriesKey) {
+function episodesResponse(list) {
   return {
     MediaContainer: {
-      Metadata: (episodes[seriesKey] ?? []).map((ep) => ({
+      Metadata: list.map((ep) => ({
         type: "episode",
         ratingKey: ep.ratingKey,
         title: ep.title,
@@ -150,6 +150,7 @@ const server = http.createServer((req, res) => {
   // Catalogo paginado de séries: /library/sections/{key}/all?type=show
   const catalogMatch = path.match(/^\/library\/sections\/(\d+)\/all$/);
 <<<<<<< HEAD
+<<<<<<< HEAD
   // Episódios de uma seção (?type=4): usado pelo scan de marcadores.
   if (catalogMatch && url.searchParams.get("type") === "4" && req.method === "GET") {
     res.writeHead(200, { "Content-Type": "application/json" });
@@ -157,6 +158,14 @@ const server = http.createServer((req, res) => {
     return;
   }
 
+=======
+  if (catalogMatch && req.method === "GET" && url.searchParams.get("type") === "4") {
+    // Episódios da seção (usado pelo scanner): /library/sections/{key}/all?type=4
+    res.writeHead(200, { "Content-Type": "application/json" });
+    res.end(JSON.stringify(episodesResponse(Object.values(episodes).flat())));
+    return;
+  }
+>>>>>>> origin/feature/fix-plex-episodes-endpoint-31-10-2026-19-14-11
   if (catalogMatch && req.method === "GET") {
     const start = parseInt(req.headers["x-plex-container-start"] ?? "0", 10);
     const size = req.headers["x-plex-container-size"];
@@ -186,7 +195,7 @@ const server = http.createServer((req, res) => {
   const leavesMatch = path.match(/^\/library\/metadata\/(\d+)\/allLeaves$/);
   if (leavesMatch && req.method === "GET") {
     res.writeHead(200, { "Content-Type": "application/json" });
-    res.end(JSON.stringify(episodesResponse(leavesMatch[1])));
+    res.end(JSON.stringify(episodesResponse(episodes[leavesMatch[1]] ?? [])));
     return;
   }
 

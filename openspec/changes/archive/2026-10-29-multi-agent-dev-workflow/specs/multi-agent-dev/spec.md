@@ -3,10 +3,14 @@
 ## Purpose
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 Define o comportamento da orquestração de desenvolvimento multi-agente (`/dev-spec`), coordenando tarefas de backend (.NET), frontend (Vue 3), portão obrigatório de code review com auto-correção, validação de testes 100% via container e publicação automatizada de Pull Request.
 =======
 Define o comportamento da orquestração de desenvolvimento multi-agente (`/dev-spec`), coordenando tarefas de backend (.NET), frontend (Vue 3), portão obrigatório de code review com auto-correção, validação de testes 100% via container Distrobox e publicação automatizada de Pull Request.
 >>>>>>> origin/feature/dashboard-redesign-31-10-2026-13-29-43-856
+=======
+Define o comportamento da orquestração de desenvolvimento multi-agente (`/dev-spec`), coordenando tarefas de backend (.NET), frontend (Vue 3), portão obrigatório de code review com auto-correção, validação de testes 100% via container e publicação automatizada de Pull Request.
+>>>>>>> origin/feature/fix-plex-episodes-endpoint-31-10-2026-19-14-11
 
 ## ADDED Requirements
 
@@ -36,6 +40,7 @@ O sistema SHALL exigir que cada agente de implementação execute a revisão de 
 - **THEN** ele executa ESLint e Prettier nos arquivos JS/Vue, corrigindo quaisquer desvios encontrados
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 ### Requirement: Validação integral de testes em container
 O sistema SHALL acionar o Agente 3 (Tester) somente após a conclusão limpa das etapas de backend e frontend, executando a suíte de testes unitários e a stack E2E Playwright diretamente na máquina do dev.
 
@@ -48,6 +53,13 @@ O sistema SHALL acionar o Agente 3 (Tester) somente após a conclusão limpa das
 #### Scenario: Execução completa com 100% de sucesso
 - **WHEN** o Agente 3 executa os testes unitários e E2E Playwright dentro do Distrobox
 >>>>>>> origin/feature/dashboard-redesign-31-10-2026-13-29-43-856
+=======
+### Requirement: Validação integral de testes em container
+O sistema SHALL acionar o Agente 3 (Tester) somente após a conclusão limpa das etapas de backend e frontend, executando a suíte de testes unitários e a stack E2E Playwright diretamente na máquina do dev.
+
+#### Scenario: Execução completa com 100% de sucesso
+- **WHEN** o Agente 3 executa os testes unitários e E2E Playwright
+>>>>>>> origin/feature/fix-plex-episodes-endpoint-31-10-2026-19-14-11
 - **THEN** todos os testes passam com zero falhas e o executor encerra com código de saída 0
 
 #### Scenario: Falha de teste gera reteste

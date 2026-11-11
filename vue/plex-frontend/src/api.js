@@ -68,12 +68,16 @@ export async function apiFetch(url, options = {}) {
   const res = await fetch(url, { ...options, headers });
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   const publicPage =
     window.location.pathname === "/login" || window.location.pathname === "/setup";
   if (res.status === 401 && url.startsWith("/api/") && !publicPage) {
 =======
   if (res.status === 401 && url.startsWith("/api/")) {
 >>>>>>> origin/feature/dashboard-redesign-31-10-2026-13-29-43-856
+=======
+  if (res.status === 401 && url.startsWith("/api/") && window.location.pathname !== "/login") {
+>>>>>>> origin/feature/fix-plex-episodes-endpoint-31-10-2026-19-14-11
     redirectToLoginPreservingRoute();
   }
   return res;
