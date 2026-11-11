@@ -55,11 +55,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: .
-<<<<<<< HEAD
           file: ./infra/Dockerfile
-=======
-          file: ./Dockerfile
->>>>>>> origin/feature/dashboard-redesign-31-10-2026-13-29-43-856
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
