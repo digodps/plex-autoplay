@@ -27,20 +27,37 @@ a{color:#2563eb;text-decoration:none} a:hover{text-decoration:underline}
 <div class="meta">Worktree: /home/hermes/plex-autoplay-catalog-sync &nbsp;|&nbsp; Base do diff: 1d8fb6ab570aab6d7c4755459c88350fbd6029b3 &nbsp;|&nbsp; Relatório: <b>/home/hermes/plex-autoplay-catalog-sync/openspec/changes/catalog-sync-popular-series/report.html</b></div>
 
 <div class="summary">
- <div><span class="big">20</span> arquivos alterados</div>
- <div><span class="big" style="color:#16a34a">+497</span> linhas adicionadas</div>
- <div><span class="big" style="color:#dc2626">-20</span> linhas removidas</div>
+ <div><span class="big">73</span> arquivos alterados</div>
+ <div><span class="big" style="color:#16a34a">+823</span> linhas adicionadas</div>
+ <div><span class="big" style="color:#dc2626">-58</span> linhas removidas</div>
  <div><span class="big">1</span> rodada(s) de QA</div>
- <div><span class="big">1</span> evidência(s)</div>
+ <div><span class="big">2</span> evidência(s)</div>
 </div>
 
 <h2>🌳 Árvore de alterações (adicionado / modificado / removido)</h2>
-<div class="tree"><details class="dir"><summary>openspec/ <span class="stat">+441 -0</span></summary>
-<details class="dir"><summary>changes/ <span class="stat">+441 -0</span></summary>
-<details class="dir"><summary>catalog-sync-popular-series/ <span class="stat">+138 -0</span></summary>
+<div class="tree"><details class="dir"><summary>openspec/ <span class="stat">+709 -0</span></summary>
+<details class="dir"><summary>changes/ <span class="stat">+688 -0</span></summary>
+<details class="dir"><summary>archive/ <span class="stat">+239 -0</span></summary>
+<details class="dir"><summary>2026-11-10-catalog-sync-popular-series/ <span class="stat">+239 -0</span></summary>
 <div class="file" style="color:#16a34a">✅ <b>.openspec.yaml</b> <span class="stat">+3 -0</span> <span class="tag">A</span></div>
 <div class="file" style="color:#16a34a">✅ <b>README.md</b> <span class="stat">+5 -0</span> <span class="tag">A</span></div>
 <div class="file" style="color:#16a34a">✅ <b>deficiencias_resolvidas.md</b> <span class="stat">+24 -0</span> <span class="tag">A</span></div>
+<div class="file" style="color:#16a34a">✅ <b>design.md</b> <span class="stat">+23 -0</span> <span class="tag">A</span></div>
+<div class="file" style="color:#16a34a">✅ <b>proposal.md</b> <span class="stat">+25 -0</span> <span class="tag">A</span></div>
+<div class="file" style="color:#16a34a">✅ <b>qa-report-1.md</b> <span class="stat">+19 -0</span> <span class="tag">A</span></div>
+<div class="file" style="color:#16a34a">✅ <b>report.html</b> <span class="stat">+101 -0</span> <span class="tag">A</span></div>
+<div class="file" style="color:#16a34a">✅ <b>tasks.md</b> <span class="stat">+17 -0</span> <span class="tag">A</span></div>
+<details class="dir"><summary>specs/ <span class="stat">+22 -0</span></summary>
+<details class="dir"><summary>catalog-sync-popular-series/ <span class="stat">+22 -0</span></summary>
+<div class="file" style="color:#16a34a">✅ <b>spec.md</b> <span class="stat">+22 -0</span> <span class="tag">A</span></div>
+</details>
+</details>
+</details>
+</details>
+<details class="dir"><summary>catalog-sync-popular-series/ <span class="stat">+146 -0</span></summary>
+<div class="file" style="color:#16a34a">✅ <b>.openspec.yaml</b> <span class="stat">+3 -0</span> <span class="tag">A</span></div>
+<div class="file" style="color:#16a34a">✅ <b>README.md</b> <span class="stat">+5 -0</span> <span class="tag">A</span></div>
+<div class="file" style="color:#16a34a">✅ <b>deficiencias_resolvidas.md</b> <span class="stat">+32 -0</span> <span class="tag">A</span></div>
 <div class="file" style="color:#16a34a">✅ <b>design.md</b> <span class="stat">+23 -0</span> <span class="tag">A</span></div>
 <div class="file" style="color:#16a34a">✅ <b>proposal.md</b> <span class="stat">+25 -0</span> <span class="tag">A</span></div>
 <div class="file" style="color:#16a34a">✅ <b>qa-report-1.md</b> <span class="stat">+19 -0</span> <span class="tag">A</span></div>
@@ -67,35 +84,93 @@ a{color:#2563eb;text-decoration:none} a:hover{text-decoration:underline}
 </details>
 </details>
 </details>
+<details class="dir"><summary>specs/ <span class="stat">+21 -0</span></summary>
+<details class="dir"><summary>catalog-sync-popular-series/ <span class="stat">+21 -0</span></summary>
+<div class="file" style="color:#16a34a">✅ <b>spec.md</b> <span class="stat">+21 -0</span> <span class="tag">A</span></div>
 </details>
-<details class="dir"><summary>src/ <span class="stat">+20 -0</span></summary>
-<details class="dir"><summary>PlexAutoplay.Web/ <span class="stat">+20 -0</span></summary>
+</details>
+</details>
+<details class="dir"><summary>src/ <span class="stat">+35 -38</span></summary>
+<details class="dir"><summary>PlexAutoplay.Web/ <span class="stat">+35 -38</span></summary>
 <details class="dir"><summary>Configuration/ <span class="stat">+1 -0</span></summary>
 <div class="file" style="color:#d97706">🛠️ <b>ServiceCollectionExtensions.cs</b> <span class="stat">+1 -0</span> <span class="tag">M</span></div>
 </details>
 <details class="dir"><summary>Endpoints/ <span class="stat">+19 -0</span></summary>
 <div class="file" style="color:#d97706">🛠️ <b>SyncEndpoints.cs</b> <span class="stat">+19 -0</span> <span class="tag">M</span></div>
 </details>
+<details class="dir"><summary>wwwroot/ <span class="stat">+15 -38</span></summary>
+<div class="file" style="color:#d97706">🛠️ <b>index.html</b> <span class="stat">+2 -2</span> <span class="tag">M</span></div>
+<details class="dir"><summary>assets/ <span class="stat">+13 -36</span></summary>
+<div class="file" style="color:#dc2626">❌ <b>DashboardView-Ccdmsbqx.js</b> <span class="stat">+0 -1</span> <span class="tag">D</span></div>
+<div class="file" style="color:#dc2626">❌ <b>DashboardView-D2KOZ8PM.js</b> <span class="stat">+0 -1</span> <span class="tag">D</span></div>
+<div class="file" style="color:#dc2626">❌ <b>DashboardView-DYRVhfrm.js</b> <span class="stat">+0 -1</span> <span class="tag">D</span></div>
+<div class="file" style="color:#16a34a">✅ <b>DashboardView-juMm7g52.js</b> <span class="stat">+1 -0</span> <span class="tag">A</span></div>
+<div class="file" style="color:#dc2626">❌ <b>LibrariesView-BLGUofxf.js</b> <span class="stat">+0 -1</span> <span class="tag">D</span></div>
+<div class="file" style="color:#dc2626">❌ <b>LibrariesView-C7Z6eFuw.js</b> <span class="stat">+0 -1</span> <span class="tag">D</span></div>
+<div class="file" style="color:#16a34a">✅ <b>LibrariesView-DgCHw1ah.js</b> <span class="stat">+1 -0</span> <span class="tag">A</span></div>
+<div class="file" style="color:#dc2626">❌ <b>LibrariesView-Dn6aXc9X.js</b> <span class="stat">+0 -1</span> <span class="tag">D</span></div>
+<div class="file" style="color:#16a34a">✅ <b>LogsView-BusU20Dr.js</b> <span class="stat">+1 -0</span> <span class="tag">A</span></div>
+<div class="file" style="color:#dc2626">❌ <b>LogsView-DEe44Cz7.js</b> <span class="stat">+0 -1</span> <span class="tag">D</span></div>
+<div class="file" style="color:#dc2626">❌ <b>LogsView-JpWyyfJy.js</b> <span class="stat">+0 -1</span> <span class="tag">D</span></div>
+<div class="file" style="color:#dc2626">❌ <b>LogsView-sD2olHBI.js</b> <span class="stat">+0 -1</span> <span class="tag">D</span></div>
+<div class="file" style="color:#dc2626">❌ <b>MarkerEditorView-7Or_OPlg.js</b> <span class="stat">+0 -1</span> <span class="tag">D</span></div>
+<div class="file" style="color:#16a34a">✅ <b>MarkerEditorView-CJsAYMlK.js</b> <span class="stat">+1 -0</span> <span class="tag">A</span></div>
+<div class="file" style="color:#dc2626">❌ <b>MarkerEditorView-CdeKT82q.js</b> <span class="stat">+0 -1</span> <span class="tag">D</span></div>
+<div class="file" style="color:#dc2626">❌ <b>MarkerEditorView-Dqu9gZ8g.js</b> <span class="stat">+0 -1</span> <span class="tag">D</span></div>
+<div class="file" style="color:#dc2626">❌ <b>MediaRootsField-CC59RoxT.js</b> <span class="stat">+0 -1</span> <span class="tag">D</span></div>
+<div class="file" style="color:#16a34a">✅ <b>MediaRootsField-CfRt7FR5.js</b> <span class="stat">+1 -0</span> <span class="tag">A</span></div>
+<div class="file" style="color:#16a34a">✅ <b>SeriesView-BfN9PIXt.js</b> <span class="stat">+1 -0</span> <span class="tag">A</span></div>
+<div class="file" style="color:#dc2626">❌ <b>SeriesView-BqMfaCRZ.js</b> <span class="stat">+0 -1</span> <span class="tag">D</span></div>
+<div class="file" style="color:#dc2626">❌ <b>SeriesView-CUIoEZ8_.js</b> <span class="stat">+0 -1</span> <span class="tag">D</span></div>
+<div class="file" style="color:#dc2626">❌ <b>SeriesView-DIdINcfD.js</b> <span class="stat">+0 -1</span> <span class="tag">D</span></div>
+<div class="file" style="color:#dc2626">❌ <b>SettingsView-BIcdNj9E.js</b> <span class="stat">+0 -1</span> <span class="tag">D</span></div>
+<div class="file" style="color:#dc2626">❌ <b>SettingsView-Cj3wWlKt.js</b> <span class="stat">+0 -1</span> <span class="tag">D</span></div>
+<div class="file" style="color:#16a34a">✅ <b>SettingsView-CyTNnKtZ.js</b> <span class="stat">+1 -0</span> <span class="tag">A</span></div>
+<div class="file" style="color:#dc2626">❌ <b>SettingsView-DoOdij2F.js</b> <span class="stat">+0 -1</span> <span class="tag">D</span></div>
+<div class="file" style="color:#dc2626">❌ <b>SetupView-BU3IfNGK.js</b> <span class="stat">+0 -1</span> <span class="tag">D</span></div>
+<div class="file" style="color:#dc2626">❌ <b>SetupView-DBLc6gr0.js</b> <span class="stat">+0 -1</span> <span class="tag">D</span></div>
+<div class="file" style="color:#dc2626">❌ <b>SetupView-DnRhEm5M.js</b> <span class="stat">+0 -1</span> <span class="tag">D</span></div>
+<div class="file" style="color:#16a34a">✅ <b>SetupView-DuV4XkiD.js</b> <span class="stat">+1 -0</span> <span class="tag">A</span></div>
+<div class="file" style="color:#dc2626">❌ <b>SyncView-ChPcLoY3.js</b> <span class="stat">+0 -1</span> <span class="tag">D</span></div>
+<div class="file" style="color:#dc2626">❌ <b>SyncView-D2o8AmBz.js</b> <span class="stat">+0 -1</span> <span class="tag">D</span></div>
+<div class="file" style="color:#dc2626">❌ <b>SyncView-K9XVbmRY.js</b> <span class="stat">+0 -1</span> <span class="tag">D</span></div>
+<div class="file" style="color:#16a34a">✅ <b>SyncView-zij5Hctz.js</b> <span class="stat">+1 -0</span> <span class="tag">A</span></div>
+<div class="file" style="color:#16a34a">✅ <b>index-B2ix6tZS.css</b> <span class="stat">+1 -0</span> <span class="tag">A</span></div>
+<div class="file" style="color:#dc2626">❌ <b>index-Br-OaV_Y.css</b> <span class="stat">+0 -1</span> <span class="tag">D</span></div>
+<div class="file" style="color:#dc2626">❌ <b>index-CfAgQ_qa.css</b> <span class="stat">+0 -1</span> <span class="tag">D</span></div>
+<div class="file" style="color:#16a34a">✅ <b>index-CzoIJAjZ.js</b> <span class="stat">+3 -0</span> <span class="tag">A</span></div>
+<div class="file" style="color:#dc2626">❌ <b>index-DktY_6DN.js</b> <span class="stat">+0 -3</span> <span class="tag">D</span></div>
+<div class="file" style="color:#dc2626">❌ <b>index-FoN3tmJo.js</b> <span class="stat">+0 -3</span> <span class="tag">D</span></div>
+<div class="file" style="color:#dc2626">❌ <b>index-ulJ5lSpE.js</b> <span class="stat">+0 -3</span> <span class="tag">D</span></div>
 </details>
 </details>
-<details class="dir"><summary>tests/ <span class="stat">+36 -20</span></summary>
-<details class="dir"><summary>e2e/ <span class="stat">+36 -20</span></summary>
+</details>
+</details>
+<details class="dir"><summary>tests/ <span class="stat">+79 -20</span></summary>
+<details class="dir"><summary>e2e/ <span class="stat">+79 -20</span></summary>
+<details class="dir"><summary>tests/ <span class="stat">+43 -0</span></summary>
+<div class="file" style="color:#16a34a">✅ <b>qa-series-catalog.spec.js</b> <span class="stat">+43 -0</span> <span class="tag">A</span></div>
+</details>
 <details class="dir"><summary>{ =&gt; tests}/ <span class="stat">+36 -20</span></summary>
 <div class="file" style="color:#d97706">🛠️ <b>qa-theme-and-navigation.spec.js</b> <span class="stat">+36 -20</span> <span class="tag">M</span></div>
 </details>
 </details>
 </details></div>
-<p class="meta">Totais: A=17 M=3 D=0 R=0 &nbsp;•&nbsp; +497 / -20</p>
+<p class="meta">Totais: A=39 M=4 D=30 R=0 &nbsp;•&nbsp; +823 / -58</p>
 
 <h2>🧪 Relatórios QA e rodadas de correção</h2>
-<details><summary>📋 qa-report-1.md — <span class="badge unk">?</span></summary><h1>QA Report — Iteração 1</h1>
-<ul><li><strong>Change:</strong> <code>catalog-sync-popular-series</code></li><li><strong>Status:</strong> <strong>PASS</strong></li><li><strong>Data:</strong> 2026-11-10 23:59 UTC</li></ul>
-<h2>Critérios Verificados</h2>
-<p>1. <strong>Registro DI de <code>CatalogSyncUseCase</code></strong>: OK. Registrado como <code>Transient</code> em <code>ServiceCollectionExtensions.cs</code>.<br>2. <strong>Endpoint <code>POST /api/sync/catalog</code></strong>: OK. Adicionado em <code>SyncEndpoints.cs</code>, executa <code>CatalogSyncUseCase.RunAsync()</code> e retorna contagens com status 200 (ou 502 em falha do Plex).<br>3. <strong>Build gate</strong>: OK. <code>dotnet build</code> passou com 0 erros.<br>4. <strong>Validação UI obrigatória (Playwright)</strong>: OK. 3/3 testes PASS (tema light/dark toggle, menus de usuário, breadcrumb com estado ativo).<br>5. <strong>Comportamento funcional</strong>: OK. Chamada a <code>POST /api/sync/catalog</code> preenche o banco local de séries e <code>GET /api/series/1</code> retorna o catálogo completo (9 séries descobertas do Plex) em vez de vazio.</p>
-<h2>Evidências</h2>
-<ul><li>URL testada: <code>http://localhost:8080</code></li><li>Contagem séries retornadas: 9 séries da biblioteca &quot;Animes&quot; ( ratingKey: 1, 7, 10, 13, 19, 25, 4, etc. )</li><li>Relatório de testes Playwright: 3 passed (3.7s)</li></ul><p><strong>URLs de validação/evidência:</strong><ul><li><a href="http://localhost:8080`">http://localhost:8080`</a></li></ul></p></details>
+<details><summary>📋 qa-report-1.md — <span class="badge unk">?</span></summary><h1>QA Report 1 — catalog-sync-popular-series</h1>
+<p><strong>Status:</strong> PASS  <br><strong>Data:</strong> 2026-11-11  <br><strong>Worktree:</strong> <code>/home/hermes/plex-autoplay-catalog-sync</code> (branch <code>feature/spec-catalog-sync-popular-series</code>)  <br><strong>URL de Validação:</strong> <code>http://192.168.18.5:8080</code> / <code>http://localhost:8080</code>  </p>
+<h2>Sumário</h2>
+<p>| # | Critério | Resultado | Evidência |<br>|---|----------|-----------|-----------|<br>| 1 | Build backend | ✅ PASS | <code>dotnet build PlexAutoplay.slnx -c Release</code> — 0 erros, 0 warnings |<br>| 2 | Build frontend | ✅ PASS | <code>npm ci</code> + <code>npm run build</code> em <code>vue/plex-frontend</code> — dist gerado |<br>| 3 | Lint frontend | ✅ PASS | <code>npm run lint</code> — 0 erros (apenas warnings de configuração ESLint boundaries) |<br>| 4 | OpenSpec Validate | ✅ PASS | <code>openspec validate --changes catalog-sync-popular-series --strict</code> — <code>✓ change/catalog-sync-popular-series</code> |<br>| 5 | Registro DI &amp; Endpoint | ✅ PASS | <code>CatalogSyncUseCase</code> registrado como Transient; <code>POST /api/sync/catalog</code> exposto |<br>| 6 | Token de cancelamento | ✅ PASS | <code>SyncEndpoints</code> usa <code>context.RequestAborted</code> no lugar de <code>CancellationToken.None</code> |<br>| 7 | Validação UI (Playwright) | ✅ PASS | Tema light/dark, menus (abertura/navegação/fechamento/estado ativo), e breadcrumb — 3/3 passed |<br>| 8 | Catálogo de Séries Populado | ✅ PASS | <code>POST /api/sync/catalog</code> (autenticado) retorna 200; <code>GET /api/series/1</code> retorna as 9 séries; página <code>/libraries/1/series</code> exibe cards de séries |</p>
+<h2>Evidências de Teste (Playwright)</h2>
+<ul><li>Comando: <code>PLAYWRIGHT_BASE_URL=http://192.168.18.5:8080 ADMIN_PASSWORD=admin123 npx playwright test tests/e2e/tests/qa-series-catalog.spec.js tests/e2e/tests/qa-theme-and-navigation.spec.js --reporter=list</code></li><li>Resultado: <strong>5 passed (11.4s)</strong></li><li>Verificações:</li></ul>
+<h2>Achados do EGM Incorporados</h2>
+<ul><li><strong>A1/C1 (<code>design.md</code>)</strong>: Corrigido registro documentado de <code>AddSingleton</code> para <code>AddTransient</code>, alinhado com a dependência transitiva de <code>IPlexApiClient</code>.</li><li><strong>A2 (<code>SyncEndpoints.cs</code>)</strong>: Atualizado endpoint para repassar <code>context.RequestAborted</code> em vez de <code>CancellationToken.None</code>.</li></ul>
+<h2>Conclusão</h2>
+<p>QA <strong>PASS</strong>. Solução compilada, testada via Playwright, validada via OpenSpec strict, e sincronização de catálogo testada fim-a-fim garantindo que <code>/libraries/1/series</code> exibe as séries.<br></p><p><strong>URLs de validação/evidência:</strong><ul><li><a href="http://192.168.18.5:8080`">http://192.168.18.5:8080`</a></li><li><a href="http://localhost:8080`">http://localhost:8080`</a></li><li><a href="http://192.168.18.5:8080">http://192.168.18.5:8080</a></li></ul></p></details>
 
-<h2>🔎 Evidências de teste</h2><ul><li><a href="../../../tests/e2e/playwright-report/index.html">tests/e2e/playwright-report/index.html</a></li></ul>
+<h2>🔎 Evidências de teste</h2><ul><li><a href="../../../tests/e2e/playwright-report/index.html">tests/e2e/playwright-report/index.html</a></li><li><a href="../../../test-results/.last-run.json">test-results/.last-run.json</a></li></ul>
 
 <p class="meta">Próximos passos: revisar árvore e QA acima, então executar <code>/opsx-archive</code> para arquivar a change ou manter a worktree <code>feature/spec-catalog-sync-popular-series</code> para merge.</p>
 </body></html>
