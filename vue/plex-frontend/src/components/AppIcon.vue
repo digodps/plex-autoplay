@@ -1,4 +1,5 @@
 <script setup>
+<<<<<<< HEAD
 import { computed } from "vue";
 const props = defineProps({
   name: { type: String, required: true },
@@ -9,10 +10,16 @@ const sizeClass = computed(() => {
   if (props.size === "sm" || props.size === "xs") return "icon-sm";
   if (props.size === "lg") return "icon-lg";
   return "";
+=======
+defineProps({
+  name: { type: String, required: true },
+  size: { type: String, default: "" }, // '', 'sm', 'lg'
+>>>>>>> origin/feature/dashboard-redesign-31-10-2026-13-29-43-856
 });
 </script>
 
 <template>
+<<<<<<< HEAD
   <span class="icon" :class="sizeClass" aria-hidden="true" :data-icon="name">
     <!-- SVG paths inline por ícone - sem sprite externo, sem dependência externa quebrada -->
     <svg v-if="name === 'home'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="100%" height="100%">
@@ -85,4 +92,9 @@ const sizeClass = computed(() => {
       <circle cx="12" cy="12" r="10" />
     </svg>
   </span>
+=======
+  <svg class="icon" :class="{ [`icon-${size}`]: size !== '' }" aria-hidden="true">
+    <use :href="`/icons.svg#ui-${name}`" />
+  </svg>
+>>>>>>> origin/feature/dashboard-redesign-31-10-2026-13-29-43-856
 </template>

@@ -2,6 +2,7 @@ import { defineStore } from "pinia";
 import { ref } from "vue";
 import { apiFetch, extractErrorMessage } from "../api";
 
+<<<<<<< HEAD
 export const useMarkerStore = defineStore("markers", () => {
   const episodesMap = ref({});
   const markersMap = ref({});
@@ -9,6 +10,20 @@ export const useMarkerStore = defineStore("markers", () => {
   const error = ref("");
   const seriesTitle = ref("");
   const savingKeys = ref({});
+=======
+/**
+ * Store central de marcadores: junta episódios da série (Plex) com marcadores
+ * persistidos (SQLite), por ratingKey, e orquestra o salvamento otimista.
+ */
+export const useMarkerStore = defineStore("markers", () => {
+  // episódios e marcadores são idenxados por ratingKey
+  const episodesMap = ref({}); // ratingKey -> { title, season, episode, rating_key }
+  const markersMap = ref({}); // ratingKey -> { intro: {startMs,endMs,origin}|null, credits: {...}|null }
+  const loading = ref(false);
+  const error = ref("");
+  const seriesTitle = ref("");
+  const savingKeys = ref({}); // `${ratingKey}:${kind}` -> true quando salvando
+>>>>>>> origin/feature/dashboard-redesign-31-10-2026-13-29-43-856
 
   async function fetchSeries(seriesKey) {
     loading.value = true;
@@ -37,6 +52,7 @@ export const useMarkerStore = defineStore("markers", () => {
       }
 
       const episodesById = {};
+<<<<<<< HEAD
       for (const ep of episodes) {
         const epCopy = { ...ep };
         if (!('thumb' in epCopy)) epCopy.thumb = null;
@@ -55,6 +71,18 @@ export const useMarkerStore = defineStore("markers", () => {
       for (const m of allMarkers) {
         const key = m.ratingKey ?? m.rating_key;
         if (!markers[key]) markers[key] = { intro: null, credits: null };
+=======
+      for (const ep of episodes) episodesById[ep.rating_key] = ep;
+      episodesMap.value = episodesById;
+
+      // merge: só marcadores de episódios desta série
+      const markers = {};
+      for (const ep of episodes) markers[ep.rating_key] = { intro: null, credits: null };
+      for (const m of allMarkers) {
+        if (!markers[m.ratingKey] && !markers[m.rating_key]) continue;
+        // normaliza camel/snake
+        const key = m.ratingKey ?? m.rating_key;
+>>>>>>> origin/feature/dashboard-redesign-31-10-2026-13-29-43-856
         const kind = m.kind;
         markers[key][kind] = {
           startMs: m.startMs ?? m.start_ms ?? 0,
@@ -70,6 +98,12 @@ export const useMarkerStore = defineStore("markers", () => {
     }
   }
 
+<<<<<<< HEAD
+=======
+  /**
+   * Cria marcador (POST) e o reflete no estado.
+   */
+>>>>>>> origin/feature/dashboard-redesign-31-10-2026-13-29-43-856
   async function createMarker(ratingKey, kind, startMs, endMs) {
     const key = `${ratingKey}:${kind}`;
     savingKeys.value[key] = true;
@@ -92,11 +126,21 @@ export const useMarkerStore = defineStore("markers", () => {
     }
   }
 
+<<<<<<< HEAD
+=======
+  /**
+   * Atualização otimista: reflete imediatamente, envia PUT e reverte em falha.
+   */
+>>>>>>> origin/feature/dashboard-redesign-31-10-2026-13-29-43-856
   async function updateMarker(ratingKey, kind, startMs, endMs) {
     const key = `${ratingKey}:${kind}`;
     const previous = markersMap.value[ratingKey]?.[kind];
     savingKeys.value[key] = true;
 
+<<<<<<< HEAD
+=======
+    // otimista
+>>>>>>> origin/feature/dashboard-redesign-31-10-2026-13-29-43-856
     markersMap.value[ratingKey][kind] = { ...(previous ?? {}), startMs, endMs };
 
     try {
@@ -106,9 +150,16 @@ export const useMarkerStore = defineStore("markers", () => {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ startMs, endMs }),
+<<<<<<< HEAD
         }
       );
       if (!res.ok) {
+=======
+        },
+      );
+      if (!res.ok) {
+        // rollback
+>>>>>>> origin/feature/dashboard-redesign-31-10-2026-13-29-43-856
         markersMap.value[ratingKey][kind] = previous;
         throw new Error("PUT falhou");
       }
@@ -126,12 +177,22 @@ export const useMarkerStore = defineStore("markers", () => {
     const previous = markersMap.value[ratingKey]?.[kind];
     savingKeys.value[key] = true;
 
+<<<<<<< HEAD
+=======
+    // otimista
+>>>>>>> origin/feature/dashboard-redesign-31-10-2026-13-29-43-856
     markersMap.value[ratingKey][kind] = null;
 
     try {
       const res = await apiFetch(
         `/api/markers/${encodeURIComponent(ratingKey)}/${encodeURIComponent(kind)}`,
+<<<<<<< HEAD
         { method: "DELETE" }
+=======
+        {
+          method: "DELETE",
+        },
+>>>>>>> origin/feature/dashboard-redesign-31-10-2026-13-29-43-856
       );
       if (!res.ok) {
         markersMap.value[ratingKey][kind] = previous;
@@ -163,4 +224,8 @@ export const useMarkerStore = defineStore("markers", () => {
     removeMarker,
     clearError,
   };
+<<<<<<< HEAD
 });
+=======
+});
+>>>>>>> origin/feature/dashboard-redesign-31-10-2026-13-29-43-856

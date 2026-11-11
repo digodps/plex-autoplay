@@ -49,13 +49,21 @@ fi
 
 if [[ "$REMOVE_CONTAINER" == true ]]; then
   echo "🗑  Removendo container e rede..."
+<<<<<<< HEAD
   docker compose -f infra/docker-compose.yml down
+=======
+  docker compose down
+>>>>>>> origin/feature/dashboard-redesign-31-10-2026-13-29-43-856
   echo "   Container e rede removidos."
 fi
 
 if [[ "$REMOVE_VOLUMES" == true ]]; then
   echo "🗑  Removendo volume persistente (plex-data)..."
+<<<<<<< HEAD
   docker compose -f infra/docker-compose.yml down -v
+=======
+  docker compose down -v
+>>>>>>> origin/feature/dashboard-redesign-31-10-2026-13-29-43-856
   echo "   Volume removido. Todos os dados locais (SQLite, SQLite marker database, cache) foram apagados."
 fi
 

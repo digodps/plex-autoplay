@@ -1,6 +1,10 @@
 using Microsoft.AspNetCore.Mvc;
 using PlexAutoplay.Application;
+<<<<<<< HEAD
 using PlexAutoplay.Application.UseCases;
+=======
+using PlexAutoplay.Domain.Ports;
+>>>>>>> origin/feature/dashboard-redesign-31-10-2026-13-29-43-856
 
 namespace PlexAutoplay.Web.Endpoints;
 
@@ -9,11 +13,19 @@ namespace PlexAutoplay.Web.Endpoints;
 /// </summary>
 public static class SeriesEndpoints
 {
+<<<<<<< HEAD
     public static void MapSeriesEndpoints(this IEndpointRouteBuilder app)
     {
         app.MapGet("/api/series/{sectionKey}", async (
             string sectionKey,
             [FromServices] GetSeriesQuery seriesQuery,
+=======
+    public static void MapSeriesEndpoints(this IEndpointRouteBuilder app, string mediaRoot)
+    {
+        app.MapGet("/api/series/{sectionKey}", async (
+            string sectionKey,
+            [FromServices] ISeriesRepository seriesRepository,
+>>>>>>> origin/feature/dashboard-redesign-31-10-2026-13-29-43-856
             int? page = 1,
             int? pageSize = 24,
             string? query = null) =>
@@ -22,7 +34,11 @@ public static class SeriesEndpoints
             var pageIndex = page is > 0 ? page.Value : 1;
             var offset = (pageIndex - 1) * size;
 
+<<<<<<< HEAD
             var (items, total) = await seriesQuery.ListAsync(sectionKey, offset, size, query);
+=======
+            var (items, total) = await seriesRepository.GetByLibraryAsync(sectionKey, offset, size, query);
+>>>>>>> origin/feature/dashboard-redesign-31-10-2026-13-29-43-856
 
             var resultItems = items.Select(s => new
             {
@@ -43,9 +59,13 @@ public static class SeriesEndpoints
 
         app.MapGet("/api/series/{sectionKey}/{seriesKey}/episodes", async (
             string seriesKey,
+<<<<<<< HEAD
             [FromServices] IPlexApiClient plexClient,
             [FromServices] IPathResolver pathResolver,
             [FromServices] IAppSettingsStore settings) =>
+=======
+            [FromServices] IPlexApiClient plexClient) =>
+>>>>>>> origin/feature/dashboard-redesign-31-10-2026-13-29-43-856
         {
             var episodesResult = await plexClient.GetSeriesEpisodesAsync(seriesKey);
 
@@ -56,15 +76,22 @@ public static class SeriesEndpoints
                     statusCode: 502);
             }
 
+<<<<<<< HEAD
             var current = await settings.GetAsync();
+=======
+>>>>>>> origin/feature/dashboard-redesign-31-10-2026-13-29-43-856
             var result = episodesResult.Episodes.Select(e => new
             {
                 rating_key = e.RatingKey,
                 title = e.Title,
                 season = e.ParentIndex,
                 episode = e.Index,
+<<<<<<< HEAD
                 local_path = pathResolver.Resolve(current.MediaRoots, e.FilePath),
                 thumb = string.IsNullOrEmpty(e.Thumb) ? null : "/api/images/" + e.Thumb.TrimStart('/')
+=======
+                local_path = MediaPathResolver.Resolve(mediaRoot, e.FilePath)
+>>>>>>> origin/feature/dashboard-redesign-31-10-2026-13-29-43-856
             });
             return Results.Ok(result);
         });

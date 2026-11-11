@@ -16,10 +16,21 @@ export function useInfiniteScroll(options = {}) {
 
   function findScrollContainer(element) {
     if (!element || typeof window === "undefined") return null;
+<<<<<<< HEAD
     let parent = element.parentElement;
     while (parent && parent !== document.body && parent !== document.documentElement) {
       const style = window.getComputedStyle(parent);
       if (/auto|scroll|overlay/.test(style.overflowY)) return parent;
+=======
+
+    let parent = element.parentElement;
+    while (parent && parent !== document.body && parent !== document.documentElement) {
+      const style = window.getComputedStyle(parent);
+      const overflowY = style.overflowY;
+      if (/auto|scroll|overlay/.test(overflowY)) {
+        return parent;
+      }
+>>>>>>> origin/feature/dashboard-redesign-31-10-2026-13-29-43-856
       parent = parent.parentElement;
     }
     return null;
@@ -33,7 +44,13 @@ export function useInfiniteScroll(options = {}) {
         const result = await onLoadMore();
         if (result === false || !hasMore.value) {
           hasMore.value = false;
+<<<<<<< HEAD
           if (typeof onEndReached === "function") onEndReached();
+=======
+          if (typeof onEndReached === "function") {
+            onEndReached();
+          }
+>>>>>>> origin/feature/dashboard-redesign-31-10-2026-13-29-43-856
         }
       }
     } finally {
@@ -58,10 +75,20 @@ export function useInfiniteScroll(options = {}) {
 
   function checkScrollPosition() {
     if (!sentinelRef.value || !detectedRoot || isLoading.value || !hasMore.value) return;
+<<<<<<< HEAD
     const sentinelRect = sentinelRef.value.getBoundingClientRect();
     const containerRect = detectedRoot.getBoundingClientRect();
     const rootMarginPx = parseInt(rootMargin) || 200;
     if (containerRect.bottom - sentinelRect.top <= rootMarginPx + detectedRoot.clientHeight) {
+=======
+    const sentinel = sentinelRef.value;
+    const container = detectedRoot;
+    const sentinelRect = sentinel.getBoundingClientRect();
+    const containerRect = container.getBoundingClientRect();
+    const rootMarginPx = parseInt(rootMargin) || 200;
+    const distanceFromBottom = containerRect.bottom - sentinelRect.top;
+    if (distanceFromBottom <= rootMarginPx + container.clientHeight) {
+>>>>>>> origin/feature/dashboard-redesign-31-10-2026-13-29-43-856
       loadMore();
     }
   }
@@ -85,7 +112,13 @@ export function useInfiniteScroll(options = {}) {
     };
     container.addEventListener("scroll", scrollHandler, { passive: true });
     scrollCheckTimeout = setInterval(() => {
+<<<<<<< HEAD
       if (hasMore.value && !isLoading.value) checkScrollPosition();
+=======
+      if (hasMore.value && !isLoading.value) {
+        checkScrollPosition();
+      }
+>>>>>>> origin/feature/dashboard-redesign-31-10-2026-13-29-43-856
     }, 1000);
   }
 
@@ -95,10 +128,24 @@ export function useInfiniteScroll(options = {}) {
     if (!sentinelRef.value || !hasMore.value) return;
     const observerRoot = root ?? findScrollContainer(sentinelRef.value);
     detectedRoot = observerRoot;
+<<<<<<< HEAD
     observer = new window.IntersectionObserver(
       (entries) => {
         const [entry] = entries;
         if (entry && entry.isIntersecting && !isLoading.value && hasMore.value) loadMore();
+=======
+    if (!observerRoot) {
+      if (import.meta.env.DEV) {
+        console.warn("[useInfiniteScroll] Nenhum container rolável detectado...");
+      }
+    }
+    observer = new window.IntersectionObserver(
+      (entries) => {
+        const [entry] = entries;
+        if (entry && entry.isIntersecting && !isLoading.value && hasMore.value) {
+          loadMore();
+        }
+>>>>>>> origin/feature/dashboard-redesign-31-10-2026-13-29-43-856
       },
       { root: observerRoot, rootMargin, threshold }
     );
@@ -106,6 +153,7 @@ export function useInfiniteScroll(options = {}) {
     setupScrollFallback();
   }
 
+<<<<<<< HEAD
   watch(sentinelRef, () => setupObserver());
   watch(hasMore, (next) => (next ? setupObserver() : cleanupObserver()));
 
@@ -113,4 +161,41 @@ export function useInfiniteScroll(options = {}) {
   onUnmounted(() => cleanupObserver());
 
   return { sentinelRef, isLoading, hasMore, loadMore };
+=======
+  watch(sentinelRef, () => {
+    setupObserver();
+  });
+
+  watch(hasMore, (newVal) => {
+    if (newVal) {
+      setupObserver();
+    } else {
+      cleanupObserver();
+    }
+  });
+
+  watch(
+    () => (root ? root : findScrollContainer(sentinelRef.value)),
+    (newRoot) => {
+      if (!root && newRoot !== detectedRoot) {
+        setupObserver();
+      }
+    }
+  );
+
+  onMounted(() => {
+    setupObserver();
+  });
+
+  onUnmounted(() => {
+    cleanupObserver();
+  });
+
+  return {
+    sentinelRef,
+    isLoading,
+    hasMore,
+    loadMore,
+  };
+>>>>>>> origin/feature/dashboard-redesign-31-10-2026-13-29-43-856
 }

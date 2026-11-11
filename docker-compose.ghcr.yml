@@ -1,0 +1,23 @@
+version: '3.8'
+
+services:
+  plex-autoplay:
+    image: ghcr.io/digodps/plex-autoplay:latest
+    container_name: plex-autoplay
+    restart: unless-stopped
+    environment:
+      PLEX_URL: http://SEU_PLEX:32400
+      PLEX_TOKEN: SEU_TOKEN_PLEX
+      JWT_SECRET: mude_em_producao
+      ADMIN_PASSWORD: senha_admin
+      MEDIA_ROOTS: /mnt/media
+      WEB_PORT: "80"
+      DISABLE_HTTP: "false"
+      SQLITE_CONNECTION_STRING: "Data Source=/data/app.db"
+      APP_CONFIG_PATH: /data/app-config.json
+      LOG_LEVEL: Information
+    ports:
+      - "8080:80"
+    volumes:
+      - /mnt/data/plex-autoplay:/data
+      - /mnt/media:/mnt/media

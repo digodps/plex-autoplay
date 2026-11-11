@@ -1,6 +1,9 @@
 import js from "@eslint/js";
 import pluginVue from "eslint-plugin-vue";
+<<<<<<< HEAD
 import boundaries from "eslint-plugin-boundaries";
+=======
+>>>>>>> origin/feature/dashboard-redesign-31-10-2026-13-29-43-856
 
 export default [
   js.configs.recommended,
@@ -68,6 +71,7 @@ export default [
       },
     },
   },
+<<<<<<< HEAD
   {
     // Fronteiras da matriz §4 do design (Clean Architecture):
     // views -> composables | stores; components -> lib apenas;
@@ -106,4 +110,6 @@ export default [
       ],
     },
   },
+=======
+>>>>>>> origin/feature/dashboard-redesign-31-10-2026-13-29-43-856
 ];

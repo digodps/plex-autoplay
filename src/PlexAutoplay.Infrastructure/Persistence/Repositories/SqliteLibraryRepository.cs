@@ -15,6 +15,23 @@ public class SqliteLibraryRepository : ILibraryRepository
     public SqliteLibraryRepository(string connectionString)
     {
         _connectionString = connectionString;
+<<<<<<< HEAD
+=======
+        EnsureTableCreated();
+    }
+
+    private void EnsureTableCreated()
+    {
+        using var conn = CreateConnection();
+        conn.ExecuteAsync(
+            @"CREATE TABLE IF NOT EXISTS Library (
+                RatingKey TEXT NOT NULL PRIMARY KEY,
+                Title TEXT NOT NULL,
+                Type TEXT NOT NULL,
+                Agent TEXT NOT NULL,
+                SyncedAt TEXT NOT NULL DEFAULT (datetime('now'))
+            )").Wait();
+>>>>>>> origin/feature/dashboard-redesign-31-10-2026-13-29-43-856
     }
 
     private DbConnection CreateConnection() => new SqliteConnection(_connectionString);

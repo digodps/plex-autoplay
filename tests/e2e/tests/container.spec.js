@@ -10,10 +10,7 @@ const INSIDE_EXECUTOR = process.env.INSIDE_EXECUTOR_CONTAINER === "true";
 
 test.describe("Ciclo de vida do container Docker", () => {
   test("inicia o container com ./start.sh e verifica que está rodando", () => {
-    test.skip(
-      INSIDE_EXECUTOR,
-      "Não gerencia containers dentro do executor (sem Docker-in-Docker)",
-    );
+    test.skip(INSIDE_EXECUTOR, "Não gerencia containers dentro do executor (sem Docker-in-Docker)");
   });
 
   test("verifica que o script stop.sh existe e é executável", () => {
@@ -26,9 +23,6 @@ test.describe("Ciclo de vida do container Docker", () => {
   });
 
   test("verifica logs via ./logs.sh --no-follow --tail 10", () => {
-    test.skip(
-      INSIDE_EXECUTOR,
-      "Não gerencia containers dentro do executor (sem Docker-in-Docker)",
-    );
+    test.skip(INSIDE_EXECUTOR, "Não gerencia containers dentro do executor (sem Docker-in-Docker)");
   });
 });

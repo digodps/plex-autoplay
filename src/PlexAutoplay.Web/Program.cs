@@ -43,6 +43,17 @@ Log.Information("Adicionando serviços de aplicação...");
 builder.AddApplicationServices();
 Log.Information("Serviços de aplicação adicionados.");
 
+<<<<<<< HEAD
+=======
+// Admin password for auth endpoints
+var adminPassword = Environment.GetEnvironmentVariable("ADMIN_PASSWORD") ?? "admin";
+Log.Information("Admin password set.");
+
+// Media root for resolving local media file paths
+var mediaRoot = Environment.GetEnvironmentVariable("MEDIA_ROOT") ?? "/media";
+Log.Information("Media root: {MediaRoot}", mediaRoot);
+
+>>>>>>> origin/feature/dashboard-redesign-31-10-2026-13-29-43-856
 Log.Information("Chamando builder.Build()...");
 WebApplication app;
 try
@@ -76,17 +87,27 @@ app.UseMiddleware<CorrelationIdMiddleware>();
 app.UseMiddleware<JwtAuthMiddleware>();
 
 // --- Endpoints ---
+<<<<<<< HEAD
 app.MapAuthEndpoints(disableHttp);
 app.MapPlexEndpoints();
 app.MapSeriesEndpoints();
+=======
+app.MapAuthEndpoints(adminPassword);
+app.MapPlexEndpoints(mediaRoot);
+app.MapSeriesEndpoints(mediaRoot);
+>>>>>>> origin/feature/dashboard-redesign-31-10-2026-13-29-43-856
 app.MapSyncEndpoints();
 app.MapMarkerEndpoints();
 app.MapImageEndpoints();
 app.MapAutoSkipWebSocketEndpoints();
 app.MapMonitoringEndpoints();
+<<<<<<< HEAD
 app.MapSettingsEndpoints();
 app.MapFileSystemEndpoints();
 app.MapPlexIdentityEndpoint();
+=======
+app.MapConfigEndpoints();
+>>>>>>> origin/feature/dashboard-redesign-31-10-2026-13-29-43-856
 app.MapThemeEndpoints();
 
 // Serve Vue SPA static files

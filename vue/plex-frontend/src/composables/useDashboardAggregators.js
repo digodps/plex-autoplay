@@ -1,5 +1,14 @@
 import { computed } from "vue";
 
+<<<<<<< HEAD
+=======
+/**
+ * Funções puras de agregação para o dashboard.
+ * Extraídas do store para reduzir sua complexidade (SRP).
+ */
+
+/** Formata uptime em ms para string legível (ex: "2d 4h 30min") */
+>>>>>>> origin/feature/dashboard-redesign-31-10-2026-13-29-43-856
 export function formatUptime(ms) {
   const sec = Math.floor(ms / 1000);
   const d = Math.floor(sec / 86400);
@@ -12,6 +21,10 @@ export function formatUptime(ms) {
   return parts.join(" ");
 }
 
+<<<<<<< HEAD
+=======
+/** Cria computed de serviceHealth a partir de statusData */
+>>>>>>> origin/feature/dashboard-redesign-31-10-2026-13-29-43-856
 export function createServiceHealthComputed(statusData) {
   return computed(() => {
     if (!statusData.value) return null;
@@ -46,9 +59,18 @@ export function createServiceHealthComputed(statusData) {
   });
 }
 
+<<<<<<< HEAD
 export function createLibrariesSummaryComputed(librariesData) {
   return computed(() => {
     if (!librariesData.value?.length) return { count: 0, totalSeries: 0, items: [] };
+=======
+/** Cria computed de librariesSummary a partir de librariesData */
+export function createLibrariesSummaryComputed(librariesData) {
+  return computed(() => {
+    if (!librariesData.value?.length) return { count: 0, totalSeries: 0, items: [] };
+    // Note: seriesCount não está disponível no DTO da biblioteca (requeriria N chamadas à API /api/series/{key})
+    // Por isso totalSeries fica 0; o dashboard mostra apenas a contagem de bibliotecas
+>>>>>>> origin/feature/dashboard-redesign-31-10-2026-13-29-43-856
     return {
       count: librariesData.value.length,
       totalSeries: 0,
@@ -61,6 +83,10 @@ export function createLibrariesSummaryComputed(librariesData) {
   });
 }
 
+<<<<<<< HEAD
+=======
+/** Cria computed de markersSummary a partir de markersData */
+>>>>>>> origin/feature/dashboard-redesign-31-10-2026-13-29-43-856
 export function createMarkersSummaryComputed(markersData) {
   return computed(() => {
     if (!markersData.value?.length) {
@@ -80,4 +106,8 @@ export function createMarkersSummaryComputed(markersData) {
       byOrigin,
     };
   });
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> origin/feature/dashboard-redesign-31-10-2026-13-29-43-856

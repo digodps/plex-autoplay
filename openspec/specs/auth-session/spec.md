@@ -36,6 +36,7 @@ O sistema SHALL devolver o usuário à rota que tentou acessar originalmente ap�
 
 ### Requirement: Persistência do token em cookie
 
+<<<<<<< HEAD
 O sistema SHALL armazenar o token de autenticação em cookie `HttpOnly` definido pelo servidor na resposta de login, de modo que o JavaScript da página não consiga lê-lo, e o navegador SHALL enviá-lo automaticamente em requisições subsequentes. O cookie SHALL ser de sessão (encerrado ao fechar o navegador) e SHALL ser marcado `Secure` e `SameSite=Lax`.
 
 #### Scenario: Cookie definido pelo servidor no login
@@ -83,3 +84,44 @@ O cliente web SHALL enviar `credentials: 'include'` em todas as requisições à
 #### Scenario: Requisição autenticada sem manipulação de token
 - **WHEN** o cliente chama um endpoint protegido da API
 - **THEN** a requisição inclui o cookie de sessão via `credentials: 'include'`, sem header `Authorization` montado pelo JavaScript.
+=======
+O sistema SHALL armazenar o token de autenticação em cookie no navegador em vez de `localStorage`, reutilizando o token salvo nas visitas seguintes para evitar novo login, e SHALL removê-lo no logout.
+
+#### Scenario: Token reutilizado entre visitas
+
+- **WHEN** o usuário retorna ao dashboard com token válido em cookie
+- **THEN** o sistema o considera autenticado sem solicitar a senha novamente.
+
+#### Scenario: Logout limpa o cookie
+
+- **WHEN** o usuário efetua logout
+- **THEN** o cookie do token é removido e a navegação passa a exigir novo login.
+
+#### Scenario: Cookie com token inválido
+
+- **WHEN** o cookie contém um token inválido ou expirado (rejeitado pelo backend)
+- **THEN** o sistema trata o usuário como não autenticado e o encaminha ao login.
+
+### Requirement: Escolha de manter a autenticação
+
+O sistema SHALL perguntar ao usuário na tela de login se ele deseja manter a autenticação: ao optar por manter, o cookie do token SHALL ser persistente; ao não optar, o token SHALL ser mantido em cookie de sessão (encerrado ao fechar o navegador).
+
+#### Scenario: Usuário opta por manter autenticado
+
+- **WHEN** o usuário marca "manter-me conectado" e autentica-se
+- **THEN** o token é salvo em cookie persistente (por exemplo, 30 dias) e as visitas futuras não pedem novo login.
+
+#### Scenario: Usuário não opta por manter autenticado
+
+- **WHEN** o usuário deixa "manter-me conectado" desmarcado e autentica-se
+- **THEN** o token é salvo em cookie de sessão, sendo encerrado ao fechar o navegador e pedindo novo login na visita seguinte.
+
+### Requirement: Limpeza de cookie antes do login
+
+O sistema SHALL limpar qualquer cookie de autenticação existente (`auth_token`) antes de tentar realizar a requisição de login ou armazenar um novo token, garantindo que cookies corrompidos ou obsoletos não interfiram na nova sessão.
+
+#### Scenario: Realização de login com cookie antigo existente
+
+- **WHEN** o usuário submete o formulário de login possuindo um cookie de autenticação antigo ou inválido no navegador
+- **THEN** o sistema remove o cookie existente antes de enviar as credenciais/armazenar o novo token e redireciona para o dashboard com o novo token válido.
+>>>>>>> origin/feature/dashboard-redesign-31-10-2026-13-29-43-856

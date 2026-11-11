@@ -82,6 +82,11 @@ Variáveis abaixo são apenas bootstrap e continuam vindo do `.env`/ambiente:
 | `JWT_SECRET` | Chave secreta para assinar tokens JWT | – |
 | `WEB_PORT` | Porta do dashboard (interno) | 8080 |
 | `WS_PORT` | Porta WebSocket do PlexAutoSkip (interno) | 8081 |
+<<<<<<< HEAD
+=======
+| `SYNC_INTERVAL_MINUTES` | Intervalo em minutos entre varreduras automáticas das bibliotecas | 5 |
+| `APP_CONFIG_PATH` | Caminho do `app-config.json` | `/data/app-config.json` |
+>>>>>>> origin/feature/dashboard-redesign-31-10-2026-13-29-43-856
 | `CERT_PATH` | Caminho para arquivo PFX no container | vazio |
 | `CERT_PASSWORD` | Senha do arquivo PFX (opcional) | vazio |
 | `CERT_BASE64` | Conteúdo base64 de um arquivo PFX (alternativa a `CERT_PATH`) | vazio |
@@ -116,7 +121,11 @@ O container roda .NET 10 ASP.NET Core Web API + Vue SPA + SQLite em modo HTTPS-o
 - **WebSocket (PlexAutoSkip)** na porta 8081.
 - **HTTP** desabilitado por padrão (`DISABLE_HTTP=true`).
 - **Certificado auto-assinado** gerado automaticamente quando nenhum `CERT_PATH`/`CERT_BASE64` é fornecido.
+<<<<<<< HEAD
 - **Volumes**: `plex-data` (`/data` - SQLite, SQLite marker database, certificados) e bind mounts de mídia (um ou mais caminhos, configurados em `MEDIA_ROOTS`).
+=======
+- **Volumes**: `plex-data` (`/data` - SQLite, SQLite marker database, certificados) e bind mount `/media` (arquivos de mídia via `MEDIA_ROOT`).
+>>>>>>> origin/feature/dashboard-redesign-31-10-2026-13-29-43-856
 
 ---
 
