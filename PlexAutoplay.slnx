@@ -6,10 +6,6 @@
     <Project Path="src/PlexAutoplay.Web/PlexAutoplay.Web.csproj" />
   </Folder>
   <Folder Name="/tests/">
-<<<<<<< HEAD
     <Project Path="tests/PlexAutoplay.ArchitectureTests/PlexAutoplay.ArchitectureTests.csproj" />
-=======
-    <Project Path="tests/unit/PlexAutoplay.UnitTests.csproj" />
->>>>>>> origin/feature/dashboard-redesign-31-10-2026-13-29-43-856
   </Folder>
 </Solution>

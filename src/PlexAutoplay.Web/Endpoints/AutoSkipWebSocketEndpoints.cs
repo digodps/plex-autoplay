@@ -1,8 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
-<<<<<<< HEAD
 using Microsoft.Extensions.Logging;
-=======
->>>>>>> origin/feature/dashboard-redesign-31-10-2026-13-29-43-856
 using PlexAutoplay.Domain.Ports;
 
 namespace PlexAutoplay.Web.Endpoints;
@@ -15,13 +12,9 @@ public static class AutoSkipWebSocketEndpoints
 {
     public static void MapAutoSkipWebSocketEndpoints(this IEndpointRouteBuilder app)
     {
-<<<<<<< HEAD
         app.Map("/ws", async (HttpContext context,
             [FromServices] IPlexAutoSkipService autoSkipService,
             [FromServices] ILoggerFactory loggerFactory) =>
-=======
-        app.Map("/ws", async (HttpContext context, [FromServices] IPlexAutoSkipService autoSkipService) =>
->>>>>>> origin/feature/dashboard-redesign-31-10-2026-13-29-43-856
         {
             var logger = loggerFactory.CreateLogger("PlexAutoSkip");
             if (context.WebSockets.IsWebSocketRequest)

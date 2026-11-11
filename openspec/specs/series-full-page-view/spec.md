@@ -20,7 +20,6 @@ O sistema SHALL navegar para a rota `/libraries/{key}/series` quando o usuário 
 - **AND** breadcrumb mostra a biblioteca ativa
 
 ### Requirement: Breadcrumb de navegação
-<<<<<<< HEAD
 
 O sistema SHALL exibir a trilha dos níveis abaixo da home no topo da página de
 séries, permitindo retorno à lista de bibliotecas com um clique, sem depender
@@ -41,20 +40,6 @@ conforme `web-ui`.
   `<li>` é usada
 - **AND** o link de retorno tem nome acessível "Bibliotecas"
 - **AND** o item atual tem `aria-current="page"`
-=======
-O sistema SHALL exibir um breadcrumb no topo da página de séries permitindo retorno à lista de bibliotecas com um clique, sem depender do botão "voltar" do navegador.
-
-#### Scenario: Breadcrumb exibe hierarquia e permite retorno
-- **WHEN** usuário está na página `/libraries/{key}/series`
-- **THEN** breadcrumb mostra `[← Bibliotecas] {Título da Biblioteca}`
-- **AND** clicar em "Bibliotecas" navega para `/libraries`
-- **AND** título da biblioteca ativa é exibido mas não é clicável (estado atual)
-
-#### Scenario: Breadcrumb acessível
-- **WHEN** leitor de tela navega pelo breadcrumb
-- **THEN** estrutura semântica `<nav aria-label="Breadcrumb">` com `<ol>` e `<li>` é usada
-- **AND** link de retorno tem texto acessível "Voltar às bibliotecas"
->>>>>>> origin/feature/dashboard-redesign-31-10-2026-13-29-43-856
 
 ### Requirement: Catálogo de séries em página completa
 O sistema SHALL exibir o grid de séries ocupando toda a largura da área de conteúdo, com toolbar de busca e contador, scroll infinito funcionando no container da página.
@@ -71,7 +56,6 @@ O sistema SHALL exibir o grid de séries ocupando toda a largura da área de con
 - **WHEN** ocorre erro de API
 - **THEN** mensagem de erro com botão "Tentar novamente" é exibida
 - **WHEN** catálogo está vazio
-<<<<<<< HEAD
 - **THEN** estado vazio com ícone e mensagem é exibido
 
 ### Requirement: Destaque da miniatura no hover e foco
@@ -95,6 +79,3 @@ O sistema SHALL destacar visualmente a miniatura do card de série quando o usu�
 - **WHEN** o usuário tem `prefers-reduced-motion: reduce`
 - **THEN** o realce não usa zoom animado
 - **AND** o destaque (overlay/borda) continua perceptível
-=======
-- **THEN** estado vazio com ícone e mensagem é exibido
->>>>>>> origin/feature/dashboard-redesign-31-10-2026-13-29-43-856

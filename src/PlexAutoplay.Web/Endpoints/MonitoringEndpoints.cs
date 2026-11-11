@@ -1,9 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using PlexAutoplay.Domain.Ports;
-<<<<<<< HEAD
 using System.Collections.Generic;
-=======
->>>>>>> origin/feature/dashboard-redesign-31-10-2026-13-29-43-856
 using Serilog;
 
 namespace PlexAutoplay.Web.Endpoints;
@@ -15,19 +12,11 @@ public static class MonitoringEndpoints
 {
     public static void MapMonitoringEndpoints(this IEndpointRouteBuilder app)
     {
-<<<<<<< HEAD
         app.MapGet("/api/status", async ([FromServices] IScanJobRepository scanJobs, [FromServices] IProcessInfoService processInfo) =>
         {
             try
             {
                 var lastJob = await scanJobs.GetLatestAsync();
-=======
-        app.MapGet("/api/status", ([FromServices] IScanJobStore scanJobs, [FromServices] IProcessInfoService processInfo) =>
-        {
-            try
-            {
-                var lastJob = scanJobs.GetLatest();
->>>>>>> origin/feature/dashboard-redesign-31-10-2026-13-29-43-856
                 var process = processInfo;
 
                 return Results.Ok(new
@@ -76,15 +65,9 @@ public static class MonitoringEndpoints
         });
 
         // Prometheus metrics endpoint (real metrics, not hardcoded)
-<<<<<<< HEAD
         app.MapGet("/metrics", async ([FromServices] IScanJobRepository scanJobs, [FromServices] IProcessInfoService processInfo) =>
         {
             var lastJob = await scanJobs.GetLatestAsync();
-=======
-        app.MapGet("/metrics", ([FromServices] IScanJobStore scanJobs, [FromServices] IProcessInfoService processInfo) =>
-        {
-            var lastJob = scanJobs.GetLatest();
->>>>>>> origin/feature/dashboard-redesign-31-10-2026-13-29-43-856
             var process = processInfo;
             var lines = new List<string>
             {

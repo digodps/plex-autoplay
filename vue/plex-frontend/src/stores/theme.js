@@ -1,5 +1,4 @@
 import { defineStore } from "pinia";
-<<<<<<< HEAD
 import { ref, computed } from "vue";
 import { apiFetch } from "../api";
 
@@ -42,34 +41,20 @@ export const useThemeStore = defineStore("theme", () => {
   function enterLight() {
     setMode("light");
   }
-=======
-import { ref } from "vue";
-import { apiFetch } from "../api";
-
-export const useThemeStore = defineStore("theme", () => {
-  const accent = ref("#e5a00d");
-  const mode = ref("system");
->>>>>>> origin/feature/dashboard-redesign-31-10-2026-13-29-43-856
 
   async function loadTheme() {
     try {
       const res = await apiFetch("/api/theme");
       if (res.ok) {
         const data = await res.json();
-<<<<<<< HEAD
         if (MODES.includes(data.mode)) {
           mode.value = data.mode;
           localStorage.setItem(STORAGE_KEY, data.mode);
         }
-=======
-        accent.value = data.accentColor || data.accent || "#e5a00d";
-        mode.value = data.mode || "system";
->>>>>>> origin/feature/dashboard-redesign-31-10-2026-13-29-43-856
       }
     } catch (e) {
       console.warn("Could not load theme from API:", e);
     }
-<<<<<<< HEAD
     applyTheme();
   }
 
@@ -103,22 +88,4 @@ export const useThemeStore = defineStore("theme", () => {
     enterDark,
     enterLight,
   };
-=======
-  }
-
-  async function saveTheme() {
-    await apiFetch("/api/theme", {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        accentColor: accent.value,
-        mode: mode.value,
-      }),
-    });
-  }
-
-  return { accent, mode, loadTheme, saveTheme };
->>>>>>> origin/feature/dashboard-redesign-31-10-2026-13-29-43-856
 });

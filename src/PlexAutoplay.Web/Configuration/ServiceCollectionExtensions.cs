@@ -1,8 +1,5 @@
 using PlexAutoplay.Application;
-<<<<<<< HEAD
 using PlexAutoplay.Application.UseCases;
-=======
->>>>>>> origin/feature/dashboard-redesign-31-10-2026-13-29-43-856
 using PlexAutoplay.Domain;
 using PlexAutoplay.Domain.Ports;
 using PlexAutoplay.Infrastructure.Auth;
@@ -29,21 +26,9 @@ public static class ServiceCollectionExtensions
         services.AddOpenApi();
         services.AddOpenTelemetryTelemetry(builder.Configuration);
 
-<<<<<<< HEAD
         // In-memory cache and the generic cache port (pluggable backend)
         services.AddMemoryCache();
         services.AddSingleton<ICacheService, ImageCacheService>();
-=======
-        // Periodic sync background service
-        services.AddHostedService<SyncBackgroundService>();
-        services.AddHostedService<CatalogSyncBackgroundService>();
-
-        // In-memory cache and the generic cache port (pluggable backend)
-        services.AddMemoryCache();
-        services.AddSingleton<ICacheService, ImageCacheService>();
-
-        // SQLite repositories
->>>>>>> origin/feature/dashboard-redesign-31-10-2026-13-29-43-856
         var sqliteConnectionString = Environment.GetEnvironmentVariable("SQLITE_CONNECTION_STRING") ?? "Data Source=/data/app.db";
         services.AddSingleton<IMarkerRepository>(
             new PlexAutoplay.Infrastructure.Persistence.Repositories.SqliteMarkerRepository(sqliteConnectionString));
@@ -53,7 +38,6 @@ public static class ServiceCollectionExtensions
             new PlexAutoplay.Infrastructure.Persistence.Repositories.SqliteLibraryRepository(sqliteConnectionString));
         services.AddSingleton<ISeriesRepository>(
             new PlexAutoplay.Infrastructure.Persistence.Repositories.SqliteSeriesRepository(sqliteConnectionString));
-<<<<<<< HEAD
         services.AddSingleton<IAppSettingsStore>(
             new PlexAutoplay.Infrastructure.Persistence.Repositories.SqliteAppSettingsStore(sqliteConnectionString));
         services.AddSingleton<UpdateAppSettingsUseCase>();
@@ -67,8 +51,6 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<LoginUseCase>();
         services.AddTransient<CompleteSetupUseCase>();
         services.AddSingleton<ChangePasswordUseCase>();
-=======
->>>>>>> origin/feature/dashboard-redesign-31-10-2026-13-29-43-856
 
         // JWT token service
         var jwtSecret = Environment.GetEnvironmentVariable("JWT_SECRET") ?? "default-secret-change-in-production";
@@ -92,7 +74,6 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IPlexAutoSkipService>(sp =>
             new PlexAutoSkipService(sp.GetRequiredService<IMarkerRepository>()));
 
-<<<<<<< HEAD
         // Modern client seek strategy
         services.AddSingleton<IClientSeekStrategyProvider, PlexModernClientDetector>();
 
@@ -104,11 +85,6 @@ public static class ServiceCollectionExtensions
         services.AddTransient<CatalogSyncUseCase>();
         services.AddSingleton<GetThemeQuery>();
         services.AddSingleton<SaveThemeCommand>();
-=======
-        // PlexAutoSkip reads markers from SQLite.
-        services.AddSingleton<IPlexAutoSkipService>(sp =>
-            new PlexAutoSkipService(sp.GetRequiredService<IMarkerRepository>()));
->>>>>>> origin/feature/dashboard-redesign-31-10-2026-13-29-43-856
 
         services.Configure<Microsoft.AspNetCore.Http.Json.JsonOptions>(options =>
         {
@@ -118,7 +94,6 @@ public static class ServiceCollectionExtensions
         // Marker detector
         services.AddSingleton<IMarkerDetector, PlexAutoplay.Infrastructure.Detection.FfmpegMarkerDetector>();
 
-<<<<<<< HEAD
         // Scan persistence (SQLite)
         services.AddSingleton<IScanJobRepository>(sp =>
             new SqliteScanJobRepository(sqliteConnectionString));
@@ -134,12 +109,5 @@ public static class ServiceCollectionExtensions
         // Local media path resolver (probes the filesystem)
         services.AddSingleton<IPathResolver, PlexAutoplay.Infrastructure.Platform.PathResolver>();
 
-=======
-        // In-memory scan job tracking
-        services.AddSingleton<IScanJobStore, ScanJobStore>();
-
-        // Process information service
-        services.AddSingleton<IProcessInfoService, ProcessInfoService>();
->>>>>>> origin/feature/dashboard-redesign-31-10-2026-13-29-43-856
     }
 }

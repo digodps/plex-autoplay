@@ -1,8 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
-<<<<<<< HEAD
 using PlexAutoplay.Application.UseCases;
-=======
->>>>>>> origin/feature/dashboard-redesign-31-10-2026-13-29-43-856
 using PlexAutoplay.Domain.Ports;
 
 namespace PlexAutoplay.Web.Endpoints;
@@ -14,11 +11,7 @@ public static class SyncEndpoints
 {
     public static void MapSyncEndpoints(this IEndpointRouteBuilder app)
     {
-<<<<<<< HEAD
         app.MapGet("/api/sync/status/{jobId}", async (string jobId, [FromServices] IScanJobRepository scanJobs) =>
-=======
-        app.MapGet("/api/sync/status/{jobId}", (string jobId, [FromServices] IScanJobStore scanJobs) =>
->>>>>>> origin/feature/dashboard-redesign-31-10-2026-13-29-43-856
         {
             var job = await scanJobs.GetAsync(jobId);
             if (job != null)
@@ -31,21 +24,13 @@ public static class SyncEndpoints
                     skipped = job.Skipped,
                     errors = job.Errors,
                     error = job.ErrorMessage,
-<<<<<<< HEAD
                     updated_at = job.UpdatedAt
-=======
-                    logs = job.Logs.ToArray()
->>>>>>> origin/feature/dashboard-redesign-31-10-2026-13-29-43-856
                 });
             }
             return Results.NotFound();
         });
 
-<<<<<<< HEAD
         app.MapGet("/api/sync/log/stream/{jobId}", async (string jobId, HttpContext context, [FromServices] IScanJobRepository scanJobs, [FromServices] IScanJobLogStore scanJobLogs) =>
-=======
-        app.MapGet("/api/sync/log/stream/{jobId}", async (string jobId, HttpContext context, [FromServices] IScanJobStore scanJobs) =>
->>>>>>> origin/feature/dashboard-redesign-31-10-2026-13-29-43-856
         {
             context.Response.ContentType = "text/event-stream";
             context.Response.Headers.Append("Cache-Control", "no-cache");
@@ -56,7 +41,6 @@ public static class SyncEndpoints
                 var job = await scanJobs.GetAsync(jobId);
                 var payload = new Dictionary<string, object>
                 {
-<<<<<<< HEAD
                     ["status"] = job?.Status ?? "notfound",
                     ["processed"] = job?.Processed ?? 0,
                     ["skipped"] = job?.Skipped ?? 0,
@@ -65,10 +49,6 @@ public static class SyncEndpoints
                 };
                 await context.Response.WriteAsync($"data: {System.Text.Json.JsonSerializer.Serialize(payload, System.Text.Json.JsonSerializerOptions.Web)}\n\n");
                 await context.Response.Body.FlushAsync();
-=======
-                    await context.Response.WriteAsync($"data: {System.Text.Json.JsonSerializer.Serialize(new { status = job.Status, processed = job.Processed, skipped = job.Skipped, errors = job.Errors, logs = job.Logs.ToArray() })}\n\n");
-                    await context.Response.Body.FlushAsync();
->>>>>>> origin/feature/dashboard-redesign-31-10-2026-13-29-43-856
 
                 if (job != null && (job.Status == "completed" || job.Status == "failed" || job.Status == "cancelled"))
                     break;
@@ -77,11 +57,7 @@ public static class SyncEndpoints
             }
         });
 
-<<<<<<< HEAD
         app.MapPost("/api/sync/cancel/{jobId}", async (string jobId, [FromServices] IScanJobRepository scanJobs) =>
-=======
-        app.MapPost("/api/sync/cancel/{jobId}", (string jobId, [FromServices] IScanJobStore scanJobs) =>
->>>>>>> origin/feature/dashboard-redesign-31-10-2026-13-29-43-856
         {
             var job = await scanJobs.GetAsync(jobId);
             if (job != null)

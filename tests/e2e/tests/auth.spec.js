@@ -3,14 +3,9 @@ const { loadEnv } = require("../utils/env");
 
 loadEnv();
 
-<<<<<<< HEAD
 const BASE_URL =
   process.env.PLAYWRIGHT_BASE_URL || "https://plex-autoplay.dns.podman:443";
 const ADMIN_PASSWORD = process.env.OPERATOR_PASSWORD || process.env.ADMIN_PASSWORD;
-=======
-const BASE_URL = process.env.PLAYWRIGHT_BASE_URL || "https://plex-autoplay.dns.podman:443";
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
->>>>>>> origin/feature/dashboard-redesign-31-10-2026-13-29-43-856
 
 test.describe("Autenticação JWT", () => {
   test("login com senha correta retorna token JWT e redireciona para dashboard", async ({
@@ -32,11 +27,7 @@ test.describe("Autenticação JWT", () => {
     await expect(page).toHaveURL(`${BASE_URL}/dashboard`);
   });
 
-<<<<<<< HEAD
   test("token JWT é armazenado no cookie após login", async ({ page, context }) => {
-=======
-  test("token JWT é armazenado em cookie após login", async ({ page, context }) => {
->>>>>>> origin/feature/dashboard-redesign-31-10-2026-13-29-43-856
     await page.goto(`${BASE_URL}/login`, { waitUntil: "networkidle" });
     await page.waitForSelector('[data-testid="login-form"]', {
       state: "visible",
@@ -50,25 +41,13 @@ test.describe("Autenticação JWT", () => {
     await page.waitForURL(`${BASE_URL}/dashboard`);
     const cookies = await context.cookies();
     const authCookie = cookies.find((c) => c.name === "auth_token");
-<<<<<<< HEAD
     const token = authCookie?.value;
     expect(token).toBeTruthy();
     expect(token.length).toBeGreaterThan(0);
-=======
-    expect(authCookie).toBeTruthy();
-    expect(authCookie.value.length).toBeGreaterThan(0);
-    // Sem "manter-me conectado": cookie de sessão (sem max-age/expiry)
-    expect(authCookie.expires).toBe(-1);
-
-    // localStorage não deve mais guardar o token
-    const localStorageToken = await page.evaluate(() => localStorage.getItem("auth_token"));
-    expect(localStorageToken).toBeFalsy();
->>>>>>> origin/feature/dashboard-redesign-31-10-2026-13-29-43-856
   });
 
-  test("cookie de sessão vira persistente quando 'manter-me conectado' é marcado", async ({
+  test("login com senha incorreta retorna HTTP 401 e exibe erro", async ({
     page,
-    context,
   }) => {
     await page.goto(`${BASE_URL}/login`, { waitUntil: "networkidle" });
     await page.waitForSelector('[data-testid="login-form"]', {
@@ -76,7 +55,6 @@ test.describe("Autenticação JWT", () => {
       timeout: 10000,
     });
 
-<<<<<<< HEAD
     await page.fill('input[data-testid="password-input"]', "senha_errada");
     await page.click('button[data-testid="login-submit"]');
 
@@ -84,38 +62,11 @@ test.describe("Autenticação JWT", () => {
     const errorMsg = page.locator(
       '[data-testid="error"]',
     );
-=======
-    await page.check('.keep-signed input[type="checkbox"]');
-    await page.fill('input[type="password"]', ADMIN_PASSWORD);
-    await page.click("button");
-
-    await page.waitForURL(`${BASE_URL}/dashboard`);
-    const cookies = await context.cookies();
-    const authCookie = cookies.find((c) => c.name === "auth_token");
-    expect(authCookie).toBeTruthy();
-    // Cookie persistente: expiração futura (~30 dias)
-    expect(authCookie.expires).toBeGreaterThan(Date.now() / 1000);
-  });
-
-  test("login com senha incorreta retorna HTTP 401 e exibe erro", async ({ page }) => {
-    await page.goto(`${BASE_URL}/login`, { waitUntil: "networkidle" });
-    await page.waitForSelector('input[type="password"]', {
-      state: "visible",
-      timeout: 10000,
-    });
-
-    await page.fill('input[type="password"]', "senha_errada");
-    await page.click("button");
-
-    // Verifica mensagem de erro exibida
-    const errorMsg = page.locator('.error, [data-testid="error"], .alert-error');
->>>>>>> origin/feature/dashboard-redesign-31-10-2026-13-29-43-856
     await expect(errorMsg.first()).toBeVisible();
     const errorText = await errorMsg.first().textContent();
     expect(errorText.toLowerCase()).toMatch(/inválida|erro|401/);
   });
 
-<<<<<<< HEAD
   test("acesso a endpoint protegido sem token retorna 401", async ({
     request,
   }) => {
@@ -123,29 +74,3 @@ test.describe("Autenticação JWT", () => {
     expect(response.status()).toBe(401);
   });
 });
-=======
-  test("acesso a endpoint protegido sem token retorna 401", async ({ request }) => {
-    const response = await request.get(`${BASE_URL}/api/libraries`);
-    expect(response.status()).toBe(401);
-  });
-
-  test("rota interna sem sessão redireciona ao login e retorna à rota original após autenticação", async ({
-    page,
-  }) => {
-    // Acessa rota interna sem sessão
-    await page.goto(`${BASE_URL}/series`, { waitUntil: "networkidle" });
-
-    // Guard manda para o login preservando o destino
-    await page.waitForURL(/\/login\?redirect=/, { timeout: 15000 });
-    expect(decodeURIComponent(page.url())).toContain("/login?redirect=/series");
-
-    // Autentica
-    await page.waitForSelector('input[type="password"]', { state: "visible" });
-    await page.fill('input[type="password"]', ADMIN_PASSWORD);
-    await page.click("button");
-
-    // Retorna à rota original, não ao dashboard
-    await page.waitForURL(`${BASE_URL}/series`, { timeout: 15000 });
-  });
-});
->>>>>>> origin/feature/dashboard-redesign-31-10-2026-13-29-43-856

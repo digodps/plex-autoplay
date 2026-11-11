@@ -15,25 +15,6 @@ public class SqliteSeriesRepository : ISeriesRepository
     public SqliteSeriesRepository(string connectionString)
     {
         _connectionString = connectionString;
-<<<<<<< HEAD
-=======
-        EnsureTableCreated();
-    }
-
-    private void EnsureTableCreated()
-    {
-        using var conn = CreateConnection();
-        conn.ExecuteAsync(
-            @"CREATE TABLE IF NOT EXISTS Series (
-                RatingKey TEXT NOT NULL PRIMARY KEY,
-                LibraryRatingKey TEXT NOT NULL,
-                Title TEXT NOT NULL,
-                Summary TEXT NOT NULL,
-                Thumb TEXT NOT NULL,
-                SyncedAt TEXT NOT NULL DEFAULT (datetime('now')),
-                FOREIGN KEY (LibraryRatingKey) REFERENCES Library(RatingKey) ON DELETE CASCADE
-            )").Wait();
->>>>>>> origin/feature/dashboard-redesign-31-10-2026-13-29-43-856
     }
 
     private DbConnection CreateConnection() => new SqliteConnection(_connectionString);
@@ -41,8 +22,6 @@ public class SqliteSeriesRepository : ISeriesRepository
     public async Task<(IEnumerable<Series> Items, int Total)> GetByLibraryAsync(string libraryRatingKey, int offset, int limit, string? query)
     {
         using var conn = CreateConnection();
-<<<<<<< HEAD
-<<<<<<< HEAD
         var parameters = new Dictionary<string, object>
         {
             ["LibraryRatingKey"] = libraryRatingKey,
@@ -50,22 +29,6 @@ public class SqliteSeriesRepository : ISeriesRepository
             ["Offset"] = offset,
             ["Limit"] = limit,
         };
-=======
-        var parameters = new Dictionary<string, object> { ["LibraryRatingKey"] = libraryRatingKey, ["Offset"] = offset, ["Limit"] = limit };
-        if (!string.IsNullOrEmpty(query))
-        {
-            parameters["Query"] = $"%{query}%";
-        }
->>>>>>> origin/feature/dashboard-redesign-31-10-2026-13-29-43-856
-=======
-        var parameters = new Dictionary<string, object>
-        {
-            ["LibraryRatingKey"] = libraryRatingKey,
-            ["Query"] = string.IsNullOrEmpty(query) ? "%" : $"%{query}%",
-            ["Offset"] = offset,
-            ["Limit"] = limit,
-        };
->>>>>>> origin/feature/fix-plex-episodes-endpoint-31-10-2026-19-14-11
 
         var items = await conn.QueryAsync<Series>(
             @"SELECT RatingKey, LibraryRatingKey, Title, Summary, Thumb 
@@ -77,21 +40,10 @@ public class SqliteSeriesRepository : ISeriesRepository
             parameters);
 
         var total = await conn.ExecuteScalarAsync<int>(
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> origin/feature/fix-plex-episodes-endpoint-31-10-2026-19-14-11
             @"SELECT COUNT(*) FROM Series 
               WHERE LibraryRatingKey = @LibraryRatingKey 
               AND Title LIKE @Query",
             parameters);
-<<<<<<< HEAD
-=======
-            @"SELECT COUNT(*) FROM Series WHERE LibraryRatingKey = @LibraryRatingKey",
-            new { LibraryRatingKey = libraryRatingKey });
->>>>>>> origin/feature/dashboard-redesign-31-10-2026-13-29-43-856
-=======
->>>>>>> origin/feature/fix-plex-episodes-endpoint-31-10-2026-19-14-11
 
         return (items, total);
     }

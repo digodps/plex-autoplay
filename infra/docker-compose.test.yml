@@ -17,15 +17,10 @@ services:
       - ADMIN_PASSWORD=${ADMIN_PASSWORD}
       - SETUP_TOKEN=${SETUP_TOKEN}
       - MEDIA_ROOT=${MEDIA_ROOT}
-<<<<<<< HEAD:infra/docker-compose.test.yml
       - MEDIA_ROOTS=${MEDIA_ROOTS:-/media}
       - APP_HOST=${APP_HOST:-plex-autoplay.dns.podman}
       - PLAYWRIGHT_BASE_URL=${PLAYWRIGHT_BASE_URL:-http://${APP_HOST:-plex-autoplay.dns.podman}:80}
       - OPERATOR_PASSWORD=${OPERATOR_PASSWORD}
-=======
-      - APP_HOST=${APP_HOST:-plex-autoplay.dns.podman}
-      - PLAYWRIGHT_BASE_URL=https://${APP_HOST:-plex-autoplay.dns.podman}:443
->>>>>>> origin/feature/dashboard-redesign-31-10-2026-13-29-43-856:docker-compose.test.yml
       - INSIDE_EXECUTOR_CONTAINER=true
     working_dir: /workspace
     depends_on:
@@ -41,15 +36,9 @@ services:
     container_name: plex-mock
     restart: "no"
     working_dir: /app
-<<<<<<< HEAD:infra/docker-compose.test.yml
     command: ["node", "server.cjs"]
     volumes:
       - ../tests/e2e/mock-plex:/app:ro
-=======
-    command: ["node", "server.js"]
-    volumes:
-      - ./tests/e2e/mock-plex:/app:ro
->>>>>>> origin/feature/dashboard-redesign-31-10-2026-13-29-43-856:docker-compose.test.yml
     expose:
       - "32400"
     security_opt:

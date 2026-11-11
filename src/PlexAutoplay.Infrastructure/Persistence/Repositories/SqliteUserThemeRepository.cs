@@ -13,20 +13,6 @@ public class SqliteUserThemeRepository : IUserThemeRepository
     public SqliteUserThemeRepository(string connectionString)
     {
         _connectionString = connectionString;
-<<<<<<< HEAD
-=======
-        EnsureTableCreated();
-    }
-
-    private void EnsureTableCreated()
-    {
-        using var connection = CreateConnection();
-        connection.Execute(@"CREATE TABLE IF NOT EXISTS UserThemePreferences (
-            UserId TEXT NOT NULL PRIMARY KEY,
-            AccentColor TEXT NOT NULL,
-            Mode TEXT NOT NULL
-        )");
->>>>>>> origin/feature/dashboard-redesign-31-10-2026-13-29-43-856
     }
 
     private DbConnection CreateConnection() => new SqliteConnection(_connectionString);

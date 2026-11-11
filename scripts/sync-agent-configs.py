@@ -6,11 +6,7 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE = ROOT / ".agent-source"
-<<<<<<< HEAD
 TARGETS = [".opencode"]
-=======
-TARGETS = [".agents", ".claude", ".continue", ".opencode", ".github", ".dsh"]
->>>>>>> origin/feature/dashboard-redesign-31-10-2026-13-29-43-856
 
 
 def copy_tree(src: Path, dst: Path) -> None:

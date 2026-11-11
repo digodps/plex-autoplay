@@ -9,10 +9,7 @@ public interface IPlexApiClient
     Task<PlexEpisodesResult> GetEpisodesAsync(string sectionKey);
     Task<PlexSeriesPage> GetSeriesAsync(string sectionKey, int containerStart, int containerSize, string? titleQuery = null);
     Task<PlexEpisodesResult> GetSeriesEpisodesAsync(string seriesKey);
-<<<<<<< HEAD
     Task<PlexIdentityResult> GetIdentityAsync(string plexUrl, string plexToken);
-=======
->>>>>>> origin/feature/dashboard-redesign-31-10-2026-13-29-43-856
 }
 
 /// <summary>
@@ -39,7 +36,6 @@ public record PlexEpisodesResult(
 {
     public static PlexEpisodesResult Empty => new(Array.Empty<PlexEpisodeDto>());
     public static PlexEpisodesResult FailedResult(string errorMessage) => new(Array.Empty<PlexEpisodeDto>(), true, errorMessage);
-<<<<<<< HEAD
 }
 
 /// <summary>
@@ -57,12 +53,6 @@ public record PlexIdentityResult(
 
 public record PlexLibraryDto(string Key, string Title, string Type, string Agent);
 public record PlexEpisodeDto(string RatingKey, string Title, int ParentIndex, int Index, string FilePath, string Thumb = "");
-=======
-}
-
-public record PlexLibraryDto(string Key, string Title, string Type, string Agent);
-public record PlexEpisodeDto(string RatingKey, string Title, int ParentIndex, int Index, string FilePath);
->>>>>>> origin/feature/dashboard-redesign-31-10-2026-13-29-43-856
 
 /// <summary>
 /// Página do catálogo de séries com o total sincronizado do Plex para paginação.

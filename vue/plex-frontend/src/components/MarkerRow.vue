@@ -1,12 +1,7 @@
 <script setup>
 import { ref, computed } from "vue";
-<<<<<<< HEAD
 import { useMarkerStore } from "@/stores/markers";
 import AppIcon from "@/components/AppIcon.vue";
-=======
-import { useMarkerStore } from "../stores/markers";
-import AppIcon from "./AppIcon.vue";
->>>>>>> origin/feature/dashboard-redesign-31-10-2026-13-29-43-856
 
 const props = defineProps({
   ratingKey: { type: String, required: true },
@@ -14,11 +9,6 @@ const props = defineProps({
 });
 
 const store = useMarkerStore();
-<<<<<<< HEAD
-=======
-
-// Estado local de edição inline: { startMs, endMs } quando aberta, null na leitura.
->>>>>>> origin/feature/dashboard-redesign-31-10-2026-13-29-43-856
 const editing = ref(null);
 
 const marker = computed(() => store.markersMap?.[props.ratingKey]?.[props.kind]);
@@ -58,7 +48,6 @@ async function removeMarker() {
 </script>
 
 <template>
-<<<<<<< HEAD
   <div
     class="flex flex-wrap items-center gap-3 rounded-md border border-transparent px-2 py-1.5 transition hover:border-stroke hover:bg-gray-2 dark:hover:border-strokedark dark:hover:bg-meta-4"
     :class="{ 'opacity-60': isSaving }"
@@ -148,67 +137,9 @@ async function removeMarker() {
           data-testid="marker-remove"
           @click="removeMarker"
         >
-=======
-  <div class="marker-row" :class="{ 'is-saving': isSaving }">
-    <span class="kind-label">
-      <AppIcon :name="kind === 'intro' ? 'play' : 'bookmark'" size="sm" />
-      {{ kind === "intro" ? "Intro" : "Créditos" }}
-    </span>
-
-    <!-- em edição inline -->
-    <template v-if="editing">
-      <div class="edit-fields">
-        <label>
-          Início (ms)
-          <input v-model="editing.startMs" class="input" type="number" min="0" step="10" />
-        </label>
-        <label>
-          Fim (ms)
-          <input v-model="editing.endMs" class="input" type="number" min="0" step="10" />
-        </label>
-      </div>
-      <div class="row-actions">
-        <button class="btn btn-sm" :disabled="isSaving" @click="saveEdit">
-          <AppIcon v-if="!isSaving" name="check" size="sm" />
-          <AppIcon v-else name="spinner" size="sm" class="spin" />
-          Salvar
-        </button>
-        <button class="btn btn-ghost btn-sm" @click="cancelEdit">Descartar</button>
-      </div>
-    </template>
-
-    <!-- leitura -->
-    <template v-else>
-      <span class="times">
-        {{ fmtMs(marker?.startMs) }}
-        →
-        {{ fmtMs(marker?.endMs) }}
-      </span>
-      <span
-        v-if="marker"
-        class="badge"
-        :class="marker.origin === 'detected' ? 'badge-detected' : 'badge-manual'"
-      >
-        {{ marker.origin === "detected" ? "detectado" : "manual" }}
-      </span>
-      <div class="row-actions">
-        <button v-if="marker" class="btn-icon info" title="Editar" @click="startEdit">
-          <AppIcon name="edit" size="sm" />
-        </button>
-        <button v-else class="btn-icon add" title="Adicionar marcador" @click="startEdit">
-          <AppIcon name="plus" size="sm" />
-        </button>
-        <button v-if="marker" class="btn-icon remove" title="Remover" @click="removeMarker">
->>>>>>> origin/feature/dashboard-redesign-31-10-2026-13-29-43-856
           <AppIcon name="trash" size="sm" />
         </button>
       </div>
     </template>
   </div>
-<<<<<<< HEAD
 </template>
-=======
-</template>
-
-<style scoped src="./marker-row.css"></style>
->>>>>>> origin/feature/dashboard-redesign-31-10-2026-13-29-43-856

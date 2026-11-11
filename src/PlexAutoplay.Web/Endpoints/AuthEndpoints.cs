@@ -8,11 +8,7 @@ using PlexAutoplay.Application.UseCases;
 namespace PlexAutoplay.Web.Endpoints;
 
 /// <summary>
-<<<<<<< HEAD
 /// Endpoints de autenticação: setup inicial, login e troca de senha.
-=======
-/// Endpoints de autenticação (POST /auth/login define cookie HttpOnly).
->>>>>>> origin/feature/fix-plex-episodes-endpoint-31-10-2026-19-14-11
 /// </summary>
 public static class AuthEndpoints
 {
@@ -34,7 +30,6 @@ public static class AuthEndpoints
 
             return result.Status switch
             {
-<<<<<<< HEAD
                 SetupStatus.Success => Results.NoContent(),
                 SetupStatus.InvalidToken => Results.Json(
                     new { message = "Token de setup inválido ou já utilizado" },
@@ -81,23 +76,6 @@ public static class AuthEndpoints
             if (!success)
             {
                 return Results.Unauthorized();
-=======
-                var token = tokenService.GenerateToken();
-
-                // Cookie legível pelo frontend: o guarda do Vue lê o token em
-                // document.cookie e o envia como Bearer. HttpOnly impediria o
-                // frontend de renovar o token após o login.
-                context.Response.Cookies.Append("auth_token", token, new CookieOptions
-                {
-                    HttpOnly = false,
-                    Secure = true,
-                    SameSite = SameSiteMode.Lax,
-                    Path = "/",
-                    IsEssential = true
-                });
-
-                return Results.Ok(new { success = true, token });
->>>>>>> origin/feature/fix-plex-episodes-endpoint-31-10-2026-19-14-11
             }
 
             // Cookie legível pelo frontend: o guarda do Vue lê o token em

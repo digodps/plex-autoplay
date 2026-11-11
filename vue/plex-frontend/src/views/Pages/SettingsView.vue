@@ -1,10 +1,7 @@
 <script setup>
 import { onMounted, reactive, ref } from "vue";
 import { apiFetch, extractErrorMessage } from "@/api";
-<<<<<<< HEAD
 import AppIcon from "@/components/AppIcon.vue";
-=======
->>>>>>> origin/feature/spec-multiplos-diretorios-configuracao
 import MediaRootsField from "@/components/MediaRootsField.vue";
 
 const form = reactive({
