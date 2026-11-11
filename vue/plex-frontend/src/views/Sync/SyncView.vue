@@ -29,7 +29,7 @@ const statusClass = {
 };
 
 const formatLogTimestamp = (date) =>
-  date.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "digit" });
+  date.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
 
 async function startScan() {
   try {
