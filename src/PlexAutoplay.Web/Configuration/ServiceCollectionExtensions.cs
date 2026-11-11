@@ -82,6 +82,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<SaveMarkerUseCase>();
         services.AddSingleton<GetMarkersQuery>();
         services.AddSingleton<GetSeriesQuery>();
+        services.AddTransient<CatalogSyncUseCase>();
         services.AddSingleton<GetThemeQuery>();
         services.AddSingleton<SaveThemeCommand>();
 
