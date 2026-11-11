@@ -12,30 +12,25 @@ metadata:
 
 > 📖 **Guia de Desenvolvimento Obrigatório**: Antes de iniciar qualquer implementação, consulte o **[`DEVELOPMENT_GUIDE.md`](../../../DEVELOPMENT_GUIDE.md)**. Ele consolida todas as regras da skill de Code Review (`code-review-skill.py`) para evitar erros comuns.
 
-## 🚀 MCP Development Server (`plex-autoplay-mcp`)
+## 🚀 MCP Development Server
 
-Antes de qualquer implementação, o Agente Orquestrador (e os demais agentes) deve usar o MCP local em `mcp-server/server.py`:
+O acesso ao MCP é fornecido pela skill **`mcp-dev`** (`/mcp-dev`), que documenta as ferramentas `get_best_practices`, `get_code_map` e `validate_commit_msg`.
 
-| Tool / Resource | Uso |
-|-----------------|-----|
-| `get_best_practices` / resource `plex://guidelines` | Boas práticas e Definition of Done, sem reler o guia inteiro |
-| `get_code_map` / resource `plex://codemap` | Mapa backend/frontend/tests/openspec para localizar arquivos |
-| `validate_commit_msg` | Valida formato Conventional Commit com emoji antes do commit |
-
-**Início obrigatório (idempotente)** — execute antes de spawnar os agentes:
+**Passo obrigatório de setup** — o Agente Orquestrador inicia o servidor se estiver parado, antes de spawnar os agentes:
 
 ```bash
-pgrep -f "mcp-server/server.py" >/dev/null || nohup python3 mcp-server/server.py >/tmp/plex-autoplay-mcp.log 2>&1 &
+pgrep -f "mcp-server/server.py" >/dev/null || nohup python3 mcp-server/server.py >/tmp/mcp-dev.log 2>&1 &
+pgrep -f "mcp-server/server.py" >/dev/null || { echo "Falha ao iniciar MCP"; exit 1; }
 ```
 
-**Validação**: `pgrep -f "mcp-server/server.py"` deve retornar um PID. Se não retornar, abortar e reportar falha ao usuário.
+Se a validação falhar, abortar e reportar ao usuário. Ao final do fluxo, encerre o servidor **apenas** se ele foi iniciado por esta execução (`pkill -f "mcp-server/server.py"`).
 
 Esta skill orquestra a implementação ponta a ponta de uma mudança OpenSpec, integrando os seguintes **agentes** e **skills de apoio**:
 
 | Agente | Skill de Apoio |
 |--------|----------------|
-| Agente 1 (Backend) | `dev-spec.py`, `code-review-skill.py`, MCP `plex-autoplay-mcp`, [`DEVELOPMENT_GUIDE.md`](../../../DEVELOPMENT_GUIDE.md) |
-| Agente 2 (Frontend + UX) | `dev-spec.py`, `code-review-skill.py`, MCP `plex-autoplay-mcp`, pesquisa de UX, [`DEVELOPMENT_GUIDE.md`](../../../DEVELOPMENT_GUIDE.md) |
+| Agente 1 (Backend) | `dev-spec.py`, `code-review-skill.py`, skill `mcp-dev`, [`DEVELOPMENT_GUIDE.md`](../../../DEVELOPMENT_GUIDE.md) |
+| Agente 2 (Frontend + UX) | `dev-spec.py`, `code-review-skill.py`, skill `mcp-dev`, pesquisa de UX, [`DEVELOPMENT_GUIDE.md`](../../../DEVELOPMENT_GUIDE.md) |
 | Agente 3 (Tester) | `dev-spec.py`, `run-e2e-tests.sh`, Validação com Navegador Real |
 | Human (Developer) | `commit-skill.py`, `code-review-skill.py --fix` |
 
