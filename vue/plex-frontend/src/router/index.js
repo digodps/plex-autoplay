@@ -40,12 +40,7 @@ const routes = [
     component: () => import("../views/Markers/MarkerEditorView.vue"),
     meta: { title: "Marcadores" },
   },
-  {
-    path: "/sync",
-    name: "sync",
-    component: () => import("../views/Sync/SyncView.vue"),
-    meta: { title: "Sincronizar" },
-  },
+
   {
     path: "/logs",
     name: "logs",
