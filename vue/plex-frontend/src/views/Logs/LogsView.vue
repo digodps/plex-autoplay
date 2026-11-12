@@ -19,7 +19,7 @@ async function handleStartScan() {
   try {
     const res = await apiFetch("/api/plex/scan", { method: "POST" });
     if (res.ok) {
-      router.push("/sync");
+      logsStore.fetchJobs();
     } else {
       window.alert("Erro ao iniciar escaneamento");
     }
