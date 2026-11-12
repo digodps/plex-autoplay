@@ -69,7 +69,7 @@ async function handleStartScan() {
   try {
     const res = await apiFetch("/api/plex/scan", { method: "POST" });
     if (res.ok) {
-      router.push("/sync");
+      router.push("/logs");
     } else {
       console.error("Falha ao iniciar escaneamento:", await res.text());
     }
@@ -79,7 +79,7 @@ async function handleStartScan() {
 }
 
 function handleViewFullLog() {
-  router.push("/sync");
+  router.push("/logs");
 }
 </script>
 
