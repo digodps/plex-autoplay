@@ -111,5 +111,5 @@ export async function fetchMarkers() {
 }
 
 export async function syncRun() {
-  return apiFetch("/api/sync/run", { method: "POST" });
+  return apiFetch("/api/plex/scan", { method: "POST" });
 }

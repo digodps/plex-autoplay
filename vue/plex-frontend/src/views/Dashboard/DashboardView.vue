@@ -40,7 +40,7 @@ async function handleStartScan() {
         <button
           class="btn btn-md btn-secondary"
           :disabled="store.isLoading"
-          @click="router.push('/sync')"
+          @click="router.push('/logs')"
         >
           Ver Log Completo
         </button>
