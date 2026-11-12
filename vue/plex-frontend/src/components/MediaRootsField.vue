@@ -38,47 +38,46 @@ function handleSelect(path) {
 <template>
   <div class="space-y-3">
     <div>
-      <label class="mb-2.5 block text-sm font-medium text-gray-700 dark:text-gray-300">
-        {{ label }}
-      </label>
-      <p class="text-xs text-gray-500 dark:text-gray-400">
+      <label class="block text-sm font-medium text-gray-300">{{ label }}</label>
+      <p class="mt-1.5 text-xs text-gray-500">
         Caminhos existentes dentro do container. Use quantos precisar.
       </p>
     </div>
 
-    <ul v-if="modelValue.length" class="space-y-2">
+    <p v-if="!modelValue.length" class="text-sm text-gray-500">
+      Nenhum diretório adicionado.
+    </p>
+
+    <ul class="space-y-2">
       <li
         v-for="path in modelValue"
         :key="path"
-        class="flex items-center justify-between gap-2 rounded border border-gray-200 bg-gray-100 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700"
+        class="flex items-center justify-between gap-3 rounded-lg border border-gray-700 bg-[#111827] px-4 py-2.5 text-sm"
       >
-        <span class="truncate font-mono text-gray-700 dark:text-gray-300">{{ path }}</span>
+        <span class="truncate font-mono text-gray-200">{{ path }}</span>
         <button
           type="button"
-          class="text-red-600 transition hover:opacity-80 dark:text-red-400"
+          class="shrink-0 text-red-400 transition hover:text-red-300"
           :aria-label="`Remover ${path}`"
           data-testid="media-root-remove"
           @click="remove(path)"
         >
-          Remover
+          Remove
         </button>
       </li>
     </ul>
-    <p v-else class="text-sm text-gray-500 dark:text-gray-400">
-      Nenhum diretório adicionado.
-    </p>
 
     <div class="flex flex-wrap items-center gap-2">
       <input
         v-model="draft"
         type="text"
         placeholder="/media"
-        class="min-w-0 flex-1 rounded border border-gray-300 bg-gray-100 px-3 py-2 text-black focus:border-primary focus:bg-white focus:text-black dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+        class="min-w-0 flex-1 rounded-lg border border-gray-700 bg-[#111827] px-4 py-2.5 text-white placeholder-gray-500 focus:border-amber-400 focus:outline-none focus:ring-1 focus:ring-amber-400"
         @keydown.enter.prevent="addDraft"
       />
       <button
         type="button"
-        class="rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-100 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
+        class="rounded-lg border border-gray-700 px-4 py-2.5 text-sm font-medium text-gray-300 transition hover:bg-gray-700 hover:text-white"
         data-testid="media-root-add"
         @click="addDraft"
       >
@@ -86,7 +85,7 @@ function handleSelect(path) {
       </button>
       <button
         type="button"
-        class="rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-100 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
+        class="rounded-lg border border-gray-700 px-4 py-2.5 text-sm font-medium text-gray-300 transition hover:bg-gray-700 hover:text-white"
         data-testid="media-root-open-picker"
         @click="pickerOpen = true"
       >

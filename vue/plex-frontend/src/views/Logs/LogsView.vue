@@ -5,7 +5,6 @@ import LogFilterBar from "@/components/Logs/LogFilterBar.vue";
 import LogGroupedView from "@/components/Logs/LogGroupedView.vue";
 import { useLogsStore } from "@/stores/logs";
 import { apiFetch } from "@/api";
-import AppIcon from "@/components/AppIcon.vue";
 
 const logsStore = useLogsStore();
 const router = useRouter();
@@ -62,22 +61,22 @@ async function handleCleanup() {
 </script>
 
 <template>
-  <div class="min-h-screen bg-black text-white">
-    <div class="mx-auto max-w-6xl px-4 py-3">
-      <div class="flex items-center justify-between gap-3">
+  <div class="min-h-screen bg-[#111827] text-white">
+    <div class="mx-auto max-w-6xl px-4 py-6">
+      <div class="flex items-center justify-between gap-3 flex-wrap">
         <div>
           <h1 class="text-2xl font-bold text-white">Logs de processamento</h1>
-          <p class="text-sm text-gray-400">
+          <p class="mt-1 text-sm text-gray-400">
             Histórico de varreduras, filtros e agrupamento.
           </p>
         </div>
-        <div class="flex items-center gap-2">
+        <div class="flex items-center gap-2 flex-wrap">
           <button
             data-testid="log-btn-scan"
-            class="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white transition hover:opacity-90"
+            class="rounded-lg border border-gray-700 bg-gray-800 px-4 py-2 text-sm font-medium text-gray-300 transition hover:border-gray-500 hover:text-white"
             @click="handleStartScan"
           >
-            <AppIcon name="play" class="mr-2 inline-block w-4 h-4" /> Iniciar Escaneamento
+            Iniciar Escaneamento
           </button>
           <button
             data-testid="log-btn-clear"
@@ -96,7 +95,7 @@ async function handleCleanup() {
         </div>
       </div>
 
-      <div class="p-4 md:p-6 lg:p-8 max-w-6xl mx-auto">
+      <div class="mt-6">
         <LogFilterBar />
         <LogGroupedView
           :items="logsStore.logs"

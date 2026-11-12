@@ -56,4 +56,4 @@ if [[ -n "$SINCE" ]]; then
   ARGS+=("$SINCE")
 fi
 
-docker compose -f infra/docker-compose.yml logs "${ARGS[@]}"
+docker compose -f ../infra/docker-compose.yml logs "${ARGS[@]}"

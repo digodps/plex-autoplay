@@ -81,112 +81,108 @@ onMounted(loadSettings);
 </script>
 
 <template>
-  <div class="page">
-    <div class="bg-gray-50 dark:bg-gray-900 min-h-screen">
-      <div class="border-b border-gray-200 dark:border-gray-800 sticky top-0 z-20 bg-gray-50 dark:bg-gray-900">
-        <div class="max-w-2xl mx-auto px-4 py-3">
-          <h1 class="text-28 font-bold text-gray-900 dark:text-gray-100">Ajustes</h1>
-          <p class="text-sm text-gray-500 dark:text-gray-400">
+  <div class="min-h-screen bg-[#111827] text-white">
+    <div class="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+      <div class="flex items-center justify-between gap-3 flex-wrap">
+        <div>
+          <h1 class="text-2xl font-bold text-white">Ajustes</h1>
+          <p class="mt-1 text-sm text-gray-400">
             Configurações do Plex e sincronização, persistidas no banco.
           </p>
         </div>
-      </div>
-
-      <div class="p-4 md:p-6 lg:p-8">
-        <div class="max-w-2xl mx-auto space-y-6">
-          <div v-if="loading" class="text-sm text-gray-500 dark:text-gray-400">Carregando...</div>
-
-          <form v-else class="space-y-6" @submit.prevent="saveSettings">
-            <div class="rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 p-4 space-y-3">
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300" for="sync-interval">
-                Intervalo de Sincronização (minutos)
-              </label>
-              <input
-                id="sync-interval"
-                v-model.number="form.sync_interval_minutes"
-                type="number"
-                min="1"
-                max="1440"
-                required
-                class="w-full rounded border border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 text-black dark:text-white focus:border-primary focus:bg-white focus:text-black"
-              />
-              <p class="text-xs text-gray-500 dark:text-gray-400">
-                Intervalo entre varreduras automáticas das bibliotecas.
-              </p>
-            </div>
-
-            <div class="rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 p-4 space-y-3">
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300" for="plex-url">
-                URL do Plex
-              </label>
-              <input
-                id="plex-url"
-                v-model="form.plex_url"
-                type="url"
-                required
-                placeholder="http://192.168.1.5:32400"
-                class="w-full rounded border border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 text-black dark:text-white focus:border-primary focus:bg-white focus:text-black"
-              />
-            </div>
-
-            <div class="rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 p-4 space-y-3">
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300" for="plex-token">
-                Token do Plex
-              </label>
-              <div class="relative">
-                <input
-                  id="plex-token"
-                  ref="plexTokenRef"
-                  v-model="plexToken"
-                  :type="showPlexToken ? 'text' : 'password'"
-                  autocomplete="new-password"
-                  :placeholder="plexTokenSet ? 'Token configurado — deixe vazio para manter' : 'Informe o token do Plex'"
-                  class="w-full rounded border border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 text-black dark:text-white focus:border-primary focus:bg-white focus:text-black pr-12 py-2 px-3"
-                  data-testid="plex-token"
-                />
-                <button
-                  type="button"
-                  class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-black dark:text-gray-300 dark:hover:text-white"
-                  :aria-label="showPlexToken ? 'Ocultar token' : 'Mostrar token'"
-                  :aria-pressed="showPlexToken"
-                  data-testid="toggle-password-plex-token"
-                  @click="togglePlexToken"
-                >
-                  <AppIcon :name="showPlexToken ? 'eye-off' : 'eye'" size="sm" />
-                </button>
-              </div>
-              <p class="text-xs text-gray-500 dark:text-gray-400">
-                {{ plexTokenSet ? "Token já configurado. Preencha apenas para substituir." : "Nenhum token configurado." }}
-              </p>
-            </div>
-
-            <div class="rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 p-4 space-y-3">
-              <MediaRootsField v-model="mediaRoots" label="Diretórios de Mídia (MEDIA_ROOTS)" />
-            </div>
-
-            <p v-if="message" class="text-sm text-green-600 dark:text-green-400">{{ message }}</p>
-            <p v-if="error" class="text-sm text-red-600 dark:text-red-400">{{ error }}</p>
-
-            <div class="flex items-center justify-end gap-2">
-              <button
-                type="button"
-                class="rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 px-4 py-2 text-sm font-medium text-gray-800 dark:text-gray-100 transition hover:border-gray-400 dark:hover:bg-gray-600 disabled:opacity-50"
-                :disabled="saving"
-                @click="loadSettings"
-              >
-                Recarregar
-              </button>
-              <button
-                type="submit"
-                class="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-50"
-                :disabled="saving"
-              >
-                {{ saving ? "Salvando..." : "Salvar Configurações" }}
-              </button>
-            </div>
-          </form>
+        <div class="flex items-center gap-2">
+          <button
+            type="button"
+            class="rounded-lg border border-gray-700 bg-[#1f2937] px-4 py-2 text-sm font-medium text-gray-300 transition hover:border-gray-500 hover:text-white disabled:opacity-50"
+            :disabled="saving"
+            @click="loadSettings"
+          >
+            Recarregar
+          </button>
+          <button
+            type="submit"
+            form="settings-form"
+            class="rounded-lg border border-gray-700 bg-gray-800 px-4 py-2 text-sm font-medium text-gray-300 transition hover:border-gray-500 hover:text-white disabled:opacity-50"
+            :disabled="saving"
+          >
+            {{ saving ? "Salvando..." : "Salvar Configurações" }}
+          </button>
         </div>
       </div>
+
+      <div v-if="loading" class="text-sm text-gray-400">Carregando...</div>
+
+      <form v-else id="settings-form" class="space-y-6" @submit.prevent="saveSettings">
+        <div class="rounded-xl border border-gray-800 bg-[#1f2937] p-6 space-y-3">
+          <label class="block text-sm font-medium text-gray-300" for="sync-interval">
+            Intervalo de Sincronização (minutos)
+          </label>
+          <input
+            id="sync-interval"
+            v-model.number="form.sync_interval_minutes"
+            type="number"
+            min="1"
+            max="1440"
+            required
+            class="w-full rounded-lg border border-gray-700 bg-[#111827] text-white placeholder-gray-500 px-4 py-2.5 focus:border-amber-400 focus:outline-none focus:ring-1 focus:ring-amber-400"
+          />
+          <p class="text-xs text-gray-500">
+            Intervalo entre varreduras automáticas das bibliotecas.
+          </p>
+        </div>
+
+        <div class="rounded-xl border border-gray-800 bg-[#1f2937] p-6 space-y-3">
+          <label class="block text-sm font-medium text-gray-300" for="plex-url">
+            URL do Plex
+          </label>
+          <input
+            id="plex-url"
+            v-model="form.plex_url"
+            type="url"
+            required
+            placeholder="http://192.168.1.5:32400"
+            class="w-full rounded-lg border border-gray-700 bg-[#111827] text-white placeholder-gray-500 px-4 py-2.5 focus:border-amber-400 focus:outline-none focus:ring-1 focus:ring-amber-400"
+          />
+        </div>
+
+        <div class="rounded-xl border border-gray-800 bg-[#1f2937] p-6 space-y-3">
+          <label class="block text-sm font-medium text-gray-300" for="plex-token">
+            Token do Plex
+          </label>
+          <div class="relative">
+            <input
+              id="plex-token"
+              ref="plexTokenRef"
+              v-model="plexToken"
+              :type="showPlexToken ? 'text' : 'password'"
+              autocomplete="new-password"
+              :placeholder="plexTokenSet ? 'Token configurado — deixe vazio para manter' : 'Informe o token do Plex'"
+              class="w-full rounded-lg border border-gray-700 bg-[#111827] text-white placeholder-gray-500 px-4 py-2.5 pr-12 focus:border-amber-400 focus:outline-none focus:ring-1 focus:ring-amber-400"
+              data-testid="plex-token"
+            />
+            <button
+              type="button"
+              class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition"
+              :aria-label="showPlexToken ? 'Ocultar token' : 'Mostrar token'"
+              :aria-pressed="showPlexToken"
+              data-testid="toggle-password-plex-token"
+              @click="togglePlexToken"
+            >
+              <AppIcon :name="showPlexToken ? 'eye-off' : 'eye'" size="sm" />
+            </button>
+          </div>
+          <p class="text-xs text-gray-500">
+            {{ plexTokenSet ? "Token já configurado. Preencha apenas para substituir." : "Nenhum token configurado." }}
+          </p>
+        </div>
+
+        <div class="rounded-xl border border-gray-800 bg-[#1f2937] p-6">
+          <MediaRootsField v-model="mediaRoots" label="Diretórios de Mídia (MEDIA_ROOTS)" />
+        </div>
+
+        <p v-if="message" class="text-sm text-green-400">{{ message }}</p>
+        <p v-if="error" class="text-sm text-red-400">{{ error }}</p>
+      </form>
     </div>
   </div>
 </template>
