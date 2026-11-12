@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="pt-BR"><head><meta charset="utf-8">
+<title>Relatório OpenSpec — dashboard-card-skip-execucao</title>
+<style>
+body{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;margin:24px;line-height:1.5;color:#1f2937}
+h1{font-size:22px;margin-bottom:4px} h2{font-size:18px;margin-top:28px;border-bottom:1px solid #e5e7eb;padding-bottom:6px}
+h3{font-size:16px;margin-top:20px}
+.badge{font-size:11px;padding:2px 7px;border-radius:99px;color:#fff;font-weight:600}
+.badge.pass{background:#16a34a}.badge.fail{background:#dc2626}.badge.unk{background:#64748b}
+.summary{display:flex;gap:16px;margin:16px 0;border:1px solid #e5e7eb;border-radius:8px;padding:12px;background:#f9fafb}
+.summary div{flex:1}
+.summary .big{font-size:20px;font-weight:700;color:#111827}
+.tree{font-size:13px;line-height:1.6}
+.details>summary,details>summary{font-weight:600;cursor:pointer;list-style:none}
+details>summary::marker{content:"▸"}
+.file{margin-left:14px;padding:2px 0;border-left:2px solid #e5e7eb}
+.stat{color:#6b7280;font-size:11.5px}
+.tag{font-size:10px;padding:1px 5px;border-radius:3px;color:#fff;margin-left:6px}
+.emptydir{color:#9ca3af;font-style:italic;margin-left:14px}
+code{background:#f3f4f6;padding:1px 4px;border-radius:4px;font-size:0.9em}
+pre{background:#1f2937;color:#e5e7eb;padding:10px;border-radius:6px;overflow:auto}
+a{color:#2563eb;text-decoration:none} a:hover{text-decoration:underline}
+.meta{color:#6b7280;font-size:12.5px;margin-top:8px}
+</style></head>
+<body>
+<h1>Relatório OpenSpec — dashboard-card-skip-execucao</h1>
+<div class="meta">Worktree: /home/hermes/plex-autoplay-dashboard-card-skip-execucao &nbsp;|&nbsp; Base do diff: 414c5061e668aca148a976a9aef3b810aa4538e1 &nbsp;|&nbsp; Relatório: <b>/home/hermes/plex-autoplay-dashboard-card-skip-execucao/openspec/changes/dashboard-card-skip-execucao/report.html</b></div>
+
+<div class="summary">
+ <div><span class="big">40</span> arquivos alterados</div>
+ <div><span class="big" style="color:#16a34a">+1529</span> linhas adicionadas</div>
+ <div><span class="big" style="color:#dc2626">-19</span> linhas removidas</div>
+ <div><span class="big">1</span> rodada(s) de QA</div>
+ <div><span class="big">1</span> evidência(s)</div>
+</div>
+
+<h2>🌳 Árvore de alterações (adicionado / modificado / removido)</h2>
+<div class="tree"><details class="dir"><summary>openspec/ <span class="stat">+1010 -0</span></summary>
+<details class="dir"><summary>changes/ <span class="stat">+1010 -0</span></summary>
+<details class="dir"><summary>dashboard-card-skip-execucao/ <span class="stat">+1010 -0</span></summary>
+<div class="file" style="color:#16a34a">✅ <b>deficiencias_resolvidas.md</b> <span class="stat">+22 -0</span> <span class="tag">A</span></div>
+<div class="file" style="color:#16a34a">✅ <b>design.md</b> <span class="stat">+149 -0</span> <span class="tag">A</span></div>
+<div class="file" style="color:#16a34a">✅ <b>proposal.md</b> <span class="stat">+18 -0</span> <span class="tag">A</span></div>
+<div class="file" style="color:#16a34a">✅ <b>qa-report-1.md</b> <span class="stat">+39 -0</span> <span class="tag">A</span></div>
+<div class="file" style="color:#16a34a">✅ <b>tasks.md</b> <span class="stat">+24 -0</span> <span class="tag">A</span></div>
+<details class="dir"><summary>qa-evidence/ <span class="stat">+664 -0</span></summary>
+<div class="file" style="color:#16a34a">✅ <b>01-theme-toggled.png</b> <span class="stat">+291 -0</span> <span class="tag">A</span></div>
+<div class="file" style="color:#16a34a">✅ <b>02-sessions-page.png</b> <span class="stat">+298 -0</span> <span class="tag">A</span></div>
+<div class="file" style="color:#16a34a">✅ <b>playwright.qa.config.ts</b> <span class="stat">+10 -0</span> <span class="tag">A</span></div>
+<div class="file" style="color:#16a34a">✅ <b>qa-sessions.spec.ts</b> <span class="stat">+65 -0</span> <span class="tag">A</span></div>
+</details>
+<details class="dir"><summary>specs/ <span class="stat">+94 -0</span></summary>
+<details class="dir"><summary>dashboard-sessions-skip/ <span class="stat">+94 -0</span></summary>
+<div class="file" style="color:#16a34a">✅ <b>spec.md</b> <span class="stat">+94 -0</span> <span class="tag">A</span></div>
+</details>
+</details>
+</details>
+</details>
+</details>
+<details class="dir"><summary>src/ <span class="stat">+218 -16</span></summary>
+<details class="dir"><summary>PlexAutoplay.Domain/ <span class="stat">+44 -0</span></summary>
+<details class="dir"><summary>Entities/ <span class="stat">+31 -0</span></summary>
+<div class="file" style="color:#16a34a">✅ <b>SessionStatus.cs</b> <span class="stat">+19 -0</span> <span class="tag">A</span></div>
+<div class="file" style="color:#16a34a">✅ <b>SkipHistoryEntry.cs</b> <span class="stat">+12 -0</span> <span class="tag">A</span></div>
+</details>
+<details class="dir"><summary>Ports/ <span class="stat">+13 -0</span></summary>
+<div class="file" style="color:#16a34a">✅ <b>ISkipMonitor.cs</b> <span class="stat">+13 -0</span> <span class="tag">A</span></div>
+</details>
+</details>
+<details class="dir"><summary>PlexAutoplay.Infrastructure/ <span class="stat">+101 -2</span></summary>
+<div class="file" style="color:#d97706">🛠️ <b>PlexAutoSkipBackgroundService.cs</b> <span class="stat">+44 -2</span> <span class="tag">M</span></div>
+<div class="file" style="color:#16a34a">✅ <b>SkipMonitor.cs</b> <span class="stat">+57 -0</span> <span class="tag">A</span></div>
+</details>
+<details class="dir"><summary>PlexAutoplay.Web/ <span class="stat">+73 -14</span></summary>
+<div class="file" style="color:#d97706">🛠️ <b>Program.cs</b> <span class="stat">+1 -0</span> <span class="tag">M</span></div>
+<details class="dir"><summary>Configuration/ <span class="stat">+6 -0</span></summary>
+<div class="file" style="color:#d97706">🛠️ <b>ServiceCollectionExtensions.cs</b> <span class="stat">+6 -0</span> <span class="tag">M</span></div>
+</details>
+<details class="dir"><summary>Endpoints/ <span class="stat">+50 -0</span></summary>
+<div class="file" style="color:#16a34a">✅ <b>SessionsEndpoints.cs</b> <span class="stat">+50 -0</span> <span class="tag">A</span></div>
+</details>
+<details class="dir"><summary>wwwroot/ <span class="stat">+16 -14</span></summary>
+<div class="file" style="color:#d97706">🛠️ <b>index.html</b> <span class="stat">+2 -2</span> <span class="tag">M</span></div>
+<details class="dir"><summary>assets/ <span class="stat">+14 -12</span></summary>
+<div class="file" style="color:#16a34a">✅ <b>DashboardView-D5i9E_F3.js</b> <span class="stat">+1 -0</span> <span class="tag">A</span></div>
+<div class="file" style="color:#dc2626">❌ <b>DashboardView-wZsD3wsK.js</b> <span class="stat">+0 -1</span> <span class="tag">D</span></div>
+<div class="file" style="color:#16a34a">✅ <b>DefaultLayout-4bIgDM5L.js</b> <span class="stat">+1 -0</span> <span class="tag">A</span></div>
+<div class="file" style="color:#16a34a">✅ <b>LogsView-BbUTi0S2.js</b> <span class="stat">+1 -0</span> <span class="tag">A</span></div>
+<div class="file" style="color:#dc2626">❌ <b>LogsView-mmIQ79KI.js</b> <span class="stat">+0 -1</span> <span class="tag">D</span></div>
+<div class="file" style="color:#16a34a">✅ <b>SeriesView-Co_qVc1X.js</b> <span class="stat">+1 -0</span> <span class="tag">A</span></div>
+<div class="file" style="color:#dc2626">❌ <b>SeriesView-CzgDN3VY.js</b> <span class="stat">+0 -1</span> <span class="tag">D</span></div>
+<div class="file" style="color:#16a34a">✅ <b>SessionsView-BFISUTsk.js</b> <span class="stat">+1 -0</span> <span class="tag">A</span></div>
+<div class="file" style="color:#dc2626">❌ <b>SettingsView-CtRWd7Ws.js</b> <span class="stat">+0 -1</span> <span class="tag">D</span></div>
+<div class="file" style="color:#16a34a">✅ <b>SettingsView-D4uBMYwh.js</b> <span class="stat">+1 -0</span> <span class="tag">A</span></div>
+<div class="file" style="color:#dc2626">❌ <b>index-CB6TjkjS.css</b> <span class="stat">+0 -1</span> <span class="tag">D</span></div>
+<div class="file" style="color:#16a34a">✅ <b>index-Mxb-XYw_.css</b> <span class="stat">+1 -0</span> <span class="tag">A</span></div>
+<div class="file" style="color:#d97706">🛠️ <b>{LibrariesView-NPLGMrGI.js =&gt; LibrariesView-CQARzNMs.js}</b> <span class="stat">+1 -1</span> <span class="tag">M</span></div>
+<div class="file" style="color:#d97706">🛠️ <b>{MarkerEditorView-WtK-ufIX.js =&gt; MarkerEditorView-C425bw_s.js}</b> <span class="stat">+1 -1</span> <span class="tag">M</span></div>
+<div class="file" style="color:#d97706">🛠️ <b>{MediaRootsField-kH9rP5H9.js =&gt; MediaRootsField-R7-tfrLm.js}</b> <span class="stat">+1 -1</span> <span class="tag">M</span></div>
+<div class="file" style="color:#d97706">🛠️ <b>{SetupView-Ddxn4K9F.js =&gt; SetupView-DAcmWfNR.js}</b> <span class="stat">+1 -1</span> <span class="tag">M</span></div>
+<div class="file" style="color:#d97706">🛠️ <b>{index-CWeeZ4Sb.js =&gt; index-COe5XEgi.js}</b> <span class="stat">+3 -3</span> <span class="tag">M</span></div>
+</details>
+</details>
+</details>
+</details>
+<details class="dir"><summary>vue/ <span class="stat">+301 -3</span></summary>
+<details class="dir"><summary>plex-frontend/ <span class="stat">+301 -3</span></summary>
+<details class="dir"><summary>src/ <span class="stat">+301 -3</span></summary>
+<details class="dir"><summary>components/ <span class="stat">+2 -2</span></summary>
+<details class="dir"><summary>DataStats/ <span class="stat">+2 -2</span></summary>
+<div class="file" style="color:#d97706">🛠️ <b>DataStatsOne.vue</b> <span class="stat">+2 -2</span> <span class="tag">M</span></div>
+</details>
+</details>
+<details class="dir"><summary>composables/ <span class="stat">+57 -1</span></summary>
+<div class="file" style="color:#d97706">🛠️ <b>useDashboardCards.js</b> <span class="stat">+57 -1</span> <span class="tag">M</span></div>
+</details>
+<details class="dir"><summary>router/ <span class="stat">+6 -0</span></summary>
+<div class="file" style="color:#d97706">🛠️ <b>index.js</b> <span class="stat">+6 -0</span> <span class="tag">M</span></div>
+</details>
+<details class="dir"><summary>views/ <span class="stat">+236 -0</span></summary>
+<details class="dir"><summary>Sessions/ <span class="stat">+236 -0</span></summary>
+<div class="file" style="color:#16a34a">✅ <b>SessionsView.vue</b> <span class="stat">+236 -0</span> <span class="tag">A</span></div>
+</details>
+</details>
+</details>
+</details>
+</details></div>
+<p class="meta">Totais: A=23 M=12 D=5 R=0 &nbsp;•&nbsp; +1529 / -19</p>
+
+<h2>🧪 Relatórios QA e rodadas de correção</h2>
+<details><summary>📋 qa-report-1.md — <span class="badge unk">?</span></summary><h1>QA Report — Iteration 1</h1>
+<h2>Status: PASS</h2>
+<h2>Criteria Verified</h2>
+<ul><li>✅ Theme toggle button visible in header (<code>button[aria-label*=&quot;Tema&quot;]</code>)</li><li>✅ Click cycles theme (light/dark)</li><li>✅ Page renders correctly in both themes</li><li>✅ Screenshot captured: <code>01-theme-toggled.png</code></li></ul>
+<ul><li>✅ Card &quot;Sessões &amp; Skips&quot; visible on Dashboard</li><li>✅ Click navigates to <code>/sessions</code></li><li>✅ SessionsView renders with &quot;Sessões &amp; Skips&quot; title</li><li>✅ Active sessions table renders (empty state shows &quot;Nenhuma sessão ativa&quot;)</li><li>✅ Recent skips table renders (empty state shows &quot;Nenhum skip executado&quot;)</li><li>✅ Screenshot captured: <code>02-sessions-page.png</code></li></ul>
+<ul><li>✅ Header breadcrumb navigation present</li><li>✅ User profile menu opens/closes</li><li>✅ Route <code>/sessions</code> is active when visited (URL matches)</li><li>✅ Focus-visible states work</li></ul>
+<ul><li>✅ <code>dotnet build PlexAutoplay.slnx -c Release</code> passes</li><li>✅ <code>npm run build</code> in <code>vue/plex-frontend</code> passes</li><li>✅ <code>npm run lint</code> in <code>vue/plex-frontend</code> passes</li><li>✅ <code>openspec validate dashboard-card-skip-execucao --strict</code> passes</li></ul>
+<ul><li><code>http://localhost:8080</code> (app running in Docker container <code>plex-autoplay</code>)</li></ul>
+<ul><li>No active Plex sessions during test (empty states verified)</li><li>Test password: <code>PlexAdmin2026</code> (admin credential created via SQLite)</li><li>Setup required: bypassed by direct DB credential injection (TEST_MASTER_PASSWORD=testmaster123 available in container)</li></ul><p><strong>URLs de validação/evidência:</strong><ul><li><a href="http://localhost:8080`">http://localhost:8080`</a></li></ul></p></details>
+
+<h2>🔎 Evidências de teste</h2><ul><li><a href="../../../test-results/.last-run.json">test-results/.last-run.json</a></li></ul>
+
+<p class="meta">Próximos passos: revisar árvore e QA acima, então executar <code>/opsx-archive</code> para arquivar a change ou manter a worktree <code>feature/spec-dashboard-card-skip-execucao</code> para merge.</p>
+</body></html>
