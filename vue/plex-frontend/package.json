@@ -1,7 +1,7 @@
 {
   "name": "plex-frontend",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.1",
   "type": "module",
   "description": "> **Dashboard web para gerenciar marcadores de intro/créditos no Plex via API oficial** – gera `SQLite marker database` para o **PlexAutoSkip** (embutido) que envia comandos de *seek* aos players compatíveis.",
   "main": "index.js",
