@@ -7,7 +7,6 @@ import MediaRootsField from "@/components/MediaRootsField.vue";
 const form = reactive({
   plex_url: "",
   sync_interval_minutes: 5,
-  sync_catalog_interval_minutes: 30,
 });
 const mediaRoots = ref([]);
 const plexToken = ref("");
@@ -28,7 +27,6 @@ function applySettings(data) {
   form.plex_url = data.plex_url ?? "";
   mediaRoots.value = data.media_roots ?? [];
   form.sync_interval_minutes = data.sync_interval_minutes ?? 5;
-  form.sync_catalog_interval_minutes = data.sync_catalog_interval_minutes ?? 30;
   plexTokenSet.value = Boolean(data.plex_token_set);
   plexToken.value = "";
 }
@@ -60,7 +58,6 @@ async function saveSettings() {
       plex_url: form.plex_url,
       media_roots: mediaRoots.value,
       sync_interval_minutes: Number(form.sync_interval_minutes),
-      sync_catalog_interval_minutes: Number(form.sync_catalog_interval_minutes),
     };
     if (plexToken.value) payload.plex_token = plexToken.value;
 
@@ -116,21 +113,6 @@ onMounted(loadSettings);
               <p class="text-xs text-gray-500 dark:text-gray-400">
                 Intervalo entre varreduras automáticas das bibliotecas.
               </p>
-            </div>
-
-            <div class="rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 p-4 space-y-3">
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300" for="catalog-interval">
-                Intervalo de Sincronização do Catálogo (minutos)
-              </label>
-              <input
-                id="catalog-interval"
-                v-model.number="form.sync_catalog_interval_minutes"
-                type="number"
-                min="1"
-                max="1440"
-                required
-                class="w-full rounded border border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 text-black dark:text-white focus:border-primary focus:bg-white focus:text-black"
-              />
             </div>
 
             <div class="rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 p-4 space-y-3">
