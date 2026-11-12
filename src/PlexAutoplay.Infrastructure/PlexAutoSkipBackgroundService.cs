@@ -64,12 +64,6 @@ public class PlexAutoSkipBackgroundService : BackgroundService
     private async Task PollAndSkipAsync(CancellationToken ct)
     {
         var settings = await _settings.GetAsync();
-        if (!settings.AutoSkipAuthorized)
-        {
-            _logger.LogDebug("Auto-skip disabled — awaiting explicit authorization from user.");
-            _monitor.UpdateSessions(System.Array.Empty<SessionStatus>());
-            return;
-        }
         var plexUrl = settings.PlexUrl.TrimEnd('/');
         using var http = _httpClientFactory.CreateClient();
         var req = new HttpRequestMessage(HttpMethod.Get, $"{plexUrl}/status/sessions");

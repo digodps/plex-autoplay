@@ -26,11 +26,11 @@ const groups = computed(() => {
 });
 
 const levelColors = {
-  info: "text-gray-500 dark:text-gray-400",
-  success: "text-meta-3",
-  skip: "text-gray-500 dark:text-gray-400",
-  warning: "text-meta-6",
-  error: "text-meta-1",
+  info: "text-gray-400",
+  success: "text-green-400",
+  skip: "text-yellow-400",
+  warning: "text-yellow-400",
+  error: "text-red-400",
 };
 
 function formatTime(ts) {
@@ -40,20 +40,20 @@ function formatTime(ts) {
 </script>
 
 <template>
-  <div v-if="loading" class="p-6 text-center text-gray-500 dark:text-gray-400">Carregando logs...</div>
-  <div v-else-if="groups.length === 0" class="p-6 text-center text-gray-500 dark:text-gray-400" data-testid="log-empty">
+  <div v-if="loading" class="p-6 text-center text-gray-400">Carregando logs...</div>
+  <div v-else-if="groups.length === 0" class="p-6 text-center text-gray-400" data-testid="log-empty">
     Nenhum log encontrado.
   </div>
   <div v-else class="space-y-4">
     <section
       v-for="group in groups"
       :key="group.key"
-      class="overflow-hidden rounded-lg border border-gray-200 bg-white dark:border-gray-600 dark:bg-gray-800"
+      class="overflow-hidden rounded-lg border border-gray-800 bg-gray-900"
       :data-testid="`log-group-${group.key}`"
     >
-      <header class="flex items-center justify-between border-b border-gray-200 px-4 py-3 dark:border-gray-600">
-        <h3 class="text-title-sm font-semibold text-gray-900 dark:text-gray-100">{{ group.key }}</h3>
-        <span class="rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-600 dark:bg-gray-700 dark:text-gray-300">
+      <header class="flex items-center justify-between border-b border-gray-800 px-4 py-3">
+        <h3 class="text-title-sm font-semibold text-white">{{ group.key }}</h3>
+        <span class="rounded-full bg-gray-800 px-2.5 py-0.5 text-xs font-medium text-gray-400">
           {{ group.items.length }}
         </span>
       </header>
@@ -64,12 +64,12 @@ function formatTime(ts) {
           class="flex flex-wrap gap-2 leading-relaxed"
           data-testid="log-entry"
         >
-          <span class="flex-none text-xs text-gray-500 dark:text-gray-400">{{ formatTime(entry.timestamp) }}</span>
-          <span class="flex-none text-xs capitalize" :class="levelColors[entry.level] || 'text-gray-500'">
+          <span class="flex-none text-xs text-gray-500">{{ formatTime(entry.timestamp) }}</span>
+          <span class="flex-none text-xs capitalize" :class="levelColors[entry.level] || 'text-gray-400'">
             {{ entry.level }}
           </span>
-          <span class="text-gray-900 dark:text-gray-100">{{ entry.message }}</span>
-          <div v-if="entry.suggestion" class="w-full pl-14 text-xs text-gray-600 dark:text-gray-300">
+          <span class="text-gray-300">{{ entry.message }}</span>
+          <div v-if="entry.suggestion" class="w-full pl-14 text-xs text-red-400">
             <strong>Sugestão:</strong> {{ entry.suggestion }}
           </div>
         </div>

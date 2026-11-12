@@ -20,6 +20,13 @@ async function handleStartScan() {
     const res = await apiFetch("/api/plex/scan", { method: "POST" });
     if (res.ok) {
       logsStore.fetchJobs();
+      logsStore.fetchLogs();
+      // Polling para atualizar logs de forma assíncrona enquanto roda
+      const interval = setInterval(() => {
+        logsStore.fetchJobs();
+        logsStore.fetchLogs();
+      }, 2000);
+      setTimeout(() => clearInterval(interval), 30000); // Para após 30 segundos
     } else {
       window.alert("Erro ao iniciar escaneamento");
     }
@@ -55,10 +62,14 @@ async function handleCleanup() {
 </script>
 
 <template>
-  <div class="mx-auto max-w-6xl px-4 py-3">
-    <div class="flex items-center justify-between gap-3">
+  <div class="min-h-screen bg-black text-white">
+    <div class="mx-auto max-w-6xl px-4 py-3">
+      <div class="flex items-center justify-between gap-3">
         <div>
-          <p class="text-sm text-gray-500 dark:text-gray-400">Histórico de varreduras, filtros e agrupamento.</p>
+          <h1 class="text-2xl font-bold text-white">Logs de processamento</h1>
+          <p class="text-sm text-gray-400">
+            Histórico de varreduras, filtros e agrupamento.
+          </p>
         </div>
         <div class="flex items-center gap-2">
           <button
@@ -70,14 +81,14 @@ async function handleCleanup() {
           </button>
           <button
             data-testid="log-btn-clear"
-            class="rounded-lg border border-gray-300 bg-gray-100 px-4 py-2 text-sm font-medium text-gray-800 transition hover:border-red-400 hover:text-red-600 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"
+            class="rounded-lg border border-gray-700 bg-gray-800 px-4 py-2 text-sm font-medium text-gray-300 transition hover:border-gray-500 hover:text-white"
             @click="handleClearLogs"
           >
             Limpar Logs
           </button>
           <button
             data-testid="log-btn-cleanup"
-            class="rounded-lg border border-stroke px-4 py-2 text-sm font-medium text-gray-500 transition hover:border-primary hover:text-primary dark:border-strokedark dark:text-bodydark"
+            class="rounded-lg border border-gray-700 bg-gray-800 px-4 py-2 text-sm font-medium text-gray-300 transition hover:border-gray-500 hover:text-white"
             @click="handleCleanup"
           >
             Limpar > 30 dias
@@ -85,13 +96,14 @@ async function handleCleanup() {
         </div>
       </div>
 
-    <div class="p-4 md:p-6 lg:p-8 max-w-6xl mx-auto">
-      <LogFilterBar />
-      <LogGroupedView
-        :items="logsStore.logs"
-        :group-by="logsStore.groupBy"
-        :loading="logsStore.loadingLogs"
-      />
+      <div class="p-4 md:p-6 lg:p-8 max-w-6xl mx-auto">
+        <LogFilterBar />
+        <LogGroupedView
+          :items="logsStore.logs"
+          :group-by="logsStore.groupBy"
+          :loading="logsStore.loadingLogs"
+        />
+      </div>
     </div>
   </div>
 </template>

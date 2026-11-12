@@ -34,8 +34,7 @@ public sealed class SqliteAppSettingsStore : IAppSettingsStore
             Get(values, AppSettingKeys.PlexUrl, defaults.PlexUrl),
             Get(values, AppSettingKeys.PlexToken, defaults.PlexToken),
             mediaRoots,
-            GetInt(values, AppSettingKeys.SyncIntervalMinutes, defaults.SyncIntervalMinutes),
-            GetBool(values, AppSettingKeys.AutoSkipAuthorized, defaults.AutoSkipAuthorized));
+            GetInt(values, AppSettingKeys.SyncIntervalMinutes, defaults.SyncIntervalMinutes));
     }
 
     public async Task SaveAsync(AppSettingsSnapshot settings)
@@ -49,8 +48,7 @@ public sealed class SqliteAppSettingsStore : IAppSettingsStore
             [AppSettingKeys.PlexUrl] = settings.PlexUrl,
             [AppSettingKeys.PlexToken] = settings.PlexToken,
             [AppSettingKeys.MediaRoots] = MediaRoots.Serialize(settings.MediaRoots),
-            [AppSettingKeys.SyncIntervalMinutes] = settings.SyncIntervalMinutes.ToString(),
-            [AppSettingKeys.AutoSkipAuthorized] = settings.AutoSkipAuthorized.ToString().ToLowerInvariant()
+            [AppSettingKeys.SyncIntervalMinutes] = settings.SyncIntervalMinutes.ToString()
         };
 
         foreach (var (key, value) in values)
@@ -72,13 +70,6 @@ public sealed class SqliteAppSettingsStore : IAppSettingsStore
 
     private static int GetInt(IReadOnlyDictionary<string, string> values, string key, int fallback) =>
         values.TryGetValue(key, out var value) && int.TryParse(value, out var parsed) ? parsed : fallback;
-
-    private static bool GetBool(IReadOnlyDictionary<string, string> values, string key, bool fallback)
-    {
-        if (!values.TryGetValue(key, out var value)) return fallback;
-        if (bool.TryParse(value.Trim(), out var parsed)) return parsed;
-        return value.Trim() switch { "1" => true, "0" => false, _ => fallback };
-    }
 }
 
 /// <summary>
@@ -105,7 +96,6 @@ public static class AppSettingsSeeder
                     AppSettingKeys.PlexToken => AppSettingDefaults.PlexToken,
                     AppSettingKeys.MediaRoots => MediaRoots.Serialize(MediaRootsFromEnvironment()),
                     AppSettingKeys.SyncIntervalMinutes => AppSettingDefaults.SyncIntervalMinutes.ToString(),
-                    AppSettingKeys.AutoSkipAuthorized => AppSettingDefaults.AutoSkipAuthorized.ToString().ToLowerInvariant(),
                     _ => ""
                 };
 
