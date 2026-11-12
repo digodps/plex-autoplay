@@ -1,14 +1,9 @@
 <script setup>
 import { onMounted, onUnmounted } from "vue";
-import { useRouter } from "vue-router";
 import DataStatsOne from "@/components/DataStats/DataStatsOne.vue";
-import AppIcon from "@/components/AppIcon.vue";
 import { useDashboardStore } from "@/stores/dashboard";
-import { useDashboardActions } from "@/composables/useDashboardActions";
 
-const router = useRouter();
 const store = useDashboardStore();
-const { startScan } = useDashboardActions();
 
 onMounted(() => {
   store.fetchAll();
@@ -18,40 +13,16 @@ onMounted(() => {
 onUnmounted(() => {
   store.stopPolling();
 });
-
-async function handleStartScan() {
-  const result = await startScan();
-  if (result.ok) router.push("/sync");
-  else console.error("Falha ao iniciar escaneamento:", result.error);
-}
 </script>
 
 <template>
   <div class="page">
-    <div class="mb-6 flex flex-col sm:flex-row sm:items-end justify-between gap-6">
+    <div class="mb-6">
       <div>
         <h1 class="text-2xl font-bold text-black dark:text-white">Visão geral</h1>
         <p class="mt-2 text-sm font-medium text-gray-600 dark:text-bodydark">
           Saúde do serviço, sincronização, bibliotecas e marcadores.
         </p>
-      </div>
-
-      <div class="flex flex-col sm:flex-row items-end gap-3">
-        <button
-          class="btn btn-md btn-secondary"
-          :disabled="store.isLoading"
-          @click="router.push('/logs')"
-        >
-          Ver Log Completo
-        </button>
-        <button
-          class="btn btn-md btn-primary"
-          :disabled="store.isLoading"
-          @click="handleStartScan"
-        >
-          <AppIcon name="play" size="sm" />
-          Iniciar Escaneamento
-        </button>
       </div>
     </div>
 
@@ -64,11 +35,7 @@ async function handleStartScan() {
     >
       <AppIcon name="warning" size="lg" class="mr-3" />
       <p class="flex-1">{{ store.error }}</p>
-      <button
-        class="btn btn-md btn-danger"
-        :disabled="store.isLoading"
-        @click="store.retry"
-      >
+      <button class="btn btn-md btn-danger" :disabled="store.isLoading" @click="store.retry">
         Tentar novamente
       </button>
     </div>
@@ -81,11 +48,7 @@ async function handleStartScan() {
       <div class="flex flex-wrap items-center gap-3">
         <AppIcon name="warning" size="lg" class="text-meta-6" />
         <p class="flex-1 font-medium text-meta-6">{{ store.libraryError }}</p>
-        <button
-          class="btn btn-md btn-warning"
-          :disabled="store.isLoading"
-          @click="store.retry"
-        >
+        <button class="btn btn-md btn-warning" :disabled="store.isLoading" @click="store.retry">
           Tentar novamente
         </button>
       </div>

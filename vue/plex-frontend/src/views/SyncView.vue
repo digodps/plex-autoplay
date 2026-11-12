@@ -1,6 +1,9 @@
 <script setup>
 import { ref, onUnmounted } from "vue";
+import { useRouter } from "vue-router";
 import { apiFetch } from "../api";
+
+const router = useRouter();
 
 const status = ref("idle");
 const processed = ref(0);
@@ -122,6 +125,7 @@ onUnmounted(() => {
       <div class="log-header">
         <h2>Console de Log</h2>
         <div class="log-actions">
+          <router-link to="/logs" class="btn btn-sm btn-ghost">Ver Log Completo</router-link>
           <button class="btn btn-sm btn-ghost" @click="clearConsole">Limpar Console</button>
         </div>
       </div>
