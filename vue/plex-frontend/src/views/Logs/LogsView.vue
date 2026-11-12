@@ -1,15 +1,32 @@
 <script setup>
 import { onMounted } from "vue";
+import { useRouter } from "vue-router";
 import LogFilterBar from "@/components/Logs/LogFilterBar.vue";
 import LogGroupedView from "@/components/Logs/LogGroupedView.vue";
 import { useLogsStore } from "@/stores/logs";
+import { apiFetch } from "@/api";
+import AppIcon from "@/components/AppIcon.vue";
 
 const logsStore = useLogsStore();
+const router = useRouter();
 
 onMounted(() => {
   logsStore.fetchLogs();
   logsStore.fetchJobs();
 });
+
+async function handleStartScan() {
+  try {
+    const res = await apiFetch("/api/plex/scan", { method: "POST" });
+    if (res.ok) {
+      router.push("/sync");
+    } else {
+      window.alert("Erro ao iniciar escaneamento");
+    }
+  } catch (e) {
+    window.alert("Erro ao iniciar escaneamento: " + e.message);
+  }
+}
 
 async function handleClearLogs() {
   if (!window.confirm("Confirma limpeza de TODOS os logs? Esta ação não pode ser desfeita.")) return;
@@ -44,6 +61,13 @@ async function handleCleanup() {
           <p class="text-sm text-gray-500 dark:text-gray-400">Histórico de varreduras, filtros e agrupamento.</p>
         </div>
         <div class="flex items-center gap-2">
+          <button
+            data-testid="log-btn-scan"
+            class="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white transition hover:opacity-90"
+            @click="handleStartScan"
+          >
+            <AppIcon name="play" class="mr-2 inline-block w-4 h-4" /> Iniciar Escaneamento
+          </button>
           <button
             data-testid="log-btn-clear"
             class="rounded-lg border border-gray-300 bg-gray-100 px-4 py-2 text-sm font-medium text-gray-800 transition hover:border-red-400 hover:text-red-600 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"
