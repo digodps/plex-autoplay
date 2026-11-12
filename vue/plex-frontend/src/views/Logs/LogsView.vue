@@ -41,7 +41,6 @@ async function handleCleanup() {
   <div class="mx-auto max-w-6xl px-4 py-3">
     <div class="flex items-center justify-between gap-3">
         <div>
-          <h1 class="text-28 font-bold text-gray-900 dark:text-gray-100">Logs de processamento</h1>
           <p class="text-sm text-gray-500 dark:text-gray-400">Histórico de varreduras, filtros e agrupamento.</p>
         </div>
         <div class="flex items-center gap-2">
