@@ -80,7 +80,7 @@ export function useDashboardCards() {
         label: "Última Sincronização",
         value: "Nunca executado",
         badge: { text: "Pendente", variant: "neutral" },
-        href: "/sync",
+        href: "/logs",
         loading: store.loading && !h,
         error: store.partialErrors.status,
       };
@@ -99,7 +99,7 @@ export function useDashboardCards() {
         { label: "Erros", value: job.errors.toLocaleString("pt-BR"), class: job.errors > 0 ? "text-danger" : "" },
       ],
       badge: { text: job.status, variant },
-      href: "/sync",
+      href: "/logs",
       loading: store.loading && !h,
       error: store.partialErrors.status,
     };
