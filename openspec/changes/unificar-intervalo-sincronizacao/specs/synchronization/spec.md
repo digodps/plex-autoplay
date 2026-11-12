@@ -1,5 +1,8 @@
 # Spec Delta — unificar-intervalo-sincronizacao
 
+## Why
+Simplificar a configuração de sincronização para um único intervalo (`sync_interval_minutes`) que governa o ciclo completo de duas etapas: etapa 1 busca bibliotecas no Plex (catálogo), etapa 2 busca marcadores nos diretórios de mídia. Remove o intervalo legado `sync_catalog_interval_minutes`.
+
 ## MODIFIED Requirements
 
 ### Requirement: Processo único de sincronização em duas etapas
