@@ -86,3 +86,5 @@ src/PlexAutoplay.Web/core.259020
 
 # Docker runtime data (SQLite, app-config)
 data/
+publish/
+publish/
