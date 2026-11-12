@@ -30,32 +30,7 @@ public static class SyncEndpoints
             return Results.NotFound();
         });
 
-        app.MapGet("/api/sync/log/stream/{jobId}", async (string jobId, HttpContext context, [FromServices] IScanJobRepository scanJobs, [FromServices] IScanJobLogStore scanJobLogs) =>
-        {
-            context.Response.ContentType = "text/event-stream";
-            context.Response.Headers.Append("Cache-Control", "no-cache");
-            context.Response.Headers.Append("Connection", "keep-alive");
 
-            while (!context.RequestAborted.IsCancellationRequested)
-            {
-                var job = await scanJobs.GetAsync(jobId);
-                var payload = new Dictionary<string, object>
-                {
-                    ["status"] = job?.Status ?? "notfound",
-                    ["processed"] = job?.Processed ?? 0,
-                    ["skipped"] = job?.Skipped ?? 0,
-                    ["errors"] = job?.Errors ?? 0,
-                    ["logs"] = job != null ? await scanJobLogs.GetLogsAsync(jobId, null, null, null, null, 1, 100) : Array.Empty<ScanLogEntry>()
-                };
-                await context.Response.WriteAsync($"data: {System.Text.Json.JsonSerializer.Serialize(payload, System.Text.Json.JsonSerializerOptions.Web)}\n\n");
-                await context.Response.Body.FlushAsync();
-
-                if (job != null && (job.Status == "completed" || job.Status == "failed" || job.Status == "cancelled"))
-                    break;
-
-                await Task.Delay(1000);
-            }
-        });
 
         app.MapPost("/api/sync/cancel/{jobId}", async (string jobId, [FromServices] IScanJobRepository scanJobs) =>
         {
