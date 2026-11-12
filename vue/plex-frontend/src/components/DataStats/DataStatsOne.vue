@@ -3,9 +3,9 @@ import { computed } from "vue";
 import { useDashboardCards } from "@/composables/useDashboardCards";
 import CardDataStats from "@/components/CardDataStats.vue";
 
-const { serviceCard, syncCard, librariesCard } = useDashboardCards();
+const { serviceCard, syncCard, librariesCard, skipSessionsCard } = useDashboardCards();
 
-const cards = computed(() => [serviceCard.value, syncCard.value, librariesCard.value]);
+const cards = computed(() => [serviceCard.value, syncCard.value, librariesCard.value, skipSessionsCard.value]);
 </script>
 
 <template>

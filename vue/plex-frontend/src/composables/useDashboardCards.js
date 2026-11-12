@@ -1,5 +1,6 @@
-import { computed } from "vue";
+import { ref, computed, onMounted, onUnmounted } from "vue";
 import { useDashboardStore } from "../stores/dashboard";
+import { apiFetch } from "../api";
 
 export function useDashboardCards() {
   const store = useDashboardStore();
@@ -9,6 +10,46 @@ export function useDashboardCards() {
     if (status === "running") return "warning";
     return "success";
   });
+
+  // Skip sessions & skips card state
+  const skipSessionsCount = ref(0);
+  const lastSkipAt = ref(null);
+  let skipPollTimer = null;
+  const SKIP_POLL_INTERVAL = 5000;
+
+  async function fetchSkipStatus() {
+    try {
+      const res = await apiFetch("/api/sessions/skip-status");
+      if (res.ok) {
+        const data = await res.json();
+        skipSessionsCount.value = data.activeSessions?.length ?? 0;
+        if (data.recentSkips?.length > 0) {
+          const last = data.recentSkips[0];
+          lastSkipAt.value = new Date(last.timestamp).toLocaleString("pt-BR", {
+            dateStyle: "short", timeStyle: "short"
+          });
+        }
+      }
+    } catch (e) {
+      console.warn("[Dashboard] fetchSkipStatus failed:", e);
+    }
+  }
+
+  function startSkipPolling() {
+    if (skipPollTimer) return;
+    fetchSkipStatus();
+    skipPollTimer = setInterval(fetchSkipStatus, SKIP_POLL_INTERVAL);
+  }
+
+  function stopSkipPolling() {
+    if (skipPollTimer) {
+      clearInterval(skipPollTimer);
+      skipPollTimer = null;
+    }
+  }
+
+  onMounted(startSkipPolling);
+  onUnmounted(stopSkipPolling);
 
   const serviceCard = computed(() => {
     const h = store.serviceHealth;
@@ -84,9 +125,24 @@ export function useDashboardCards() {
     };
   });
 
+  const skipSessionsCard = computed(() => ({
+    icon: "tv",
+    label: "Sessões & Skips",
+    value: skipSessionsCount.value === 0 ? "—" : skipSessionsCount.value.toString(),
+    breakdown: [
+      { label: "Sessões ativas", value: skipSessionsCount.value.toString() },
+      { label: "Último skip", value: lastSkipAt.value ?? "—" },
+    ],
+    badge: skipSessionsCount.value > 0 ? { text: `${skipSessionsCount.value} ativas`, variant: "warning" } : { text: "Sem sessões", variant: "neutral" },
+    href: "/sessions",
+    loading: store.loading,
+    error: false,
+  }));
+
   return {
     serviceCard,
     syncCard,
     librariesCard,
+    skipSessionsCard,
   };
 }
