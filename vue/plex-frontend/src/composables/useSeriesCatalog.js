@@ -17,6 +17,11 @@ export function useSeriesCatalog(options = {}) {
   const isLoadingMore = ref(false);
   const seriesError = ref("");
 
+  // Estados para sincronização forçada do catálogo
+  const syncLoading = ref(false);
+  const syncMessage = ref("");
+  const syncType = ref(""); // "success" | "error" | ""
+
   let seriesDebounceTimer = null;
 
   const libraryKey = computed(() => propLibraryKey || route.params.key || null);
@@ -127,6 +132,34 @@ export function useSeriesCatalog(options = {}) {
     { immediate: true }
   );
 
+  async function forceSyncCatalog() {
+    syncLoading.value = true;
+    syncMessage.value = "";
+    syncType.value = "";
+    try {
+      const res = await apiFetch("/api/sync/catalog", { method: "POST" });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        syncType.value = "error";
+        syncMessage.value = body.detail || body.message || `Erro ${res.status} ao sincronizar`;
+        return false;
+      }
+      const result = await res.json();
+      syncType.value = "success";
+      syncMessage.value = `Catálogo sincronizado: ${result.librariesInserted + result.librariesUpdated} biblioteca(s), ${result.seriesInserted + result.seriesUpdated} série(s)`;
+      // Recarrega a lista de séries após sincronizar
+      const key = libraryKey.value;
+      if (key) loadInitialSeries(key);
+      return true;
+    } catch (err) {
+      syncType.value = "error";
+      syncMessage.value = err.message || "Erro de conexão ao sincronizar";
+      return false;
+    } finally {
+      syncLoading.value = false;
+    }
+  }
+
   return {
     libraryKey,
     seriesList,
@@ -137,8 +170,12 @@ export function useSeriesCatalog(options = {}) {
     seriesError,
     hasMore,
     sentinelRef,
+    syncLoading,
+    syncMessage,
+    syncType,
     loadSeries: loadInitialSeries,
     loadMore,
     refresh: () => libraryKey.value && loadInitialSeries(libraryKey.value),
+    forceSyncCatalog,
   };
 }

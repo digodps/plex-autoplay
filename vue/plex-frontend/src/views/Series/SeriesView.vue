@@ -17,8 +17,17 @@ const {
   error: libraryError,
 } = useLibraryTitle(libraryKey, queryTitle);
 
-const { seriesList, seriesTotalSize, seriesLoading, seriesError, sentinelRef } =
-  useSeriesCatalog();
+const {
+  seriesList,
+  seriesTotalSize,
+  seriesLoading,
+  seriesError,
+  sentinelRef,
+  syncLoading,
+  syncMessage,
+  syncType,
+  forceSyncCatalog,
+} = useSeriesCatalog();
 
 const viewState = computed(() => {
   if (libraryTitleLoading.value) return "title-loading";
@@ -148,6 +157,40 @@ function openMarkers(series) {
         >
           <AppIcon name="tv" size="lg" class="mx-auto text-gray-400 dark:text-gray-600" />
           <p class="mt-3 text-sm font-medium text-gray-300 dark:text-gray-400">Nenhuma série encontrada.</p>
+          <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">
+            O catálogo desta biblioteca ainda não foi sincronizado.
+          </p>
+          <button
+            v-if="!syncLoading"
+            type="button"
+            class="mt-4 px-4 py-2 rounded-lg border border-primary bg-primary text-white text-sm font-medium hover:bg-primary/90 transition-colors dark:bg-primary dark:text-white dark:hover:bg-primary/90"
+            @click="forceSyncCatalog"
+          >
+            <AppIcon name="refresh-cw" size="sm" class="inline mr-1" />
+            Forçar sincronização
+          </button>
+          <button
+            v-else
+            type="button"
+            class="mt-4 px-4 py-2 rounded-lg border border-gray-400 bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400 text-sm font-medium cursor-not-allowed"
+            disabled
+          >
+            <AppIcon name="loader" size="sm" class="inline mr-1 animate-spin" />
+            Sincronizandoîl...
+          </button>
+        </div>
+
+        <div
+          v-if="syncMessage"
+          :class="[
+            'mt-4 rounded-lg border p-4 text-sm',
+            syncType === 'success'
+              ? 'border-green-300 dark:border-green-700 bg-green-50 dark:bg-green-900/30 text-green-800 dark:text-green-200'
+              : 'border-red-300 dark:border-red-700 bg-red-50 dark:bg-red-900/30 text-red-800 dark:text-red-200',
+          ]"
+          role="alert"
+        >
+          {{ syncMessage }}
         </div>
       </div>
       </div>
