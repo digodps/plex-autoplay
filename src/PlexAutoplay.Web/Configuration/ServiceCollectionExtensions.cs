@@ -74,6 +74,9 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IPlexAutoSkipService>(sp =>
             new PlexAutoSkipService(sp.GetRequiredService<IMarkerRepository>()));
 
+        // Monitor de sessões ativas e histórico de skips (singleton, in-memory)
+        services.AddSingleton<ISkipMonitor, SkipMonitor>();
+
         // Modern client seek strategy
         services.AddSingleton<IClientSeekStrategyProvider, PlexModernClientDetector>();
 
@@ -107,6 +110,9 @@ public static class ServiceCollectionExtensions
 
         // Sincronização periódica unificada (catálogo → marcadores) em um único intervalo
         services.AddHostedService<SynchronizationBackgroundService>();
+
+        // Auto-skip de intro/créditos (poll a cada 2s, monitora sessões + registra skips)
+        services.AddHostedService<PlexAutoSkipBackgroundService>();
 
         // Process information service
         services.AddSingleton<IProcessInfoService, PlexAutoplay.Infrastructure.Platform.ProcessInfoService>();

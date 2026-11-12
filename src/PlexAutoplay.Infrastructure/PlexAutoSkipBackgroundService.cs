@@ -4,6 +4,7 @@ using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using PlexAutoplay.Application;
+using PlexAutoplay.Domain.Entities;
 using PlexAutoplay.Domain.Ports;
 using PlexAutoplay.Infrastructure.AutoSkip;
 using Microsoft.Extensions.Hosting;
@@ -18,6 +19,7 @@ public class PlexAutoSkipBackgroundService : BackgroundService
     private readonly IAppSettingsStore _settings;
     private readonly IMarkerRepository _markerRepository;
     private readonly IClientSeekStrategyProvider _strategyProvider;
+    private readonly ISkipMonitor _monitor;
 
     // Cooldown: evita loop de re-seek no mesmo marcador.
     // Key = "ratingKey|kind", Value = EndMs que pulamos.
@@ -29,13 +31,15 @@ public class PlexAutoSkipBackgroundService : BackgroundService
         IHttpClientFactory httpClientFactory,
         IAppSettingsStore settings,
         IMarkerRepository markerRepository,
-        IClientSeekStrategyProvider strategyProvider)
+        IClientSeekStrategyProvider strategyProvider,
+        ISkipMonitor monitor)
     {
         _logger = logger;
         _httpClientFactory = httpClientFactory;
         _settings = settings;
         _markerRepository = markerRepository;
         _strategyProvider = strategyProvider;
+        _monitor = monitor;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -63,6 +67,7 @@ public class PlexAutoSkipBackgroundService : BackgroundService
         if (!settings.AutoSkipAuthorized)
         {
             _logger.LogDebug("Auto-skip disabled — awaiting explicit authorization from user.");
+            _monitor.UpdateSessions(System.Array.Empty<SessionStatus>());
             return;
         }
         var plexUrl = settings.PlexUrl.TrimEnd('/');
@@ -79,11 +84,36 @@ public class PlexAutoSkipBackgroundService : BackgroundService
 
         var xml = await resp.Content.ReadAsStringAsync(ct);
         var session = ParsePlayingSession(xml);
-        if (session is null) return;
+        if (session is null)
+        {
+            _monitor.UpdateSessions(System.Array.Empty<SessionStatus>());
+            return;
+        }
 
         var markers = (await _markerRepository.GetByRatingKeyAsync(session.RatingKey.ToString()))
             .Select(m => new MarkerInfo(m.Kind, m.StartMs, m.EndMs))
             .ToList();
+
+        var upcoming = markers.Where(m => session.PositionMs < m.StartMs)
+            .OrderBy(m => m.StartMs)
+            .ToList();
+        var target = upcoming.Count > 0
+            ? new MarkerTarget(upcoming[0].Kind, upcoming[0].StartMs, upcoming[0].EndMs,
+                Math.Max(0, upcoming[0].StartMs - session.PositionMs))
+            : null;
+
+        _monitor.UpdateSessions(new[]
+        {
+            new SessionStatus(
+                session.MachineIdentifier,
+                session.Product,
+                session.Platform,
+                session.RatingKey,
+                session.PositionMs,
+                session.DurationMs,
+                "playing",
+                target)
+        });
 
         foreach (var marker in markers)
         {
@@ -109,6 +139,15 @@ public class PlexAutoSkipBackgroundService : BackgroundService
             if (success)
             {
                 _lastSkipEndMs[cooldownKey] = marker.EndMs;
+                _monitor.RecordSkip(new SkipHistoryEntry(
+                    DateTime.UtcNow,
+                    session.MachineIdentifier,
+                    session.Product,
+                    session.Platform,
+                    session.RatingKey,
+                    marker.Kind,
+                    session.PositionMs,
+                    marker.EndMs));
                 break; // apenas um skip por ciclo
             }
         }
@@ -128,6 +167,7 @@ public class PlexAutoSkipBackgroundService : BackgroundService
 
             int viewOffset = int.Parse(video.Attribute("viewOffset")!.Value);
             int ratingKey = int.Parse(video.Attribute("ratingKey")!.Value);
+            long durationMs = long.TryParse(video.Attribute("duration")?.Value, out var d) ? d : 0;
 
             var player = video.Elements("Player").FirstOrDefault(p => p.Attribute("state")?.Value == "playing");
             if (player == null) return null;
@@ -135,6 +175,7 @@ public class PlexAutoSkipBackgroundService : BackgroundService
             return new PlexSessionInfo
             {
                 PositionMs = viewOffset,
+                DurationMs = durationMs,
                 RatingKey = ratingKey,
                 ClientIp = player.Attribute("address")?.Value ?? string.Empty,
                 MachineIdentifier = player.Attribute("machineIdentifier")?.Value ?? string.Empty,
@@ -261,6 +302,7 @@ public class PlexAutoSkipBackgroundService : BackgroundService
 internal class PlexSessionInfo
 {
     public int PositionMs { get; set; }
+    public long DurationMs { get; set; }
     public int RatingKey { get; set; }
     public string ClientIp { get; set; } = string.Empty;
     public string MachineIdentifier { get; set; } = string.Empty;

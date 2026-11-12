@@ -58,6 +58,12 @@ const routes = [
     component: () => import("../views/Pages/SettingsView.vue"),
     meta: { title: "Ajustes" },
   },
+  {
+    path: "/sessions",
+    name: "sessions",
+    component: () => import("../views/Sessions/SessionsView.vue"),
+    meta: { title: "Sessões e Skips" },
+  },
   { path: "/ajustes", redirect: "/settings" },
 ];
 
