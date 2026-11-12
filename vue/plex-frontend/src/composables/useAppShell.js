@@ -12,7 +12,6 @@ export function useAppShell() {
   const navItems = [
     { to: "/dashboard", label: "Início", icon: "home" },
     { to: "/libraries", label: "Bibliotecas", icon: "library" },
-    { to: "/sync", label: "Sincronizar", icon: "sync" },
     { to: "/settings", label: "Ajustes", icon: "settings" },
   ];
 
