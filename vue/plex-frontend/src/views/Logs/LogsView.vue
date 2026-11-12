@@ -1,6 +1,5 @@
 <script setup>
 import { onMounted } from "vue";
-import DefaultLayout from "@/components/layouts/DefaultLayout.vue";
 import LogFilterBar from "@/components/Logs/LogFilterBar.vue";
 import LogGroupedView from "@/components/Logs/LogGroupedView.vue";
 import { useLogsStore } from "@/stores/logs";
@@ -39,9 +38,8 @@ async function handleCleanup() {
 </script>
 
 <template>
-  <DefaultLayout>
-    <div class="max-w-6xl mx-auto px-4 py-3">
-      <div class="flex items-center justify-between gap-3">
+  <div class="mx-auto max-w-6xl px-4 py-3">
+    <div class="flex items-center justify-between gap-3">
         <div>
           <h1 class="text-28 font-bold text-gray-900 dark:text-gray-100">Logs de processamento</h1>
           <p class="text-sm text-gray-500 dark:text-gray-400">Histórico de varreduras, filtros e agrupamento.</p>
@@ -63,7 +61,6 @@ async function handleCleanup() {
           </button>
         </div>
       </div>
-    </div>
 
     <div class="p-4 md:p-6 lg:p-8 max-w-6xl mx-auto">
       <LogFilterBar />
@@ -73,5 +70,5 @@ async function handleCleanup() {
         :loading="logsStore.loadingLogs"
       />
     </div>
-  </DefaultLayout>
+  </div>
 </template>

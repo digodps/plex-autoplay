@@ -1,6 +1,5 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted, watch } from "vue";
-import DefaultLayout from "@/components/layouts/DefaultLayout.vue";
 import { apiFetch } from "@/api";
 
 const POLL_INTERVAL = 5000;
@@ -85,9 +84,8 @@ function fmtTime(iso) {
 </script>
 
 <template>
-  <DefaultLayout>
-    <div class="max-w-6xl mx-auto px-4 py-3">
-      <div class="flex items-center justify-between gap-3">
+  <div class="mx-auto max-w-6xl px-4 py-3">
+    <div class="flex items-center justify-between gap-3">
         <div>
           <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">Sessões &amp; Skips</h1>
           <p class="text-sm text-gray-500 dark:text-gray-400">
@@ -103,7 +101,6 @@ function fmtTime(iso) {
           </button>
         </div>
       </div>
-    </div>
 
     <div class="p-4 md:p-6 lg:p-8 max-w-6xl mx-auto">
       <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -232,5 +229,5 @@ function fmtTime(iso) {
         </section>
       </div>
     </div>
-  </DefaultLayout>
+  </div>
 </template>
