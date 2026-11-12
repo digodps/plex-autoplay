@@ -83,6 +83,8 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<GetMarkersQuery>();
         services.AddSingleton<GetSeriesQuery>();
         services.AddTransient<CatalogSyncUseCase>();
+        services.AddTransient<EpisodeMarkerSyncUseCase>();
+        services.AddTransient<SynchronizationUseCase>();
         services.AddSingleton<GetThemeQuery>();
         services.AddSingleton<SaveThemeCommand>();
 
@@ -102,6 +104,9 @@ public static class ServiceCollectionExtensions
 
         // Limpeza automática de logs antigos (executa no startup e a cada 24h)
         services.AddHostedService<LogCleanupBackgroundService>();
+
+        // Sincronização periódica unificada (catálogo → marcadores) em um único intervalo
+        services.AddHostedService<SynchronizationBackgroundService>();
 
         // Process information service
         services.AddSingleton<IProcessInfoService, PlexAutoplay.Infrastructure.Platform.ProcessInfoService>();

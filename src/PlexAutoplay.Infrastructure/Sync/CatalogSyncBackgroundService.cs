@@ -33,7 +33,7 @@ public class CatalogSyncBackgroundService : BackgroundService
         _plexClient = plexClient;
         _libraryRepository = libraryRepository;
         _seriesRepository = seriesRepository;
-        _intervalMinutes = configuration.GetValue("SYNC_CATALOG_INTERVAL_MINUTES", 30);
+        _intervalMinutes = configuration.GetValue("SYNC_INTERVAL_MINUTES", 5);
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
