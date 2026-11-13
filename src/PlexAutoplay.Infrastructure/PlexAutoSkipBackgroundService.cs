@@ -83,6 +83,7 @@ public class PlexAutoSkipBackgroundService : BackgroundService
         var session = ParsePlayingSession(xml);
         if (session is null)
         {
+            _logger.LogDebug("No playable video session found in Plex /status/sessions response");
             _monitor.UpdateSessions(System.Array.Empty<SessionStatus>());
             return;
         }
@@ -166,8 +167,7 @@ public class PlexAutoSkipBackgroundService : BackgroundService
             var doc = System.Xml.Linq.XDocument.Parse(xml);
             var video = doc.Descendants("Video").FirstOrDefault(v =>
                 v.Attribute("viewOffset") != null &&
-                v.Attribute("ratingKey") != null &&
-                v.Attribute("type")?.Value == "episode");
+                v.Attribute("ratingKey") != null);
 
             if (video == null) return null;
 
