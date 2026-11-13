@@ -100,6 +100,20 @@ public static class DatabaseInitializer
         (10, "CREATE INDEX IF NOT EXISTS IX_ScanJobLog_Timestamp ON ScanJobLog(Timestamp)", true),
         (11, "CREATE INDEX IF NOT EXISTS IX_ScanJobLog_JobId ON ScanJobLog(JobId)", true),
         (12, "CREATE INDEX IF NOT EXISTS IX_ScanJobLog_Level ON ScanJobLog(Level)", true),
+        (13, """ 
+        CREATE TABLE IF NOT EXISTS SkipHistory (
+            Id INTEGER PRIMARY KEY AUTOINCREMENT,
+            Timestamp TEXT NOT NULL,
+            MachineIdentifier TEXT NOT NULL,
+            Product TEXT NOT NULL,
+            Platform TEXT NOT NULL,
+            RatingKey INTEGER NOT NULL,
+            MarkerKind TEXT NOT NULL,
+            SkippedFromMs INTEGER NOT NULL,
+            SkippedToMs INTEGER NOT NULL
+        )
+        """, false),
+        (14, "CREATE INDEX IF NOT EXISTS IX_SkipHistory_Timestamp ON SkipHistory(Timestamp)", true),
     ];
 
     public static async Task InitializeAsync(string connectionString)
