@@ -30,13 +30,23 @@ public class SqliteSeriesRepositoryTests : IDisposable
     /// <summary>Cria a tabela referenciada pela FK de Series.</summary>
     private SqliteSeriesRepository CreateRepository()
     {
-        using (var conn = new Microsoft.Data.Sqlite.SqliteConnection(ConnectionString))
-        {
-            conn.Open();
-            using var cmd = conn.CreateCommand();
-            cmd.CommandText = "CREATE TABLE IF NOT EXISTS Library (RatingKey TEXT NOT NULL PRIMARY KEY); INSERT OR IGNORE INTO Library (RatingKey) VALUES ('6');";
-            cmd.ExecuteNonQuery();
-        }
+        using var conn = new Microsoft.Data.Sqlite.SqliteConnection(ConnectionString);
+        conn.Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = @"
+            CREATE TABLE IF NOT EXISTS Library (RatingKey TEXT NOT NULL PRIMARY KEY);
+            INSERT OR IGNORE INTO Library (RatingKey) VALUES ('6');
+            CREATE TABLE IF NOT EXISTS Series (
+                RatingKey TEXT NOT NULL PRIMARY KEY,
+                LibraryRatingKey TEXT NOT NULL,
+                Title TEXT NOT NULL,
+                Summary TEXT NOT NULL,
+                Thumb TEXT NOT NULL,
+                SyncedAt TEXT
+            );
+            CREATE INDEX IF NOT EXISTS IX_Series_LibraryRatingKey ON Series(LibraryRatingKey);
+        ";
+        cmd.ExecuteNonQuery();
 
         return new SqliteSeriesRepository(ConnectionString);
     }

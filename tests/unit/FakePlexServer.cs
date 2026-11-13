@@ -2,9 +2,8 @@ namespace PlexAutoplay.UnitTests;
 
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Net;
-using System.Net.Http;
+using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -24,13 +23,20 @@ public sealed class FakePlexServer : IDisposable
     {
         _responseJson = responseJson;
         _statusCode = statusCode;
-        _listener = new HttpListener();
-        _listener.Prefixes.Add("http://localhost:0/");
-        _listener.Start();
+        
+        // Find an available port using a temporary listener on port 0
+        int port;
+        using (var tempListener = new TcpListener(IPAddress.Loopback, 0))
+        {
+            tempListener.Start();
+            port = ((IPEndPoint)tempListener.LocalEndpoint).Port;
+            tempListener.Stop();
+        }
 
-        var prefix = _listener.Prefixes.GetEnumerator();
-        prefix.MoveNext();
-        BaseUrl = prefix.Current.TrimEnd('/') + "/";
+        _listener = new HttpListener();
+        BaseUrl = $"http://127.0.0.1:{port}/";
+        _listener.Prefixes.Add(BaseUrl);
+        _listener.Start();
 
         _runTask = RunAsync();
     }

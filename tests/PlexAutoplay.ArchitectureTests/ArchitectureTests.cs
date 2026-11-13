@@ -74,7 +74,6 @@ public class LayerDependencyTests
             typeof(ISeriesRepository),
             typeof(ILibraryRepository),
             typeof(IUserThemeRepository),
-            typeof(IPlexApiClient),
             typeof(IImageProxyService),
             typeof(IAppSettingsStore),
             typeof(IScanJobLogStore),

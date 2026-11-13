@@ -20,7 +20,7 @@ public class PlexModernClientDetectorTests
         Assert.Equal(ClientSeekCategory.ModernWeb, s.Category);
         Assert.False(s.SupportsDirectConnection);
         Assert.Equal(0, s.DirectPort);
-        Assert.True(s.SupportsPmsProxy);
+        Assert.False(s.SupportsPmsProxy);
         Assert.False(s.ExpectsNonXmlResponse);
     }
 
@@ -31,7 +31,7 @@ public class PlexModernClientDetectorTests
         Assert.Equal(ClientSeekCategory.ModernDesktop, s.Category);
         Assert.False(s.SupportsDirectConnection);
         Assert.Equal(0, s.DirectPort);
-        Assert.True(s.SupportsPmsProxy);
+        Assert.False(s.SupportsPmsProxy);
     }
 
     [Fact]
@@ -81,7 +81,7 @@ public class PlexModernClientDetectorTests
         var s = _detector.Detect("Plex for Chrome", "Windows", "4.90.0");
         Assert.Equal(ClientSeekCategory.ModernWeb, s.Category);
         Assert.False(s.SupportsDirectConnection);
-        Assert.True(s.SupportsPmsProxy);
+        Assert.False(s.SupportsPmsProxy);
     }
 }
 
