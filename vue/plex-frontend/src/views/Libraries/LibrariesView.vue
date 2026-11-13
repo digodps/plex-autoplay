@@ -46,7 +46,7 @@ function navigateToSeries(libraryKey, libraryTitle) {
         </div>
         <div class="flex items-center gap-2">
           <button
-            class="rounded-lg border border-gray-700 bg-gray-800/80 px-4 py-2 text-sm font-medium text-gray-300 transition hover:bg-gray-700 hover:text-white"
+            class="rounded-lg border border-stroke px-4 py-2 text-sm font-medium text-gray-700 transition hover:border-accent hover:text-accent dark:border-strokedark dark:text-bodydark"
             @click="loadLibraries"
           >
             Atualizar
@@ -71,7 +71,7 @@ function navigateToSeries(libraryKey, libraryTitle) {
             :key="lib.key"
             type="button"
             data-testid="library-card"
-            class="group relative flex flex-col justify-between rounded-xl border border-gray-800 bg-[#1f2937] p-6 text-left shadow-lg transition-all hover:border-gray-600 hover:bg-[#374151]"
+            class="rounded-xl border border-stroke bg-white dark:bg-gray-800 p-5 dark:border-gray-700"
             @click="navigateToSeries(lib.key, lib.title)"
           >
             <div>
@@ -87,7 +87,7 @@ function navigateToSeries(libraryKey, libraryTitle) {
           </button>
         </div>
 
-        <div v-else class="rounded-xl border border-gray-800 bg-[#1f2937] p-12 text-center shadow-lg">
+        <div v-else class="rounded-xl border border-stroke bg-white dark:bg-gray-800 p-12 text-center dark:border-gray-700">
           <AppIcon name="tv" size="lg" class="mx-auto text-gray-500" />
           <p class="mt-3 text-sm font-medium text-gray-400">
             Nenhuma biblioteca de séries encontrada.
