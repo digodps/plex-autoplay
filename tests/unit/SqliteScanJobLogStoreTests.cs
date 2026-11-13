@@ -10,9 +10,15 @@ namespace PlexAutoplay.Tests.Unit.Infrastructure;
 
 public class SqliteScanJobLogStoreTests : IAsyncLifetime
 {
-    private readonly string _connectionString = "Data Source=:memory:;Cache=Shared";
+    private readonly string _dbPath = Path.Combine(Path.GetTempPath(), $"scanlog-test-{Guid.NewGuid():N}.db");
+    private readonly string _connectionString;
     private SqliteConnection _conn;
     private SqliteScanJobLogStore _store;
+
+    public SqliteScanJobLogStoreTests()
+    {
+        _connectionString = $"Data Source={_dbPath};Cache=Shared";
+    }
 
     public async Task InitializeAsync()
     {
@@ -58,6 +64,8 @@ public class SqliteScanJobLogStoreTests : IAsyncLifetime
     {
         await _conn.CloseAsync();
         _conn.Dispose();
+        if (File.Exists(_dbPath))
+            File.Delete(_dbPath);
     }
 
     [Fact]
@@ -105,16 +113,16 @@ public class SqliteScanJobLogStoreTests : IAsyncLifetime
     [Fact]
     public async Task GetLogsAsync_FiltersByDateRange()
     {
-        var past = DateTime.UtcNow.AddDays(-2);
-        var future = DateTime.UtcNow.AddDays(2);
+        var oldTime = DateTime.UtcNow.AddDays(-2);
+        var newTime = DateTime.UtcNow.AddHours(-1); // dentro do intervalo
 
         // Add directly to bypass timestamp generation for test precision
         await _conn.ExecuteAsync(
             "INSERT INTO ScanJobLog (JobId, Timestamp, Level, Message) VALUES ('job-1', @ts, 'info', 'old')",
-            new { ts = past.ToString("o") });
+            new { ts = oldTime.ToString("o") });
         await _conn.ExecuteAsync(
             "INSERT INTO ScanJobLog (JobId, Timestamp, Level, Message) VALUES ('job-1', @ts, 'info', 'new')",
-            new { ts = future.ToString("o") });
+            new { ts = newTime.ToString("o") });
 
         var from = DateTime.UtcNow.AddDays(-1);
         var to = DateTime.UtcNow.AddDays(1);
@@ -146,11 +154,13 @@ public class SqliteScanJobLogStoreTests : IAsyncLifetime
             "INSERT INTO ScanJobLog (JobId, Timestamp, Level, Message) VALUES ('job-1', @ts, 'info', 'old')",
             new { ts = oldTime });
 
-        // Add old log for job-3 (no job in ScanJob table)
+        // Add old log for job-3 (no job in ScanJob table) — desativa FK temporariamente para criar órfão
+        await _conn.ExecuteAsync("PRAGMA foreign_keys=OFF");
         var oldTime3 = DateTime.UtcNow.AddDays(-40).ToString("o");
         await _conn.ExecuteAsync(
             "INSERT INTO ScanJobLog (JobId, Timestamp, Level, Message) VALUES ('job-3', @ts, 'info', 'orphan')",
             new { ts = oldTime3 });
+        await _conn.ExecuteAsync("PRAGMA foreign_keys=ON");
 
         // Cleanup with 30 day retention
         var cleaned = await _store.CleanupOldLogsAsync(30);
