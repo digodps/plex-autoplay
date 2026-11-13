@@ -59,13 +59,15 @@ public class SqliteSkipHistoryRepository : ISkipHistoryRepository
         return list;
     }
 
-    private sealed record SkipHistoryRow(
-        string Timestamp,
-        string MachineIdentifier,
-        string Product,
-        string Platform,
-        int RatingKey,
-        string MarkerKind,
-        long SkippedFromMs,
-        long SkippedToMs);
+    private sealed class SkipHistoryRow
+    {
+        public string Timestamp { get; set; } = string.Empty;
+        public string MachineIdentifier { get; set; } = string.Empty;
+        public string Product { get; set; } = string.Empty;
+        public string Platform { get; set; } = string.Empty;
+        public int RatingKey { get; set; }
+        public string MarkerKind { get; set; } = string.Empty;
+        public long SkippedFromMs { get; set; }
+        public long SkippedToMs { get; set; }
+    }
 }
