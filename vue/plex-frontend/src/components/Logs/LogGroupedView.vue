@@ -41,7 +41,7 @@ function formatTime(ts) {
 
 <template>
   <div v-if="loading" class="p-6 text-center text-gray-400">Carregando logs...</div>
-  <div v-else-if="groups.length === 0" class="rounded-xl border border-gray-800 bg-[#1f2937] p-8 text-center text-gray-400 shadow-lg" data-testid="log-empty">
+  <div v-else-if="groups.length === 0" class="mx-auto max-w-6xl px-4 py-3" data-testid="log-empty">
     Nenhum log encontrado.
   </div>
   <div v-else class="space-y-4">

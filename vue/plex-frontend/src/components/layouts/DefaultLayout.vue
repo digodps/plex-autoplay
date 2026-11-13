@@ -34,7 +34,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="flex h-dvh flex-col overflow-hidden bg-gray-50 dark:bg-gray-900">
+  <div class="flex h-dvh flex-col overflow-hidden">
     <AppHeader :items="breadcrumbs" />
     <main class="min-h-0 flex-1 p-2 md:p-3">
       <div

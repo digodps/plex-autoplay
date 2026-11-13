@@ -50,7 +50,7 @@ function openMarkers(series) {
 
 <template>
   <div class="page">
-    <div class="bg-gray-50 dark:bg-gray-900 min-h-screen">
+    <div class="min-h-screen">
       <div class="p-4 md:p-6 lg:p-8 flex flex-col gap-6">
         <div
           v-if="viewState === 'error'"

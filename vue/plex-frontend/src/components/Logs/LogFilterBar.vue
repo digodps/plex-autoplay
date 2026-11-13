@@ -33,7 +33,7 @@ function onGroupingChange(event) {
 </script>
 
 <template>
-  <div class="mb-6 rounded-xl border border-gray-800 bg-[#1f2937] p-5 shadow-lg">
+  <div class="mb-6 rounded-xl border border-stroke bg-white dark:bg-gray-800 p-5 dark:border-gray-700">
     <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-5">
       <label class="flex flex-col gap-1.5 lg:col-span-2">
         <span class="text-xs font-medium uppercase tracking-wide text-gray-400">Busca textual</span>

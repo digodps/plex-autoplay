@@ -61,7 +61,7 @@ async function handleCleanup() {
 </script>
 
 <template>
-  <div class="min-h-screen bg-[#111827] text-white">
+  <div class="mx-auto max-w-6xl px-4 py-3">
     <div class="mx-auto max-w-6xl px-4 py-6">
       <div class="flex items-center justify-between gap-3 flex-wrap">
         <div>

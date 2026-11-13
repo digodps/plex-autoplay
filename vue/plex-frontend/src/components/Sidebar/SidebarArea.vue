@@ -20,7 +20,7 @@ const sidebar = useSidebarStore();
 </script>
 
 <template>
-  <div class="sidebar w-64 flex h-screen flex-col bg-gray-50 dark:bg-gray-900 text-body text-sm border-r dark:border-gray-800">
+  <div class="sidebar w-64 flex h-screen flex-col text-body text-sm border-r dark:border-gray-800">
     <button
       class="flex w-full items-center gap-3 rounded-lg px-3 py-3 text-body hover:text-primary dark:hover:text-bodydark hover:bg-stroke dark:hover:bg-strokedark"
       type="button"
