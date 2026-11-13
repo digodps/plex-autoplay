@@ -2,6 +2,7 @@
 import { ref, computed } from "vue";
 import { useMarkerStore } from "@/stores/markers";
 import AppIcon from "@/components/AppIcon.vue";
+import { msToReligious, religiousToMs } from "@/utils/timeFormat";
 
 const props = defineProps({
   ratingKey: { type: String, required: true },
@@ -14,17 +15,13 @@ const editing = ref(null);
 const marker = computed(() => store.markersMap?.[props.ratingKey]?.[props.kind]);
 const isSaving = computed(() => !!store.savingKeys[`${props.ratingKey}:${props.kind}`]);
 
-function fmtMs(ms) {
-  if (ms == null) return "--:--";
-  const totalSec = Math.floor(ms / 1000);
-  const m = Math.floor(totalSec / 60);
-  const s = totalSec % 60;
-  const cs = Math.floor((ms % 1000) / 10);
-  return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}.${String(cs).padStart(2, "0")}`;
-}
-
 function startEdit() {
-  editing.value = { startMs: marker.value?.startMs ?? 0, endMs: marker.value?.endMs ?? 0 };
+  editing.value = {
+    startMs: marker.value?.startMs ?? 0,
+    endMs: marker.value?.endMs ?? 0,
+    startStr: msToReligious(marker.value?.startMs ?? 0),
+    endStr: msToReligious(marker.value?.endMs ?? 0),
+  };
 }
 
 function cancelEdit() {
@@ -33,8 +30,8 @@ function cancelEdit() {
 
 async function saveEdit() {
   if (!editing.value) return;
-  const startMs = Number(editing.value.startMs) || 0;
-  const endMs = Number(editing.value.endMs) || 0;
+  const startMs = religiousToMs(editing.value.startStr);
+  const endMs = religiousToMs(editing.value.endStr);
   const exists = !!marker.value;
   const ok = exists
     ? await store.updateMarker(props.ratingKey, props.kind, startMs, endMs)
@@ -44,6 +41,13 @@ async function saveEdit() {
 
 async function removeMarker() {
   await store.removeMarker(props.ratingKey, props.kind);
+}
+
+function onStartChange(val) {
+  if (editing.value) editing.value.startStr = val;
+}
+function onEndChange(val) {
+  if (editing.value) editing.value.endStr = val;
 }
 </script>
 
@@ -60,27 +64,27 @@ async function removeMarker() {
 
     <template v-if="editing">
       <div class="flex flex-1 flex-wrap items-center gap-2">
-        <label class="sr-only" for="marker-start">Início (ms)</label>
+        <label class="sr-only" for="marker-start">Início (HH:MM:SS.cs)</label>
         <input
           id="marker-start"
-          v-model="editing.startMs"
-          class="w-24 min-h-[44px] min-w-[44px] rounded border border-stroke bg-transparent px-2 py-1.5 text-sm text-black outline-none focus:border-primary dark:border-form-strokedark dark:bg-form-input dark:text-white"
-          type="number"
-          min="0"
-          step="10"
-          aria-label="Início (ms)"
+          :value="editing.startStr"
+          class="w-32 min-h-[44px] min-w-[44px] rounded border border-stroke bg-transparent px-2 py-1.5 font-mono text-sm text-black outline-none focus:border-primary dark:border-form-strokedark dark:bg-form-input dark:text-white"
+          type="text"
+          placeholder="00:00:00.00"
+          aria-label="Início (HH:MM:SS.cs)"
           data-testid="marker-start"
+          @input="onStartChange($event.target.value)"
         />
-        <label class="sr-only" for="marker-end">Fim (ms)</label>
+        <label class="sr-only" for="marker-end">Fim (HH:MM:SS.cs)</label>
         <input
           id="marker-end"
-          v-model="editing.endMs"
-          class="w-24 min-h-[44px] min-w-[44px] rounded border border-stroke bg-transparent px-2 py-1.5 text-sm text-black outline-none focus:border-primary dark:border-form-strokedark dark:bg-form-input dark:text-white"
-          type="number"
-          min="0"
-          step="10"
-          aria-label="Fim (ms)"
+          :value="editing.endStr"
+          class="w-32 min-h-[44px] min-w-[44px] rounded border border-stroke bg-transparent px-2 py-1.5 font-mono text-sm text-black outline-none focus:border-primary dark:border-form-strokedark dark:bg-form-input dark:text-white"
+          type="text"
+          placeholder="00:00:00.00"
+          aria-label="Fim (HH:MM:SS.cs)"
           data-testid="marker-end"
+          @input="onEndChange($event.target.value)"
         />
         <button
           class="inline-flex items-center gap-1 min-h-[44px] min-w-[44px] rounded bg-primary px-3 py-1.5 text-xs font-medium text-white transition hover:bg-opacity-90 disabled:opacity-60"
@@ -102,7 +106,7 @@ async function removeMarker() {
 
     <template v-else>
       <span class="font-mono text-sm text-black dark:text-white">
-        {{ fmtMs(marker?.startMs) }} → {{ fmtMs(marker?.endMs) }}
+        {{ msToReligious(marker?.startMs) }} → {{ msToReligious(marker?.endMs) }}
       </span>
       <span
         v-if="marker"
