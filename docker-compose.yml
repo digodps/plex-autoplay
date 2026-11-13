@@ -4,8 +4,8 @@ services:
     container_name: plex-autoplay
     restart: unless-stopped
     ports:
-      - "8443:443"     # HTTPS API + Vue SPA (mapeada para 8443 no host em modo rootless)
-      - "8081:8081"   # WSS PlexAutoSkip WebSocket
+      - "8081:80"     # HTTP API + Vue SPA
+      - "8082:8082"   # WSS PlexAutoSkip WebSocket
     volumes:
       - plex-data:/data              # SQLite, image-cache, app-config.json
       - ${MEDIA_ROOT}:/media:ro     # Plex media files (read-only)
@@ -15,15 +15,11 @@ services:
       - MEDIA_ROOT=/media
       - JWT_SECRET=${JWT_SECRET}
       - ADMIN_PASSWORD=${ADMIN_PASSWORD}
-      - ASPNETCORE_URLS=https://+:443
+      - ASPNETCORE_URLS=http://+:80
       - OTEL_EXPORTER=${OTEL_EXPORTER:-console}
       - OTEL_ENDPOINT=${OTEL_ENDPOINT:-}
       - OTEL_SERVICE_NAME=${OTEL_SERVICE_NAME:-plex-autoplay}
-      - CERT_PATH=${CERT_PATH}
-      - CERT_PASSWORD=${CERT_PASSWORD}
-      - CERT_BASE64=${CERT_BASE64}
-      - HTTPS_PORT=${HTTPS_PORT:-443}
-      - DISABLE_HTTP=${DISABLE_HTTP:-true}
+      - DISABLE_HTTP=true
       - LOG_LEVEL=${LOG_LEVEL:-Information}
       - ALLOWED_HOSTS=${ALLOWED_HOSTS:-*}
       - SYNC_INTERVAL_MINUTES=${SYNC_INTERVAL_MINUTES:-5}

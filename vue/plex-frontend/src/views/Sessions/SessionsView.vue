@@ -92,14 +92,6 @@ function fmtTime(iso) {
             Sessões ativas no Plex, próximo skip e histórico de skips executados.
           </p>
         </div>
-        <div class="flex items-center gap-2">
-          <button
-            class="rounded-lg border border-stroke px-4 py-2 text-sm font-medium text-gray-700 transition hover:border-accent hover:text-accent dark:border-strokedark dark:text-bodydark"
-            @click="load"
-          >
-            Atualizar
-          </button>
-        </div>
       </div>
 
     <div class="p-4 md:p-6 lg:p-8 max-w-6xl mx-auto">

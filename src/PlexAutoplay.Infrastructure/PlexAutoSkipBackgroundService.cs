@@ -20,6 +20,7 @@ public class PlexAutoSkipBackgroundService : BackgroundService
     private readonly IMarkerRepository _markerRepository;
     private readonly IClientSeekStrategyProvider _strategyProvider;
     private readonly ISkipMonitor _monitor;
+    private readonly ISkipHistoryRepository _skipHistory;
 
     // Cooldown: evita loop de re-seek no mesmo marcador.
     // Key = "ratingKey|kind", Value = EndMs que pulamos.
@@ -32,7 +33,8 @@ public class PlexAutoSkipBackgroundService : BackgroundService
         IAppSettingsStore settings,
         IMarkerRepository markerRepository,
         IClientSeekStrategyProvider strategyProvider,
-        ISkipMonitor monitor)
+        ISkipMonitor monitor,
+        ISkipHistoryRepository skipHistory)
     {
         _logger = logger;
         _httpClientFactory = httpClientFactory;
@@ -40,6 +42,7 @@ public class PlexAutoSkipBackgroundService : BackgroundService
         _markerRepository = markerRepository;
         _strategyProvider = strategyProvider;
         _monitor = monitor;
+        _skipHistory = skipHistory;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -133,7 +136,7 @@ public class PlexAutoSkipBackgroundService : BackgroundService
             if (success)
             {
                 _lastSkipEndMs[cooldownKey] = marker.EndMs;
-                _monitor.RecordSkip(new SkipHistoryEntry(
+                var entry = new SkipHistoryEntry(
                     DateTime.UtcNow,
                     session.MachineIdentifier,
                     session.Product,
@@ -141,7 +144,16 @@ public class PlexAutoSkipBackgroundService : BackgroundService
                     session.RatingKey,
                     marker.Kind,
                     session.PositionMs,
-                    marker.EndMs));
+                    marker.EndMs);
+                _monitor.RecordSkip(entry);
+                try
+                {
+                    await _skipHistory.AddAsync(entry);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Falha ao persistir histórico de skip ratingKey={RK}", session.RatingKey);
+                }
                 break; // apenas um skip por ciclo
             }
         }

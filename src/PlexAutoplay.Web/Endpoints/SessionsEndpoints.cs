@@ -5,14 +5,15 @@ namespace PlexAutoplay.Web.Endpoints;
 
 /// <summary>
 /// Endpoints de status de sessões ativas e histórico de skips.
-/// Lê snapshot mantido pelo ISkipMonitor (atualizado a cada 2s pelo background service).
+/// Sessões ativas lêem snapshot do ISkipMonitor (atualizado a cada 2s pelo background service).
+/// Histórico de skips é lido do banco de dados via ISkipHistoryRepository (persistido pelo auto-skip).
 /// </summary>
 public static class SessionsEndpoints
 {
     public static void MapSessionsEndpoints(this IEndpointRouteBuilder app)
     {
         app.MapGet("/api/sessions/skip-status",
-            ([FromServices] ISkipMonitor monitor) =>
+            async ([FromServices] ISkipMonitor monitor, [FromServices] ISkipHistoryRepository skipHistory) =>
             {
                 return Results.Ok(new
                 {
@@ -33,7 +34,7 @@ public static class SessionsEndpoints
                             msUntilSkip = s.NextMarker.MsUntilSkip
                         }
                     }),
-                    recentSkips = monitor.RecentSkips.Select(s => new
+                    recentSkips = (await skipHistory.GetRecentAsync(50)).Select(s => new
                     {
                         s.Timestamp,
                         s.MachineIdentifier,
