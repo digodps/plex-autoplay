@@ -61,48 +61,46 @@ async function handleCleanup() {
 </script>
 
 <template>
-  <div class="min-h-screen bg-[#111827] text-white">
-    <div class="mx-auto max-w-6xl px-4 py-6">
-      <div class="flex items-center justify-between gap-3 flex-wrap">
-        <div>
-          <h1 class="text-2xl font-bold text-white">Logs de processamento</h1>
-          <p class="mt-1 text-sm text-gray-400">
-            Histórico de varreduras, filtros e agrupamento.
-          </p>
-        </div>
-        <div class="flex items-center gap-2 flex-wrap">
-          <button
-            data-testid="log-btn-scan"
-            class="rounded-lg border border-gray-700 bg-gray-800 px-4 py-2 text-sm font-medium text-gray-300 transition hover:border-gray-500 hover:text-white"
-            @click="handleStartScan"
-          >
-            Iniciar Escaneamento
-          </button>
-          <button
-            data-testid="log-btn-clear"
-            class="rounded-lg border border-gray-700 bg-gray-800 px-4 py-2 text-sm font-medium text-gray-300 transition hover:border-gray-500 hover:text-white"
-            @click="handleClearLogs"
-          >
-            Limpar Logs
-          </button>
-          <button
-            data-testid="log-btn-cleanup"
-            class="rounded-lg border border-gray-700 bg-gray-800 px-4 py-2 text-sm font-medium text-gray-300 transition hover:border-gray-500 hover:text-white"
-            @click="handleCleanup"
-          >
-            Limpar > 30 dias
-          </button>
-        </div>
+  <div class="mx-auto max-w-6xl px-4 py-3">
+    <div class="flex items-center justify-between gap-3">
+      <div>
+        <h1 class="text-2xl font-semibold text-gray-900 dark:text-gray-100">Logs de processamento</h1>
+        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+          Histórico de varreduras, filtros e agrupamento.
+        </p>
       </div>
+      <div class="flex items-center gap-2">
+        <button
+          data-testid="log-btn-scan"
+          class="rounded-lg border border-stroke px-4 py-2 text-sm font-medium text-gray-700 transition hover:border-accent hover:text-accent dark:border-strokedark dark:text-bodydark"
+          @click="handleStartScan"
+        >
+          Iniciar Escaneamento
+        </button>
+        <button
+          data-testid="log-btn-clear"
+          class="rounded-lg border border-stroke px-4 py-2 text-sm font-medium text-gray-700 transition hover:border-accent hover:text-accent dark:border-strokedark dark:text-bodydark"
+          @click="handleClearLogs"
+        >
+          Limpar Logs
+        </button>
+        <button
+          data-testid="log-btn-cleanup"
+          class="rounded-lg border border-stroke px-4 py-2 text-sm font-medium text-gray-700 transition hover:border-accent hover:text-accent dark:border-strokedark dark:text-bodydark"
+          @click="handleCleanup"
+        >
+          Limpar > 30 dias
+        </button>
+      </div>
+    </div>
 
-      <div class="mt-6">
-        <LogFilterBar />
-        <LogGroupedView
-          :items="logsStore.logs"
-          :group-by="logsStore.groupBy"
-          :loading="logsStore.loadingLogs"
-        />
-      </div>
+    <div class="p-4 md:p-6 lg:p-8 max-w-6xl mx-auto">
+      <LogFilterBar />
+      <LogGroupedView
+        :items="logsStore.logs"
+        :group-by="logsStore.groupBy"
+        :loading="logsStore.loadingLogs"
+      />
     </div>
   </div>
 </template>

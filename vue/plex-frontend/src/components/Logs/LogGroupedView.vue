@@ -25,12 +25,12 @@ const groups = computed(() => {
     .map(([key, items]) => ({ key, items }));
 });
 
-const levelColors = {
-  info: "text-gray-400",
-  success: "text-green-400",
-  skip: "text-yellow-400",
-  warning: "text-yellow-400",
-  error: "text-red-400",
+const levelClasses = {
+  info: "text-gray-500 dark:text-gray-400",
+  success: "text-green-600 dark:text-green-400",
+  skip: "text-amber-600 dark:text-amber-400",
+  warning: "text-yellow-600 dark:text-yellow-400",
+  error: "text-red-600 dark:text-red-400",
 };
 
 function formatTime(ts) {
@@ -40,20 +40,20 @@ function formatTime(ts) {
 </script>
 
 <template>
-  <div v-if="loading" class="p-6 text-center text-gray-400">Carregando logs...</div>
-  <div v-else-if="groups.length === 0" class="rounded-xl border border-gray-800 bg-[#1f2937] p-8 text-center text-gray-400 shadow-lg" data-testid="log-empty">
+  <div v-if="loading" class="p-6 text-center text-gray-500 dark:text-gray-400">Carregando logs...</div>
+  <div v-else-if="groups.length === 0" class="rounded-xl border border-stroke bg-white dark:bg-gray-800 p-8 text-center text-gray-500 dark:text-gray-400" data-testid="log-empty">
     Nenhum log encontrado.
   </div>
   <div v-else class="space-y-4">
     <section
       v-for="group in groups"
       :key="group.key"
-      class="overflow-hidden rounded-xl border border-gray-800 bg-[#1f2937] shadow-lg"
+      class="overflow-hidden rounded-xl border border-stroke bg-white dark:bg-gray-800 dark:border-gray-700"
       :data-testid="`log-group-${group.key}`"
     >
-      <header class="flex items-center justify-between border-b border-gray-800/80 px-6 py-4">
-        <h3 class="text-lg font-semibold text-white tracking-tight">{{ group.key }}</h3>
-        <span class="rounded-lg bg-gray-800 px-3 py-1 text-xs font-medium text-gray-400 border border-gray-700/50">
+      <header class="flex items-center justify-between border-b border-stroke dark:border-gray-700 px-6 py-4">
+        <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 tracking-tight">{{ group.key }}</h3>
+        <span class="rounded-lg border border-stroke bg-gray-100 dark:bg-gray-700 px-3 py-1 text-xs font-medium text-gray-700 dark:text-gray-300 dark:border-gray-600">
           {{ group.items.length }}
         </span>
       </header>
@@ -61,15 +61,15 @@ function formatTime(ts) {
         <div
           v-for="(entry, index) in group.items"
           :key="`${entry.timestamp}-${index}`"
-          class="flex flex-wrap gap-x-3 gap-y-1 leading-relaxed border-b border-gray-800/40 pb-2 last:border-b-0 last:pb-0"
+          class="flex flex-wrap gap-x-3 gap-y-1 leading-relaxed border-b border-stroke/40 dark:border-gray-700/40 pb-2 last:border-b-0 last:pb-0"
           data-testid="log-entry"
         >
-          <span class="flex-none text-xs text-gray-500 font-sans">{{ formatTime(entry.timestamp) }}</span>
-          <span class="flex-none text-xs capitalize font-sans font-medium" :class="levelColors[entry.level] || 'text-gray-400'">
+          <span class="flex-none text-xs text-gray-500 dark:text-gray-400 font-sans">{{ formatTime(entry.timestamp) }}</span>
+          <span class="flex-none text-xs capitalize font-sans font-medium" :class="levelClasses[entry.level] || 'text-gray-500 dark:text-gray-400'">
             {{ entry.level }}
           </span>
-          <span class="w-full text-gray-300 sm:w-auto sm:flex-1">{{ entry.message }}</span>
-          <div v-if="entry.suggestion" class="w-full pl-14 text-xs text-red-400">
+          <span class="w-full text-gray-700 dark:text-gray-300 sm:w-auto sm:flex-1">{{ entry.message }}</span>
+          <div v-if="entry.suggestion" class="w-full pl-14 text-xs text-red-600 dark:text-red-400">
             <strong>Sugestão:</strong> {{ entry.suggestion }}
           </div>
         </div>

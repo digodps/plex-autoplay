@@ -33,25 +33,25 @@ function onGroupingChange(event) {
 </script>
 
 <template>
-  <div class="mb-6 rounded-xl border border-gray-800 bg-[#1f2937] p-5 shadow-lg">
+  <div class="mb-6 rounded-xl border border-stroke bg-white dark:bg-gray-800 p-5 dark:border-gray-700">
     <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-5">
       <label class="flex flex-col gap-1.5 lg:col-span-2">
-        <span class="text-xs font-medium uppercase tracking-wide text-gray-400">Busca textual</span>
+        <span class="text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">Busca textual</span>
         <input
           v-model="textInput"
           type="search"
           placeholder="Filtrar mensagens..."
           data-testid="log-filter-text"
-          class="log-filter-input w-full rounded-lg border border-gray-700 bg-[#111827] px-3.5 py-2.5 text-sm text-white placeholder-gray-500 focus:border-amber-400 focus:outline-none focus:ring-1 focus:ring-amber-400"
+          class="log-filter-input w-full rounded-lg border border-stroke bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 px-3.5 py-2.5 text-sm focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent/30 dark:border-gray-600"
           @input="onTextInput"
         />
       </label>
       <label class="flex flex-col gap-1.5">
-        <span class="text-xs font-medium uppercase tracking-wide text-gray-400">Nível</span>
+        <span class="text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">Nível</span>
         <select
           :value="logsStore.filters.level"
           data-testid="log-filter-level"
-          class="log-filter-input w-full rounded-lg border border-gray-700 bg-[#111827] px-3.5 py-2.5 text-sm text-white focus:border-amber-400 focus:outline-none focus:ring-1 focus:ring-amber-400"
+          class="log-filter-input w-full rounded-lg border border-stroke bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 px-3.5 py-2.5 text-sm focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent/30 dark:border-gray-600"
           @change="onLevelChange"
         >
           <option value="">Todos</option>
@@ -59,26 +59,26 @@ function onGroupingChange(event) {
         </select>
       </label>
       <label class="flex flex-col gap-1.5">
-        <span class="text-xs font-medium uppercase tracking-wide text-gray-400">De</span>
+        <span class="text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">De</span>
         <input
           v-model="fromInput"
           type="date"
-          class="log-filter-input w-full rounded-lg border border-gray-700 bg-[#111827] px-3.5 py-2.5 text-sm text-white focus:border-amber-400 focus:outline-none focus:ring-1 focus:ring-amber-400"
+          class="log-filter-input w-full rounded-lg border border-stroke bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 px-3.5 py-2.5 text-sm focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent/30 dark:border-gray-600"
           @change="onDateChange"
         />
       </label>
       <label class="flex flex-col gap-1.5">
-        <span class="text-xs font-medium uppercase tracking-wide text-gray-400">Até</span>
+        <span class="text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">Até</span>
         <input
           v-model="toInput"
           type="date"
-          class="log-filter-input w-full rounded-lg border border-gray-700 bg-[#111827] px-3.5 py-2.5 text-sm text-white focus:border-amber-400 focus:outline-none focus:ring-1 focus:ring-amber-400"
+          class="log-filter-input w-full rounded-lg border border-stroke bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 px-3.5 py-2.5 text-sm focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent/30 dark:border-gray-600"
           @change="onDateChange"
         />
       </label>
     </div>
     <div class="mt-4 flex flex-wrap items-center gap-2">
-      <span class="text-xs font-medium uppercase tracking-wide text-gray-400 mr-2">Agrupar por</span>
+      <span class="text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400 mr-2">Agrupar por</span>
       <button
         v-for="option in groupingOptions"
         :key="option.value"
@@ -87,8 +87,8 @@ function onGroupingChange(event) {
         class="rounded-lg border px-4 py-2 text-sm font-medium transition"
         :class="
           logsStore.groupBy === option.value
-            ? 'border-amber-400 bg-amber-500/20 text-amber-300'
-            : 'border-gray-700 bg-[#111827] text-gray-300 hover:border-gray-500 hover:text-white'
+            ? 'border-accent bg-accent/10 text-accent dark:border-accent dark:bg-accent/10 dark:text-accent'
+            : 'border-stroke bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:border-accent hover:text-accent dark:hover:border-accent dark:hover:bg-gray-700'
         "
         @click="onGroupingChange({ target: { value: option.value } })"
       >
