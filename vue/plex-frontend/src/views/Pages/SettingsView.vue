@@ -81,7 +81,7 @@ onMounted(loadSettings);
 </script>
 
 <template>
-  <div class="min-h-screen bg-[#111827] text-white">
+  <div class="mx-auto max-w-6xl px-4 py-3">
     <div class="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 py-6 space-y-6">
       <div class="flex items-center justify-between gap-3 flex-wrap">
         <div>
@@ -93,7 +93,7 @@ onMounted(loadSettings);
         <div class="flex items-center gap-2">
           <button
             type="button"
-            class="rounded-lg border border-gray-700 bg-[#1f2937] px-4 py-2 text-sm font-medium text-gray-300 transition hover:border-gray-500 hover:text-white disabled:opacity-50"
+            class="rounded-lg border border-stroke px-4 py-2 text-sm font-medium text-gray-700 transition hover:border-accent hover:text-accent dark:border-strokedark dark:text-bodydark disabled:opacity-50"
             :disabled="saving"
             @click="loadSettings"
           >
@@ -102,7 +102,7 @@ onMounted(loadSettings);
           <button
             type="submit"
             form="settings-form"
-            class="rounded-lg border border-gray-700 bg-gray-800 px-4 py-2 text-sm font-medium text-gray-300 transition hover:border-gray-500 hover:text-white disabled:opacity-50"
+            class="rounded-lg border border-stroke px-4 py-2 text-sm font-medium text-gray-700 transition hover:border-accent hover:text-accent dark:border-strokedark dark:text-bodydark disabled:opacity-50"
             :disabled="saving"
           >
             {{ saving ? "Salvando..." : "Salvar Configurações" }}
@@ -113,7 +113,7 @@ onMounted(loadSettings);
       <div v-if="loading" class="text-sm text-gray-400">Carregando...</div>
 
       <form v-else id="settings-form" class="space-y-6" @submit.prevent="saveSettings">
-        <div class="rounded-xl border border-gray-800 bg-[#1f2937] p-6 space-y-3">
+        <div class="rounded-xl border border-stroke bg-white dark:bg-gray-800 p-5 dark:border-gray-700">
           <label class="block text-sm font-medium text-gray-300" for="sync-interval">
             Intervalo de Sincronização (minutos)
           </label>
@@ -131,7 +131,7 @@ onMounted(loadSettings);
           </p>
         </div>
 
-        <div class="rounded-xl border border-gray-800 bg-[#1f2937] p-6 space-y-3">
+        <div class="rounded-xl border border-stroke bg-white dark:bg-gray-800 p-5 dark:border-gray-700">
           <label class="block text-sm font-medium text-gray-300" for="plex-url">
             URL do Plex
           </label>
@@ -145,7 +145,7 @@ onMounted(loadSettings);
           />
         </div>
 
-        <div class="rounded-xl border border-gray-800 bg-[#1f2937] p-6 space-y-3">
+        <div class="rounded-xl border border-stroke bg-white dark:bg-gray-800 p-5 dark:border-gray-700">
           <label class="block text-sm font-medium text-gray-300" for="plex-token">
             Token do Plex
           </label>
@@ -176,7 +176,7 @@ onMounted(loadSettings);
           </p>
         </div>
 
-        <div class="rounded-xl border border-gray-800 bg-[#1f2937] p-6">
+        <div class="rounded-xl border border-stroke bg-white dark:bg-gray-800 p-5 dark:border-gray-700">
           <MediaRootsField v-model="mediaRoots" label="Diretórios de Mídia (MEDIA_ROOTS)" />
         </div>
 

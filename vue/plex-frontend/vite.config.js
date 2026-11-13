@@ -15,6 +15,8 @@ export default defineConfig({
     pure: [],
   },
   build: {
+    outDir: "../../src/PlexAutoplay.Web/wwwroot",
+    emptyOutDir: true,
     minify: "esbuild",
   },
 });
