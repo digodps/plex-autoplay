@@ -1,7 +1,7 @@
 ## ADDED Requirements
 
 ### Requirement: Exibição e Edição de Marcadores em Formato Religioso
-O sistema deve permitir visualizar e editar marcadores usando o formato `HH:MM:SS.cs`.
+The system SHALL allow viewing and editing markers using the `HH:MM:SS.cs` format.
 
 #### Scenario: Visualizar e editar no formato HH:MM:SS.cs
 - **Given** um marcador cadastrado
