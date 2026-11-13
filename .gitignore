@@ -81,8 +81,7 @@ obj/
 *.sourcelink.json
 *.FileListAbsolute.txt
 .vs/
-src/PlexAutoplay.Web/core.258355
-src/PlexAutoplay.Web/core.259020
+src/PlexAutoplay.Web/core.*
 
 # Docker runtime data (SQLite, app-config)
 data/
