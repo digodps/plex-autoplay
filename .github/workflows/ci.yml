@@ -84,9 +84,8 @@ jobs:
       - name: Run QA validation tests (theme, navigation, breadcrumb)
         run: |
           docker compose --env-file .env -f infra/docker-compose.test.yml run --rm \
-            -e TEST_FILTER=qa-theme-and-navigation \
             -w /workspace/tests/e2e \
-            executor npx playwright test $TEST_FILTER --reporter=html
+            executor npx playwright test qa-theme-and-navigation --reporter=html
 
       - name: Upload failure artifacts
         if: failure()

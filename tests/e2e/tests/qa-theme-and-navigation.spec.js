@@ -11,7 +11,7 @@ async function login(page) {
   await page.waitForURL(`${BASE}/dashboard`, { timeout: 15000 });
 }
 
-test("tema: toggle cicla system -> light -> dark e persiste", async ({ page }) => {
+test("tema: toggle cicla system -> light -> dark -> system e persiste", async ({ page }) => {
   await login(page);
 
   const themeMode = () => page.evaluate(() => localStorage.getItem("theme.mode"));
@@ -24,6 +24,11 @@ test("tema: toggle cicla system -> light -> dark e persiste", async ({ page }) =
   const toggle = page.locator('button[aria-label="Tema claro"], button[aria-label="Tema escuro"]').first();
   await expect(toggle).toBeVisible({ timeout: 5000 });
 
+  // sistema -> claro (primeiro clique)
+  await toggle.click();
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
+  await expect(themeMode()).resolves.toBe("light");
+
   // claro -> escuro
   await toggle.click();
   await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
@@ -34,10 +39,10 @@ test("tema: toggle cicla system -> light -> dark e persiste", async ({ page }) =
   await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
   await expect(themeMode()).resolves.toBe("dark");
 
-  // escuro -> claro
+  // escuro -> sistema
   await toggle.click();
   await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
-  await expect(themeMode()).resolves.toBe("light");
+  await expect(themeMode()).resolves.toBe("system");
 });
 
 test("breadcrumb: exibe trilha e marca item ativo", async ({ page }) => {
