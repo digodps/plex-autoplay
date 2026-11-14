@@ -137,7 +137,14 @@ if [[ ! -d node_modules ]]; then
   fi
 fi
 
-npx playwright test --reporter=html || TEST_EXIT_CODE=$?
+# Usa TEST_FILTER se definido (ex.: "qa-theme-and-navigation")
+if [[ -n "${TEST_FILTER:-}" ]]; then
+  log "Filtro de testes: $TEST_FILTER"
+  npx playwright test "$TEST_FILTER" --reporter=html || TEST_EXIT_CODE=$?
+else
+  log "Rodando todos os testes (sem filtro)"
+  npx playwright test --reporter=html || TEST_EXIT_CODE=$?
+fi
 cd "$PROJECT_ROOT"
 
 # --- 5. Capturar artefatos (sempre, para diagnóstico) ---
