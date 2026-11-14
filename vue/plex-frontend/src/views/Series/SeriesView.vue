@@ -117,13 +117,13 @@ function openMarkers(series) {
               :key="series.ratingKey"
               type="button"
               data-testid="series-card"
-              class="group flex flex-col rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-2 sm:p-3 shadow-sm transition-colors hover:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900"
+              class="group relative flex flex-col rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm hover:shadow-lg transition-all duration-300 motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900"
               @click="openMarkers(series)"
             >
-              <div class="relative mb-2 aspect-[2/3] w-full overflow-hidden rounded-md bg-gray-100 dark:bg-gray-700">
+              <div class="relative aspect-[2/3] w-full overflow-hidden bg-gray-100 dark:bg-gray-700">
                 <div
                   data-testid="series-thumb-inner"
-                  class="h-full w-full transition-transform duration-300 motion-safe:group-hover:scale-105 motion-safe:group-focus-visible:scale-105 motion-reduce:transition-none"
+                  class="h-full w-full transition-transform duration-500 motion-safe:group-hover:scale-105 motion-safe:group-focus-visible:scale-105 motion-reduce:transition-none"
                 >
                   <img
                     v-if="series.thumb"
@@ -138,13 +138,13 @@ function openMarkers(series) {
                 </div>
                 <div
                   aria-hidden="true"
-                  class="pointer-events-none absolute inset-0 bg-black/0 transition-colors group-hover:bg-black/25 group-focus-visible:bg-black/25 motion-reduce:transition-none"
+                  class="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent transition-opacity duration-300 group-hover:opacity-100 group-focus-visible:opacity-100"
                 ></div>
+                <div class="absolute bottom-0 left-0 right-0 p-3 text-white">
+                  <h4 class="truncate text-sm sm:text-base font-semibold">{{ series.title }}</h4>
+                </div>
               </div>
-              <h4 class="truncate text-title-sm font-semibold text-gray-900 dark:text-gray-100">
-                {{ series.title }}
-              </h4>
-              <span class="mt-1 text-sm font-medium text-gray-600 dark:text-gray-400">Ver marcadores</span>
+              <span class="sr-only">Abrir marcadores de {{ series.title }}</span>
             </button>
           </div>
 
