@@ -36,9 +36,13 @@ Simply remove the added elements. The original static logo was:
 
 Edit `vue/plex-frontend/src/components/AppLogo.vue`:
 1. Remove the `<path class="logo-lightning" ... />` element
-2. Remove the `<script>` section entirely (no refs needed)
-3. Remove the entire `<style>` section
-4. Result: pure template with two static paths
+2. Keep `<script setup>` with `defineProps({ size: { type: Number, default: 28 } })` — required for the `size` prop API. Remove only the `import { ref }` and the `animationDelay` ref.
+3. Remove the entire `<style>` section (only held animation rules)
+4. Result: template with two static paths + minimal script defining `size`
+
+### E2E test cleanup
+
+`tests/e2e/tests/qa-electric-logo-animation.spec.js` asserts the lightning path exists and animates. It was created solely to validate the removed feature and must be deleted. Theme/menu regression coverage remains in `tests/e2e/tests/qa-theme-and-navigation.spec.js`.
 
 ## Risks / Trade-offs
 

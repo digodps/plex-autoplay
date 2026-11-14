@@ -16,15 +16,12 @@ The electric/lightning logo animation effect added in `add-electric-logo-icon-ef
 
 ### Removed Capabilities
 
-- `brand/logo-animation`: Electric/lightning animation effect for the application logo
-
-### Modified Capabilities
-
-- `web-ui`: The logo rendering reverts to static SVG without animation
+- `brand-logo-animation`: Electric/lightning animation effect for the application logo
 
 ## Impact
 
 - Modified file: `vue/plex-frontend/src/components/AppLogo.vue`
+- Deleted file: `tests/e2e/tests/qa-electric-logo-animation.spec.js` (orphan QA test for removed feature)
 - No API changes
 - No backend changes
 - No new dependencies

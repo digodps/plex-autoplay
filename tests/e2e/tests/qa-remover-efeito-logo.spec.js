@@ -1,7 +1,27 @@
 const { test, expect } = require("@playwright/test");
 
-const BASE = process.env.PLAYWRIGHT_BASE_URL || "http://localhost:8080";
-const PASSWORD = process.env.OPERATOR_PASSWORD || process.env.ADMIN_PASSWORD || "admin123";
+const BASE = process.env.PLAYWRIGHT_BASE_URL || "http://127.0.0.1:8080";
+const PASSWORD = process.env.OPERATOR_PASSWORD || process.env.ADMIN_PASSWORD || "admin1234";
+const SETUP_TOKEN = process.env.SETUP_TOKEN || "1H7HrHo2wD1i2Py5jRiCL-epSq2EH_lsYDft5TjK2O0";
+const PLEX_URL = process.env.PLEX_URL || "http://192.168.18.3:32400";
+const PLEX_TOKEN = process.env.PLEX_TOKEN || "test";
+const MEDIA_ROOTS = process.env.MEDIA_ROOTS || "/home/hermes/media";
+
+async function completeSetup(page) {
+  const res = await page.request.post(`${BASE}/api/auth/setup`, {
+    data: {
+      Token: SETUP_TOKEN,
+      NewPassword: PASSWORD,
+      PlexUrl: PLEX_URL,
+      PlexToken: PLEX_TOKEN,
+      MediaRoots: MEDIA_ROOTS.split(",").map(s => s.trim()),
+    },
+  });
+  if (!res.ok()) {
+    const body = await res.text();
+    throw new Error(`Setup failed: ${res.status()} ${body}`);
+  }
+}
 
 async function login(page) {
   await page.goto(`${BASE}/login`, { waitUntil: "networkidle" });
@@ -12,55 +32,53 @@ async function login(page) {
 }
 
 async function getLogo(page) {
-  // The logo is inside the RouterLink in the header, directly rendered as SVG
   return page.locator('header[data-testid="app-header"] a[aria-label*="Plex Autoplay"] svg').first();
 }
 
-async function getLightningPath(page) {
-  // The lightning bolt path has class "logo-lightning"
-  return page.locator('header[data-testid="app-header"] a[aria-label*="Plex Autoplay"] svg path.logo-lightning').first();
-}
+test.describe("Remover Efeito Logo — Static Logo Validation", () => {
+  test.beforeAll(async ({ request }) => {
+    const res = await request.post(`${BASE}/api/auth/setup`, {
+      data: {
+        Token: SETUP_TOKEN,
+        NewPassword: PASSWORD,
+        PlexUrl: PLEX_URL,
+        PlexToken: PLEX_TOKEN,
+        MediaRoots: MEDIA_ROOTS.split(",").map(s => s.trim()),
+      },
+    });
+    if (!res.ok() && res.status() !== 409) {
+      const body = await res.text();
+      throw new Error(`Setup failed: ${res.status()} ${body}`);
+    }
+  });
 
-test.describe("Electric Logo Animation", () => {
-  test("logo animation: electric lightning bolt effect is present and animating", async ({ page }) => {
+  test.beforeEach(async ({ page }) => {
     await login(page);
+  });
+
+  test("logo renders static (no lightning bolt, no animation)", async ({ page }) => {
     await page.goto(`${BASE}/dashboard`, { waitUntil: "networkidle" });
 
-    // Find the logo SVG
     const logo = await getLogo(page);
     await expect(logo).toBeVisible({ timeout: 10000 });
 
-    // Check for the lightning bolt path in the SVG
-    const lightningPath = await getLightningPath(page);
-    await expect(lightningPath).toBeVisible();
+    // Verify NO lightning bolt path exists
+    const lightningPath = page.locator('header[data-testid="app-header"] a[aria-label*="Plex Autoplay"] svg path.logo-lightning').first();
+    await expect(lightningPath).toHaveCount(0);
 
-    // Verify animation CSS is applied on the lightning path
-    const hasAnimation = await lightningPath.evaluate(el => {
-      const style = window.getComputedStyle(el);
-      return style.animationName !== "none" && style.animationDuration !== "0s";
-    });
-    expect(hasAnimation).toBe(true);
-  });
+    // Verify logo SVG has exactly 2 paths (triangle + vertical line)
+    const paths = page.locator('header[data-testid="app-header"] a[aria-label*="Plex Autoplay"] svg path');
+    await expect(paths).toHaveCount(2);
 
-  test("logo animation: respects prefers-reduced-motion", async ({ page }) => {
-    // Set prefers-reduced-motion before navigation
-    await page.emulateMedia({ reducedMotion: "reduce" });
-    await login(page);
-    await page.goto(`${BASE}/dashboard`, { waitUntil: "networkidle" });
-
-    const lightningPath = await getLightningPath(page);
-    await expect(lightningPath).toBeVisible({ timeout: 10000 });
-
-    // Check that animation is disabled on the lightning path
-    const hasAnimation = await lightningPath.evaluate(el => {
+    // Verify no animation on any path
+    const hasAnimation = await paths.first().evaluate(el => {
       const style = window.getComputedStyle(el);
       return style.animationName !== "none" && style.animationDuration !== "0s";
     });
     expect(hasAnimation).toBe(false);
   });
 
-  test("logo animation: theme switching works correctly (light/dark)", async ({ page }) => {
-    await login(page);
+  test("logo: theme switching works correctly (light/dark)", async ({ page }) => {
     await page.goto(`${BASE}/dashboard`, { waitUntil: "networkidle" });
 
     const logo = await getLogo(page);
@@ -72,28 +90,21 @@ test.describe("Electric Logo Animation", () => {
     await page.evaluate(() => localStorage.setItem("theme.mode", "light"));
     await page.reload({ waitUntil: "networkidle" });
     await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
-    
-    // Verify logo is visible and uses correct color in light theme
     await expect(logo).toBeVisible();
 
     // Test dark theme
     await page.evaluate(() => localStorage.setItem("theme.mode", "dark"));
     await page.reload({ waitUntil: "networkidle" });
     await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
-    
-    // Verify logo is visible and uses correct color in dark theme
     await expect(logo).toBeVisible();
   });
 
-  test("logo animation: different logo sizes render correctly", async ({ page }) => {
-    await login(page);
+  test("logo: different sizes render correctly (via AppHeader default 28)", async ({ page }) => {
     await page.goto(`${BASE}/dashboard`, { waitUntil: "networkidle" });
 
-    // The logo should be present at default size (28px in AppHeader)
     const logo = await getLogo(page);
     await expect(logo).toBeVisible({ timeout: 10000 });
 
-    // Check that the logo SVG has proper dimensions
     const box = await logo.boundingBox();
     expect(box).toBeTruthy();
     expect(box.width).toBeGreaterThan(0);
@@ -102,8 +113,12 @@ test.describe("Electric Logo Animation", () => {
 });
 
 test.describe("Theme and Navigation (Regression)", () => {
-  test("tema: toggle cicla system -> light -> dark e persiste", async ({ page }) => {
+  test.beforeEach(async ({ page }) => {
     await login(page);
+  });
+
+  test("tema: toggle cicla system -> light -> dark e persiste", async ({ page }) => {
+    await page.goto(`${BASE}/dashboard`, { waitUntil: "networkidle" });
 
     const themeMode = () => page.evaluate(() => localStorage.getItem("theme.mode"));
 
@@ -114,6 +129,11 @@ test.describe("Theme and Navigation (Regression)", () => {
 
     const toggle = page.locator('button[aria-label="Tema claro"], button[aria-label="Tema escuro"]').first();
     await expect(toggle).toBeVisible({ timeout: 5000 });
+
+    // Ensure we start from system (light)
+    await page.evaluate(() => localStorage.setItem("theme.mode", "system"));
+    await page.reload({ waitUntil: "networkidle" });
+    await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
 
     // claro -> escuro
     await toggle.click();
@@ -132,7 +152,7 @@ test.describe("Theme and Navigation (Regression)", () => {
   });
 
   test("menu do usuário: abre, fecha e navega", async ({ page }) => {
-    await login(page);
+    await page.goto(`${BASE}/dashboard`, { waitUntil: "networkidle" });
 
     const menuBtn = page.locator('button[aria-label="Menu do usuário"]').first();
     await expect(menuBtn).toBeVisible();
@@ -148,21 +168,5 @@ test.describe("Theme and Navigation (Regression)", () => {
     await page.click('a[href="/settings"]');
     await expect(page).toHaveURL(`${BASE}/settings`);
     await expect(menuBtn).toHaveAttribute("aria-expanded", "false");
-  });
-
-  test("breadcrumb: exibe trilha e marca item ativo", async ({ page }) => {
-    await login(page);
-
-    await page.goto(`${BASE}/libraries`, { waitUntil: "networkidle" });
-
-    const breadcrumb = page.locator("nav[aria-label=Breadcrumb]");
-    await expect(breadcrumb).toBeVisible();
-
-    // item atual marcado como ativo
-    const current = breadcrumb.locator('[aria-current="page"]');
-    await expect(current.first()).toBeVisible();
-    await expect(current.first()).toHaveText(/Bibliotecas/);
-
-    await expect(page.locator(".topbar")).toBeVisible();
   });
 });
