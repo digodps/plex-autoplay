@@ -81,6 +81,7 @@ app.MapPlexEndpoints();
 app.MapSeriesEndpoints();
 app.MapSyncEndpoints();
 app.MapMarkerEndpoints();
+app.MapMarkerReprocessLibraryEndpoints();
 app.MapSessionsEndpoints();
 app.MapImageEndpoints();
 app.MapAutoSkipWebSocketEndpoints();
