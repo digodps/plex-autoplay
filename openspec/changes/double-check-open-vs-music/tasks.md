@@ -10,3 +10,10 @@
 - [x] 1.6 Criar unit tests para `AnalyzeSegmentLoudness` e thresholds. **Verify:** testes passam.
 - [x] 1.7 Build: `dotnet build PlexAutoplay.slnx -c Release` passa. **Verify:** sem erros de compilação.
 - [x] 1.8 `dotnet test` passa. **Verify:** sem regressões.
+
+## 2. Botão reprocessar na página de marcadores
+
+- [x] 2.1 Endpoint POST `/api/markers/reprocess/{seriesKey}`: limpa marcadores dos episódios da série, re-detecta via LibraryScanUseCase. **Verify:** build passa.
+- [x] 2.2 Função `reprocessMarkers(seriesKey)` em `src/api.js`. **Verify:** endpoint disponível.
+- [x] 2.3 Botão "Reprocessar" no header de `MarkerEditorView.vue` com estado de carregamento e recarrega `fetchSeries` após sucesso. **Verify:** teste de build/TS do Vue.
+- [x] 2.4 CSS `.reprocess` (margem, alinhamento) em `marker-editor.css`.
