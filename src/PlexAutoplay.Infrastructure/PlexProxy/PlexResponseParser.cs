@@ -106,11 +106,14 @@ public static class PlexResponseParser
                 if (item.Type is not null && item.Type != "show")
                     continue;
 
+                var genre = item.Genre is { Count: > 0 } ? item.Genre[0].Tag ?? "" : "";
+
                 series.Add(new PlexSeriesDto(
                     item.RatingKey ?? "",
                     item.Title ?? "",
                     item.Summary ?? "",
-                    item.Thumb ?? ""));
+                    item.Thumb ?? "",
+                    genre));
             }
         }
 
@@ -173,6 +176,12 @@ public static class PlexResponseParser
         public int ParentIndex { get; set; }
         public int Index { get; set; }
         public List<PlexMediaItem>? Media { get; set; }
+        public List<PlexGenreItem>? Genre { get; set; }
+    }
+
+    private sealed class PlexGenreItem
+    {
+        public string? Tag { get; set; }
     }
 
     private sealed class PlexMediaItem

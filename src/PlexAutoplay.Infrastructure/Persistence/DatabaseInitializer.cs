@@ -38,6 +38,7 @@ public static class DatabaseInitializer
                 Title TEXT NOT NULL,
                 Summary TEXT NOT NULL,
                 Thumb TEXT NOT NULL,
+                Genre TEXT NOT NULL DEFAULT '',
                 SyncedAt TEXT NOT NULL DEFAULT (datetime('now')),
                 FOREIGN KEY (LibraryRatingKey) REFERENCES Library(RatingKey) ON DELETE CASCADE
             )
@@ -114,6 +115,7 @@ public static class DatabaseInitializer
         )
         """, false),
         (14, "CREATE INDEX IF NOT EXISTS IX_SkipHistory_Timestamp ON SkipHistory(Timestamp)", true),
+        (15, "ALTER TABLE Series ADD COLUMN Genre TEXT NOT NULL DEFAULT ''", true),
     ];
 
     public static async Task InitializeAsync(string connectionString)

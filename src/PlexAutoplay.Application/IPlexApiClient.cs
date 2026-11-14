@@ -68,4 +68,4 @@ public record PlexSeriesPage(
 /// <summary>
 /// Série do catálogo (thumbnail cru; o endpoint reescreve para o proxy de imagens).
 /// </summary>
-public record PlexSeriesDto(string RatingKey, string Title, string Summary, string Thumb);
+public record PlexSeriesDto(string RatingKey, string Title, string Summary, string Thumb, string Genre);

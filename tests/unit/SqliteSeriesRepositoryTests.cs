@@ -42,6 +42,7 @@ public class SqliteSeriesRepositoryTests : IDisposable
                 Title TEXT NOT NULL,
                 Summary TEXT NOT NULL,
                 Thumb TEXT NOT NULL,
+                Genre TEXT NOT NULL DEFAULT '',
                 SyncedAt TEXT
             );
             CREATE INDEX IF NOT EXISTS IX_Series_LibraryRatingKey ON Series(LibraryRatingKey);

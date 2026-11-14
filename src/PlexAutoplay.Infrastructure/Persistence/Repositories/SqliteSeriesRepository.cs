@@ -31,7 +31,7 @@ public class SqliteSeriesRepository : ISeriesRepository
         };
 
         var items = await conn.QueryAsync<Series>(
-            @"SELECT RatingKey, LibraryRatingKey, Title, Summary, Thumb 
+            @"SELECT RatingKey, LibraryRatingKey, Title, Summary, Thumb, Genre 
               FROM Series 
               WHERE LibraryRatingKey = @LibraryRatingKey 
               AND Title LIKE @Query 
@@ -52,7 +52,7 @@ public class SqliteSeriesRepository : ISeriesRepository
     {
         using var conn = CreateConnection();
         return await conn.QueryFirstOrDefaultAsync<Series>(
-            "SELECT RatingKey, LibraryRatingKey, Title, Summary, Thumb FROM Series WHERE RatingKey = @RatingKey",
+            "SELECT RatingKey, LibraryRatingKey, Title, Summary, Thumb, Genre FROM Series WHERE RatingKey = @RatingKey",
             new { RatingKey = ratingKey });
     }
 
@@ -60,13 +60,14 @@ public class SqliteSeriesRepository : ISeriesRepository
     {
         using var conn = CreateConnection();
         await conn.ExecuteAsync(
-            @"INSERT INTO Series (RatingKey, LibraryRatingKey, Title, Summary, Thumb, SyncedAt)
-              VALUES (@RatingKey, @LibraryRatingKey, @Title, @Summary, @Thumb, datetime('now'))
+            @"INSERT INTO Series (RatingKey, LibraryRatingKey, Title, Summary, Thumb, Genre, SyncedAt)
+              VALUES (@RatingKey, @LibraryRatingKey, @Title, @Summary, @Thumb, @Genre, datetime('now'))
               ON CONFLICT(RatingKey) DO UPDATE SET
                 LibraryRatingKey = excluded.LibraryRatingKey,
                 Title = excluded.Title,
                 Summary = excluded.Summary,
                 Thumb = excluded.Thumb,
+                Genre = excluded.Genre,
                 SyncedAt = datetime('now')",
             series);
     }
