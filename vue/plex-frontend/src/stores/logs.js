@@ -114,8 +114,13 @@ export const useLogsStore = defineStore("logs", () => {
       if (groupBy.value === "date") {
         key = log.timestamp.split("T")[0]; // YYYY-MM-DD
       } else if (groupBy.value === "status") {
-        // precisa de job status — use jobId lookup if needed
-        key = log.level; // fallback
+        key = log.jobStatus || log.level || 'sem-status';
+      } else if (groupBy.value === "library") {
+        // Extract library from message/suggestion
+        const text = `${log.message} ${log.suggestion || ''}`;
+        const libMatch = text.match(/(?:processing|library|biblioteca)\s*[:=]\s*([^,\n\r]+)/i) ||
+                         text.match(/scan\s+completed\s+for\s+library\s*[:=]\s*([^,\n\r]+)/i);
+        key = libMatch ? libMatch[1].trim() : 'Sem biblioteca';
       } else {
         key = log.level; // "level" (info, error, warning, skip, success)
       }

@@ -44,7 +44,7 @@ async function handleLogin() {
     const response = await fetch("/auth/login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ password: password.value }),
+      body: JSON.stringify({ Password: password.value }),
     });
 
     if (response.ok) {
