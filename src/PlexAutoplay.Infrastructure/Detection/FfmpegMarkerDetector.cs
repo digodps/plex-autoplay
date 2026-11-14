@@ -126,13 +126,19 @@ public class FfmpegMarkerDetector : IMarkerDetector
             .OrderBy(s => s.StartMs)
             .ToList();
 
-        foreach (var gap in gaps)
+        // Pair consecutive silence gaps: silence1 (pre-OP) -> ~90s loud -> silence2 (post-OP)
+        // introStart = gap[i].EndMs (audio gets loud = OP starts)
+        // introEnd = gap[i+1].StartMs (audio gets quiet = OP ends)
+        for (int i = 0; i < gaps.Count - 1; i++)
         {
-            var nextStart = gaps.FirstOrDefault(g => g.StartMs > gap.StartMs)?.StartMs ?? durationMs;
-            if (nextStart - gap.EndMs < 60_000) continue;
+            var current = gaps[i];
+            var next = gaps[i + 1];
 
-            var start = gap.StartMs;
-            var end = Math.Min(start + FallbackIntroLengthMs, durationMs - 120_000);
+            var introDuration = next.StartMs - current.EndMs;
+            if (introDuration < 75_000 || introDuration > 105_000) continue; // ~90s ±15s
+
+            var start = current.EndMs;  // when audio becomes loud = OP start
+            var end = next.StartMs;     // when audio becomes quiet = OP end
             if (end - start < 30_000) continue;
 
             // Double check loudness of segment
@@ -164,7 +170,7 @@ public class FfmpegMarkerDetector : IMarkerDetector
             if (result == "rejected")
             {
                 activity?.AddEvent(new ActivityEvent("intro.rejected_background_music", tags: new ActivityTagsCollection { ["loudness_db"] = loudnessDb }));
-                continue; // Try next gap
+                continue; // Try next pair
             }
 
             var origin = result == "low_confidence" ? "detected-low-confidence" : "detected";
