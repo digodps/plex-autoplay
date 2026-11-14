@@ -22,6 +22,7 @@ services:
       - PLAYWRIGHT_BASE_URL=${PLAYWRIGHT_BASE_URL:-http://${APP_HOST:-plex-autoplay.dns.podman}:80}
       - OPERATOR_PASSWORD=${OPERATOR_PASSWORD}
       - INSIDE_EXECUTOR_CONTAINER=true
+      - TEST_FILTER=${TEST_FILTER:-}
     working_dir: /workspace
     depends_on:
       plex-autoplay:

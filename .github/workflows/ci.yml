@@ -70,14 +70,13 @@ jobs:
           OPERATOR_PASSWORD=ci-e2e-admin-password
           MEDIA_ROOT=/tmp/plex-media
           MEDIA_ROOTS=/media
+          TEST_FILTER=qa-theme-and-navigation
           EOF
 
       - name: Create media root directory
         run: mkdir -p /tmp/plex-media
 
       - name: Run e2e stack (app + executor + plex-mock)
-        env:
-          TEST_FILTER: qa-theme-and-navigation
         run: >-
           docker compose --env-file .env -f infra/docker-compose.test.yml up
           --build --abort-on-container-exit --exit-code-from executor
