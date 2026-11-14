@@ -1,5 +1,5 @@
 <script setup>
-import { computed } from "vue";
+import { computed, ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import AppIcon from "@/components/AppIcon.vue";
 import GenreCarousel from "@/components/GenreCarousel.vue";
@@ -35,13 +35,28 @@ const {
   isLoadingMore,
 } = useSeriesCatalog();
 
-const { genreGroups, isLoading: carouselLoading, error: carouselError } = useSeriesByGenre({
+const {
+  genreGroups,
+  isLoading: carouselLoading,
+  error: carouselError,
+  sentinelRef: carouselSentinelRef,
+  hasMore: carouselHasMore,
+  allSeriesLoaded,
+} = useSeriesByGenre({
   libraryKey: libraryKey.value,
 });
 
 const totalSeriesInCarousel = computed(() =>
   genreGroups.value.reduce((sum, g) => sum + g.series.length, 0),
 );
+
+// Tab state: 'carousel' | 'list'
+const activeTab = ref("carousel");
+
+const tabs = [
+  { id: "carousel", label: "Por Gênero", icon: "grid", count: computed(() => genreGroups.value.length) },
+  { id: "list", label: "Todas as Séries", icon: "list", count: computed(() => seriesTotalSize.value) },
+];
 
 function openMarkers(series) {
   if (libraryTitleLoading.value) return;
@@ -56,8 +71,30 @@ function openMarkers(series) {
 
 <template>
   <div class="series-view">
+    <!-- Tab Navigation -->
+    <nav class="tabs-nav" role="tablist" aria-label="Visualização do catálogo">
+      <button
+        v-for="tab in tabs"
+        :key="tab.id"
+        role="tab"
+        :aria-selected="activeTab === tab.id"
+        :aria-controls="`panel-${tab.id}`"
+        :id="`tab-${tab.id}`"
+        class="tab-btn"
+        :class="{ 'tab-btn--active': activeTab === tab.id }"
+        @click="activeTab = tab.id"
+        type="button"
+      >
+        <AppIcon :name="tab.icon" size="sm" aria-hidden="true" />
+        <span>{{ tab.label }}</span>
+        <span v-if="tab.count !== undefined && tab.count !== null" class="tab-count">
+          {{ tab.count }}
+        </span>
+      </button>
+    </nav>
+
     <div class="series-toolbar">
-      <div class="search-box">
+      <div class="search-box" v-show="activeTab === 'list'">
         <AppIcon name="search" size="sm" />
         <input
           class="input"
@@ -82,115 +119,150 @@ function openMarkers(series) {
       <div class="h-16 rounded-lg border border-stroke bg-skeleton"></div>
     </div>
 
-    <div v-else-if="seriesError" class="alert" role="alert">
-      <span>{{ seriesError }}</span>
-    </div>
+    <!-- Tab Panel: Por Gênero (Carousel) -->
+    <section
+      v-show="activeTab === 'carousel'"
+      id="panel-carousel"
+      role="tabpanel"
+      aria-labelledby="tab-carousel"
+      class="tab-panel"
+    >
+      <div v-if="carouselError" class="alert" role="alert">
+        <span>{{ carouselError }}</span>
+      </div>
 
-    <div v-else-if="seriesLoading && seriesList.length === 0" class="loading-skeleton">
-      <div class="h-24 rounded-lg border border-stroke bg-skeleton"></div>
-      <div class="h-20 rounded-lg border border-stroke bg-skeleton"></div>
-      <div class="h-16 rounded-lg border border-stroke bg-skeleton"></div>
-    </div>
+      <div v-else-if="carouselLoading" class="loading-skeleton">
+        <div class="h-24 rounded-lg border border-stroke bg-skeleton"></div>
+        <div class="h-20 rounded-lg border border-stroke bg-skeleton"></div>
+        <div class="h-16 rounded-lg border border-stroke bg-skeleton"></div>
+      </div>
 
-    <div v-else-if="seriesList.length > 0" class="series-grid-section">
-      <p class="series-grid-count" role="status">
-        {{ seriesTotalSize }} série(s)
-      </p>
+      <div v-else-if="genreGroups.length > 0">
+        <GenreCarousel
+          :genre-groups="genreGroups"
+          :is-loading="false"
+          :error="carouselError"
+        />
 
-      <div class="series-grid" role="list">
-        <button
-          v-for="series in seriesList"
-          :key="series.ratingKey"
-          type="button"
-          data-testid="series-card"
-          class="series-card group relative flex flex-col rounded-xl overflow-hidden border border-stroke bg-card shadow-sm hover:shadow-lg transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900"
-          @click="openMarkers(series)"
-          role="listitem"
-        >
-          <div class="series-card-poster relative aspect-[2/3] w-full overflow-hidden bg-sunken">
-            <div
-              data-testid="series-thumb-inner"
-              class="h-full w-full transition-transform duration-500 group-hover:scale-105 group-focus-visible:scale-105"
-            >
-              <img
-                v-if="series.thumb"
-                :src="series.thumb"
-                :alt="series.title"
-                loading="lazy"
-                class="h-full w-full object-cover"
-              />
-              <div v-else class="flex h-full w-full items-center justify-center text-muted">
-                <AppIcon name="tv" size="lg" />
+        <!-- Load More for Carousel -->
+        <div v-if="carouselHasMore && !allSeriesLoaded" class="load-more-area">
+          <div v-if="carouselLoading" class="loading-indicator">
+            <AppIcon name="loader" size="md" class="animate-spin" />
+            <span>Carregando mais gêneros...</span>
+          </div>
+          <div ref="carouselSentinelRef" class="h-1" aria-hidden="true"></div>
+        </div>
+      </div>
+
+      <div v-else class="empty-state">
+        <AppIcon name="grid" size="lg" class="mx-auto text-muted" />
+        <p class="mt-3 text-sm font-medium text-secondary">Nenhum gênero encontrado.</p>
+        <p class="mt-2 text-xs text-tertiary">
+          O catálogo desta biblioteca ainda não foi sincronizado.
+        </p>
+      </div>
+    </section>
+
+    <!-- Tab Panel: Todas as Séries (Infinite Scroll List) -->
+    <section
+      v-show="activeTab === 'list'"
+      id="panel-list"
+      role="tabpanel"
+      aria-labelledby="tab-list"
+      class="tab-panel"
+    >
+      <div v-if="seriesError" class="alert" role="alert">
+        <span>{{ seriesError }}</span>
+      </div>
+
+      <div v-else-if="seriesLoading && seriesList.length === 0" class="loading-skeleton">
+        <div class="h-24 rounded-lg border border-stroke bg-skeleton"></div>
+        <div class="h-20 rounded-lg border border-stroke bg-skeleton"></div>
+        <div class="h-16 rounded-lg border border-stroke bg-skeleton"></div>
+      </div>
+
+      <div v-else-if="seriesList.length > 0" class="series-grid-section">
+        <p class="series-grid-count" role="status">
+          {{ seriesTotalSize }} série(s)
+        </p>
+
+        <div class="series-grid" role="list">
+          <button
+            v-for="series in seriesList"
+            :key="series.ratingKey"
+            type="button"
+            data-testid="series-card"
+            class="series-card group relative flex flex-col rounded-xl overflow-hidden border border-stroke bg-card shadow-sm hover:shadow-lg transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900"
+            @click="openMarkers(series)"
+            role="listitem"
+          >
+            <div class="series-card-poster relative aspect-[2/3] w-full overflow-hidden bg-sunken">
+              <div
+                data-testid="series-thumb-inner"
+                class="h-full w-full transition-transform duration-500 group-hover:scale-105 group-focus-visible:scale-105"
+              >
+                <img
+                  v-if="series.thumb"
+                  :src="series.thumb"
+                  :alt="series.title"
+                  loading="lazy"
+                  class="h-full w-full object-cover"
+                />
+                <div v-else class="flex h-full w-full items-center justify-center text-muted">
+                  <AppIcon name="tv" size="lg" />
+                </div>
+              </div>
+              <div
+                aria-hidden="true"
+                class="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent transition-opacity duration-300 group-hover:opacity-100 group-focus-visible:opacity-100"
+              ></div>
+              <div class="absolute bottom-0 left-0 right-0 p-3 text-white">
+                <h4 class="truncate text-sm font-semibold">{{ series.title }}</h4>
               </div>
             </div>
-            <div
-              aria-hidden="true"
-              class="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent transition-opacity duration-300 group-hover:opacity-100 group-focus-visible:opacity-100"
-            ></div>
-            <div class="absolute bottom-0 left-0 right-0 p-3 text-white">
-              <h4 class="truncate text-sm font-semibold">{{ series.title }}</h4>
-            </div>
+            <span class="sr-only">Abrir marcadores de {{ series.title }}</span>
+          </button>
+        </div>
+
+        <div v-if="hasMore" class="load-more-area">
+          <div v-if="isLoadingMore" class="loading-indicator">
+            <AppIcon name="loader" size="md" class="animate-spin" />
+            <span>Carregando mais...</span>
           </div>
-          <span class="sr-only">Abrir marcadores de {{ series.title }}</span>
+          <div ref="sentinelRef" class="h-1" aria-hidden="true"></div>
+        </div>
+      </div>
+
+      <div v-else class="empty-state">
+        <AppIcon name="tv" size="lg" class="mx-auto text-muted" />
+        <p class="mt-3 text-sm font-medium text-secondary">Nenhuma série encontrada.</p>
+        <p class="mt-2 text-xs text-tertiary">
+          O catálogo desta biblioteca ainda não foi sincronizado.
+        </p>
+        <button
+          v-if="!syncLoading"
+          type="button"
+          class="mt-4 px-4 py-2 rounded-lg border border-primary bg-primary text-white text-sm font-medium hover:bg-primary/90 transition-colors"
+          @click="forceSyncCatalog"
+        >
+          <AppIcon name="refresh-cw" size="sm" class="inline mr-1" />
+          Forçar sincronização
+        </button>
+        <button
+          v-else
+          type="button"
+          class="mt-4 px-4 py-2 rounded-lg border border-border bg-muted text-muted text-sm font-medium cursor-not-allowed"
+          disabled
+        >
+          <AppIcon name="loader" size="sm" class="inline mr-1 animate-spin" />
+          Sincronizando...
         </button>
       </div>
-
-      <div v-if="hasMore" class="load-more-area">
-        <div v-if="isLoadingMore" class="loading-indicator">
-          <AppIcon name="loader" size="md" class="animate-spin" />
-          <span>Carregando mais...</span>
-        </div>
-        <div ref="sentinelRef" class="h-1" aria-hidden="true"></div>
-      </div>
-    </div>
-
-    <div v-else class="empty-state">
-      <AppIcon name="tv" size="lg" class="mx-auto text-muted" />
-      <p class="mt-3 text-sm font-medium text-secondary">Nenhuma série encontrada.</p>
-      <p class="mt-2 text-xs text-tertiary">
-        O catálogo desta biblioteca ainda não foi sincronizado.
-      </p>
-      <button
-        v-if="!syncLoading"
-        type="button"
-        class="mt-4 px-4 py-2 rounded-lg border border-primary bg-primary text-white text-sm font-medium hover:bg-primary/90 transition-colors"
-        @click="forceSyncCatalog"
-      >
-        <AppIcon name="refresh-cw" size="sm" class="inline mr-1" />
-        Forçar sincronização
-      </button>
-      <button
-        v-else
-        type="button"
-        class="mt-4 px-4 py-2 rounded-lg border border-border bg-muted text-muted text-sm font-medium cursor-not-allowed"
-        disabled
-      >
-        <AppIcon name="loader" size="sm" class="inline mr-1 animate-spin" />
-        Sincronizando...
-      </button>
-    </div>
+    </section>
 
     <div v-if="syncMessage" class="sync-message" :class="syncType">
       {{ syncMessage }}
     </div>
-
-    <!-- Genre Carousel Section - Below Infinite Scroll List -->
-    <section v-if="!carouselLoading && genreGroups.length > 0" class="genre-carousel-section" aria-labelledby="genres-heading">
-      <h2 id="genres-heading" class="section-title">Por Gênero</h2>
-      <GenreCarousel
-        :genre-groups="genreGroups"
-        :is-loading="carouselLoading"
-        :error="carouselError"
-      />
-    </section>
-    <section v-else-if="carouselLoading" class="genre-carousel-section">
-      <h2 id="genres-heading" class="section-title">Por Gênero</h2>
-      <GenreCarousel
-        :genre-groups="[]"
-        :is-loading="true"
-        :error="carouselError"
-      />
-    </section>
   </div>
 </template>
 
@@ -198,6 +270,89 @@ function openMarkers(series) {
 .series-view {
   padding: 1.5rem;
   max-width: 100%;
+}
+
+/* Tab Navigation */
+.tabs-nav {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.tab-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1rem;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.tab-btn:hover {
+  background: var(--bg-sunken);
+  color: var(--text);
+  border-color: var(--border);
+}
+
+.tab-btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--primary);
+  border-color: var(--primary);
+}
+
+.tab-btn--active {
+  background: var(--primary);
+  color: var(--primary-foreground);
+  border-color: var(--primary);
+}
+
+.tab-btn--active:hover {
+  opacity: 0.9;
+  color: var(--primary-foreground);
+  border-color: var(--primary);
+}
+
+.tab-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.5rem;
+  height: 1.25rem;
+  padding: 0 0.375rem;
+  border-radius: 9999px;
+  background: var(--bg-sunken);
+  color: var(--text-tertiary);
+  font-size: 0.6875rem;
+  font-weight: 600;
+}
+
+.tab-btn--active .tab-count {
+  background: color-mix(in srgb, var(--primary-foreground) 20%, transparent);
+  color: var(--primary-foreground);
+}
+
+.tab-panel {
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Hide content when not active (v-show uses display: none) */
+.tab-panel[style*="display: none"] {
+  display: none !important;
 }
 
 .series-toolbar {
@@ -402,19 +557,5 @@ function openMarkers(series) {
   background: color-mix(in srgb, var(--danger) 10%, transparent);
   border: 1px solid color-mix(in srgb, var(--danger) 30%, transparent);
   color: var(--danger);
-}
-
-/* Genre Carousel Section */
-.genre-carousel-section {
-  margin-top: 3rem;
-  padding-top: 2rem;
-  border-top: 1px solid var(--border);
-}
-
-.section-title {
-  font-size: 1.25rem;
-  font-weight: 700;
-  margin: 0 0 1.5rem;
-  color: var(--text);
 }
 </style>

@@ -1,23 +1,29 @@
 import { ref, computed, watch } from "vue";
 import { useRoute } from "vue-router";
 import { apiFetch, extractErrorMessage } from "../api";
+import { useInfiniteScroll } from "./useInfiniteScroll";
 
 export function useSeriesByGenre(options = {}) {
-  const { libraryKey: propLibraryKey, pageSize: propPageSize = 1000 } = options;
+  const { libraryKey: propLibraryKey, pageSize: propPageSize = 100 } = options;
   const route = useRoute();
-  const PAGE_SIZE = propPageSize;
+  const PAGE_SIZE = Math.min(propPageSize, 100); // API max is 100
 
   const genreGroups = ref([]);
   const isLoading = ref(false);
   const error = ref("");
+  const internalPage = ref(1);
+  const hasMore = ref(true);
   const allSeriesLoaded = ref(false);
 
   const libraryKey = computed(() => propLibraryKey || route.params.key || null);
 
-  async function fetchAllSeries(key) {
+  // Track loaded ratingKeys per genre to avoid duplicates
+  const loadedKeysByGenre = ref({});
+
+  async function fetchSeriesPage(key, pageToFetch) {
     if (!key) return null;
     const params = new URLSearchParams({
-      page: "1",
+      page: String(pageToFetch),
       pageSize: String(PAGE_SIZE),
     });
 
@@ -32,8 +38,8 @@ export function useSeriesByGenre(options = {}) {
     return await res.json();
   }
 
-  function groupByGenre(series) {
-    const groups = {};
+  function groupByGenre(series, existingGroups = {}) {
+    const groups = { ...existingGroups };
     const noGenreKey = "Outros";
 
     for (const s of series) {
@@ -41,7 +47,14 @@ export function useSeriesByGenre(options = {}) {
       if (!groups[genre]) {
         groups[genre] = [];
       }
-      groups[genre].push(s);
+      // Avoid duplicates by ratingKey
+      if (!loadedKeysByGenre.value[genre]) {
+        loadedKeysByGenre.value[genre] = new Set();
+      }
+      if (!loadedKeysByGenre.value[genre].has(s.ratingKey)) {
+        groups[genre].push(s);
+        loadedKeysByGenre.value[genre].add(s.ratingKey);
+      }
     }
 
     // Sort genres alphabetically, but put "Outros" at the end
@@ -57,21 +70,71 @@ export function useSeriesByGenre(options = {}) {
     }));
   }
 
-  async function loadSeriesByGenre(key) {
+  async function loadNextPage() {
+    const key = libraryKey.value;
+    if (!key || !hasMore.value || isLoading.value) return false;
+
+    isLoading.value = true;
+    const nextPage = internalPage.value + 1;
+
+    try {
+      const data = await fetchSeriesPage(key, nextPage);
+      if (!data) return false;
+
+      const items = data.items ?? [];
+      if (items.length === 0) {
+        hasMore.value = false;
+        allSeriesLoaded.value = true;
+        return false;
+      }
+
+      // Merge new items into existing genre groups
+      genreGroups.value = groupByGenre(items, Object.fromEntries(
+        genreGroups.value.map(g => [g.genre, g.series])
+      ));
+
+      internalPage.value = nextPage;
+
+      // Check if we've loaded all items
+      if (items.length < PAGE_SIZE) {
+        hasMore.value = false;
+        allSeriesLoaded.value = true;
+      }
+
+      return hasMore.value;
+    } catch (err) {
+      error.value = err.message || "Erro de conexão";
+      return false;
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  async function loadInitialPage(key) {
     const targetKey = key || libraryKey.value;
     if (!targetKey) return;
 
     isLoading.value = true;
     error.value = "";
     allSeriesLoaded.value = false;
+    internalPage.value = 1;
+    hasMore.value = true;
+    loadedKeysByGenre.value = {};
 
     try {
-      const data = await fetchAllSeries(targetKey);
+      const data = await fetchSeriesPage(targetKey, 1);
       if (!data) return;
 
       const items = data.items ?? [];
       genreGroups.value = groupByGenre(items);
-      allSeriesLoaded.value = true;
+      internalPage.value = 1;
+
+      if (items.length < PAGE_SIZE) {
+        hasMore.value = false;
+        allSeriesLoaded.value = true;
+      } else {
+        hasMore.value = true;
+      }
     } catch (err) {
       error.value = err.message || "Erro de conexão";
       genreGroups.value = [];
@@ -80,11 +143,18 @@ export function useSeriesByGenre(options = {}) {
     }
   }
 
+  const { sentinelRef, loadMore } = useInfiniteScroll({
+    onLoadMore: loadNextPage,
+    hasMore,
+    isLoading,
+    rootMargin: "300px",
+  });
+
   watch(
     libraryKey,
     (newKey, oldKey) => {
       if (newKey && newKey !== oldKey) {
-        loadSeriesByGenre(newKey);
+        loadInitialPage(newKey);
       }
     },
     { immediate: true }
@@ -96,6 +166,9 @@ export function useSeriesByGenre(options = {}) {
     isLoading,
     error,
     allSeriesLoaded,
-    refresh: () => libraryKey.value && loadSeriesByGenre(libraryKey.value),
+    hasMore,
+    sentinelRef,
+    loadMore,
+    refresh: () => libraryKey.value && loadInitialPage(libraryKey.value),
   };
 }
