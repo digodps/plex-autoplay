@@ -117,7 +117,7 @@ public class FfmpegMarkerDetector : IMarkerDetector
         return names.Any(n => normalized == n || normalized.StartsWith(n + " "));
     }
 
-    private Marker? DetectIntroFromSilence(string filePath, List<SilenceSegment> silenceSegments, int durationMs, Activity? activity)
+    internal Marker? DetectIntroFromSilence(string filePath, List<SilenceSegment> silenceSegments, int durationMs, Activity? activity)
     {
         if (silenceSegments.Count == 0 || durationMs <= 0) return null;
 

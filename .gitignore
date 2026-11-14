@@ -87,3 +87,4 @@ src/PlexAutoplay.Web/core.*
 data/
 publish/
 publish/
+docker-compose.override.yml
