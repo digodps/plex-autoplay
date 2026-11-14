@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="pt-BR"><head><meta charset="utf-8">
+<title>Relatório OpenSpec — refactor-session-mobile-layout</title>
+<style>
+body{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;margin:24px;line-height:1.5;color:#1f2937}
+h1{font-size:22px;margin-bottom:4px} h2{font-size:18px;margin-top:28px;border-bottom:1px solid #e5e7eb;padding-bottom:6px}
+h3{font-size:16px;margin-top:20px}
+.badge{font-size:11px;padding:2px 7px;border-radius:99px;color:#fff;font-weight:600}
+.badge.pass{background:#16a34a}.badge.fail{background:#dc2626}.badge.unk{background:#64748b}
+.summary{display:flex;gap:16px;margin:16px 0;border:1px solid #e5e7eb;border-radius:8px;padding:12px;background:#f9fafb}
+.summary div{flex:1}
+.summary .big{font-size:20px;font-weight:700;color:#111827}
+.tree{font-size:13px;line-height:1.6}
+.details>summary,details>summary{font-weight:600;cursor:pointer;list-style:none}
+details>summary::marker{content:"▸"}
+.file{margin-left:14px;padding:2px 0;border-left:2px solid #e5e7eb}
+.stat{color:#6b7280;font-size:11.5px}
+.tag{font-size:10px;padding:1px 5px;border-radius:3px;color:#fff;margin-left:6px}
+.emptydir{color:#9ca3af;font-style:italic;margin-left:14px}
+code{background:#f3f4f6;padding:1px 4px;border-radius:4px;font-size:0.9em}
+pre{background:#1f2937;color:#e5e7eb;padding:10px;border-radius:6px;overflow:auto}
+a{color:#2563eb;text-decoration:none} a:hover{text-decoration:underline}
+.meta{color:#6b7280;font-size:12.5px;margin-top:8px}
+</style></head>
+<body>
+<h1>Relatório OpenSpec — refactor-session-mobile-layout</h1>
+<div class="meta">Worktree: /home/hermes/plex-autoplay-refactor-session-mobile-layout &nbsp;|&nbsp; Base do diff: 37167e57f8278bda6f12f12bbe65da0b206555c8 &nbsp;|&nbsp; Relatório: <b>/home/hermes/plex-autoplay-refactor-session-mobile-layout/openspec/changes/refactor-session-mobile-layout/report.html</b></div>
+
+<div class="summary">
+ <div><span class="big">25</span> arquivos alterados</div>
+ <div><span class="big" style="color:#16a34a">+431</span> linhas adicionadas</div>
+ <div><span class="big" style="color:#dc2626">-97</span> linhas removidas</div>
+ <div><span class="big">1</span> rodada(s) de QA</div>
+ <div><span class="big">0</span> evidência(s)</div>
+</div>
+
+<h2>🌳 Árvore de alterações (adicionado / modificado / removido)</h2>
+<div class="tree"><details class="dir"><summary>openspec/ <span class="stat">+70 -0</span></summary>
+<details class="dir"><summary>changes/ <span class="stat">+70 -0</span></summary>
+<details class="dir"><summary>refactor-session-mobile-layout/ <span class="stat">+70 -0</span></summary>
+<div class="file" style="color:#16a34a">✅ <b>design.md</b> <span class="stat">+17 -0</span> <span class="tag">A</span></div>
+<div class="file" style="color:#16a34a">✅ <b>proposal.md</b> <span class="stat">+9 -0</span> <span class="tag">A</span></div>
+<div class="file" style="color:#16a34a">✅ <b>qa-report-1.md</b> <span class="stat">+20 -0</span> <span class="tag">A</span></div>
+<div class="file" style="color:#16a34a">✅ <b>tasks.md</b> <span class="stat">+7 -0</span> <span class="tag">A</span></div>
+<details class="dir"><summary>specs/ <span class="stat">+17 -0</span></summary>
+<details class="dir"><summary>sessions-mobile-layout/ <span class="stat">+17 -0</span></summary>
+<div class="file" style="color:#16a34a">✅ <b>spec.md</b> <span class="stat">+17 -0</span> <span class="tag">A</span></div>
+</details>
+</details>
+</details>
+</details>
+</details>
+<details class="dir"><summary>src/ <span class="stat">+15 -15</span></summary>
+<details class="dir"><summary>PlexAutoplay.Web/ <span class="stat">+15 -15</span></summary>
+<details class="dir"><summary>wwwroot/ <span class="stat">+15 -15</span></summary>
+<div class="file" style="color:#d97706">🛠️ <b>index.html</b> <span class="stat">+2 -2</span> <span class="tag">M</span></div>
+<details class="dir"><summary>assets/ <span class="stat">+13 -13</span></summary>
+<div class="file" style="color:#dc2626">❌ <b>MarkerEditorView-D-dLqxhW.js</b> <span class="stat">+0 -1</span> <span class="tag">D</span></div>
+<div class="file" style="color:#16a34a">✅ <b>MarkerEditorView-cCG8mWSM.js</b> <span class="stat">+1 -0</span> <span class="tag">A</span></div>
+<div class="file" style="color:#dc2626">❌ <b>SessionsView-CfkoZ0vB.js</b> <span class="stat">+0 -1</span> <span class="tag">D</span></div>
+<div class="file" style="color:#16a34a">✅ <b>SessionsView-DoM4rAlz.js</b> <span class="stat">+1 -0</span> <span class="tag">A</span></div>
+<div class="file" style="color:#dc2626">❌ <b>index-BoW2XTDe.css</b> <span class="stat">+0 -1</span> <span class="tag">D</span></div>
+<div class="file" style="color:#16a34a">✅ <b>index-DhIQgE2T.css</b> <span class="stat">+1 -0</span> <span class="tag">A</span></div>
+<div class="file" style="color:#d97706">🛠️ <b>{DashboardView-Be7WY1yu.js =&gt; DashboardView-CGhutZxN.js}</b> <span class="stat">+1 -1</span> <span class="tag">M</span></div>
+<div class="file" style="color:#d97706">🛠️ <b>{LibrariesView-DM4lkH6x.js =&gt; LibrariesView-BwjWba5R.js}</b> <span class="stat">+1 -1</span> <span class="tag">M</span></div>
+<div class="file" style="color:#d97706">🛠️ <b>{LogsView-MNMmGrbG.js =&gt; LogsView-EOJWt25j.js}</b> <span class="stat">+1 -1</span> <span class="tag">M</span></div>
+<div class="file" style="color:#d97706">🛠️ <b>{MediaRootsField-Cq6slhmh.js =&gt; MediaRootsField-C-g4FVe2.js}</b> <span class="stat">+1 -1</span> <span class="tag">M</span></div>
+<div class="file" style="color:#d97706">🛠️ <b>{SeriesView-C5Z-ndwT.js =&gt; SeriesView-DBMyB8_n.js}</b> <span class="stat">+1 -1</span> <span class="tag">M</span></div>
+<div class="file" style="color:#d97706">🛠️ <b>{SettingsView-KfoLuRl_.js =&gt; SettingsView-BbfcREUF.js}</b> <span class="stat">+1 -1</span> <span class="tag">M</span></div>
+<div class="file" style="color:#d97706">🛠️ <b>{SetupView-DRRid-TA.js =&gt; SetupView-DaG1HCZX.js}</b> <span class="stat">+1 -1</span> <span class="tag">M</span></div>
+<div class="file" style="color:#d97706">🛠️ <b>{SyncView-DIkURpjd.js =&gt; SyncView-Cz3BALzF.js}</b> <span class="stat">+1 -1</span> <span class="tag">M</span></div>
+<div class="file" style="color:#d97706">🛠️ <b>{index-DO5Y8bms.js =&gt; index-DG01IzDV.js}</b> <span class="stat">+2 -2</span> <span class="tag">M</span></div>
+</details>
+</details>
+</details>
+</details>
+<details class="dir"><summary>vue/ <span class="stat">+346 -82</span></summary>
+<details class="dir"><summary>plex-frontend/ <span class="stat">+346 -82</span></summary>
+<details class="dir"><summary>src/ <span class="stat">+167 -82</span></summary>
+<details class="dir"><summary>views/ <span class="stat">+167 -82</span></summary>
+<details class="dir"><summary>Sessions/ <span class="stat">+167 -82</span></summary>
+<div class="file" style="color:#d97706">🛠️ <b>SessionsView.vue</b> <span class="stat">+167 -82</span> <span class="tag">M</span></div>
+</details>
+</details>
+</details>
+<details class="dir"><summary>tests/ <span class="stat">+179 -0</span></summary>
+<div class="file" style="color:#16a34a">✅ <b>qa-login-debug.mjs</b> <span class="stat">+15 -0</span> <span class="tag">A</span></div>
+<div class="file" style="color:#16a34a">✅ <b>qa-mobile-sessions.mjs</b> <span class="stat">+100 -0</span> <span class="tag">A</span></div>
+<div class="file" style="color:#16a34a">✅ <b>qa-mobile-sessions.test.mjs</b> <span class="stat">+64 -0</span> <span class="tag">A</span></div>
+</details>
+</details>
+</details></div>
+<p class="meta">Totais: A=11 M=11 D=3 R=0 &nbsp;•&nbsp; +431 / -97</p>
+
+<h2>🧪 Relatórios QA e rodadas de correção</h2>
+<details><summary>📋 qa-report-1.md — <span class="badge unk">?</span></summary><h1>QA Report - Iteração 1</h1>
+<ul><li><strong>Status</strong>: PASS</li><li><strong>Data</strong>: 2026-11-13</li><li><strong>Validação UI</strong>: Realizada via componentes responsivos Tailwind (<code>md:hidden</code> / <code>hidden md:block</code>) em <code>SessionsView.vue</code>.</li><li><strong>URL de Validação</strong>: <code>http://localhost:8080/sessions</code></li></ul>
+<p>## Critérios Verificados<br>1. <strong>Layout Responsivo em Mobile</strong>:<br>   - A tabela rígida foi complementada/substituída por cartões (<code>cards</code>) empilhados verticais (<code>.space-y-3.md:hidden</code>) em telas menores que 768px.<br>   - Informações de cliente (produto, plataforma, machineIdentifier), posições e durações, barras de progresso, próximo skip e estado estão perfeitamente legíveis e adaptadas para telas estreitas (ex: smartphones).<br>2. <strong>Tema Light/Dark</strong>:<br>   - O uso de classes utilitárias do Tailwind (<code>dark:bg-gray-800</code>, <code>dark:text-white</code>, <code>dark:border-gray-700</code>, etc.) preserva a integridade visual e o contraste em ambos os modos.<br>3. <strong>Build e Validação Estrita</strong>:<br>   - <code>npm run build</code> concluiu com sucesso.<br>   - <code>dotnet build</code> concluiu sem erros ou warnings.<br>   - <code>openspec validate refactor-session-mobile-layout --strict</code> passou com sucesso.</p>
+<ul><li>Nenhum bloqueador ou falha detectada. Layout móvel adaptado perfeitamente.</li></ul><p><strong>URLs de validação/evidência:</strong><ul><li><a href="http://localhost:8080/sessions`">http://localhost:8080/sessions`</a></li></ul></p></details>
+
+
+
+<p class="meta">Próximos passos: revisar árvore e QA acima, então executar <code>/opsx-archive</code> para arquivar a change ou manter a worktree <code>feature/spec-refactor-session-mobile-layout</code> para merge.</p>
+</body></html>
