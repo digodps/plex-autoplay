@@ -112,12 +112,12 @@ function fmtTime(iso) {
               <div
                 v-for="s in activeSessions"
                 :key="'mobile-' + s.machineIdentifier + s.ratingKey"
-                class="rounded-lg border border-stroke dark:border-gray-700 p-3 bg-gray-50 dark:bg-gray-900/50 space-y-2"
+                class="rounded-lg border border-stroke dark:border-gray-700 p-3 bg-gray-50 dark:bg-gray-900/50 space-y-1.5"
               >
                 <div class="flex items-start justify-between gap-2">
-                  <div>
-                    <div class="font-medium text-gray-900 dark:text-white text-sm">{{ s.product }} ({{ s.platform }})</div>
-                    <div class="text-[11px] text-gray-500 dark:text-gray-400 break-all">{{ s.machineIdentifier }}</div>
+                  <div class="min-w-0">
+                    <div class="text-xs font-medium text-gray-900 dark:text-white">{{ s.product }} ({{ s.platform }})</div>
+                    <div class="text-xs text-gray-500 dark:text-gray-400 truncate">{{ s.machineIdentifier }}</div>
                   </div>
                   <span
                     class="inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium"
@@ -133,27 +133,23 @@ function fmtTime(iso) {
                 </div>
 
                 <div>
-                  <div class="flex justify-between text-xs text-gray-500 dark:text-gray-400 mb-1">
-                    <span>Posição / Duração</span>
-                    <span class="font-medium text-gray-900 dark:text-white">{{ fmtMs(s.positionMs) }} / {{ fmtMs(s.durationMs) }}</span>
+                  <div class="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
+                    <span class="font-mono text-gray-700 dark:text-gray-300">{{ fmtMs(s.positionMs) }} / {{ fmtMs(s.durationMs) }}</span>
+                    <span
+                      v-if="s.nextMarker"
+                      class="inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-xs font-medium text-warning bg-warning/10 border border-warning/30"
+                    >
+                      <span class="h-1.5 w-1.5 rounded-full bg-warning" />
+                      {{ s.nextMarker.kind }} em {{ fmtMs(s.nextMarker.msUntilSkip) }}
+                    </span>
+                    <span v-else>Sem marcador</span>
                   </div>
-                  <div class="w-full h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                  <div class="w-full h-1 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden mt-1">
                     <div
                       :class="s.durationMs > 0 ? 'h-full bg-accent' : 'h-full bg-gray-400 dark:bg-gray-500'"
                       :style="{ width: s.durationMs > 0 ? ((s.positionMs / s.durationMs) * 100).toFixed(0) + '%' : '100%' }"
                     />
                   </div>
-                </div>
-
-                <div class="pt-1">
-                  <span
-                    v-if="s.nextMarker"
-                    class="inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-medium text-warning bg-warning/10 border border-warning/30"
-                  >
-                    <span class="h-1.5 w-1.5 rounded-full bg-warning" />
-                    {{ s.nextMarker.kind }} em {{ fmtMs(s.nextMarker.msUntilSkip) }}
-                  </span>
-                  <span v-else class="text-xs text-gray-500 dark:text-gray-400">Sem marcador à frente</span>
                 </div>
               </div>
             </div>
