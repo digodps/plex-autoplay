@@ -1,13 +1,29 @@
 <script setup>
-import { computed, onMounted } from "vue";
+import { computed, onMounted, ref } from "vue";
 import { useRoute } from "vue-router";
 import AppIcon from "@/components/AppIcon.vue";
 import MarkerRow from "@/components/MarkerRow.vue";
 import { useMarkerStore } from "@/stores/markers";
+import { reprocessMarkers } from "@/api";
 
 const route = useRoute();
 const store = useMarkerStore();
 const seriesKey = computed(() => route.params.seriesKey);
+const reprocessing = ref(false);
+
+async function handleReprocess() {
+  if (!seriesKey.value) return;
+  reprocessing.value = true;
+  try {
+    const res = await reprocessMarkers(seriesKey.value);
+    if (!res.ok) throw new Error("Falha ao reprocessar marcadores");
+    await store.fetchSeries(seriesKey.value);
+  } catch (e) {
+    store.error.value = e.message || "Falha ao reprocessar.";
+  } finally {
+    reprocessing.value = false;
+  }
+}
 
 onMounted(() => {
   store.fetchSeries(seriesKey.value);
@@ -30,13 +46,34 @@ const seasons = computed(() => {
   <div class="page">
     <div class="min-h-screen">
       <div class="border-b border-gray-200 dark:border-gray-800 sticky top-0 z-20">
-        <div class="max-w-2xl mx-auto px-4 py-3 flex items-center gap-2">
-          <h1 class="text-28 font-bold text-gray-900 dark:text-gray-100">
-            Marcadores da série
-          </h1>
-          <p class="text-sm text-gray-500 dark:text-gray-400">
-            Selecione um campo de intro ou créditos para editar ou adicionar.
-          </p>
+        <div class="max-w-2xl mx-auto px-4 py-3 flex items-center gap-3">
+          <div class="flex-1 min-w-0">
+            <h1 class="text-28 font-bold text-gray-900 dark:text-gray-100">
+              Marcadores da série
+            </h1>
+            <p class="text-sm text-gray-500 dark:text-gray-400">
+              Selecione um campo de intro ou créditos para editar ou adicionar.
+            </p>
+          </div>
+          <button
+            type="button"
+            :disabled="reprocessing"
+            data-testid="markers-reprocess"
+            class="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 shadow-sm transition hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            @click="handleReprocess"
+          >
+            <svg
+              class="h-4 w-4"
+              :class="{ 'animate-spin': reprocessing }"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            {{ reprocessing ? "Reprocessando…" : "Reprocessar" }}
+          </button>
         </div>
       </div>
 
