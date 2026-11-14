@@ -7,6 +7,7 @@
 # Login, dashboard, configurações, bibliotecas/séries/editor e scan são
 # exercitados como o usuário faz: Chromium real contra BASE_URL.
 PW_LOG="$TMP/playwright.log"
+BASE_URL=${BASE_URL:-http://localhost:8080}
 if ! command -v npx >/dev/null 2>&1; then
   fail "Playwright — npx não encontrado; instale Node.js para testar a interface"
 else

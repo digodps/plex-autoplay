@@ -1,4 +1,8 @@
-# https-transporte Specification
+# https-transporte Specification (OBSOLETO — substituído por remover-controle-https)
+
+> **⚠️ OBSOLETO:** Esta especificação foi substituída pela change `remover-controle-https`.
+> A aplicação agora serve apenas HTTP na porta 80. TLS/HTTPS é responsabilidade da infraestrutura do usuário (reverse proxy, load balancer cloud, etc.).
+> Esta spec é mantida apenas para histórico.
 
 ## Purpose
 Define o comportamento de transporte seguro HTTPS-only do plex-autoplay: certificado auto-assinado por padrão em dev, importação de certificado válido via variável de ambiente, bloqueio completo de HTTP e WebSocket Secure (WSS) para o canal do PlexAutoSkip.

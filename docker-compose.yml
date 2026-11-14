@@ -4,8 +4,7 @@ services:
     container_name: plex-autoplay
     restart: unless-stopped
     ports:
-      - "8081:80"     # HTTP API + Vue SPA
-      - "8082:8082"   # WSS PlexAutoSkip WebSocket
+      - "8080:80"     # HTTP API + Vue SPA
     volumes:
       - plex-data:/data              # SQLite, image-cache, app-config.json
       - ${MEDIA_ROOT}:/media:ro     # Plex media files (read-only)
@@ -19,7 +18,6 @@ services:
       - OTEL_EXPORTER=${OTEL_EXPORTER:-console}
       - OTEL_ENDPOINT=${OTEL_ENDPOINT:-}
       - OTEL_SERVICE_NAME=${OTEL_SERVICE_NAME:-plex-autoplay}
-      - DISABLE_HTTP=true
       - LOG_LEVEL=${LOG_LEVEL:-Information}
       - ALLOWED_HOSTS=${ALLOWED_HOSTS:-*}
       - SYNC_INTERVAL_MINUTES=${SYNC_INTERVAL_MINUTES:-5}
