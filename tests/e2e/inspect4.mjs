@@ -1,0 +1,20 @@
+import { chromium } from "@playwright/test";
+const BASE = "http://localhost:8080";
+const browser = await chromium.launch({ headless: true });
+const page = await browser.newPage({ ignoreHTTPSErrors: true });
+page.setDefaultTimeout(30000);
+page.on("pageerror", e => console.log("PAGEERR:", e.message, e.stack?.slice(0,500)));
+page.on("console", msg => console.log("CONSOLE:", msg.type(), msg.text().slice(0,300)));
+
+await page.goto(`${BASE}/login`, { waitUntil: "domcontentloaded" });
+await page.fill('input[data-testid="password-input"]', "admin123");
+await page.click('button[data-testid="login-submit"]');
+await page.waitForURL(`${BASE}/dashboard`, { timeout: 10000 });
+await page.goto(`${BASE}/libraries/1/series`, { waitUntil: "domcontentloaded" });
+await page.waitForTimeout(8000);
+console.log("URL:", page.url());
+console.log("genre-carousel-view:", await page.locator('.genre-carousel-view').count());
+console.log("genre-section:", await page.locator('.genre-section').count());
+console.log("carousel-card:", await page.locator('.carousel-card').count());
+console.log("series-view:", await page.locator('.series-view').count());
+await browser.close();
