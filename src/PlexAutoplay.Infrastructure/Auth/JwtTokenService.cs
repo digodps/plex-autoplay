@@ -27,7 +27,6 @@ public class JwtTokenService : ITokenService
             new Claim(ClaimTypes.Name, "admin"),
             new Claim(ClaimTypes.Role, "admin"),
             new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-            // No expiration - stateless, internal use only
         };
 
         var credentials = new SigningCredentials(_key, SecurityAlgorithms.HmacSha256);
@@ -36,7 +35,7 @@ public class JwtTokenService : ITokenService
             issuer: "plex-autoplay",
             audience: "plex-autoplay",
             claims: claims,
-            expires: null,
+            expires: DateTime.UtcNow.AddMinutes(30),
             signingCredentials: credentials);
 
         return new JwtSecurityTokenHandler().WriteToken(token);
@@ -60,7 +59,7 @@ public class JwtTokenService : ITokenService
                 ValidIssuer = "plex-autoplay",
                 ValidAudience = "plex-autoplay",
                 IssuerSigningKey = _key,
-                ValidateLifetime = false, // No expiration
+                ValidateLifetime = true,
                 ClockSkew = TimeSpan.Zero
             }, out _);
             return true;

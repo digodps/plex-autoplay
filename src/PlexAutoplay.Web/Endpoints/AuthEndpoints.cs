@@ -87,7 +87,8 @@ public static class AuthEndpoints
                 Secure = cookieSecure,
                 SameSite = SameSiteMode.Lax,
                 Path = "/",
-                IsEssential = true
+                IsEssential = true,
+                MaxAge = TimeSpan.FromMinutes(30)
             };
             context.Response.Cookies.Delete("auth_token", cookieOptions);
             context.Response.Cookies.Append("auth_token", token!, cookieOptions);

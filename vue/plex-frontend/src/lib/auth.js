@@ -12,8 +12,8 @@ function buildCookieString(name, value, options = {}) {
   return `${name}=${encodeURIComponent(value)}${expiry}; path=${path}; SameSite=${sameSite}${secureFlag}`;
 }
 
-export function setCookie(name, value, days = 0) {
-  const maxAge = days > 0 ? days * 24 * 60 * 60 : undefined;
+export function setCookie(name, value, maxAgeSeconds = 0) {
+  const maxAge = maxAgeSeconds > 0 ? maxAgeSeconds : undefined;
   document.cookie = buildCookieString(name, value, { maxAge });
 }
 

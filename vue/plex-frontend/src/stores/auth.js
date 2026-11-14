@@ -12,7 +12,7 @@ export const useAuthStore = defineStore("auth", {
     login(token) {
       this.token = "";
       deleteCookie(AUTH_COOKIE);
-      setCookie(AUTH_COOKIE, token, 0);
+      setCookie(AUTH_COOKIE, token, 30 * 60);
       this.token = token;
     },
     logout() {
