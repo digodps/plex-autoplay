@@ -5,15 +5,30 @@ export function getCookie(name) {
   return match ? decodeURIComponent(match[2]) : "";
 }
 
+function buildCookieString(name, value, options = {}) {
+  const { maxAge, path = "/", sameSite = "Lax", secure = location.protocol === "https:" } = options;
+  const expiry = maxAge !== undefined ? `; max-age=${maxAge}` : "";
+  const secureFlag = secure ? "; Secure" : "";
+  return `${name}=${encodeURIComponent(value)}${expiry}; path=${path}; SameSite=${sameSite}${secureFlag}`;
+}
+
 export function setCookie(name, value, days = 0) {
-  const expiry = days > 0 ? `; max-age=${days * 24 * 60 * 60}` : "";
-  const secure = location.protocol === "https:" ? "; Secure" : "";
-  document.cookie = `${name}=${encodeURIComponent(value)}${expiry}; path=/; SameSite=Lax${secure}`;
+  const maxAge = days > 0 ? days * 24 * 60 * 60 : undefined;
+  document.cookie = buildCookieString(name, value, { maxAge });
 }
 
 export function deleteCookie(name) {
-  const secure = location.protocol === "https:" ? "; Secure" : "";
-  document.cookie = `${name}=; max-age=0; path=/; SameSite=Lax${secure}`;
+  const attrs = [
+    { secure: true, sameSite: "Lax" },
+    { secure: false, sameSite: "Lax" },
+    { secure: true, sameSite: "None" },
+    { secure: false, sameSite: "None" },
+    { secure: true, sameSite: "Strict" },
+    { secure: false, sameSite: "Strict" },
+  ];
+  for (const opt of attrs) {
+    document.cookie = buildCookieString(name, "", { maxAge: 0, ...opt });
+  }
 }
 
 export function getToken() {

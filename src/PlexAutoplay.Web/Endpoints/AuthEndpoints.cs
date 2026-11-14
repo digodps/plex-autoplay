@@ -78,17 +78,19 @@ public static class AuthEndpoints
                 return Results.Unauthorized();
             }
 
-            // Cookie legível pelo frontend: o guarda do Vue lê o token em
-            // document.cookie e o envia como Bearer.
-            var cookieSecure = !disableHttp; // Secure only when HTTPS is enabled
-            context.Response.Cookies.Append("auth_token", token!, new CookieOptions
+            // Explicitly expire any existing cookie first to guarantee replacement
+            // even if Secure/SameSite attributes differed (e.g. HTTPS→HTTP downgrade).
+            var cookieSecure = !disableHttp;
+            var cookieOptions = new CookieOptions
             {
                 HttpOnly = false,
                 Secure = cookieSecure,
                 SameSite = SameSiteMode.Lax,
                 Path = "/",
                 IsEssential = true
-            });
+            };
+            context.Response.Cookies.Delete("auth_token", cookieOptions);
+            context.Response.Cookies.Append("auth_token", token!, cookieOptions);
 
             return Results.Ok(new { success = true, token });
         }
