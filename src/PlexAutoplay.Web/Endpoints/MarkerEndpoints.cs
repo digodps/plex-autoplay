@@ -8,6 +8,63 @@ using PlexAutoplay.Domain.Ports;
 namespace PlexAutoplay.Web.Endpoints;
 
 /// <summary>
+/// Endpoints de reprocessamento em massa de marcadores por biblioteca.
+/// </summary>
+public static class MarkerReprocessLibraryEndpoints
+{
+    public static void MapMarkerReprocessLibraryEndpoints(this IEndpointRouteBuilder app)
+    {
+        app.MapPost("/api/markers/reprocess-library/{sectionKey}", async (
+            string sectionKey,
+            [FromServices] GetSeriesQuery seriesQuery,
+            [FromServices] IPlexApiClient plexClient,
+            [FromServices] LibraryScanUseCase libraryScan,
+            [FromServices] IMarkerRepository markerRepository,
+            [FromServices] IAppSettingsStore settings) =>
+        {
+            // Busca todas as séries da biblioteca local
+            var (seriesItems, _) = await seriesQuery.ListAsync(sectionKey, 0, int.MaxValue, null);
+            var seriesList = seriesItems.ToList();
+
+            if (seriesList.Count == 0)
+            {
+                return Results.Ok(new { processed = 0, skipped = 0, total = 0, message = "Nenhuma série encontrada nesta biblioteca" });
+            }
+
+            var currentSettings = await settings.GetAsync();
+            int totalEpisodes = 0;
+            int processedMarkers = 0;
+            int skippedMarkers = 0;
+
+            foreach (var series in seriesList)
+            {
+                var episodesResult = await plexClient.GetSeriesEpisodesAsync(series.RatingKey);
+                if (episodesResult.Failed)
+                {
+                    continue; // skip failed series
+                }
+
+                var episodes = episodesResult.Episodes.ToList();
+                totalEpisodes += episodes.Count;
+
+                foreach (var ep in episodes)
+                {
+                    await markerRepository.DeleteAsync(ep.RatingKey, "intro");
+                    await markerRepository.DeleteAsync(ep.RatingKey, "credits");
+                }
+
+                var seeds = episodes.Select(e => new EpisodeSeed(e.RatingKey, e.FilePath));
+                var summary = await libraryScan.ScanLibraryAsync(seeds, currentSettings.MediaRoots, origin: "detected");
+                processedMarkers += summary.Processed;
+                skippedMarkers += summary.Skipped;
+            }
+
+            return Results.Ok(new { processed = processedMarkers, skipped = skippedMarkers, total = totalEpisodes, series = seriesList.Count });
+        });
+    }
+}
+
+/// <summary>
 /// Endpoints de CRUD de marcadores (intro/créditos) por RatingKey.
 /// </summary>
 public static class MarkerEndpoints

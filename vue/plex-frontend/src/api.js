@@ -117,3 +117,7 @@ export async function syncRun() {
 export async function reprocessMarkers(seriesKey) {
   return apiFetch(`/api/markers/reprocess/${encodeURIComponent(seriesKey)}`, { method: "POST" });
 }
+
+export async function reprocessLibrary(sectionKey) {
+  return apiFetch(`/api/markers/reprocess-library/${encodeURIComponent(sectionKey)}`, { method: "POST" });
+}

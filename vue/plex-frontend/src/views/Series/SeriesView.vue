@@ -6,7 +6,7 @@ import GenreCarousel from "@/components/GenreCarousel.vue";
 import { useSeriesCatalog } from "@/composables/useSeriesCatalog";
 import { useSeriesByGenre } from "@/composables/useSeriesByGenre";
 import { useLibraryTitle } from "@/composables/useLibraryTitle";
-import { reprocessMarkers } from "@/api";
+import { reprocessLibrary } from "@/api";
 
 const route = useRoute();
 const router = useRouter();
@@ -59,23 +59,25 @@ const tabs = [
   { id: "list", label: "Todas as Séries", icon: "list", count: computed(() => seriesTotalSize.value) },
 ];
 
-// Reprocessing state per series
-const reprocessingKey = ref(null);
+// Library-wide reprocessing state
+const libraryReprocessing = ref(false);
 
-async function handleReprocess(seriesKey, e) {
-  e.stopPropagation();
-  reprocessingKey.value = seriesKey;
+async function handleReprocessLibrary() {
+  const key = libraryKey.value;
+  if (!key) return;
+  
+  libraryReprocessing.value = true;
   try {
-    const res = await reprocessMarkers(seriesKey);
-    if (!res.ok) throw new Error("Falha ao reprocessar marcadores");
-    // Optionally refresh series list or show success toast
-    syncMessage.value = "Marcadores reprocessados com sucesso";
+    const res = await reprocessLibrary(key);
+    if (!res.ok) throw new Error("Falha ao reprocessar biblioteca");
+    const data = await res.json();
+    syncMessage.value = `Reprocessamento concluído: ${data.processed} marcadores, ${data.series} séries`;
     syncType.value = "success";
   } catch (e) {
-    syncMessage.value = e.message || "Falha ao reprocessar";
+    syncMessage.value = e.message || "Falha ao reprocessar biblioteca";
     syncType.value = "error";
   } finally {
-    reprocessingKey.value = null;
+    libraryReprocessing.value = false;
   }
 }
 
@@ -128,6 +130,16 @@ function openMarkers(series) {
       <span v-if="!seriesLoading && !carouselLoading" class="count">
         {{ seriesTotalSize }} série(s) • {{ totalSeriesInCarousel }} em {{ genreGroups.length }} gênero(s)
       </span>
+      <button
+        type="button"
+        class="reprocess-library-btn"
+        :disabled="libraryReprocessing"
+        data-testid="library-reprocess"
+        @click="handleReprocessLibrary"
+      >
+        <AppIcon name="refresh-cw" size="sm" :class="{ 'animate-spin': libraryReprocessing }" />
+        <span>{{ libraryReprocessing ? "Reprocessando…" : "Reprocessar biblioteca" }}</span>
+      </button>
     </div>
 
     <div v-if="libraryError" class="alert" role="alert">
@@ -208,61 +220,41 @@ function openMarkers(series) {
         </p>
 
         <div class="series-grid" role="list">
-          <div
+          <button
             v-for="series in seriesList"
             :key="series.ratingKey"
+            type="button"
             data-testid="series-card"
-            class="series-card group relative flex flex-col rounded-xl overflow-hidden border border-stroke bg-card shadow-sm hover:shadow-lg transition-all duration-300"
+            class="series-card group relative flex flex-col rounded-xl overflow-hidden border border-stroke bg-card shadow-sm hover:shadow-lg transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900"
+            @click="openMarkers(series)"
             role="listitem"
           >
-            <button
-              type="button"
-              class="series-card-main flex flex-col focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset"
-              @click="openMarkers(series)"
-            >
-              <div class="series-card-poster relative aspect-[2/3] w-full overflow-hidden bg-sunken">
-                <div
-                  data-testid="series-thumb-inner"
-                  class="h-full w-full transition-transform duration-500 group-hover:scale-105 group-focus-visible:scale-105"
-                >
-                  <img
-                    v-if="series.thumb"
-                    :src="series.thumb"
-                    :alt="series.title"
-                    loading="lazy"
-                    class="h-full w-full object-cover"
-                  />
-                  <div v-else class="flex h-full w-full items-center justify-center text-muted">
-                    <AppIcon name="tv" size="lg" />
-                  </div>
-                </div>
-                <div
-                  aria-hidden="true"
-                  class="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent"
-                ></div>
-                <div class="absolute bottom-0 left-0 right-0 p-3 text-white">
-                  <h4 class="truncate text-sm font-semibold">{{ series.title }}</h4>
+            <div class="series-card-poster relative aspect-[2/3] w-full overflow-hidden bg-sunken">
+              <div
+                data-testid="series-thumb-inner"
+                class="h-full w-full transition-transform duration-500 group-hover:scale-105 group-focus-visible:scale-105"
+              >
+                <img
+                  v-if="series.thumb"
+                  :src="series.thumb"
+                  :alt="series.title"
+                  loading="lazy"
+                  class="h-full w-full object-cover"
+                />
+                <div v-else class="flex h-full w-full items-center justify-center text-muted">
+                  <AppIcon name="tv" size="lg" />
                 </div>
               </div>
-              <span class="sr-only">Abrir marcadores de {{ series.title }}</span>
-            </button>
-            <button
-              type="button"
-              class="series-reprocess-btn"
-              :disabled="reprocessingKey !== null"
-              data-testid="series-reprocess"
-              :title="`Forçar reprocessamento de ${series.title}`"
-              :aria-label="`Forçar reprocessamento de ${series.title}`"
-              @click="handleReprocess(series.ratingKey, $event)"
-            >
-              <AppIcon
-                name="refresh-cw"
-                size="sm"
-                :class="{ 'animate-spin': reprocessingKey === series.ratingKey }"
-              />
-              <span>{{ reprocessingKey === series.ratingKey ? "Reprocessando…" : "Reprocessar" }}</span>
-            </button>
-          </div>
+              <div
+                aria-hidden="true"
+                class="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent transition-opacity duration-300 group-hover:opacity-100 group-focus-visible:opacity-100"
+              ></div>
+              <div class="absolute bottom-0 left-0 right-0 p-3 text-white">
+                <h4 class="truncate text-sm font-semibold">{{ series.title }}</h4>
+              </div>
+            </div>
+            <span class="sr-only">Abrir marcadores de {{ series.title }}</span>
+          </button>
         </div>
 
         <div v-if="hasMore" class="load-more-area">
@@ -554,37 +546,29 @@ function openMarkers(series) {
   overflow: hidden;
 }
 
-.series-card-main {
-  background: transparent;
-  border: none;
-  padding: 0;
-  cursor: pointer;
-  text-align: left;
-  flex: 1;
-}
-
-.series-reprocess-btn {
+.reprocess-library-btn {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
   gap: 0.375rem;
-  padding: 0.5rem;
-  border: none;
-  border-top: 1px solid var(--border);
+  padding: 0.5rem 0.875rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
   background: var(--bg-elevated);
   color: var(--text-secondary);
-  font-size: 0.75rem;
+  font-size: 0.8125rem;
   font-weight: 500;
   cursor: pointer;
-  transition: background 0.2s, color 0.2s;
+  white-space: nowrap;
+  transition: background 0.2s, color 0.2s, border-color 0.2s;
 }
 
-.series-reprocess-btn:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--primary) 12%, transparent);
+.reprocess-library-btn:hover:not(:disabled) {
+  border-color: var(--primary);
   color: var(--primary);
+  background: color-mix(in srgb, var(--primary) 10%, transparent);
 }
 
-.series-reprocess-btn:disabled {
+.reprocess-library-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
