@@ -27,22 +27,22 @@ a{color:#2563eb;text-decoration:none} a:hover{text-decoration:underline}
 <div class="meta">Worktree: /home/hermes/plex-autoplay-double-check-open-vs-music &nbsp;|&nbsp; Base do diff: ad41bf07fa58c94c2844ba26318d0469f42a339d &nbsp;|&nbsp; Relatório: <b>/home/hermes/plex-autoplay-double-check-open-vs-music/openspec/changes/double-check-open-vs-music/report.html</b></div>
 
 <div class="summary">
- <div><span class="big">10</span> arquivos alterados</div>
- <div><span class="big" style="color:#16a34a">+433</span> linhas adicionadas</div>
- <div><span class="big" style="color:#dc2626">-59</span> linhas removidas</div>
+ <div><span class="big">14</span> arquivos alterados</div>
+ <div><span class="big" style="color:#16a34a">+505</span> linhas adicionadas</div>
+ <div><span class="big" style="color:#dc2626">-60</span> linhas removidas</div>
  <div><span class="big">1</span> rodada(s) de QA</div>
  <div><span class="big">0</span> evidência(s)</div>
 </div>
 
 <h2>🌳 Árvore de alterações (adicionado / modificado / removido)</h2>
-<div class="tree"><details class="dir"><summary>openspec/ <span class="stat">+223 -0</span></summary>
-<details class="dir"><summary>changes/ <span class="stat">+223 -0</span></summary>
-<details class="dir"><summary>double-check-open-vs-music/ <span class="stat">+223 -0</span></summary>
+<div class="tree"><details class="dir"><summary>openspec/ <span class="stat">+230 -0</span></summary>
+<details class="dir"><summary>changes/ <span class="stat">+230 -0</span></summary>
+<details class="dir"><summary>double-check-open-vs-music/ <span class="stat">+230 -0</span></summary>
 <div class="file" style="color:#16a34a">✅ <b>deficiencias_resolvidas.md</b> <span class="stat">+13 -0</span> <span class="tag">A</span></div>
 <div class="file" style="color:#16a34a">✅ <b>design.md</b> <span class="stat">+65 -0</span> <span class="tag">A</span></div>
 <div class="file" style="color:#16a34a">✅ <b>proposal.md</b> <span class="stat">+41 -0</span> <span class="tag">A</span></div>
 <div class="file" style="color:#16a34a">✅ <b>qa-report-1.md</b> <span class="stat">+34 -0</span> <span class="tag">A</span></div>
-<div class="file" style="color:#16a34a">✅ <b>tasks.md</b> <span class="stat">+12 -0</span> <span class="tag">A</span></div>
+<div class="file" style="color:#16a34a">✅ <b>tasks.md</b> <span class="stat">+19 -0</span> <span class="tag">A</span></div>
 <details class="dir"><summary>specs/ <span class="stat">+58 -0</span></summary>
 <details class="dir"><summary>plex-markers/ <span class="stat">+58 -0</span></summary>
 <div class="file" style="color:#16a34a">✅ <b>spec.md</b> <span class="stat">+58 -0</span> <span class="tag">A</span></div>
@@ -51,16 +51,19 @@ a{color:#2563eb;text-decoration:none} a:hover{text-decoration:underline}
 </details>
 </details>
 </details>
-<details class="dir"><summary>src/ <span class="stat">+182 -59</span></summary>
+<details class="dir"><summary>src/ <span class="stat">+211 -59</span></summary>
 <details class="dir"><summary>PlexAutoplay.Infrastructure/ <span class="stat">+172 -57</span></summary>
 <details class="dir"><summary>Detection/ <span class="stat">+172 -57</span></summary>
 <div class="file" style="color:#d97706">🛠️ <b>FfmpegMarkerDetector.cs</b> <span class="stat">+172 -57</span> <span class="tag">M</span></div>
 </details>
 </details>
-<details class="dir"><summary>PlexAutoplay.Web/ <span class="stat">+10 -2</span></summary>
+<details class="dir"><summary>PlexAutoplay.Web/ <span class="stat">+39 -2</span></summary>
 <div class="file" style="color:#d97706">🛠️ <b>appsettings.json</b> <span class="stat">+5 -1</span> <span class="tag">M</span></div>
 <details class="dir"><summary>Configuration/ <span class="stat">+5 -1</span></summary>
 <div class="file" style="color:#d97706">🛠️ <b>ServiceCollectionExtensions.cs</b> <span class="stat">+5 -1</span> <span class="tag">M</span></div>
+</details>
+<details class="dir"><summary>Endpoints/ <span class="stat">+29 -0</span></summary>
+<div class="file" style="color:#d97706">🛠️ <b>MarkerEndpoints.cs</b> <span class="stat">+29 -0</span> <span class="tag">M</span></div>
 </details>
 </details>
 </details>
@@ -68,20 +71,34 @@ a{color:#2563eb;text-decoration:none} a:hover{text-decoration:underline}
 <details class="dir"><summary>unit/ <span class="stat">+28 -0</span></summary>
 <div class="file" style="color:#16a34a">✅ <b>FfmpegMarkerDetectorDoubleCheckTests.cs</b> <span class="stat">+28 -0</span> <span class="tag">A</span></div>
 </details>
+</details>
+<details class="dir"><summary>vue/ <span class="stat">+36 -1</span></summary>
+<details class="dir"><summary>plex-frontend/ <span class="stat">+36 -1</span></summary>
+<details class="dir"><summary>src/ <span class="stat">+36 -1</span></summary>
+<div class="file" style="color:#d97706">🛠️ <b>api.js</b> <span class="stat">+4 -0</span> <span class="tag">M</span></div>
+<details class="dir"><summary>views/ <span class="stat">+32 -1</span></summary>
+<div class="file" style="color:#d97706">🛠️ <b>MarkerEditorView.vue</b> <span class="stat">+27 -1</span> <span class="tag">M</span></div>
+<div class="file" style="color:#d97706">🛠️ <b>marker-editor.css</b> <span class="stat">+5 -0</span> <span class="tag">M</span></div>
+</details>
+</details>
+</details>
 </details></div>
-<p class="meta">Totais: A=7 M=3 D=0 R=0 &nbsp;•&nbsp; +433 / -59</p>
+<p class="meta">Totais: A=7 M=7 D=0 R=0 &nbsp;•&nbsp; +505 / -60</p>
 
 <h2>🧪 Relatórios QA e rodadas de correção</h2>
 <details><summary>📋 qa-report-1.md — <span class="badge unk">?</span></summary><h1>QA Report — Iteração 1</h1>
 <p><strong>Change:</strong> double-check-open-vs-music<br><strong>Status:</strong> ✅ PASS<br><strong>Worktree:</strong> /home/hermes/plex-autoplay-double-check-open-vs-music<br><strong>Branch:</strong> feature/spec-double-check-open-vs-music</p>
 <h2>Critérios verificados</h2>
 <p>| # | Critério (spec) | Resultado | Evidência |<br>|---|-----------------|-----------|-----------|<br>| 1 | Double-check loudness RMS pós-silêncio | ✅ | <code>AnalyzeSegmentLoudness</code> em <code>FfmpegMarkerDetector.cs</code> via <code>ffmpeg astats</code> |<br>| 2 | Confirmado quando RMS ≥ threshold | ✅ | origin <code>detected</code>; cenário &quot;Intro candidate confirmed as opening theme&quot; |<br>| 3 | Rejeitado quando RMS &lt; low-confidence | ✅ | <code>continue</code> no loop, sem criar intro; cenário &quot;rejected as background music&quot; |<br>| 4 | Ambíguo → <code>detected-low-confidence</code> | ✅ | ramo <code>low_confidence</code> |<br>| 5 | Thresholds configuráveis c/ defaults | ✅ | <code>appsettings.json</code> + env vars <code>MARKER_INTRO_*</code>; defaults -20/-30 |<br>| 6 | Capítulo como ground truth (sem double-check) | ✅ | <code>FindChapterMarker</code> inalterado; origin <code>detected-chapter</code> |<br>| 7 | Telemetria <code>intro_double_check_total{result}</code> | ✅ | <code>Counter&lt;int&gt;</code> no Meter <code>PlexAutoplay</code> |<br>| 8 | Build Release | ✅ | <code>dotnet build PlexAutoplay.slnx -c Release</code> → 0 erros |<br>| 9 | Testes | ✅ | 56/56 passam (<code>dotnet test</code> Release) |<br>| 10 | <code>openspec validate --strict</code> | ✅ | &quot;Change &#x27;double-check-open-vs-music&#x27; is valid&quot; |</p>
+<h2>Feature adicional: Botão &quot;Reprocessar marcadores&quot;</h2>
+<p>| # | Critério | Resultado | Evidência |<br>|---|----------|-----------|-----------|<br>| A1 | Endpoint POST <code>/api/markers/reprocess/{seriesKey}</code> | ✅ | Adicionado em <code>MarkerEndpoints.cs</code>, deleta marcadores existentes e re-detecta via <code>LibraryScanUseCase</code> |<br>| A2 | API frontend <code>reprocessMarkers(seriesKey)</code> | ✅ | <code>src/api.js</code> exporta função autenticada |<br>| A3 | Botão &quot;Reprocessar&quot; em <code>MarkerEditorView.vue</code> | ✅ | Header com ícone <code>refresh</code>, loading state, recarrega <code>fetchSeries</code> |<br>| A4 | CSS <code>.reprocess</code> | ✅ | <code>marker-editor.css</code> com <code>margin-left: auto</code> no flex header |</p>
 <h2>Validação UI (Playwright)</h2>
 <p><strong>N/A</strong> — mudança backend-only (detecção de marcadores). Nenhuma rota, componente ou menu foi alterado; nenhum impacto visual a validar. Tema/menu permanecem inalterados.</p>
+<p>O botão &quot;Reprocessar&quot; foi adicionado à UI de edição de marcadores, mas a validação visual de tema/menu não se aplica a este componente (não há mudança de cores, layout ou navegação).</p>
 <h2>Achados</h2>
 <p>Nenhum. Build gate passou de primeira; nenhuma iteração de correção necessária.</p>
 <h2>Notas</h2>
-<ul><li><code>ffmpeg</code>/<code>ffprobe</code> ausentes no host de teste → <code>AnalyzeSegmentLoudness</code> retorna <code>double.NegativeInfinity</code> (fallback &quot;confirmed&quot;), coberto por teste unitário. Em runtime de container o binário existe.</li><li>Marcadores existentes não são afetados (skip-if-exists preservado).</li></ul></details>
+<ul><li><code>ffmpeg</code>/<code>ffprobe</code> ausentes no host de teste → <code>AnalyzeSegmentLoudness</code> retorna <code>double.NegativeInfinity</code> (fallback &quot;confirmed&quot;), coberto por teste unitário. Em runtime de container o binário existe.</li><li>Marcadores existentes não são afetados (skip-if-exists preservado).</li><li>O reprocess força limpeza dos marcadores ANTES de re-detectar, permitindo corrigir falsos positivos do double-check.</li></ul></details>
 
 
 
