@@ -26,6 +26,7 @@ export default [
         location: "readonly",
         requestAnimationFrame: "readonly",
         navigator: "readonly",
+        AbortController: "readonly",
       },
     },
     rules: {

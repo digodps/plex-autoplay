@@ -1,8 +1,8 @@
 <script setup>
 import { ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
-import AppIcon from "@/components/AppIcon.vue";
 import { apiFetch } from "@/api";
+import LibraryMosaic from "@/components/LibraryMosaic.vue";
 
 const router = useRouter();
 const libraries = ref([]);
@@ -73,12 +73,8 @@ function navigateToSeries(libraryKey, libraryTitle) {
           class="rounded-xl border border-stroke bg-white dark:bg-gray-800 p-5 dark:border-gray-700 hover:border-accent/50 transition-colors"
           @click="navigateToSeries(lib.key, lib.title)"
         >
-          <div>
-            <span class="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-700 text-amber-600 dark:text-amber-400 border border-stroke dark:border-gray-600">
-              <AppIcon name="tv" size="lg" />
-            </span>
-            <h3 class="text-xl font-semibold text-gray-900 dark:text-gray-100 tracking-tight">{{ lib.title }}</h3>
-          </div>
+          <LibraryMosaic :library-key="lib.key" />
+          <h3 class="mt-4 text-xl font-semibold text-gray-900 dark:text-gray-100 tracking-tight">{{ lib.title }}</h3>
           <span class="mt-6 flex items-center gap-1 text-sm font-medium text-gray-500 dark:text-gray-400 group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">
             Ver séries
             <span class="transform transition-transform group-hover:translate-x-0.5">›</span>
