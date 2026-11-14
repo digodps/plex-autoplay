@@ -2,7 +2,7 @@
 import { onMounted } from "vue";
 import { useRouter } from "vue-router";
 import LogFilterBar from "@/components/Logs/LogFilterBar.vue";
-import LogGroupedView from "@/components/Logs/LogGroupedView.vue";
+import LogCarouselView from "@/components/Logs/LogCarouselView.vue";
 import { useLogsStore } from "@/stores/logs";
 import { apiFetch } from "@/api";
 
@@ -97,7 +97,7 @@ async function handleCleanup() {
 
       <div class="mt-6">
         <LogFilterBar />
-        <LogGroupedView
+        <LogCarouselView
           :items="logsStore.logs"
           :group-by="logsStore.groupBy"
           :loading="logsStore.loadingLogs"

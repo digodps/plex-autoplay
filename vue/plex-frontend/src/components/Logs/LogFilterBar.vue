@@ -9,6 +9,7 @@ const groupingOptions = [
   { value: "date", label: "Data" },
   { value: "status", label: "Status" },
   { value: "level", label: "Tipo" },
+  { value: "library", label: "Biblioteca" },
 ];
 
 const textInput = ref(logsStore.filters.text);

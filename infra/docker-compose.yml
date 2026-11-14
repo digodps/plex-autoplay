@@ -6,7 +6,7 @@ services:
       args:
         GIT_COMMIT: ${GIT_COMMIT:-local}
     image: ${IMAGE_NAME:-plex-autoplay:latest}
-    container_name: ${CONTAINER_NAME:-plex-autoplay}
+    # No fixed container_name; let compose generate unique names per project
     restart: unless-stopped
     env_file: ../.env
     environment:
