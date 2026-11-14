@@ -191,6 +191,13 @@ def validate_commit_type(commit_type: str) -> None:
         )
 
 
+def sanitize_title(title: str) -> str:
+    """Remove tags HTML e limpa caracteres indesejados do título."""
+    clean = re.sub(r'<(script|style)[^>]*>.*?</\1>', '', title, flags=re.DOTALL | re.IGNORECASE)
+    clean = re.sub(r'<[^>]+>', '', clean)
+    return re.sub(r'\s+', ' ', clean).strip()
+
+
 def build_header(commit_type: str, scope: Optional[str], title: str) -> str:
     """Constrói o cabeçalho: tipo(🎯escopo): título ou tipo(🎯): título.
 
@@ -198,9 +205,10 @@ def build_header(commit_type: str, scope: Optional[str], title: str) -> str:
     """
     validate_commit_type(commit_type)
     emoji = TYPE_EMOJI[commit_type]
+    clean_title = sanitize_title(title)
     if scope:
-        return f"{commit_type}({emoji}{scope}): {title}"
-    return f"{commit_type}({emoji}): {title}"
+        return f"{commit_type}({emoji}{scope}): {clean_title}"
+    return f"{commit_type}({emoji}): {clean_title}"
 
 
 def validate_body(body: str) -> None:
