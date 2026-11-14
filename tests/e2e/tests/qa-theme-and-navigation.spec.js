@@ -60,7 +60,7 @@ test("breadcrumb: exibe trilha e marca item ativo", async ({ page }) => {
     await expect(page).toHaveURL(`${BASE}/libraries`);
   }
 
-  await expect(page.locator(".topbar")).toBeVisible();
+  await expect(page.locator('[data-testid="app-header"]')).toBeVisible();
 });
 
 test("menu do usuário: abre, fecha e navega", async ({ page }) => {
