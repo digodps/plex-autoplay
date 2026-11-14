@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="pt-BR"><head><meta charset="utf-8">
+<title>Relatório OpenSpec — series-genre-carousel</title>
+<style>
+body{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;margin:24px;line-height:1.5;color:#1f2937}
+h1{font-size:22px;margin-bottom:4px} h2{font-size:18px;margin-top:28px;border-bottom:1px solid #e5e7eb;padding-bottom:6px}
+h3{font-size:16px;margin-top:20px}
+.badge{font-size:11px;padding:2px 7px;border-radius:99px;color:#fff;font-weight:600}
+.badge.pass{background:#16a34a}.badge.fail{background:#dc2626}.badge.unk{background:#64748b}
+.summary{display:flex;gap:16px;margin:16px 0;border:1px solid #e5e7eb;border-radius:8px;padding:12px;background:#f9fafb}
+.summary div{flex:1}
+.summary .big{font-size:20px;font-weight:700;color:#111827}
+.tree{font-size:13px;line-height:1.6}
+.details>summary,details>summary{font-weight:600;cursor:pointer;list-style:none}
+details>summary::marker{content:"▸"}
+.file{margin-left:14px;padding:2px 0;border-left:2px solid #e5e7eb}
+.stat{color:#6b7280;font-size:11.5px}
+.tag{font-size:10px;padding:1px 5px;border-radius:3px;color:#fff;margin-left:6px}
+.emptydir{color:#9ca3af;font-style:italic;margin-left:14px}
+code{background:#f3f4f6;padding:1px 4px;border-radius:4px;font-size:0.9em}
+pre{background:#1f2937;color:#e5e7eb;padding:10px;border-radius:6px;overflow:auto}
+a{color:#2563eb;text-decoration:none} a:hover{text-decoration:underline}
+.meta{color:#6b7280;font-size:12.5px;margin-top:8px}
+</style></head>
+<body>
+<h1>Relatório OpenSpec — series-genre-carousel</h1>
+<div class="meta">Worktree: /home/hermes/plex-autoplay-series-genre-carousel &nbsp;|&nbsp; Base do diff: 17cb9f68b2798022c043d4601b6a343eea544790 &nbsp;|&nbsp; Relatório: <b>/home/hermes/plex-autoplay-series-genre-carousel/openspec/changes/series-genre-carousel/report.html</b></div>
+
+<div class="summary">
+ <div><span class="big">92</span> arquivos alterados</div>
+ <div><span class="big" style="color:#16a34a">+2650</span> linhas adicionadas</div>
+ <div><span class="big" style="color:#dc2626">-484</span> linhas removidas</div>
+ <div><span class="big">1</span> rodada(s) de QA</div>
+ <div><span class="big">0</span> evidência(s)</div>
+</div>
+
+<h2>🌳 Árvore de alterações (adicionado / modificado / removido)</h2>
+<div class="tree"><details class="dir"><summary>data-test/ <span class="stat">+209 -0</span></summary>
+<div class="file" style="color:#16a34a">✅ <b>app.db</b> <span class="stat">+209 -0</span> <span class="tag">A</span></div>
+</details>
+<details class="dir"><summary>infra/ <span class="stat">+16 -81</span></summary>
+<div class="file" style="color:#d97706">🛠️ <b>docker-compose.test.yml</b> <span class="stat">+16 -81</span> <span class="tag">M</span></div>
+</details>
+<details class="dir"><summary>openspec/ <span class="stat">+273 -0</span></summary>
+<details class="dir"><summary>changes/ <span class="stat">+273 -0</span></summary>
+<details class="dir"><summary>series-genre-carousel/ <span class="stat">+273 -0</span></summary>
+<div class="file" style="color:#16a34a">✅ <b>deficiencias_resolvidas.md</b> <span class="stat">+42 -0</span> <span class="tag">A</span></div>
+<div class="file" style="color:#16a34a">✅ <b>design.md</b> <span class="stat">+55 -0</span> <span class="tag">A</span></div>
+<div class="file" style="color:#16a34a">✅ <b>proposal.md</b> <span class="stat">+35 -0</span> <span class="tag">A</span></div>
+<div class="file" style="color:#16a34a">✅ <b>qa-report-1.md</b> <span class="stat">+47 -0</span> <span class="tag">A</span></div>
+<div class="file" style="color:#16a34a">✅ <b>tasks.md</b> <span class="stat">+25 -0</span> <span class="tag">A</span></div>
+<details class="dir"><summary>specs/ <span class="stat">+69 -0</span></summary>
+<details class="dir"><summary>series-genre-carousel/ <span class="stat">+69 -0</span></summary>
+<div class="file" style="color:#16a34a">✅ <b>spec.md</b> <span class="stat">+69 -0</span> <span class="tag">A</span></div>
+</details>
+</details>
+</details>
+</details>
+</details>
+<details class="dir"><summary>src/ <span class="stat">+55 -29</span></summary>
+<details class="dir"><summary>PlexAutoplay.Application/ <span class="stat">+6 -4</span></summary>
+<div class="file" style="color:#d97706">🛠️ <b>IPlexApiClient.cs</b> <span class="stat">+1 -1</span> <span class="tag">M</span></div>
+<details class="dir"><summary>UseCases/ <span class="stat">+5 -3</span></summary>
+<div class="file" style="color:#d97706">🛠️ <b>CatalogSyncUseCase.cs</b> <span class="stat">+5 -3</span> <span class="tag">M</span></div>
+</details>
+</details>
+<details class="dir"><summary>PlexAutoplay.Domain/ <span class="stat">+1 -0</span></summary>
+<details class="dir"><summary>Entities/ <span class="stat">+1 -0</span></summary>
+<div class="file" style="color:#d97706">🛠️ <b>Series.cs</b> <span class="stat">+1 -0</span> <span class="tag">M</span></div>
+</details>
+</details>
+<details class="dir"><summary>PlexAutoplay.Infrastructure/ <span class="stat">+17 -5</span></summary>
+<details class="dir"><summary>Persistence/ <span class="stat">+7 -4</span></summary>
+<div class="file" style="color:#d97706">🛠️ <b>DatabaseInitializer.cs</b> <span class="stat">+2 -0</span> <span class="tag">M</span></div>
+<details class="dir"><summary>Repositories/ <span class="stat">+5 -4</span></summary>
+<div class="file" style="color:#d97706">🛠️ <b>SqliteSeriesRepository.cs</b> <span class="stat">+5 -4</span> <span class="tag">M</span></div>
+</details>
+</details>
+<details class="dir"><summary>PlexProxy/ <span class="stat">+10 -1</span></summary>
+<div class="file" style="color:#d97706">🛠️ <b>PlexResponseParser.cs</b> <span class="stat">+10 -1</span> <span class="tag">M</span></div>
+</details>
+</details>
+<details class="dir"><summary>PlexAutoplay.Web/ <span class="stat">+31 -20</span></summary>
+<details class="dir"><summary>Endpoints/ <span class="stat">+2 -1</span></summary>
+<div class="file" style="color:#d97706">🛠️ <b>SeriesEndpoints.cs</b> <span class="stat">+2 -1</span> <span class="tag">M</span></div>
+</details>
+<details class="dir"><summary>Services/ <span class="stat">+12 -1</span></summary>
+<div class="file" style="color:#d97706">🛠️ <b>PlexApiClient.Series.cs</b> <span class="stat">+12 -1</span> <span class="tag">M</span></div>
+</details>
+<details class="dir"><summary>wwwroot/ <span class="stat">+17 -18</span></summary>
+<div class="file" style="color:#d97706">🛠️ <b>index.html</b> <span class="stat">+3 -3</span> <span class="tag">M</span></div>
+<details class="dir"><summary>assets/ <span class="stat">+14 -15</span></summary>
+<div class="file" style="color:#16a34a">✅ <b>DashboardView-Bwg4ltvm.js</b> <span class="stat">+1 -0</span> <span class="tag">A</span></div>
+<div class="file" style="color:#dc2626">❌ <b>DashboardView-DbuMTdXV.js</b> <span class="stat">+0 -1</span> <span class="tag">D</span></div>
+<div class="file" style="color:#16a34a">✅ <b>LibrariesView-DGSvwWxZ.js</b> <span class="stat">+1 -0</span> <span class="tag">A</span></div>
+<div class="file" style="color:#dc2626">❌ <b>LibrariesView-Df_T192R.js</b> <span class="stat">+0 -1</span> <span class="tag">D</span></div>
+<div class="file" style="color:#dc2626">❌ <b>LogsView-CJjAoLFo.js</b> <span class="stat">+0 -1</span> <span class="tag">D</span></div>
+<div class="file" style="color:#16a34a">✅ <b>LogsView-KwgXWKcg.js</b> <span class="stat">+1 -0</span> <span class="tag">A</span></div>
+<div class="file" style="color:#16a34a">✅ <b>MarkerEditorView-Dne5YbsU.js</b> <span class="stat">+1 -0</span> <span class="tag">A</span></div>
+<div class="file" style="color:#dc2626">❌ <b>MarkerEditorView-fmIGJtl5.js</b> <span class="stat">+0 -1</span> <span class="tag">D</span></div>
+<div class="file" style="color:#dc2626">❌ <b>MediaRootsField-BBqH9u_5.js</b> <span class="stat">+0 -1</span> <span class="tag">D</span></div>
+<div class="file" style="color:#16a34a">✅ <b>MediaRootsField-XVg2ERBH.js</b> <span class="stat">+1 -0</span> <span class="tag">A</span></div>
+<div class="file" style="color:#dc2626">❌ <b>SeriesView-BGkna2KG.js</b> <span class="stat">+0 -1</span> <span class="tag">D</span></div>
+<div class="file" style="color:#16a34a">✅ <b>SessionsView-B5tnuf4s.js</b> <span class="stat">+1 -0</span> <span class="tag">A</span></div>
+<div class="file" style="color:#dc2626">❌ <b>SessionsView-C9mGzjMY.js</b> <span class="stat">+0 -1</span> <span class="tag">D</span></div>
+<div class="file" style="color:#16a34a">✅ <b>SettingsView-CzX5Np0q.js</b> <span class="stat">+1 -0</span> <span class="tag">A</span></div>
+<div class="file" style="color:#dc2626">❌ <b>SettingsView-V1pavMZr.js</b> <span class="stat">+0 -1</span> <span class="tag">D</span></div>
+<div class="file" style="color:#dc2626">❌ <b>SetupView-C5prToTh.js</b> <span class="stat">+0 -1</span> <span class="tag">D</span></div>
+<div class="file" style="color:#16a34a">✅ <b>SetupView-CCkLgRoy.js</b> <span class="stat">+1 -0</span> <span class="tag">A</span></div>
+<div class="file" style="color:#dc2626">❌ <b>SyncView-CN6Npv5X.js</b> <span class="stat">+0 -1</span> <span class="tag">D</span></div>
+<div class="file" style="color:#16a34a">✅ <b>SyncView-D0oCvdVb.js</b> <span class="stat">+1 -0</span> <span class="tag">A</span></div>
+<div class="file" style="color:#dc2626">❌ <b>api-DbVX7Ei_.js</b> <span class="stat">+0 -1</span> <span class="tag">D</span></div>
+<div class="file" style="color:#16a34a">✅ <b>api-Dv7oXzy8.js</b> <span class="stat">+1 -0</span> <span class="tag">A</span></div>
+<div class="file" style="color:#dc2626">❌ <b>index-3QjxoD1Y.js</b> <span class="stat">+0 -3</span> <span class="tag">D</span></div>
+<div class="file" style="color:#16a34a">✅ <b>index-CC4wmARb.css</b> <span class="stat">+1 -0</span> <span class="tag">A</span></div>
+<div class="file" style="color:#16a34a">✅ <b>index-CbMaigxm.js</b> <span class="stat">+3 -0</span> <span class="tag">A</span></div>
+<div class="file" style="color:#dc2626">❌ <b>index-PRF3YqVx.css</b> <span class="stat">+0 -1</span> <span class="tag">D</span></div>
+</details>
+</details>
+</details>
+</details>
+<details class="dir"><summary>tests/ <span class="stat">+1539 -0</span></summary>
+<details class="dir"><summary>e2e/ <span class="stat">+1538 -0</span></summary>
+<div class="file" style="color:#16a34a">✅ <b>check-api.mjs</b> <span class="stat">+32 -0</span> <span class="tag">A</span></div>
+<div class="file" style="color:#16a34a">✅ <b>check-block.mjs</b> <span class="stat">+37 -0</span> <span class="tag">A</span></div>
+<div class="file" style="color:#16a34a">✅ <b>check-body.mjs</b> <span class="stat">+18 -0</span> <span class="tag">A</span></div>
+<div class="file" style="color:#16a34a">✅ <b>check-body2.mjs</b> <span class="stat">+18 -0</span> <span class="tag">A</span></div>
+<div class="file" style="color:#16a34a">✅ <b>check-close.mjs</b> <span class="stat">+37 -0</span> <span class="tag">A</span></div>
+<div class="file" style="color:#16a34a">✅ <b>check-dom.mjs</b> <span class="stat">+42 -0</span> <span class="tag">A</span></div>
+<div class="file" style="color:#16a34a">✅ <b>check-eval.mjs</b> <span class="stat">+22 -0</span> <span class="tag">A</span></div>
+<div class="file" style="color:#16a34a">✅ <b>check-js.mjs</b> <span class="stat">+43 -0</span> <span class="tag">A</span></div>
+<div class="file" style="color:#16a34a">✅ <b>check-locators.mjs</b> <span class="stat">+46 -0</span> <span class="tag">A</span></div>
+<div class="file" style="color:#16a34a">✅ <b>check-nav.mjs</b> <span class="stat">+32 -0</span> <span class="tag">A</span></div>
+<div class="file" style="color:#16a34a">✅ <b>check-timing.mjs</b> <span class="stat">+43 -0</span> <span class="tag">A</span></div>
+<div class="file" style="color:#16a34a">✅ <b>debug-console.mjs</b> <span class="stat">+16 -0</span> <span class="tag">A</span></div>
+<div class="file" style="color:#16a34a">✅ <b>debug-lib.mjs</b> <span class="stat">+33 -0</span> <span class="tag">A</span></div>
+<div class="file" style="color:#16a34a">✅ <b>debug-runtime.mjs</b> <span class="stat">+55 -0</span> <span class="tag">A</span></div>
+<div class="file" style="color:#16a34a">✅ <b>debug-series.mjs</b> <span class="stat">+48 -0</span> <span class="tag">A</span></div>
+<div class="file" style="color:#16a34a">✅ <b>debug-series2.mjs</b> <span class="stat">+48 -0</span> <span class="tag">A</span></div>
+<div class="file" style="color:#16a34a">✅ <b>debug-test.mjs</b> <span class="stat">+22 -0</span> <span class="tag">A</span></div>
+<div class="file" style="color:#16a34a">✅ <b>eval-dom.mjs</b> <span class="stat">+39 -0</span> <span class="tag">A</span></div>
+<div class="file" style="color:#16a34a">✅ <b>get-html.mjs</b> <span class="stat">+21 -0</span> <span class="tag">A</span></div>
+<div class="file" style="color:#16a34a">✅ <b>inspect.mjs</b> <span class="stat">+22 -0</span> <span class="tag">A</span></div>
+<div class="file" style="color:#16a34a">✅ <b>inspect2.mjs</b> <span class="stat">+18 -0</span> <span class="tag">A</span></div>
+<div class="file" style="color:#16a34a">✅ <b>inspect3.mjs</b> <span class="stat">+22 -0</span> <span class="tag">A</span></div>
+<div class="file" style="color:#16a34a">✅ <b>inspect4.mjs</b> <span class="stat">+20 -0</span> <span class="tag">A</span></div>
+<div class="file" style="color:#16a34a">✅ <b>inspect5.mjs</b> <span class="stat">+20 -0</span> <span class="tag">A</span></div>
+<div class="file" style="color:#16a34a">✅ <b>inspect6.mjs</b> <span class="stat">+18 -0</span> <span class="tag">A</span></div>
+<div class="file" style="color:#16a34a">✅ <b>inspect7.mjs</b> <span class="stat">+17 -0</span> <span class="tag">A</span></div>
+<div class="file" style="color:#16a34a">✅ <b>inspect8.mjs</b> <span class="stat">+17 -0</span> <span class="tag">A</span></div>
+<div class="file" style="color:#16a34a">✅ <b>qa-genre-carousel.mjs</b> <span class="stat">+104 -0</span> <span class="tag">A</span></div>
+<div class="file" style="color:#16a34a">✅ <b>simple-test.mjs</b> <span class="stat">+28 -0</span> <span class="tag">A</span></div>
+<div class="file" style="color:#16a34a">✅ <b>test-console.mjs</b> <span class="stat">+37 -0</span> <span class="tag">A</span></div>
+<div class="file" style="color:#16a34a">✅ <b>test-console2.mjs</b> <span class="stat">+41 -0</span> <span class="tag">A</span></div>
+<div class="file" style="color:#16a34a">✅ <b>test-debug.mjs</b> <span class="stat">+51 -0</span> <span class="tag">A</span></div>
+<div class="file" style="color:#16a34a">✅ <b>test-debug2.mjs</b> <span class="stat">+45 -0</span> <span class="tag">A</span></div>
+<div class="file" style="color:#16a34a">✅ <b>test-err.mjs</b> <span class="stat">+27 -0</span> <span class="tag">A</span></div>
+<div class="file" style="color:#16a34a">✅ <b>test-err2.mjs</b> <span class="stat">+28 -0</span> <span class="tag">A</span></div>
+<div class="file" style="color:#16a34a">✅ <b>test-err3.mjs</b> <span class="stat">+28 -0</span> <span class="tag">A</span></div>
+<div class="file" style="color:#16a34a">✅ <b>test-full.mjs</b> <span class="stat">+33 -0</span> <span class="tag">A</span></div>
+<div class="file" style="color:#16a34a">✅ <b>test-full2.mjs</b> <span class="stat">+36 -0</span> <span class="tag">A</span></div>
+<div class="file" style="color:#16a34a">✅ <b>test-login.mjs</b> <span class="stat">+22 -0</span> <span class="tag">A</span></div>
+<div class="file" style="color:#16a34a">✅ <b>test-login2.mjs</b> <span class="stat">+30 -0</span> <span class="tag">A</span></div>
+<div class="file" style="color:#16a34a">✅ <b>test-nav.mjs</b> <span class="stat">+41 -0</span> <span class="tag">A</span></div>
+<div class="file" style="color:#16a34a">✅ <b>test-nav2.mjs</b> <span class="stat">+47 -0</span> <span class="tag">A</span></div>
+<div class="file" style="color:#16a34a">✅ <b>test-series.mjs</b> <span class="stat">+29 -0</span> <span class="tag">A</span></div>
+<details class="dir"><summary>mock-plex/ <span class="stat">+105 -0</span></summary>
+<div class="file" style="color:#d97706">🛠️ <b>server.cjs</b> <span class="stat">+105 -0</span> <span class="tag">M</span></div>
+</details>
+</details>
+<details class="dir"><summary>unit/ <span class="stat">+1 -0</span></summary>
+<div class="file" style="color:#d97706">🛠️ <b>SqliteSeriesRepositoryTests.cs</b> <span class="stat">+1 -0</span> <span class="tag">M</span></div>
+</details>
+</details>
+<details class="dir"><summary>vue/ <span class="stat">+558 -374</span></summary>
+<details class="dir"><summary>plex-frontend/ <span class="stat">+558 -374</span></summary>
+<details class="dir"><summary>src/ <span class="stat">+558 -374</span></summary>
+<details class="dir"><summary>components/ <span class="stat">+411 -0</span></summary>
+<div class="file" style="color:#16a34a">✅ <b>GenreCarousel.vue</b> <span class="stat">+411 -0</span> <span class="tag">A</span></div>
+</details>
+<details class="dir"><summary>composables/ <span class="stat">+101 -0</span></summary>
+<div class="file" style="color:#16a34a">✅ <b>useSeriesByGenre.js</b> <span class="stat">+101 -0</span> <span class="tag">A</span></div>
+</details>
+<details class="dir"><summary>router/ <span class="stat">+2 -1</span></summary>
+<div class="file" style="color:#d97706">🛠️ <b>index.js</b> <span class="stat">+2 -1</span> <span class="tag">M</span></div>
+</details>
+<details class="dir"><summary>views/ <span class="stat">+44 -373</span></summary>
+<div class="file" style="color:#d97706">🛠️ <b>SeriesView.css</b> <span class="stat">+2 -192</span> <span class="tag">M</span></div>
+<details class="dir"><summary>Series/ <span class="stat">+42 -181</span></summary>
+<div class="file" style="color:#d97706">🛠️ <b>SeriesView.vue</b> <span class="stat">+42 -181</span> <span class="tag">M</span></div>
+</details>
+</details>
+</details>
+</details>
+</details></div>
+<p class="meta">Totais: A=64 M=15 D=13 R=0 &nbsp;•&nbsp; +2650 / -484</p>
+
+<h2>🧪 Relatórios QA e rodadas de correção</h2>
+<details><summary>📋 qa-report-1.md — <span class="badge unk">?</span></summary><h1>QA Report: series-genre-carousel</h1>
+<ul><li><strong>Change</strong>: <code>series-genre-carousel</code></li><li><strong>Date</strong>: 2026-11-14</li><li><strong>Environment</strong>: Docker container <code>plex-autoplay</code> on port 8080</li><li><strong>Result</strong>: <strong>PASS</strong> — 13/13 checks passed</li></ul>
+<h2>Checks Executed</h2>
+<p>| # | Check | Result | Detail |<br>|---|-------|--------|--------|<br>| 1 | Login page loads | PASS | <code>/login</code> renders |<br>| 2 | Login redirects | PASS | Redirects to <code>/dashboard</code> |<br>| 3 | Series page renders genre carousel | PASS | <code>.genre-carousel-view</code> mounted |<br>| 4 | Genre sections rendered | PASS | 6 sections: Action, Animation, Comedy, Crime, Drama, Outros |<br>| 5 | Expected genres present | PASS | Action, Animation, Comedy, Crime, Drama all present |<br>| 6 | &#x27;Outros&#x27; section last | PASS | Last section is &quot;Outros&quot; |<br>| 7 | Carousel cards rendered | PASS | 15 cards across genres |<br>| 8 | Carousel tracks present | PASS | 6 horizontal tracks |<br>| 9 | Right scroll button appears on hover | PASS | Visible when &gt;2 items |<br>| 10 | Card hover triggers scale transform | PASS | <code>scale(1.08) translateY(-4px)</code> |<br>| 11 | Mouse wheel scrolls track horizontally | PASS | <code>scrollLeft 2 → 104</code> |<br>| 12 | Card click navigates to markers | PASS | Navigates to <code>/series/{key}/markers</code> |<br>| 13 | Theme toggle works on series page | PASS | Dark/light toggle functional |</p>
+<ul><li><strong>UI QA (theme toggle + menu nav)</strong>: 12/12 PASS</li><li><strong>OpenSpec validation</strong>: <code>openspec validate series-genre-carousel --strict</code> → VALID</li><li><strong>Frontend build</strong>: <code>npx vite build</code> → SUCCESS</li><li><strong>Backend build</strong>: <code>dotnet build</code> → SUCCESS</li><li><strong>Lint</strong>: Only pre-existing errors in unrelated files (<code>LogsView.vue</code>, <code>SyncView.vue</code>)</li></ul>
+<ul><li>Created <code>useSeriesByGenre.js</code> composable: fetches all series (<code>pageSize=1000</code>), groups by <code>genre</code> (first tag), falls back to &quot;Outros&quot;, sorts alphabetically + &quot;Outros&quot; last</li><li>Created <code>GenreCarousel.vue</code>: horizontal scroll tracks, hover scroll buttons (show when &gt;2 items), wheel scroll, card hover scale animation (<code>scale(1.08) translateY(-4px)</code>)</li><li>Updated <code>Series/SeriesView.vue</code> to use genre carousel</li><li>Router uses direct import of <code>SeriesView</code> (not lazy) to ensure component loads</li><li>CSS variables from <code>style.css</code> used for dark/light theme compatibility</li><li>Fixed infinite render loop caused by inline ref callbacks + reactive state writes</li></ul>
+<ul><li>15 test series across 6 genres (Action: 7, Animation: 3, Drama: 2, Crime: 1, Comedy: 1, Outros: 1)</li><li>Mock Plex at <code>plex-mock:32400</code> serves Genre data</li></ul>
+<p>## Status<br>✅ <strong>READY FOR MERGE</strong><br></p></details>
+
+
+
+<p class="meta">Próximos passos: revisar árvore e QA acima, então executar <code>/opsx-archive</code> para arquivar a change ou manter a worktree <code>feature/spec-series-genre-carousel</code> para merge.</p>
+</body></html>

@@ -1,0 +1,22 @@
+import { chromium } from "@playwright/test";
+const BASE = "http://localhost:8082";
+const browser = await chromium.launch({ headless: true });
+const page = await browser.newPage({ ignoreHTTPSErrors: true });
+page.setDefaultTimeout(30000);
+page.on("pageerror", e => console.log("PAGEERR:", e.message, e.stack?.slice(0,500)));
+page.on("console", msg => console.log("CONSOLE:", msg.type(), msg.text().slice(0,500)));
+
+await page.goto(`${BASE}/login`, { waitUntil: "domcontentloaded" });
+await page.fill('input[data-testid="password-input"]', "admin123");
+await page.click('button[data-testid="login-submit"]');
+await page.waitForURL(`${BASE}/dashboard`, { timeout: 10000 });
+await page.goto(`${BASE}/libraries/1/series`, { waitUntil: "domcontentloaded" });
+await page.waitForTimeout(3000);
+console.log("Done waiting, page closed?", page.isClosed());
+const hasSeriesView = await page.evaluate(() => document.querySelector('.series-view') !== null);
+console.log("Has .series-view:", hasSeriesView);
+const hasCarousel = await page.evaluate(() => document.querySelector('.genre-carousel-view') !== null);
+console.log("Has .genre-carousel-view:", hasCarousel);
+const genreCount = await page.evaluate(() => document.querySelectorAll('.genre-section').length);
+console.log("genre-section count:", genreCount);
+await browser.close();

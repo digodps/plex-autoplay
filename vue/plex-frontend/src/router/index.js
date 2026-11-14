@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from "vue-router";
 import SigninView from "../views/Authentication/SigninView.vue";
+import SeriesView from "../views/Series/SeriesView.vue";
 
 const routes = [
   { path: "/", redirect: "/dashboard" },
@@ -30,7 +31,7 @@ const routes = [
   {
     path: "/libraries/:key/series",
     name: "series",
-    component: () => import("../views/Series/SeriesView.vue"),
+    component: SeriesView,
     props: true,
     meta: { title: "Biblioteca" },
   },

@@ -120,11 +120,12 @@ public sealed class CatalogSyncUseCase
                         LibraryRatingKey = lib.Key,
                         Title = plexSeries.Title,
                         Summary = plexSeries.Summary,
-                        Thumb = plexSeries.Thumb
+                        Thumb = plexSeries.Thumb,
+                        Genre = plexSeries.Genre
                     });
                     seriesInserted++;
                 }
-                else if (existing.Title != plexSeries.Title || existing.Summary != plexSeries.Summary || existing.Thumb != plexSeries.Thumb)
+                else if (existing.Title != plexSeries.Title || existing.Summary != plexSeries.Summary || existing.Thumb != plexSeries.Thumb || existing.Genre != plexSeries.Genre)
                 {
                     await _seriesRepository.UpsertAsync(new Series
                     {
@@ -132,7 +133,8 @@ public sealed class CatalogSyncUseCase
                         LibraryRatingKey = lib.Key,
                         Title = plexSeries.Title,
                         Summary = plexSeries.Summary,
-                        Thumb = plexSeries.Thumb
+                        Thumb = plexSeries.Thumb,
+                        Genre = plexSeries.Genre
                     });
                     seriesUpdated++;
                 }

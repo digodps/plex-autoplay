@@ -29,7 +29,8 @@ public static class SeriesEndpoints
                 ratingKey = s.RatingKey,
                 title = s.Title,
                 summary = s.Summary,
-                thumb = string.IsNullOrEmpty(s.Thumb) ? null : "/api/images/" + s.Thumb.TrimStart('/')
+                thumb = string.IsNullOrEmpty(s.Thumb) ? null : "/api/images/" + s.Thumb.TrimStart('/'),
+                genre = s.Genre
             });
 
             return Results.Ok(new

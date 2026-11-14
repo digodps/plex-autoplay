@@ -66,11 +66,22 @@ public partial class PlexApiClient
                     if (item.TryGetProperty("type", out var typeEl) && typeEl.GetString() != "show")
                         continue;
 
+                    string genre = "";
+                    if (item.TryGetProperty("Genre", out var genreEl) && genreEl.ValueKind == JsonValueKind.Array && genreEl.GetArrayLength() > 0)
+                    {
+                        var firstGenre = genreEl.EnumerateArray().FirstOrDefault();
+                        if (firstGenre.TryGetProperty("tag", out var tagEl))
+                        {
+                            genre = tagEl.GetString() ?? "";
+                        }
+                    }
+
                     series.Add(new PlexSeriesDto(
                         item.GetProperty("ratingKey").GetString() ?? "",
                         item.GetProperty("title").GetString() ?? "",
                         item.TryGetProperty("summary", out var summaryEl) ? summaryEl.GetString() ?? "" : "",
-                        item.TryGetProperty("thumb", out var thumbEl) ? thumbEl.GetString() ?? "" : ""
+                        item.TryGetProperty("thumb", out var thumbEl) ? thumbEl.GetString() ?? "" : "",
+                        genre
                     ));
                 }
             }

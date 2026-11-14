@@ -8,4 +8,5 @@ public class Series
     public string Title { get; set; } = string.Empty;
     public string Summary { get; set; } = string.Empty;
     public string Thumb { get; set; } = string.Empty;
+    public string Genre { get; set; } = string.Empty;
 }
