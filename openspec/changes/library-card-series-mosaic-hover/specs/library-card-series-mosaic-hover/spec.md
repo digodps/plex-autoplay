@@ -1,47 +1,43 @@
 # Spec: Library Card Series Mosaic Hover
 
-## Overview
-Replace the static TV icon on library cards with a dynamic mosaic of series posters that animates/changes on hover. When a library has no series, show the TV icon in a neutral/muted color.
+## ADDED Requirements
 
-## Requirements
+### Requirement: REQ-MOSAIC-DISPLAY
+**Descrição**: Cada card de biblioteca SHALL exibir um mosaico 2×3 de pôsteres de séries em vez do ícone estático de TV.
 
-### Functional Requirements
+#### Scenario: Library com séries mostra mosaico
+- **Given** uma biblioteca com pelo menos 1 série que tenha `thumb`
+- **When** o usuário visita `/libraries`
+- **Then** o card exibe até 6 pôsteres em grid 2×3
+- **And** cada pôster usa `background-image: url(/api/images/...)` com o `thumb` da série
 
-1. **Mosaic Display**: Each library card shows a mosaic grid of series posters (up to 4-6 posters) instead of the static TV icon
-2. **Hover Animation**: When user hovers over the library card, the mosaic posters cycle/animate (like a slideshow or shuffle effect)
-3. **Fallback**: When library has no series, display the TV icon in a neutral/muted color (var(--text-tertiary) or similar)
-4. **Data Source**: Fetch series data from existing `/api/series/{libraryKey}` endpoint (first page, 6 items)
-5. **Performance**: Lazy load posters, cache results, don't block initial render
+#### Scenario: Library sem séries mostra ícone neutro
+- **Given** uma biblioteca com 0 séries ou sem `thumb`
+- **When** o usuário visita `/libraries`
+- **Then** o card exibe o ícone `tv` em `var(--text-tertiary)` (cor neutra)
 
-### Visual/UX Requirements
+### Requirement: REQ-MOSAIC-HOVER-SHUFFLE
+**Descrição**: Ao passar o mouse sobre o card, o sistema SHALL embaralhar (shuffle) os pôsteres suavemente.
 
-1. **Mosaic Layout**: 2x2 or 2x3 grid of small poster thumbnails
-2. **Hover Effect**: Smooth transition between posters (fade, slide, or shuffle) - inspired by reactbits.dev Shape Magic / Spotlight Card hover effects
-3. **Neutral Icon**: TV icon in var(--text-tertiary) when no series available
-4. **Aspect Ratio**: Maintain poster aspect ratio (2:3 typical for TV posters)
-5. **Responsive**: Mosaic adapts to card size
+#### Scenario: Hover inicia shuffle
+- **Given** um card com mosaico de pôsteres
+- **When** o mouse entra no card
+- **Then** a ordem dos pôsteres é alterada aleatoriamente a cada ~400 ms
+- **And** transição suave via CSS `transform` + `opacity`
 
-### Technical Requirements
+#### Scenario: Mouse leave restaura ordem original
+- **When** o mouse sai do card
+- **Then** o shuffle para e a ordem original (cached) é restaurada
 
-1. **Reuse Existing Composables**: Leverage `useLibrarySeries` for fetching
-2. **New Composable**: Create `useLibraryMosaic` for mosaic-specific logic (hover animation, poster selection)
-3. **Component**: Create `LibraryMosaic.vue` component for the mosaic display
-4. **Integration**: Replace `.library-card-icon` in LibrariesView with new component
-5. **CSS Variables**: Use existing design system variables (--radius, --speed, --ease, --text-tertiary, etc.)
+#### Scenario: Reduced motion desabilita animação
+- **Given** usuário com `prefers-reduced-motion: reduce`
+- **When** passa mouse no card
+- **Then** não há shuffle nem transição
 
-## Acceptance Criteria
+### Requirement: REQ-MOSAIC-PERFORMANCE
+**Descrição**: O carregamento SHALL ser não bloqueante e MUST manter cache de resultados.
 
-- [ ] Library cards show mosaic of series posters (max 6) instead of TV icon
-- [ ] Hovering card triggers smooth poster animation/cycling
-- [ ] Libraries with no series show TV icon in neutral color
-- [ ] Initial page load not blocked by poster fetching
-- [ ] Posters lazy-loaded with placeholder/skeleton
-- [ ] Works in both light and dark themes
-- [ ] No layout shift when posters load
-- [ ] Accessible: keyboard focus shows mosaic, screen readers get proper labels
-
-## Out of Scope
-
-- Full series detail on hover (just visual mosaic)
-- Click interaction on individual posters (card click still navigates to series view)
-- Custom animation configuration (use sensible defaults)
+#### Scenario: Cache evita refetch
+- **Given** biblioteca já foi carregada uma vez
+- **When** o usuário revisita `/libraries` na mesma sessão
+- **Then** o mosaic usa dados do cache em memória sem nova requisição HTTP
