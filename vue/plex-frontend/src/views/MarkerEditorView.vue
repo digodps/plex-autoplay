@@ -1,15 +1,32 @@
 <script setup>
-import { computed, onMounted } from "vue";
+import { computed, onMounted, ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useMarkerStore } from "../stores/markers";
 import AppIcon from "../components/AppIcon.vue";
 import MarkerRow from "../components/MarkerRow.vue";
+import { reprocessMarkers } from "../api";
 
 const route = useRoute();
 const router = useRouter();
 const store = useMarkerStore();
+const reprocessing = ref(false);
 
 const seriesKey = computed(() => route.params.seriesKey);
+
+async function handleReprocess() {
+  if (!seriesKey.value) return;
+  reprocessing.value = true;
+  try {
+    const res = await reprocessMarkers(seriesKey.value);
+    if (!res.ok) throw new Error("Falha ao reprocessar marcadores");
+    await res.json();
+    await store.fetchSeries(seriesKey.value);
+  } catch (e) {
+    store.error.value = e.message || "Falha ao reprocessar marcadores.";
+  } finally {
+    reprocessing.value = false;
+  }
+}
 
 onMounted(() => {
   store.fetchSeries(seriesKey.value);
@@ -38,6 +55,15 @@ const seasons = computed(() => {
         <h1>Marcadores da série</h1>
         <p class="subtitle">Selecione um campo de intro ou créditos para editar ou adicionar.</p>
       </div>
+      <button
+        class="btn btn-ghost reprocess"
+        :disabled="reprocessing"
+        data-testid="markers-reprocess"
+        @click="handleReprocess"
+      >
+        <AppIcon name="refresh" size="sm" />
+        {{ reprocessing ? "Reprocessando…" : "Reprocessar" }}
+      </button>
     </header>
 
     <div v-if="store.error" class="alert" role="alert">

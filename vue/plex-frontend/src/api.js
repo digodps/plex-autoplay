@@ -113,3 +113,7 @@ export async function fetchMarkers() {
 export async function syncRun() {
   return apiFetch("/api/plex/scan", { method: "POST" });
 }
+
+export async function reprocessMarkers(seriesKey) {
+  return apiFetch(`/api/markers/reprocess/${encodeURIComponent(seriesKey)}`, { method: "POST" });
+}

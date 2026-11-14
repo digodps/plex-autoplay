@@ -99,7 +99,11 @@ public static class ServiceCollectionExtensions
         });
 
         // Marker detector
-        services.AddSingleton<IMarkerDetector, PlexAutoplay.Infrastructure.Detection.FfmpegMarkerDetector>();
+        var markerConfig = builder.Configuration.GetSection("MarkerDetection");
+        services.AddSingleton<IMarkerDetector>(sp =>
+            new PlexAutoplay.Infrastructure.Detection.FfmpegMarkerDetector(
+                introLoudnessThresholdDb: markerConfig.GetValue<double>("IntroLoudnessThresholdDb", -20.0),
+                introLowConfidenceThresholdDb: markerConfig.GetValue<double>("IntroLowConfidenceThresholdDb", -30.0)));
 
         // Scan persistence (SQLite)
         services.AddSingleton<IScanJobRepository>(sp =>

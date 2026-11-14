@@ -1,7 +1,9 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
+using PlexAutoplay.Application;
 using PlexAutoplay.Application.DTOs;
 using PlexAutoplay.Application.UseCases;
+using PlexAutoplay.Domain.Ports;
 
 namespace PlexAutoplay.Web.Endpoints;
 
@@ -113,6 +115,33 @@ public static class MarkerEndpoints
         {
             await saveMarker.RemoveMarkerAsync(ratingKey, kind);
             return Results.Ok();
+        });
+
+        app.MapPost("/api/markers/reprocess/{seriesKey}", async (
+            string seriesKey,
+            [FromServices] IPlexApiClient plexClient,
+            [FromServices] LibraryScanUseCase libraryScan,
+            [FromServices] IMarkerRepository markerRepository,
+            [FromServices] IAppSettingsStore settings) =>
+        {
+            var episodesResult = await plexClient.GetSeriesEpisodesAsync(seriesKey);
+            if (episodesResult.Failed)
+            {
+                return Results.Problem(episodesResult.ErrorMessage ?? "Falha ao buscar episódios da série.", statusCode: 502);
+            }
+
+            var episodes = episodesResult.Episodes.ToList();
+            foreach (var ep in episodes)
+            {
+                await markerRepository.DeleteAsync(ep.RatingKey, "intro");
+                await markerRepository.DeleteAsync(ep.RatingKey, "credits");
+            }
+
+            var currentSettings = await settings.GetAsync();
+            var seeds = episodes.Select(e => new EpisodeSeed(e.RatingKey, e.FilePath));
+            var summary = await libraryScan.ScanLibraryAsync(seeds, currentSettings.MediaRoots, origin: "detected");
+
+            return Results.Ok(new { processed = summary.Processed, skipped = summary.Skipped, total = episodes.Count });
         });
     }
 }

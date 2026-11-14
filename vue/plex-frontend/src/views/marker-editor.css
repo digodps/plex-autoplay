@@ -28,6 +28,11 @@
   flex: none;
 }
 
+.reprocess {
+  flex: none;
+  margin-left: auto;
+}
+
 .editor-skeleton {
   display: flex;
   flex-direction: column;
