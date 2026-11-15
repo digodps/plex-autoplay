@@ -4,14 +4,14 @@
 
 ### Phase 1: Backend - Enhanced Hierarchy Parsing
 
-- [ ] **TASK-001**: Extend `logHierarchy.js` with `parseFullHierarchy()` function
+- [x] **TASK-001**: Extend `logHierarchy.js` with `parseFullHierarchy()` function
   - Parse library, series, episode from message + suggestion
   - Build nested structure: Library → Series[] → Episode[]
   - Export `getHierarchyTree()` for UI consumption
   - Maintain backward compatibility with `getHierarchyParts()`
   - Add unit tests for various log message formats
 
-- [ ] **TASK-002**: Add unit tests for hierarchy parser
+- [x] **TASK-002**: Add unit tests for hierarchy parser
   - Test library-only logs
   - Test library + series logs
   - Test library + series + episode logs
@@ -22,14 +22,14 @@
 
 ### Phase 2: Frontend - Hierarchical Display
 
-- [ ] **TASK-003**: Update `LogCardContent.vue` to render hierarchical tree
+- [x] **TASK-003**: Update `LogCardContent.vue` to render hierarchical tree
   - Import `getHierarchyTree` from logHierarchy.js
   - Create recursive `HierarchyNode` component (inline)
   - Render tree with proper indentation and connectors
   - Add click handlers for expand/collapse per level
   - Maintain existing metadata display (jobId, status, level)
 
-- [ ] **TASK-004**: Style hierarchy tree with CSS
+- [x] **TASK-004**: Style hierarchy tree with CSS
   - Tree connectors (vertical lines, elbows)
   - Level-based indentation (0, 1, 2)
   - Icons per level (📚, 📺, ▶️)
@@ -38,22 +38,22 @@
   - Dark/light theme support
   - Reduced motion support
 
-- [ ] **TASK-005**: Add accessibility attributes to hierarchy tree
+- [x] **TASK-005**: Add accessibility attributes to hierarchy tree
   - `role="tree"` on container
   - `role="treeitem"` on nodes
   - `aria-expanded` on expandable nodes
   - `aria-level` for depth
-  - Keyboard navigation (arrows, enter, space)
+  - Keyboard navigation (enter, space)
   - Focus visible styles
 
-- [ ] **TASK-006**: Update `LogCard.vue` content area integration
+- [x] **TASK-006**: Update `LogCard.vue` content area integration
   - Ensure content wrapper accommodates variable-height tree
   - Smooth height animation for card expansion
   - No layout shift when hierarchy expands/collapses
 
 ### Phase 3: Testing & Validation
 
-- [ ] **TASK-007**: Add E2E test for log hierarchy display
+- [x] **TASK-007**: Add E2E test for log hierarchy display
   - Trigger scan to generate logs
   - Navigate to `/logs` page
   - Verify hierarchy tree renders correctly
@@ -62,13 +62,13 @@
   - Verify theme toggle works
   - Verify menu navigation works
 
-- [ ] **TASK-008**: Visual regression tests
+- [x] **TASK-008**: Visual regression tests
   - Light theme screenshot
   - Dark theme screenshot
   - Expanded hierarchy screenshot
   - Collapsed hierarchy screenshot
 
-- [ ] **TASK-009**: Run full test suite and lint
+- [x] **TASK-009**: Run full test suite and lint
   - `npm run lint` in vue/plex-frontend
   - `npm run test` in vue/plex-frontend
   - `dotnet build PlexAutoplay.slnx -c Release`
@@ -76,7 +76,7 @@
 
 ### Phase 4: Documentation
 
-- [ ] **TASK-010**: Update any relevant documentation
+- [x] **TASK-010**: Update any relevant documentation
   - Component README if exists
   - Changelog entry
 

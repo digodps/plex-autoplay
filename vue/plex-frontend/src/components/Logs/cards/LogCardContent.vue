@@ -1,6 +1,14 @@
 <script setup>
-import { computed } from 'vue'
-import { parseHierarchy, getHierarchyParts, formatTimestamp, getLevelConfig } from './logHierarchy.js'
+import { computed, ref, h } from 'vue'
+import { 
+  parseHierarchy, 
+  parseFullHierarchy, 
+  getHierarchyTree, 
+  hasHierarchyTree,
+  getHierarchyParts, 
+  formatTimestamp, 
+  getLevelConfig 
+} from './logHierarchy.js'
 
 const props = defineProps({
   log: {
@@ -10,21 +18,224 @@ const props = defineProps({
 })
 
 const hierarchy = computed(() => parseHierarchy(props.log.message, props.log.suggestion))
+const fullHierarchy = computed(() => parseFullHierarchy(props.log.message, props.log.suggestion))
+const hierarchyTree = computed(() => getHierarchyTree(fullHierarchy.value))
+const hasTree = computed(() => hasHierarchyTree(fullHierarchy.value))
 const hierarchyParts = computed(() => getHierarchyParts(hierarchy.value))
 const timestamp = computed(() => formatTimestamp(props.log.timestamp))
 const levelConfig = computed(() => getLevelConfig(props.log.level))
+
+// Track expanded state for each hierarchy node (by unique key)
+const expandedNodes = ref(new Set())
+
+function getNodeKey(node, level, parentKey = '') {
+  return `${parentKey}|${level}|${node.name}`
+}
+
+function toggleNode(node, level, parentKey = '') {
+  const key = getNodeKey(node, level, parentKey)
+  if (expandedNodes.value.has(key)) {
+    expandedNodes.value.delete(key)
+  } else {
+    expandedNodes.value.add(key)
+  }
+}
+
+function isExpanded(node, level, parentKey = '') {
+  const key = getNodeKey(node, level, parentKey)
+  return expandedNodes.value.has(key)
+}
+
+function hasChildren(node) {
+  return node.series && node.series.length > 0
+}
+
+function hasEpisodes(series) {
+  return series.episodes && series.episodes.length > 0
+}
 
 const copyJobId = async () => {
   if (props.log.jobId) {
     await navigator.clipboard.writeText(props.log.jobId)
   }
 }
+
+// Recursive Hierarchy Node Component
+const HierarchyNode = {
+  name: 'HierarchyNode',
+  props: {
+    node: { type: Object, required: true },
+    level: { type: Number, required: true },
+    parentKey: { type: String, required: true },
+    isLast: { type: Boolean, default: false }
+  },
+  setup(props) {
+    const indentSize = 16 // px per level
+    
+    const isLib = props.level === 0
+    const isSeries = props.level === 1
+    const isEpisode = props.level === 2
+    
+    const children = isLib ? props.node.series : (isSeries ? props.node.episodes : [])
+    const hasChildren = children && children.length > 0
+    
+    const nodeKey = `${props.parentKey}|${props.level}|${props.node.name}`
+    const isExpanded = () => expandedNodes.value.has(nodeKey)
+    
+    const handleClick = (e) => {
+      e.stopPropagation()
+      if (hasChildren) {
+        toggleNode(props.node, props.level, props.parentKey)
+      }
+    }
+    
+    const handleKeydown = (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault()
+        e.stopPropagation()
+        if (hasChildren) {
+          toggleNode(props.node, props.level, props.parentKey)
+        }
+      }
+    }
+    
+    const levelStyles = {
+      paddingLeft: `${props.level * indentSize + 8}px`,
+      borderLeft: props.level > 0 ? '1px solid rgba(55, 65, 81, 0.5)' : 'none',
+    }
+    
+    const labelClass = isLib ? 'text-gray-100 font-semibold' : (isSeries ? 'text-gray-200' : 'text-gray-300')
+    const valueClass = 'text-gray-200'
+    
+    return () => {
+      const nodeElements = []
+      
+      // Connector line
+      if (props.level > 0) {
+        nodeElements.push(
+          h('div', {
+            class: 'flex-shrink-0 w-4 h-full relative',
+            style: { marginTop: '2px' }
+          }, [
+            h('div', {
+              class: 'absolute left-1/2 top-0 bottom-0 w-px bg-gray-700/50',
+              style: { transform: 'translateX(-50%)' }
+            }),
+            !props.isLast && h('div', {
+              class: 'absolute left-1/2 bottom-0 w-4 h-px bg-gray-700/50',
+              style: { transform: 'translateX(-50%)' }
+            })
+          ])
+        )
+      }
+      
+      // Expand/Collapse Chevron
+      if (hasChildren) {
+        nodeElements.push(
+          h('div', {
+            class: 'flex-shrink-0 w-6 h-6 flex items-center justify-center',
+            style: { marginTop: '2px' }
+          }, [
+            h('svg', {
+              class: `w-4 h-4 text-gray-500 transition-transform ${isExpanded() ? 'rotate-90' : ''}`,
+              fill: 'none',
+              stroke: 'currentColor',
+              viewBox: '0 0 24 24',
+              'aria-hidden': 'true'
+            }, [
+              h('path', {
+                'stroke-linecap': 'round',
+                'stroke-linejoin': 'round',
+                'stroke-width': '2',
+                d: 'M9 5l7 7-7 7'
+              })
+            ])
+          ])
+        )
+      } else {
+        nodeElements.push(
+          h('div', {
+            class: 'flex-shrink-0 w-6 h-6',
+            style: { marginTop: '2px' }
+          })
+        )
+      }
+      
+      // Icon
+      nodeElements.push(
+        h('div', {
+          class: 'flex-shrink-0 w-6 h-6 flex items-center justify-center text-lg',
+          style: { marginTop: '2px' }
+        }, props.node.icon)
+      )
+      
+      // Label & Value
+      nodeElements.push(
+        h('div', { class: 'flex-1 min-w-0' }, [
+          h('div', { class: 'flex items-center gap-2' }, [
+            h('span', { 
+              class: `text-xs font-medium text-gray-500 uppercase tracking-wide ${isLib ? 'font-semibold' : ''}`
+            }, isLib ? 'Biblioteca' : (isSeries ? 'Série' : 'Episódio')),
+            h('span', { class: `text-sm truncate ${valueClass}` }, props.node.name)
+          ])
+        ])
+      )
+      
+      // Children
+      if (hasChildren && isExpanded()) {
+        nodeElements.push(
+          h('div', { 
+            class: 'hierarchy-children', 
+            role: 'group',
+            style: { marginLeft: '24px' }
+          }, children.map((child, idx) => 
+            h(HierarchyNode, {
+              key: `${nodeKey}|${idx}-${child.name}`,
+              node: child,
+              level: props.level + 1,
+              parentKey: nodeKey,
+              isLast: idx === children.length - 1
+            })
+          ))
+        )
+      }
+      
+      return h('div', {
+        class: 'hierarchy-node flex items-start gap-3 py-1.5 cursor-pointer hover:bg-gray-800/50 rounded transition-colors',
+        style: levelStyles,
+        role: 'treeitem',
+        'aria-level': props.level + 1,
+        'aria-expanded': hasChildren ? isExpanded() : undefined,
+        tabindex: hasChildren ? 0 : -1,
+        onClick: handleClick,
+        onKeydown: handleKeydown
+      }, nodeElements)
+    }
+  }
+}
 </script>
 
 <template>
   <div class="log-card-content animate-in slide-in-from-top-2 fade-in duration-200 ease-out" role="region" aria-label="Detalhes do log">
-    <!-- Hierarchy Tree -->
-    <div v-if="hierarchyParts.length > 0" class="mb-4 p-4 rounded-lg bg-gray-900/50 border border-gray-800">
+    <!-- Hierarchy Tree (New Nested Display) -->
+    <div v-if="hasTree" class="mb-4 p-4 rounded-lg bg-gray-900/50 border border-gray-800">
+      <div class="flex items-center gap-2 text-xs font-medium text-gray-400 uppercase tracking-wider mb-3">
+        <span>Hierarquia do processamento</span>
+      </div>
+      <div class="hierarchy-tree" role="tree" aria-label="Hierarquia de processamento">
+        <HierarchyNode
+          v-for="(library, libIndex) in hierarchyTree"
+          :key="`lib-${libIndex}-${library.name}`"
+          :node="library"
+          :level="0"
+          :parent-key="''"
+          :is-last="libIndex === hierarchyTree.length - 1"
+        />
+      </div>
+    </div>
+
+    <!-- Fallback: Flat Hierarchy Display (Backward Compatibility) -->
+    <div v-else-if="hierarchyParts.length > 0" class="mb-4 p-4 rounded-lg bg-gray-900/50 border border-gray-800">
       <div class="flex items-center gap-2 text-xs font-medium text-gray-400 uppercase tracking-wider mb-3">
         <span>Hierarquia do processamento</span>
       </div>
@@ -104,5 +315,40 @@ const copyJobId = async () => {
 /* Ensure smooth animation */
 .log-card-content {
   overflow: hidden;
+}
+
+/* Hierarchy tree styles */
+.hierarchy-tree {
+  font-family: inherit;
+}
+
+.hierarchy-node {
+  user-select: none;
+}
+
+.hierarchy-node:focus-visible {
+  outline: none;
+  ring: 2px;
+  ring-color: var(--color-accent);
+  ring-offset: 2px;
+  ring-offset-color: #1f2937;
+}
+
+/* Chevron animation */
+.hierarchy-node svg {
+  transition: transform 150ms ease-out;
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .hierarchy-node svg,
+  .hierarchy-node {
+    transition: none !important;
+  }
+}
+
+/* Dark theme adjustments */
+.dark .hierarchy-node:hover {
+  background-color: rgba(55, 65, 81, 0.5);
 }
 </style>

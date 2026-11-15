@@ -90,6 +90,7 @@ export function parseHierarchy(message, suggestion = '') {
  * @returns {boolean}
  */
 export function hasHierarchy(hierarchy) {
+  if (!hierarchy) return false
   return !!(hierarchy.library || hierarchy.series || hierarchy.episode)
 }
 
@@ -156,4 +157,66 @@ export function getLevelConfig(level) {
 export function truncate(text, maxLength = 80) {
   if (!text || text.length <= maxLength) return text
   return text.slice(0, maxLength).trim() + '…'
+}
+
+/**
+ * Parse full nested hierarchy from a log message
+ * Builds Library -> Series[] -> Episode[] structure
+ * @param {string} message - Log message
+ * @param {string} suggestion - Optional suggestion field
+ * @returns {Object} Nested hierarchy with libraries array
+ */
+export function parseFullHierarchy(message, suggestion = '') {
+  const flat = parseHierarchy(message, suggestion)
+  
+  const libraries = []
+  
+  if (flat.library) {
+    const library = {
+      name: flat.library,
+      icon: '📚',
+      series: []
+    }
+    
+    if (flat.series) {
+      const series = {
+        name: flat.series,
+        icon: '📺',
+        episodes: []
+      }
+      
+      if (flat.episode) {
+        series.episodes.push({
+          name: flat.episode,
+          icon: '▶️'
+        })
+      }
+      
+      library.series.push(series)
+    }
+    
+    libraries.push(library)
+  }
+  
+  return { libraries }
+}
+
+/**
+ * Get hierarchy tree for nested rendering
+ * @param {Object} hierarchy - Parsed hierarchy object from parseFullHierarchy
+ * @returns {Array} Array of library nodes with nested series/episodes
+ */
+export function getHierarchyTree(hierarchy) {
+  if (!hierarchy || !hierarchy.libraries) return []
+  return hierarchy.libraries
+}
+
+/**
+ * Check if hierarchy has any nested content
+ * @param {Object} hierarchy - Parsed hierarchy object from parseFullHierarchy
+ * @returns {boolean}
+ */
+export function hasHierarchyTree(hierarchy) {
+  if (!hierarchy || !hierarchy.libraries) return false
+  return hierarchy.libraries.some(lib => lib.series && lib.series.length > 0)
 }
