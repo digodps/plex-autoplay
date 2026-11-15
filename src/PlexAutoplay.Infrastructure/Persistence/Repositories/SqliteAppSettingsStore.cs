@@ -34,8 +34,12 @@ public sealed class SqliteAppSettingsStore : IAppSettingsStore
             Get(values, AppSettingKeys.PlexUrl, defaults.PlexUrl),
             Get(values, AppSettingKeys.PlexToken, defaults.PlexToken),
             mediaRoots,
-            GetInt(values, AppSettingKeys.SyncIntervalMinutes, defaults.SyncIntervalMinutes));
+            GetInt(values, AppSettingKeys.SyncIntervalMinutes, defaults.SyncIntervalMinutes),
+            GetBool(values, AppSettingKeys.AutoPlayEnabled, defaults.AutoPlayEnabled));
     }
+
+    private static bool GetBool(IReadOnlyDictionary<string, string> values, string key, bool fallback) =>
+        values.TryGetValue(key, out var value) && bool.TryParse(value, out var parsed) ? parsed : fallback;
 
     public async Task SaveAsync(AppSettingsSnapshot settings)
     {
@@ -48,7 +52,8 @@ public sealed class SqliteAppSettingsStore : IAppSettingsStore
             [AppSettingKeys.PlexUrl] = settings.PlexUrl,
             [AppSettingKeys.PlexToken] = settings.PlexToken,
             [AppSettingKeys.MediaRoots] = MediaRoots.Serialize(settings.MediaRoots),
-            [AppSettingKeys.SyncIntervalMinutes] = settings.SyncIntervalMinutes.ToString()
+            [AppSettingKeys.SyncIntervalMinutes] = settings.SyncIntervalMinutes.ToString(),
+            [AppSettingKeys.AutoPlayEnabled] = settings.AutoPlayEnabled.ToString().ToLowerInvariant()
         };
 
         foreach (var (key, value) in values)
@@ -96,6 +101,7 @@ public static class AppSettingsSeeder
                     AppSettingKeys.PlexToken => AppSettingDefaults.PlexToken,
                     AppSettingKeys.MediaRoots => MediaRoots.Serialize(MediaRootsFromEnvironment()),
                     AppSettingKeys.SyncIntervalMinutes => AppSettingDefaults.SyncIntervalMinutes.ToString(),
+                    AppSettingKeys.AutoPlayEnabled => AppSettingDefaults.AutoPlayEnabled.ToString().ToLowerInvariant(),
                     _ => ""
                 };
 

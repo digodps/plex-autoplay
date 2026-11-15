@@ -59,7 +59,7 @@ public sealed class UpdateAppSettingsUseCase
         }
 
         var token = request.PlexToken is null ? current.PlexToken : request.PlexToken.Trim();
-        await _store.SaveAsync(new AppSettingsSnapshot(plexUrl, token, mediaRoots, syncInterval));
+        await _store.SaveAsync(new AppSettingsSnapshot(plexUrl, token, mediaRoots, syncInterval, current.AutoPlayEnabled));
 
         return UpdateAppSettingsResult.Ok();
     }

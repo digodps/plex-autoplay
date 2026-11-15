@@ -116,6 +116,24 @@ public static class DatabaseInitializer
         """, false),
         (14, "CREATE INDEX IF NOT EXISTS IX_SkipHistory_Timestamp ON SkipHistory(Timestamp)", true),
         (15, "ALTER TABLE Series ADD COLUMN Genre TEXT NOT NULL DEFAULT ''", true),
+        (16, """
+            CREATE TABLE IF NOT EXISTS SeriesEpisode (
+                RatingKey TEXT NOT NULL PRIMARY KEY,
+                SeriesRatingKey TEXT NOT NULL,
+                SeasonNumber INTEGER NOT NULL,
+                EpisodeNumber INTEGER NOT NULL,
+                Title TEXT NOT NULL,
+                Summary TEXT NOT NULL,
+                Thumb TEXT NOT NULL,
+                DurationSeconds INTEGER NOT NULL DEFAULT 0,
+                Watched INTEGER NOT NULL DEFAULT 0,
+                WatchProgress INTEGER NOT NULL DEFAULT 0,
+                AddedAt TEXT NOT NULL DEFAULT (datetime('now')),
+                UpdatedAt TEXT NOT NULL DEFAULT (datetime('now')),
+                FOREIGN KEY (SeriesRatingKey) REFERENCES Series(RatingKey) ON DELETE CASCADE
+            )
+            """, false),
+        (17, "CREATE INDEX IF NOT EXISTS IX_SeriesEpisode_SeriesRatingKey ON SeriesEpisode(SeriesRatingKey)", true),
     ];
 
     public static async Task InitializeAsync(string connectionString)

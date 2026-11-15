@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Logging;
 using PlexAutoplay.Application;
-using PlexAutoplay.Domain.Entities;
+using SeriesEntity = PlexAutoplay.Domain.Entities.Series;
+using LibraryEntity = PlexAutoplay.Domain.Entities.Library;
 using PlexAutoplay.Domain.Ports;
 
 namespace PlexAutoplay.Application.UseCases;
@@ -58,7 +59,7 @@ public sealed class CatalogSyncUseCase
             var existing = await _libraryRepository.GetByRatingKeyAsync(plexLib.Key);
             if (existing == null)
             {
-                await _libraryRepository.UpsertAsync(new Library
+                await _libraryRepository.UpsertAsync(new LibraryEntity
                 {
                     RatingKey = plexLib.Key,
                     Title = plexLib.Title,
@@ -69,7 +70,7 @@ public sealed class CatalogSyncUseCase
             }
             else
             {
-                await _libraryRepository.UpsertAsync(new Library
+                await _libraryRepository.UpsertAsync(new LibraryEntity
                 {
                     RatingKey = plexLib.Key,
                     Title = plexLib.Title,
@@ -114,7 +115,7 @@ public sealed class CatalogSyncUseCase
                 var existing = await _seriesRepository.GetByRatingKeyAsync(plexSeries.RatingKey);
                 if (existing == null)
                 {
-                    await _seriesRepository.UpsertAsync(new Series
+                    await _seriesRepository.UpsertAsync(new SeriesEntity
                     {
                         RatingKey = plexSeries.RatingKey,
                         LibraryRatingKey = lib.Key,
@@ -127,7 +128,7 @@ public sealed class CatalogSyncUseCase
                 }
                 else if (existing.Title != plexSeries.Title || existing.Summary != plexSeries.Summary || existing.Thumb != plexSeries.Thumb || existing.Genre != plexSeries.Genre)
                 {
-                    await _seriesRepository.UpsertAsync(new Series
+                    await _seriesRepository.UpsertAsync(new SeriesEntity
                     {
                         RatingKey = plexSeries.RatingKey,
                         LibraryRatingKey = lib.Key,
