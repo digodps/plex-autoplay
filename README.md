@@ -39,9 +39,10 @@
 git clone https://github.com/seu-usuario/plex-autoplay.git
 cd plex-autoplay
 
-# 2️⃣  Crie o arquivo .env apenas com bootstrap (JWT_SECRET, portas)
+# 2️⃣  Crie o arquivo .env com variáveis bootstrap
 cp infra/.env.example .env
-# URL/token do Plex, diretórios de mídia e intervalos são configurados em ⚙ Ajustes
+# Edite .env: PLEX_URL, PLEX_TOKEN, ADMIN_PASSWORD, MEDIA_ROOTS
+# JWT_SECRET é auto-gerado no primeiro start; porta interna é 80.
 
 # 3️⃣  Build + up
 ./scripts/start.sh --detach
@@ -79,8 +80,6 @@ Variáveis abaixo são apenas bootstrap e continuam vindo do `.env`/ambiente:
 
 | Variável | Descrição | Padrão |
 |----------|-----------|--------|
-| `JWT_SECRET` | Chave secreta para assinar tokens JWT | – |
-| `WEB_PORT` | Porta do dashboard (interno) | 8080 |
 | `WS_PORT` | Porta WebSocket do PlexAutoSkip (interno ao container) | 8081 |
 | `ASPNETCORE_ENVIRONMENT` | Ambiente ASP.NET Core | Development |
 | `LOG_LEVEL` | Nível de log (`DEBUG`, `INFO`, `WARN`, `ERROR`) | Information |
@@ -88,6 +87,12 @@ Variáveis abaixo são apenas bootstrap e continuam vindo do `.env`/ambiente:
 | `OTEL_EXPORTER` | Exportador de telemetria: `console` ou `otlp` | console |
 | `OTEL_ENDPOINT` | Endpoint OTLP (apenas quando `OTEL_EXPORTER=otlp`) | vazio |
 | `OTEL_SERVICE_NAME` | Nome do serviço para identificação nos traces/métricas | plex-autoplay |
+
+**Já não são necessárias** (valores padrão ou auto-gerados):
+- `JWT_SECRET` → gerado automaticamente no primeiro start, salvo no SQLite
+- `WEB_PORT` → porta interna fixa em 80 (`ASPNETCORE_URLS=http://+:80`)
+- `SQLITE_CONNECTION_STRING` → default `Data Source=/data/app.db`
+- `APP_CONFIG_PATH` → default `/data/app-config.json`
 
 Todas as variáveis são lidas exclusivamente de variáveis de ambiente. O arquivo `app-config.json` não é usado para configuração (consulte o spec `config-env`).
 
