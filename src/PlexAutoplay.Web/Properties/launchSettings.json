@@ -1,15 +1,13 @@
 ﻿{
   "$schema": "https://json.schemastore.org/launchsettings.json",
   "profiles": {
-    "https": {
+    "http": {
       "commandName": "Project",
       "dotnetRunMessages": true,
       "launchBrowser": false,
-      "applicationUrl": "https://localhost:443",
+      "applicationUrl": "http://localhost:80",
       "environmentVariables": {
-        "ASPNETCORE_ENVIRONMENT": "Development",
-        "DISABLE_HTTP": "true",
-        "HTTPS_PORT": "443"
+        "ASPNETCORE_ENVIRONMENT": "Development"
       }
     }
   }

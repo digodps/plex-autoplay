@@ -4,8 +4,6 @@ using PlexAutoplay.Web.Configuration;
 using PlexAutoplay.Web.Endpoints;
 using PlexAutoplay.Web.Middleware;
 using Serilog;
-using System.Security.Cryptography;
-using System.Security.Cryptography.X509Certificates;
 
 // --- Logging bootstrap ---
 var logLevelRaw = Environment.GetEnvironmentVariable("LOG_LEVEL") ?? "Information";
@@ -30,13 +28,8 @@ Log.Logger = new LoggerConfiguration()
 var builder = WebApplication.CreateBuilder(args);
 builder.Host.UseSerilog();
 
-// --- Certificate & Kestrel ---
-Log.Information("Carregando certificado...");
-var disableHttp = (Environment.GetEnvironmentVariable("DISABLE_HTTP") ?? "true").Equals("true", StringComparison.OrdinalIgnoreCase);
-var serverCert = ServerCertificateProvider.GetServerCertificate();
-Log.Information("Certificado carregado, configurando Kestrel...");
-KestrelSetup.Configure(builder, serverCert, disableHttp);
-Log.Information("Kestrel configurado.");
+// HTTP only - TLS handled by infrastructure (reverse proxy, load balancer)
+builder.WebHost.UseUrls(Environment.GetEnvironmentVariable("ASPNETCORE_URLS") ?? "http://+:80");
 
 // --- Services (DI) ---
 Log.Information("Adicionando serviços de aplicação...");
@@ -76,7 +69,7 @@ app.UseMiddleware<CorrelationIdMiddleware>();
 app.UseMiddleware<JwtAuthMiddleware>();
 
 // --- Endpoints ---
-app.MapAuthEndpoints(disableHttp);
+app.MapAuthEndpoints();
 app.MapPlexEndpoints();
 app.MapSeriesEndpoints();
 app.MapSyncEndpoints();

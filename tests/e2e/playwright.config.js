@@ -20,8 +20,6 @@ module.exports = defineConfig({
     // Timeout de cada teste individual
     actionTimeout: 10 * 1000,
     navigationTimeout: 30 * 1000,
-    // A aplicação no container de teste expõe HTTP (não HTTPS)
-    ignoreHTTPSErrors: true,
   },
 
   projects: [

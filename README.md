@@ -39,7 +39,7 @@
 git clone https://github.com/seu-usuario/plex-autoplay.git
 cd plex-autoplay
 
-# 2️⃣  Crie o arquivo .env apenas com bootstrap (JWT_SECRET, portas, certificado)
+# 2️⃣  Crie o arquivo .env apenas com bootstrap (JWT_SECRET, portas)
 cp infra/.env.example .env
 # URL/token do Plex, diretórios de mídia e intervalos são configurados em ⚙ Ajustes
 
@@ -47,8 +47,8 @@ cp infra/.env.example .env
 ./scripts/start.sh --detach
 
 # 4️⃣  Acesse o dashboard
-# HTTPS : https://localhost:8443   (certificado auto‑assinado – aceite o aviso)
-# WebSocket (PlexAutoSkip): wss://localhost:8081
+# HTTP : http://localhost:8080
+# WebSocket (PlexAutoSkip): ws://localhost:8081 (interno ao container)
 
 # 5️⃣  Crie o usuário admin → Conclua o setup → Em ⚙ Ajustes salve URL/Token do Plex
 #     → Em ▤ Bibliotecas → veja os cards das bibliotecas do Plex
@@ -81,12 +81,7 @@ Variáveis abaixo são apenas bootstrap e continuam vindo do `.env`/ambiente:
 |----------|-----------|--------|
 | `JWT_SECRET` | Chave secreta para assinar tokens JWT | – |
 | `WEB_PORT` | Porta do dashboard (interno) | 8080 |
-| `WS_PORT` | Porta WebSocket do PlexAutoSkip (interno) | 8081 |
-| `CERT_PATH` | Caminho para arquivo PFX no container | vazio |
-| `CERT_PASSWORD` | Senha do arquivo PFX (opcional) | vazio |
-| `CERT_BASE64` | Conteúdo base64 de um arquivo PFX (alternativa a `CERT_PATH`) | vazio |
-| `HTTPS_PORT` | Porta HTTPS (padrão: 443) | 443 |
-| `DISABLE_HTTP` | Desabilitar listener HTTP completamente | true |
+| `WS_PORT` | Porta WebSocket do PlexAutoSkip (interno ao container) | 8081 |
 | `ASPNETCORE_ENVIRONMENT` | Ambiente ASP.NET Core | Development |
 | `LOG_LEVEL` | Nível de log (`DEBUG`, `INFO`, `WARN`, `ERROR`) | Information |
 | `ALLOWED_HOSTS` | Hosts permitidos | * |
@@ -105,18 +100,17 @@ O container roda .NET 10 ASP.NET Core Web API + Vue SPA + SQLite em modo HTTPS-o
 ```text
 +--------------------------------------------------+
 |  Container único (PID 1 = .NET 10)               |
-|  ├─ Kestrel :443 (HTTPS API + Vue SPA)           |
-|  ├─ Kestrel :8081 (WSS PlexAutoSkip)             |
+|  ├─ Kestrel :80 (HTTP API + Vue SPA)             |
+|  ├─ Kestrel :8081 (WS PlexAutoSkip)              |
 |  ├─ OpenTelemetry (traces + métricas Prometheus) |
 |  └─ SQLite (/data/app.db)                        |
 +--------------------------------------------------+
 ```
 
-- **HTTPS** na porta 443 do container (mapeada para 8443 no host em modo rootless).
-- **WebSocket (PlexAutoSkip)** na porta 8081.
-- **HTTP** desabilitado por padrão (`DISABLE_HTTP=true`).
-- **Certificado auto-assinado** gerado automaticamente quando nenhum `CERT_PATH`/`CERT_BASE64` é fornecido.
-- **Volumes**: `plex-data` (`/data` - SQLite, SQLite marker database, certificados) e bind mounts de mídia (um ou mais caminhos, configurados em `MEDIA_ROOTS`).
+- **HTTP** na porta 80 do container (mapeada para 8080 no host).
+- **WebSocket (PlexAutoSkip)** na porta 8081 interno (texto plano `ws://`).
+- **TLS/HTTPS** é responsabilidade da infraestrutura do usuário (reverse proxy: NGINX, Traefik, Caddy, ou load balancer cloud).
+- **Volumes**: `plex-data` (`/data` - SQLite, SQLite marker database) e bind mounts de mídia (um ou mais caminhos, configurados em `MEDIA_ROOTS`).
 
 ---
 
@@ -272,7 +266,7 @@ plex-autoplay/
 
 ## 🛡  Segurança
 
-* **HTTPS** auto‑assinado por padrão (`DISABLE_HTTP=true`). Em produção, substitua os certificados por um certificado válido (Let’s Encrypt, etc.) e defina `DASHBOARD_COOKIE_SECURE=true`.
+* **TLS/HTTPS** deve ser terminado por um reverse proxy (NGINX, Traefik, Caddy) ou load balancer cloud na frente do container. A aplicação serve apenas HTTP na porta 80.
 * **CSRF** em todas as rotas `POST/PUT/DELETE` sob `/api/` (cabeçalho `X-CSRF-TOKEN`).
 * **Webhook** protegido por HMAC (`WEBHOOK_SECRET`).
 * Token Plex **nunca** escrito nos logs (mascarado na UI).

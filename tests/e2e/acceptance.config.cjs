@@ -11,8 +11,7 @@ module.exports = defineConfig({
   timeout: 90 * 1000,
 
   use: {
-    baseURL: process.env.ACCEPTANCE_BASE_URL || "https://localhost:8443",
-    ignoreHTTPSErrors: true,
+    baseURL: process.env.ACCEPTANCE_BASE_URL || "http://localhost:8080",
     trace: "retain-on-failure",
     screenshot: "only-on-failure",
     actionTimeout: 10 * 1000,

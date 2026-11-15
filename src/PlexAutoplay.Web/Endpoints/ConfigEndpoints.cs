@@ -15,8 +15,6 @@ public static class ConfigEndpoints
                 sync_interval_minutes = Environment.GetEnvironmentVariable("SYNC_INTERVAL_MINUTES") ?? "5",
                 media_root = Environment.GetEnvironmentVariable("MEDIA_ROOT") ?? "/media",
                 ws_port = Environment.GetEnvironmentVariable("WS_PORT") ?? "8081",
-                https_port = Environment.GetEnvironmentVariable("HTTPS_PORT") ?? "443",
-                disable_http = Environment.GetEnvironmentVariable("DISABLE_HTTP") ?? "true",
                 log_level = Environment.GetEnvironmentVariable("LOG_LEVEL") ?? "Information",
                 allowed_hosts = Environment.GetEnvironmentVariable("ALLOWED_HOSTS") ?? "*",
                 otel_exporter = Environment.GetEnvironmentVariable("OTEL_EXPORTER") ?? "console",

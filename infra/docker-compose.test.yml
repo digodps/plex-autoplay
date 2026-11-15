@@ -57,7 +57,7 @@ services:
       plex-mock:
         condition: service_started
     ports:
-      - "8443:80"
+      - "8080:80"
     volumes:
       - plex-test-data:/data
       - ${MEDIA_ROOT}:/media:ro
@@ -68,16 +68,6 @@ services:
       - JWT_SECRET=${JWT_SECRET}
       - ADMIN_PASSWORD=${ADMIN_PASSWORD}
       - SETUP_TOKEN=${SETUP_TOKEN}
-      - WEB_PORT=80
-      - ASPNETCORE_URLS=http://0.0.0.0:80
-      - DISABLE_HTTP=false
-      - OTEL_EXPORTER=${OTEL_EXPORTER:-console}
-      - OTEL_ENDPOINT=${OTEL_ENDPOINT:-}
-      - OTEL_SERVICE_NAME=${OTEL_SERVICE_NAME:-plex-autoplay}
-      - CERT_PATH=${CERT_PATH}
-      - CERT_PASSWORD=${CERT_PASSWORD}
-      - CERT_BASE64=${CERT_BASE64}
-      - HTTPS_PORT=${HTTPS_PORT:-443}
     networks:
       - plex-test-network
 

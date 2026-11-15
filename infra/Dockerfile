@@ -24,7 +24,5 @@ WORKDIR /app
 COPY --from=dotnet /app/publish .
 EXPOSE 80
 ENV ASPNETCORE_URLS=http://+:80 \
-    DISABLE_HTTP=false \
-    WEB_PORT=80 \
     LOG_LEVEL=Information
 ENTRYPOINT ["dotnet", "PlexAutoplay.Web.dll"]

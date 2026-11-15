@@ -21,7 +21,7 @@ ensure_docker
 
 BUILD=false
 ATTACH=false
-LOGIN_URL="https://localhost:8443/login"
+LOGIN_URL="http://localhost:8080/login"
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -82,8 +82,7 @@ echo "  Plex Autoplay (.NET 10) - Iniciando"
 echo "=============================================="
 echo "PLEX_URL:     $PLEX_URL"
 echo "MEDIA_ROOTS:  ${MEDIA_ROOTS:-/home/hermes/media}"
-echo "WEB_PORT:     ${WEB_PORT:-8080}"
-echo "WS_PORT:      ${WS_PORT:-8081}"
+echo "HTTP_PORT:    8080"
 echo ""
 
 # Compila e publica antes de tocar no Docker (falha aqui aborta o start)
@@ -112,15 +111,13 @@ echo ""
 
 echo -n "⏳ Aguardando a aplicação responder"
 for _ in $(seq 1 60); do
-  if curl -sk -o /dev/null "$LOGIN_URL" 2>/dev/null; then
+  if curl -s -o /dev/null "$LOGIN_URL" 2>/dev/null; then
     echo ""
     echo ""
     echo "────────────────────────────────────────────────"
     echo "✅ Aplicação no ar!"
     echo ""
     echo "   👉 Login:  $LOGIN_URL"
-    echo ""
-    echo "   (aceite o certificado auto-assinado no navegador)"
     echo "────────────────────────────────────────────────"
     echo ""
     echo "   Para ver os logs:   ./scripts/logs.sh"

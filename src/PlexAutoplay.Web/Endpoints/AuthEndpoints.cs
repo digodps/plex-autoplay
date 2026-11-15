@@ -12,7 +12,7 @@ namespace PlexAutoplay.Web.Endpoints;
 /// </summary>
 public static class AuthEndpoints
 {
-    public static void MapAuthEndpoints(this IEndpointRouteBuilder app, bool disableHttp = false)
+    public static void MapAuthEndpoints(this IEndpointRouteBuilder app)
     {
         app.MapGet("/api/auth/setup/status", async ([FromServices] IAuthCredentialStore credentials) =>
             Results.Ok(new { setupRequired = !await credentials.IsConfiguredAsync() }));
@@ -78,13 +78,11 @@ public static class AuthEndpoints
                 return Results.Unauthorized();
             }
 
-            // Explicitly expire any existing cookie first to guarantee replacement
-            // even if Secure/SameSite attributes differed (e.g. HTTPS→HTTP downgrade).
-            var cookieSecure = !disableHttp;
+            // TLS is terminated by infrastructure; the app serves plain HTTP.
             var cookieOptions = new CookieOptions
             {
                 HttpOnly = false,
-                Secure = cookieSecure,
+                Secure = false,
                 SameSite = SameSiteMode.Lax,
                 Path = "/",
                 IsEssential = true,
