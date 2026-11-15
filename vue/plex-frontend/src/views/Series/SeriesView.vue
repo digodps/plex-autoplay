@@ -1,621 +1,124 @@
 <script setup>
-import { computed, ref } from "vue";
+import { computed } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import AppIcon from "@/components/AppIcon.vue";
-import GenreCarousel from "@/components/GenreCarousel.vue";
+import Breadcrumb from "@/components/Breadcrumb.vue";
 import { useSeriesCatalog } from "@/composables/useSeriesCatalog";
-import { useSeriesByGenre } from "@/composables/useSeriesByGenre";
-import { useLibraryTitle } from "@/composables/useLibraryTitle";
-import { reprocessLibrary } from "@/api";
+import "./SeriesView.css";
 
 const route = useRoute();
 const router = useRouter();
 
 const libraryKey = computed(() => route.params.key);
-const queryTitle = computed(() => route.query.libraryTitle);
 
-const {
-  title: libraryTitle,
-  loading: libraryTitleLoading,
-  error: libraryError,
-} = useLibraryTitle(libraryKey, queryTitle);
+function openSeries(series) {
+  router.push({ name: "series-detail", params: { seriesKey: series.ratingKey } });
+}
 
 const {
   seriesList,
   seriesTotalSize,
-  seriesLoading,
-  seriesError,
-  sentinelRef,
   seriesQuery,
-  syncLoading,
-  syncMessage,
-  syncType,
-  forceSyncCatalog,
-  loadMore,
-  hasMore,
+  seriesLoading,
   isLoadingMore,
-} = useSeriesCatalog();
+  seriesError,
+  hasMore,
+  sentinelRef,
+  refresh,
+} = useSeriesCatalog({ libraryKey: libraryKey.value });
 
-const {
-  genreGroups,
-  isLoading: carouselLoading,
-  error: carouselError,
-  sentinelRef: carouselSentinelRef,
-  hasMore: carouselHasMore,
-  allSeriesLoaded,
-} = useSeriesByGenre({
-  libraryKey: libraryKey.value,
+const libraryTitle = computed(() => {
+  return libraryKey.value ? `Biblioteca ${libraryKey.value}` : "Biblioteca";
 });
 
-const totalSeriesInCarousel = computed(() =>
-  genreGroups.value.reduce((sum, g) => sum + g.series.length, 0),
-);
-
-// Tab state: 'carousel' | 'list'
-const activeTab = ref("carousel");
-
-const tabs = [
-  { id: "carousel", label: "Por Gênero", icon: "grid", count: computed(() => genreGroups.value.length) },
-  { id: "list", label: "Todas as Séries", icon: "list", count: computed(() => seriesTotalSize.value) },
-];
-
-// Library-wide reprocessing state
-const libraryReprocessing = ref(false);
-
-async function handleReprocessLibrary() {
-  const key = libraryKey.value;
-  if (!key) return;
-  
-  libraryReprocessing.value = true;
-  try {
-    const res = await reprocessLibrary(key);
-    if (!res.ok) throw new Error("Falha ao reprocessar biblioteca");
-    const data = await res.json();
-    syncMessage.value = `Reprocessamento concluído: ${data.processed} marcadores, ${data.series} séries`;
-    syncType.value = "success";
-  } catch (e) {
-    syncMessage.value = e.message || "Falha ao reprocessar biblioteca";
-    syncType.value = "error";
-  } finally {
-    libraryReprocessing.value = false;
-  }
-}
-
-function openMarkers(series) {
-  if (libraryTitleLoading.value) return;
-  const query = {
-    libraryKey: libraryKey.value,
-    seriesTitle: series.title,
-  };
-  if (libraryTitle.value) query.libraryTitle = libraryTitle.value;
-  router.push({ name: "series-markers", params: { seriesKey: series.ratingKey }, query });
-}
+const breadcrumbItems = computed(() => [
+  { label: "Bibliotecas", to: { name: "libraries" } },
+  { label: libraryTitle.value, current: true },
+]);
 </script>
 
 <template>
   <div class="series-view">
-    <!-- Tab Navigation -->
-    <nav class="tabs-nav" role="tablist" aria-label="Visualização do catálogo">
-      <button
-        v-for="tab in tabs"
-        :key="tab.id"
-        role="tab"
-        :aria-selected="activeTab === tab.id"
-        :aria-controls="`panel-${tab.id}`"
-        :id="`tab-${tab.id}`"
-        class="tab-btn"
-        :class="{ 'tab-btn--active': activeTab === tab.id }"
-        @click="activeTab = tab.id"
-        type="button"
-      >
-        <AppIcon :name="tab.icon" size="sm" aria-hidden="true" />
-        <span>{{ tab.label }}</span>
-        <span v-if="tab.count !== undefined && tab.count !== null" class="tab-count">
-          {{ tab.count }}
-        </span>
-      </button>
-    </nav>
+    <!-- Breadcrumb -->
+    <Breadcrumb :items="breadcrumbItems" />
 
+    <!-- Toolbar -->
     <div class="series-toolbar">
-      <div class="search-box" v-show="activeTab === 'list'">
+      <div class="search-box">
         <AppIcon name="search" size="sm" />
         <input
+          v-model="seriesQuery"
           class="input"
           type="search"
-          v-model="seriesQuery"
           placeholder="Buscar série..."
           aria-label="Buscar série"
         />
       </div>
-      <span v-if="!seriesLoading && !carouselLoading" class="count">
-        {{ seriesTotalSize }} série(s) • {{ totalSeriesInCarousel }} em {{ genreGroups.length }} gênero(s)
-      </span>
-      <button
-        type="button"
-        class="reprocess-library-btn"
-        :disabled="libraryReprocessing"
-        data-testid="library-reprocess"
-        @click="handleReprocessLibrary"
-      >
-        <AppIcon name="refresh-cw" size="sm" :class="{ 'animate-spin': libraryReprocessing }" />
-        <span>{{ libraryReprocessing ? "Reprocessando…" : "Reprocessar biblioteca" }}</span>
-      </button>
+      <span v-if="!seriesLoading" class="count">{{ seriesTotalSize }} série(s)</span>
     </div>
 
-    <div v-if="libraryError" class="alert" role="alert">
-      <span>{{ libraryError }}</span>
+    <!-- Error State -->
+    <div v-if="seriesError" class="alert" role="alert">
+      <AppIcon name="warning" size="sm" />
+      <span>{{ seriesError }}</span>
+      <button class="btn btn-ghost btn-sm" @click="refresh">Tentar novamente</button>
     </div>
 
-    <div v-else-if="libraryTitleLoading" class="loading-skeleton">
-      <div class="h-24 rounded-lg border border-stroke bg-skeleton"></div>
-      <div class="h-20 rounded-lg border border-stroke bg-skeleton"></div>
-      <div class="h-16 rounded-lg border border-stroke bg-skeleton"></div>
-    </div>
-
-    <!-- Tab Panel: Por Gênero (Carousel) -->
-    <section
-      v-show="activeTab === 'carousel'"
-      id="panel-carousel"
-      role="tabpanel"
-      aria-labelledby="tab-carousel"
-      class="tab-panel"
-    >
-      <div v-if="carouselError" class="alert" role="alert">
-        <span>{{ carouselError }}</span>
-      </div>
-
-      <div v-else-if="carouselLoading" class="loading-skeleton">
-        <div class="h-24 rounded-lg border border-stroke bg-skeleton"></div>
-        <div class="h-20 rounded-lg border border-stroke bg-skeleton"></div>
-        <div class="h-16 rounded-lg border border-stroke bg-skeleton"></div>
-      </div>
-
-      <div v-else-if="genreGroups.length > 0">
-        <GenreCarousel
-          :genre-groups="genreGroups"
-          :is-loading="false"
-          :error="carouselError"
-        />
-
-        <!-- Load More for Carousel -->
-        <div v-if="carouselHasMore && !allSeriesLoaded" class="load-more-area">
-          <div v-if="carouselLoading" class="loading-indicator">
-            <AppIcon name="loader" size="md" class="animate-spin" />
-            <span>Carregando mais gêneros...</span>
-          </div>
-          <div ref="carouselSentinelRef" class="h-1" aria-hidden="true"></div>
+    <!-- Loading Skeletons -->
+    <div v-else-if="seriesLoading && seriesList.length === 0" class="series-grid">
+      <div v-for="n in 24" :key="n" class="series-card skeleton">
+        <div class="series-card-poster skeleton"></div>
+        <div class="series-card-info">
+          <div class="skeleton-line"></div>
+          <div class="skeleton-line short"></div>
         </div>
       </div>
+    </div>
 
-      <div v-else class="empty-state">
-        <AppIcon name="grid" size="lg" class="mx-auto text-muted" />
-        <p class="mt-3 text-sm font-medium text-secondary">Nenhum gênero encontrado.</p>
-        <p class="mt-2 text-xs text-tertiary">
-          O catálogo desta biblioteca ainda não foi sincronizado.
-        </p>
-      </div>
-    </section>
+    <!-- Series Grid -->
+    <div v-else-if="seriesList.length > 0" class="series-grid-wrapper">
+      <div class="series-grid">
+        <div
+          v-for="series in seriesList"
+          :key="series.ratingKey"
+          class="series-card"
+          @click="openSeries(series)"
+        >
+          <div class="series-card-poster">
+            <img v-if="series.thumb" :src="series.thumb" :alt="series.title" loading="lazy" />
+            <AppIcon v-else name="tv" size="lg" />
+          </div>
+          <div class="series-card-info">
+            <h4>{{ series.title }}</h4>
+            <p v-if="series.summary" class="series-summary">{{ series.summary }}</p>
+          </div>
+        </div>
 
-    <!-- Tab Panel: Todas as Séries (Infinite Scroll List) -->
-    <section
-      v-show="activeTab === 'list'"
-      id="panel-list"
-      role="tabpanel"
-      aria-labelledby="tab-list"
-      class="tab-panel"
-    >
-      <div v-if="seriesError" class="alert" role="alert">
-        <span>{{ seriesError }}</span>
-      </div>
-
-      <div v-else-if="seriesLoading && seriesList.length === 0" class="loading-skeleton">
-        <div class="h-24 rounded-lg border border-stroke bg-skeleton"></div>
-        <div class="h-20 rounded-lg border border-stroke bg-skeleton"></div>
-        <div class="h-16 rounded-lg border border-stroke bg-skeleton"></div>
-      </div>
-
-      <div v-else-if="seriesList.length > 0" class="series-grid-section">
-        <p class="series-grid-count" role="status">
-          {{ seriesTotalSize }} série(s)
-        </p>
-
-        <div class="series-grid" role="list">
-          <button
-            v-for="series in seriesList"
-            :key="series.ratingKey"
-            type="button"
-            data-testid="series-card"
-            class="series-card group relative flex flex-col rounded-xl overflow-hidden border border-stroke bg-card shadow-sm hover:shadow-lg transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900"
-            @click="openMarkers(series)"
-            role="listitem"
-          >
-            <div class="series-card-poster relative aspect-[2/3] w-full overflow-hidden bg-sunken">
-              <div
-                data-testid="series-thumb-inner"
-                class="h-full w-full transition-transform duration-500 group-hover:scale-105 group-focus-visible:scale-105"
-              >
-                <img
-                  v-if="series.thumb"
-                  :src="series.thumb"
-                  :alt="series.title"
-                  loading="lazy"
-                  class="h-full w-full object-cover"
-                />
-                <div v-else class="flex h-full w-full items-center justify-center text-muted">
-                  <AppIcon name="tv" size="lg" />
-                </div>
-              </div>
-              <div
-                aria-hidden="true"
-                class="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent transition-opacity duration-300 group-hover:opacity-100 group-focus-visible:opacity-100"
-              ></div>
-              <div class="absolute bottom-0 left-0 right-0 p-3 text-white">
-                <h4 class="truncate text-sm font-semibold">{{ series.title }}</h4>
-              </div>
+        <!-- Loading skeletons for next page -->
+        <template v-if="isLoadingMore">
+          <div v-for="n in 6" :key="'more-' + n" class="series-card skeleton">
+            <div class="series-card-poster skeleton"></div>
+            <div class="series-card-info">
+              <div class="skeleton-line"></div>
+              <div class="skeleton-line short"></div>
             </div>
-            <span class="sr-only">Abrir marcadores de {{ series.title }}</span>
-          </button>
-        </div>
-
-        <div v-if="hasMore" class="load-more-area">
-          <div v-if="isLoadingMore" class="loading-indicator">
-            <AppIcon name="loader" size="md" class="animate-spin" />
-            <span>Carregando mais...</span>
           </div>
-          <div ref="sentinelRef" class="h-1" aria-hidden="true"></div>
-        </div>
+        </template>
+
+        <!-- Sentinel for IntersectionObserver -->
+        <div ref="sentinelRef" class="sentinel" aria-hidden="true"></div>
       </div>
 
-      <div v-else class="empty-state">
-        <AppIcon name="tv" size="lg" class="mx-auto text-muted" />
-        <p class="mt-3 text-sm font-medium text-secondary">Nenhuma série encontrada.</p>
-        <p class="mt-2 text-xs text-tertiary">
-          O catálogo desta biblioteca ainda não foi sincronizado.
-        </p>
-        <button
-          v-if="!syncLoading"
-          type="button"
-          class="mt-4 px-4 py-2 rounded-lg border border-primary bg-primary text-white text-sm font-medium hover:bg-primary/90 transition-colors"
-          @click="forceSyncCatalog"
-        >
-          <AppIcon name="refresh-cw" size="sm" class="inline mr-1" />
-          Forçar sincronização
-        </button>
-        <button
-          v-else
-          type="button"
-          class="mt-4 px-4 py-2 rounded-lg border border-border bg-muted text-muted text-sm font-medium cursor-not-allowed"
-          disabled
-        >
-          <AppIcon name="loader" size="sm" class="inline mr-1 animate-spin" />
-          Sincronizando...
-        </button>
+      <!-- End of catalog indicator -->
+      <div v-if="!hasMore && seriesList.length > 0" class="end-of-catalog">
+        <span>Fim do catálogo</span>
       </div>
-    </section>
+    </div>
 
-    <div v-if="syncMessage" class="sync-message" :class="syncType">
-      {{ syncMessage }}
+    <!-- Empty State -->
+    <div v-else-if="!seriesLoading && !seriesError" class="empty">
+      <AppIcon name="tv" size="lg" />
+      <p>Nenhuma série encontrada.</p>
     </div>
   </div>
 </template>
-
-<style scoped>
-.series-view {
-  padding: 1.5rem;
-  max-width: 100%;
-}
-
-/* Tab Navigation */
-.tabs-nav {
-  display: flex;
-  gap: 0.5rem;
-  margin-bottom: 1.5rem;
-  border-bottom: 1px solid var(--border);
-  padding-bottom: 0.5rem;
-  flex-wrap: wrap;
-}
-
-.tab-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.625rem 1rem;
-  border: 1px solid transparent;
-  border-radius: 8px;
-  background: transparent;
-  color: var(--text-secondary);
-  font-size: 0.875rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s;
-  white-space: nowrap;
-}
-
-.tab-btn:hover {
-  background: var(--bg-sunken);
-  color: var(--text);
-  border-color: var(--border);
-}
-
-.tab-btn:focus-visible {
-  outline: none;
-  box-shadow: 0 0 0 2px var(--primary);
-  border-color: var(--primary);
-}
-
-.tab-btn--active {
-  background: var(--primary);
-  color: var(--primary-foreground);
-  border-color: var(--primary);
-}
-
-.tab-btn--active:hover {
-  opacity: 0.9;
-  color: var(--primary-foreground);
-  border-color: var(--primary);
-}
-
-.tab-count {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 1.5rem;
-  height: 1.25rem;
-  padding: 0 0.375rem;
-  border-radius: 9999px;
-  background: var(--bg-sunken);
-  color: var(--text-tertiary);
-  font-size: 0.6875rem;
-  font-weight: 600;
-}
-
-.tab-btn--active .tab-count {
-  background: color-mix(in srgb, var(--primary-foreground) 20%, transparent);
-  color: var(--primary-foreground);
-}
-
-.tab-panel {
-  animation: fadeIn 0.2s ease;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(4px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-/* Hide content when not active (v-show uses display: none) */
-.tab-panel[style*="display: none"] {
-  display: none !important;
-}
-
-.series-toolbar {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  margin-bottom: 1.5rem;
-}
-
-.search-box {
-  position: relative;
-  flex: 1;
-  min-width: 200px;
-  max-width: 400px;
-}
-
-.search-box .input {
-  width: 100%;
-  padding: 0.625rem 0.875rem 0.625rem 2.5rem;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  background: var(--bg-elevated);
-  color: var(--text);
-  font-size: 0.875rem;
-  transition: border-color 0.2s, box-shadow 0.2s;
-}
-
-.search-box .input:focus {
-  outline: none;
-  border-color: var(--primary);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 20%, transparent);
-}
-
-.search-box AppIcon {
-  position: absolute;
-  left: 0.75rem;
-  top: 50%;
-  transform: translateY(-50%);
-  color: var(--text-tertiary);
-  pointer-events: none;
-}
-
-.count {
-  font-size: 0.8125rem;
-  color: var(--text-secondary);
-  white-space: nowrap;
-}
-
-.alert {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.75rem 1rem;
-  border-radius: 8px;
-  background: color-mix(in srgb, var(--danger) 10%, transparent);
-  color: var(--danger);
-  margin-bottom: 1rem;
-}
-
-.loading-skeleton {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.bg-skeleton {
-  background: linear-gradient(90deg, var(--bg-sunken) 25%, var(--border) 50%, var(--bg-sunken) 75%);
-  background-size: 200% 100%;
-  animation: shimmer 1.5s infinite;
-  border-radius: 8px;
-}
-
-@keyframes shimmer {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
-}
-
-.series-grid-section {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.series-grid-count {
-  font-size: 0.875rem;
-  color: var(--text-secondary);
-  margin: 0;
-}
-
-.series-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 0.75rem;
-}
-
-@media (min-width: 640px) {
-  .series-grid { grid-template-columns: repeat(3, 1fr); }
-}
-
-@media (min-width: 768px) {
-  .series-grid { grid-template-columns: repeat(4, 1fr); }
-}
-
-@media (min-width: 1024px) {
-  .series-grid { grid-template-columns: repeat(5, 1fr); }
-}
-
-@media (min-width: 1280px) {
-  .series-grid { grid-template-columns: repeat(6, 1fr); }
-}
-
-@media (min-width: 1536px) {
-  .series-grid { grid-template-columns: repeat(7, 1fr); }
-}
-
-.series-card {
-  border-radius: 12px;
-  overflow: hidden;
-  background: var(--bg-elevated);
-  border: 1px solid var(--border);
-  box-shadow: 0 1px 3px var(--shadow);
-  transition: box-shadow 0.3s, transform 0.2s;
-}
-
-.series-card:hover {
-  box-shadow: 0 10px 25px var(--shadow-lg);
-  transform: translateY(-2px);
-}
-
-.series-card-poster {
-  position: relative;
-  aspect-ratio: 2/3;
-  width: 100%;
-  overflow: hidden;
-  background: var(--bg-sunken);
-}
-
-.series-card-poster img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  transition: transform 0.5s;
-}
-
-.series-card:hover .series-card-poster img {
-  transform: scale(1.05);
-}
-
-.series-card-poster h4 {
-  margin: 0;
-  font-size: 0.8125rem;
-  font-weight: 600;
-  line-height: 1.3;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  overflow: hidden;
-}
-
-.reprocess-library-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.375rem;
-  padding: 0.5rem 0.875rem;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  background: var(--bg-elevated);
-  color: var(--text-secondary);
-  font-size: 0.8125rem;
-  font-weight: 500;
-  cursor: pointer;
-  white-space: nowrap;
-  transition: background 0.2s, color 0.2s, border-color 0.2s;
-}
-
-.reprocess-library-btn:hover:not(:disabled) {
-  border-color: var(--primary);
-  color: var(--primary);
-  background: color-mix(in srgb, var(--primary) 10%, transparent);
-}
-
-.reprocess-library-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.load-more-area {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 1.5rem;
-}
-
-.loading-indicator {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  color: var(--text-secondary);
-  font-size: 0.875rem;
-}
-
-.empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 3rem;
-  text-align: center;
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  background: var(--bg-elevated);
-}
-
-.sync-message {
-  margin-top: 1rem;
-  padding: 0.75rem 1rem;
-  border-radius: 8px;
-  font-size: 0.875rem;
-}
-
-.sync-message.success {
-  background: color-mix(in srgb, var(--success) 10%, transparent);
-  border: 1px solid color-mix(in srgb, var(--success) 30%, transparent);
-  color: var(--success);
-}
-
-.sync-message.error {
-  background: color-mix(in srgb, var(--danger) 10%, transparent);
-  border: 1px solid color-mix(in srgb, var(--danger) 30%, transparent);
-  color: var(--danger);
-}
-</style>

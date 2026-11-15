@@ -36,6 +36,13 @@ const routes = [
     meta: { title: "Biblioteca" },
   },
   {
+    path: "/series/:seriesKey",
+    name: "series-detail",
+    component: () => import("../views/SeriesDetail/SeriesPage.vue"),
+    props: true,
+    meta: { title: "Série" },
+  },
+  {
     path: "/series/:seriesKey/markers",
     name: "series-markers",
     component: () => import("../views/Markers/MarkerEditorView.vue"),

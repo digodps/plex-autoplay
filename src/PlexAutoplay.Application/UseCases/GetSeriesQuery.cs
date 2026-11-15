@@ -1,6 +1,6 @@
 namespace PlexAutoplay.Application.UseCases;
 
-using PlexAutoplay.Domain.Entities;
+using SeriesEntity = PlexAutoplay.Domain.Entities.Series;
 using PlexAutoplay.Domain.Ports;
 
 public class GetSeriesQuery
@@ -12,7 +12,7 @@ public class GetSeriesQuery
         _repository = repository;
     }
 
-    public async Task<(IEnumerable<Series> Items, int Total)> ListAsync(
+    public async Task<(IEnumerable<SeriesEntity> Items, int Total)> ListAsync(
         string libraryRatingKey, int offset, int limit, string? query)
     {
         return await _repository.GetByLibraryAsync(libraryRatingKey, offset, limit, query);

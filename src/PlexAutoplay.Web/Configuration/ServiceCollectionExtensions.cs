@@ -1,5 +1,7 @@
 using PlexAutoplay.Application;
 using PlexAutoplay.Application.UseCases;
+using PlexAutoplay.Application.UseCases.Series;
+using PlexAutoplay.Application.UseCases.UserPreferences;
 using PlexAutoplay.Domain;
 using PlexAutoplay.Domain.Ports;
 using PlexAutoplay.Infrastructure.Auth;
@@ -40,6 +42,8 @@ public static class ServiceCollectionExtensions
             new PlexAutoplay.Infrastructure.Persistence.Repositories.SqliteLibraryRepository(sqliteConnectionString));
         services.AddSingleton<ISeriesRepository>(
             new PlexAutoplay.Infrastructure.Persistence.Repositories.SqliteSeriesRepository(sqliteConnectionString));
+        services.AddSingleton<ISeriesEpisodeRepository>(
+            new PlexAutoplay.Infrastructure.Persistence.Repositories.SqliteSeriesEpisodeRepository(sqliteConnectionString));
         services.AddSingleton<IAppSettingsStore>(
             new PlexAutoplay.Infrastructure.Persistence.Repositories.SqliteAppSettingsStore(sqliteConnectionString));
         services.AddSingleton<UpdateAppSettingsUseCase>();
@@ -87,11 +91,15 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<SaveMarkerUseCase>();
         services.AddSingleton<GetMarkersQuery>();
         services.AddSingleton<GetSeriesQuery>();
+        services.AddSingleton<GetSeriesEpisodesQuery>();
+        services.AddSingleton<UpdateWatchProgressCommand>();
         services.AddTransient<CatalogSyncUseCase>();
         services.AddTransient<EpisodeMarkerSyncUseCase>();
         services.AddTransient<SynchronizationUseCase>();
         services.AddSingleton<GetThemeQuery>();
         services.AddSingleton<SaveThemeCommand>();
+        services.AddSingleton<GetAutoPlayPreferenceQuery>();
+        services.AddSingleton<SetAutoPlayPreferenceCommand>();
 
         services.Configure<Microsoft.AspNetCore.Http.Json.JsonOptions>(options =>
         {

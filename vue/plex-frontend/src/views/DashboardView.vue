@@ -25,10 +25,7 @@ const accentPalette = [
 ];
 
 function toggleDarkMode() {
-  const modes = ["light", "dark", "system"];
-  const currentIndex = modes.indexOf(themeStore.mode);
-  themeStore.mode = modes[(currentIndex + 1) % modes.length];
-  themeStore.saveTheme();
+  themeStore.cycleMode();
 }
 
 function setAccentColor(color) {
@@ -36,23 +33,14 @@ function setAccentColor(color) {
   themeStore.saveTheme();
 }
 
-// Apply accent and mode to root element
-function applyTheme() {
+// Apply accent to root element
+function applyAccent() {
   document.documentElement.style.setProperty("--accent", themeStore.accent);
-  document.documentElement.classList.toggle("theme-dark", themeStore.mode === "dark");
-  document.documentElement.classList.toggle("theme-light", themeStore.mode === "light");
 }
 
-watch(
-  () => themeStore.accent,
-  () => applyTheme()
-);
-watch(
-  () => themeStore.mode,
-  () => applyTheme()
-);
+watch(() => themeStore.accent, () => applyAccent());
 
-applyTheme();
+applyAccent();
 
 // Inicia polling ao montar, para ao desmontar
 onMounted(() => {

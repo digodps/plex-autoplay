@@ -13,13 +13,15 @@ public static class AppSettingKeys
 
     public const string MediaRoots = "MEDIA_ROOTS";
     public const string SyncIntervalMinutes = "SYNC_INTERVAL_MINUTES";
+    public const string AutoPlayEnabled = "AUTOPLAY_ENABLED";
 
     public static readonly string[] All =
     [
         PlexUrl,
         PlexToken,
         MediaRoots,
-        SyncIntervalMinutes
+        SyncIntervalMinutes,
+        AutoPlayEnabled
     ];
 }
 
@@ -30,6 +32,7 @@ public static class AppSettingDefaults
     public const string PlexToken = "";
     public const string MediaRoot = "/media";
     public const int SyncIntervalMinutes = 5;
+    public const bool AutoPlayEnabled = true;
 
     public static IReadOnlyList<string> MediaRoots => [MediaRoot];
 }
@@ -39,7 +42,8 @@ public sealed record AppSettingsSnapshot(
     string PlexUrl,
     string PlexToken,
     IReadOnlyList<string> MediaRoots,
-    int SyncIntervalMinutes)
+    int SyncIntervalMinutes,
+    bool AutoPlayEnabled)
 {
     public bool PlexTokenSet => !string.IsNullOrEmpty(PlexToken);
 
@@ -47,7 +51,8 @@ public sealed record AppSettingsSnapshot(
         AppSettingDefaults.PlexUrl,
         AppSettingDefaults.PlexToken,
         AppSettingDefaults.MediaRoots,
-        AppSettingDefaults.SyncIntervalMinutes);
+        AppSettingDefaults.SyncIntervalMinutes,
+        AppSettingDefaults.AutoPlayEnabled);
 }
 
 /// <summary>Porta de leitura/gravação das configurações operacionais no SQLite.</summary>
