@@ -21,7 +21,7 @@ if [[ "${1:-}" == "--help" || "${1:-}" == "-h" ]]; then
   echo "  3. Roda os testes e2e (Playwright) com relatório HTML"
   echo "  4. Em caso de falha, captura artefatos em ./test-artifacts/"
   echo ""
-  echo "Variáveis obrigatórias no .env: PLEX_URL, PLEX_TOKEN, JWT_SECRET, ADMIN_PASSWORD, MEDIA_ROOT"
+  echo "Nenhuma variável obrigatória no .env (configuração via UI/SQLite)"
   exit 0
 fi
 
@@ -49,8 +49,8 @@ log() { echo -e "${GREEN}[run-e2e-tests]${NC} $*"; }
 warn() { echo -e "${YELLOW}[run-e2e-tests]${NC} $*"; }
 error() { echo -e "${RED}[run-e2e-tests]${NC} $*" >&2; }
 
-# Variáveis obrigatórias
-REQUIRED_VARS=(PLEX_URL PLEX_TOKEN JWT_SECRET ADMIN_PASSWORD MEDIA_ROOT)
+# Variáveis obrigatórias (apenas LOG_LEVEL é usada pelo código; demais são opcionais no .env)
+REQUIRED_VARS=()
 
 # --- 1. Validar .env ---
 if [[ ! -f .env ]]; then

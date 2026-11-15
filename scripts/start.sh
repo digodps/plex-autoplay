@@ -59,31 +59,12 @@ set -a
 source .env
 set +a
 
-# Valida variáveis obrigatórias
-MISSING_VARS=()
-for var in PLEX_URL PLEX_TOKEN MEDIA_ROOTS JWT_SECRET ADMIN_PASSWORD; do
-  if [[ -z "${!var:-}" ]]; then
-    MISSING_VARS+=("$var")
-  fi
-done
-
-if [[ ${#MISSING_VARS[@]} -gt 0 ]]; then
-  echo "❌ Variáveis obrigatórias não definidas no .env:"
-  for var in "${MISSING_VARS[@]}"; do
-    echo "   - $var"
-  done
-  echo ""
-  echo "   Edite o arquivo .env e tente novamente."
-  exit 1
-fi
-
 echo "=============================================="
 echo "  Plex Autoplay (.NET 10) - Iniciando"
 echo "=============================================="
-echo "PLEX_URL:     $PLEX_URL"
-echo "MEDIA_ROOTS:  ${MEDIA_ROOTS:-/home/hermes/media}"
 echo "HTTP_PORT:    8080"
 echo ""
+echo "ℹ️  Configuração do Plex/Token/MediaRoots é feita via UI em /settings (salvo no SQLite)"
 
 # Compila e publica antes de tocar no Docker (falha aqui aborta o start)
 echo "🔨 Compilando a solução (.NET 10)..."

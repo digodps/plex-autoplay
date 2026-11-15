@@ -9,25 +9,9 @@ services:
       - plex-data:/data              # SQLite, image-cache, app-config.json
       - ${MEDIA_ROOT}:/media:ro     # Plex media files (read-only)
     environment:
-      - PLEX_URL=${PLEX_URL}
-      - PLEX_TOKEN=${PLEX_TOKEN}
-      - MEDIA_ROOT=/media
-      - JWT_SECRET=${JWT_SECRET}
-      - ADMIN_PASSWORD=${ADMIN_PASSWORD}
       - ASPNETCORE_URLS=http://+:80
-      - OTEL_EXPORTER=${OTEL_EXPORTER:-console}
-      - OTEL_ENDPOINT=${OTEL_ENDPOINT:-}
-      - OTEL_SERVICE_NAME=${OTEL_SERVICE_NAME:-plex-autoplay}
       - LOG_LEVEL=${LOG_LEVEL:-Information}
-      - ALLOWED_HOSTS=${ALLOWED_HOSTS:-*}
-      - SYNC_INTERVAL_MINUTES=${SYNC_INTERVAL_MINUTES:-5}
     depends_on: []
-    networks:
-      - plex-network
 
 volumes:
   plex-data:
-
-networks:
-  plex-network:
-    driver: bridge
