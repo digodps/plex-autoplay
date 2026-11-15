@@ -1,0 +1,94 @@
+#!/usr/bin/env python3
+"""
+Git commit-msg hook to enforce commit skill format.
+Validates: type(🎯scope): title + blank line + descriptive body
+"""
+
+import re
+import sys
+from pathlib import Path
+
+VALID_TYPES = {
+    "feat", "fix", "docs", "chore", "style",
+    "refactor", "test", "perf", "ci", "build", "revert"
+}
+
+TYPE_EMOJI = {
+    "feat": "🚀", "fix": "🐛", "docs": "📖", "chore": "🔧",
+    "style": "🎨", "refactor": "♻️", "test": "✅", "perf": "⚡",
+    "ci": "👷", "build": "📦", "revert": "⏪"
+}
+
+HEADER_PATTERN = re.compile(
+    r"^(feat|fix|docs|chore|style|refactor|test|perf|ci|build|revert)"
+    r"(\([^)]+\))?: .+$"
+)
+
+def validate_commit_message(message: str) -> tuple[bool, str]:
+    lines = message.strip().splitlines()
+    
+    if not lines:
+        return False, "Mensagem de commit vazia"
+    
+    header = lines[0].strip()
+
+    # Merge commits são auto-gerados pelo git: isenta da validação.
+    if header.startswith("Merge "):
+        return True, "OK"
+    
+    # Validate header format
+    if not HEADER_PATTERN.match(header):
+        return False, (
+            f"Cabeçalho inválido: '{header}'\n"
+            f"Formato esperado: tipo(🎯escopo): título\n"
+            f"Tipos válidos: {', '.join(sorted(VALID_TYPES))}"
+        )
+    
+    # Extract type
+    type_match = re.match(r"^(feat|fix|docs|chore|style|refactor|test|perf|ci|build|revert)", header)
+    if type_match:
+        commit_type = type_match.group(1)
+        if commit_type not in VALID_TYPES:
+            return False, f"Tipo de commit inválido: '{commit_type}'"
+    
+    # Check for blank line after header
+    if len(lines) < 2 or lines[1].strip() != "":
+        return False, "Linha em branco obrigatória após o cabeçalho"
+    
+    # Check body exists and is not empty
+    body = "\n".join(lines[2:]).strip()
+    if not body:
+        return False, "Corpo do commit não pode estar vazio. Descreva por que e o que foi feito."
+    
+    # Check for Co-authored-by (not allowed)
+    if any("Co-authored-by:" in line for line in lines):
+        return False, "Não use Co-authored-by nos commits"
+    
+    return True, "OK"
+
+def main():
+    if len(sys.argv) < 2:
+        print("Uso: commit-msg <arquivo-da-mensagem>", file=sys.stderr)
+        return 1
+    
+    msg_file = Path(sys.argv[1])
+    if not msg_file.exists():
+        print(f"Arquivo não encontrado: {msg_file}", file=sys.stderr)
+        return 1
+    
+    message = msg_file.read_text(encoding="utf-8")
+    
+    valid, reason = validate_commit_message(message)
+    
+    if not valid:
+        print(f"❌ Commit rejeitado: {reason}", file=sys.stderr)
+        print("\nExemplo válido:", file=sys.stderr)
+        print("  feat(🚀cache): adiciona interface Redis", file=sys.stderr)
+        print("", file=sys.stderr)
+        print("  Define o contrato de leitura/gravação usado pelos backends.", file=sys.stderr)
+        return 1
+    
+    return 0
+
+if __name__ == "__main__":
+    sys.exit(main())
