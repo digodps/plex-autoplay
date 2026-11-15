@@ -11,6 +11,7 @@ services:
     environment:
       - ASPNETCORE_URLS=http://+:80
       - LOG_LEVEL=${LOG_LEVEL:-Information}
+      - PLEX_URL=http://host.docker.internal:32400
     depends_on: []
 
 volumes:

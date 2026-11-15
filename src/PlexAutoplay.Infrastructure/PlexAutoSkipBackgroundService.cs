@@ -67,6 +67,16 @@ public class PlexAutoSkipBackgroundService : BackgroundService
     private async Task PollAndSkipAsync(CancellationToken ct)
     {
         var settings = await _settings.GetAsync();
+        
+        // Valida se Plex está configurado (URL e Token não padrão/vazios)
+        if (string.IsNullOrWhiteSpace(settings.PlexUrl) 
+            || settings.PlexUrl == AppSettingDefaults.PlexUrl
+            || string.IsNullOrWhiteSpace(settings.PlexToken))
+        {
+            _logger.LogDebug("Plex não configurado (URL/Token padrão ou vazio) — pulando ciclo de polling");
+            return;
+        }
+
         var plexUrl = settings.PlexUrl.TrimEnd('/');
         using var http = _httpClientFactory.CreateClient();
         var req = new HttpRequestMessage(HttpMethod.Get, $"{plexUrl}/status/sessions");
