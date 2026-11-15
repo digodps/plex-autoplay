@@ -6,11 +6,11 @@ const EVIDENCE = '/home/hermes/plex-autoplay-log-carousel-accordion/openspec/cha
 
 test.describe('Log Carousel Accordion QA', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto(`${BASE_URL}/login`, { waitUntil: 'domcontentloaded', timeout: 30000 });
+    await page.goto(`${BASE_URL}/login`, { waitUntil: 'networkidle', timeout: 30000 });
     await page.waitForSelector('[data-testid="password-input"]', { state: 'visible', timeout: 30000 });
     await page.fill('[data-testid="password-input"]', PASSWORD);
     await page.click('[data-testid="login-submit"]');
-    await page.waitForSelector('text="Serviço"', { state: 'visible', timeout: 30000 });
+    await page.waitForSelector('[data-testid="app-header"]', { state: 'visible', timeout: 30000 });
   });
 
   test('carousel view renders cards', async ({ page }) => {

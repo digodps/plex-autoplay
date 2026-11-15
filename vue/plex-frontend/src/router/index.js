@@ -1,5 +1,5 @@
 import { createRouter, createWebHistory } from "vue-router";
-import { useI18n } from "vue-i18n";
+import i18n from "../i18n";
 import SigninView from "../views/Authentication/SigninView.vue";
 import SeriesView from "../views/Series/SeriesView.vue";
 
@@ -86,7 +86,7 @@ const router = createRouter({
 });
 
 router.beforeEach(async (to) => {
-  const { t } = useI18n();
+  const { t } = i18n.global;
 
   // Update document title and lang attribute
   if (to.name !== "login" && to.name !== "setup") {
