@@ -154,3 +154,24 @@ disable_http = Environment.GetEnvironmentVariable("DISABLE_HTTP") ?? "true",
 - **Breaking change**: URLs mudam de `https://localhost:8443` → `http://localhost:8080`
 - Cookies de auth: `Secure=false` (funciona em HTTP)
 - Reverse proxy esperado: NGINX/Caddy/Traefik/Cloud LB termina TLS e encaminha HTTP para container porta 80
+
+## Non-Requirements (Fora de Escopo)
+- **Não** implementar ACME/Let's Encrypt
+- **Não** implementar geração de certificado sob demanda
+- **Não** validar certificados de terceiros
+- **Não** terminar TLS na aplicação
+- **Não** expor porta 443 ou 8443
+- **Não** manter compatibilidade com `DISABLE_HTTP=true` (HTTPS-only)
+
+## Migration Notes (para operadores)
+| Antes | Depois | Ação do Operador |
+|---|---|---|
+| `https://localhost:8443` | `http://localhost:8080` | Atualizar bookmarks/links |
+| `CERT_PATH` / `CERT_BASE64` | — | Remover do `.env`; configurar TLS no proxy reverso |
+| `DISABLE_HTTP=true` | — | Remover; proxy reverso termina TLS |
+| Cookie `Secure=true` | `Secure=false` | Funciona automaticamente behind proxy com `X-Forwarded-Proto` |
+| `docker-compose.yml` ports `8081` | `8080:80` | Atualizar port mapping se customizado |
+
+## Related Specs
+- **Obsoleta**: `https-transporte` (arquivada, mantida para histórico)
+- **Substitui**: todos os requirements de `https-transporte`

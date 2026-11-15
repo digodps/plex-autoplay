@@ -5,13 +5,6 @@ Remove todo o controle de HTTPS/TLS/certificados da aplicação `plex-autoplay`.
 
 Este delta **substitui** a spec `https-transporte` (que fica obsoleta/arquivada).
 
-## Why
-- **Simplicidade**: O código de certificado auto-assinado, CERT_PATH, CERT_BASE64, DISABLE_HTTP, KestrelSetup, ServerCertificateProvider adiciona ~300 linhas de complexidade.
-- **Separação de responsabilidades**: TLS é preocupação de infraestrutura/rede, não de aplicação.
-- **Flexibilidade**: Usuários em produção já usam reverse proxy (NGINX/Caddy/Traefik) ou cloud LB (ALB, Cloud Run, Azure Container Apps) que terminam TLS na borda.
-- **Menos bugs**: Elimina falhas de handshake IPv6 TLS, certificados expirados, geração de cert auto-assinado, validação de PFX, etc.
-- **Testes mais simples**: E2E roda em HTTP puro sem `ignoreHTTPSErrors` nem `curl -k`.
-
 ## ADDED Requirements
 
 ### Requirement: Servir apenas HTTP
@@ -185,24 +178,3 @@ O sistema SHALL permitir configurar se o listener HTTP deve ser totalmente desab
 #### Scenario: DISABLE_HTTP=false
 - **WHEN** a variável `DISABLE_HTTP` está definida como `false`
 - **THEN** o sistema expõe um listener HTTP adicional (porta configurável, padrão 8080) para uso quando o container está atrás de um load balancer que termina TLS externamente (ex: AWS ALB, Azure Container Apps, Google Cloud Run, Heroku)
-
-## Non-Requirements (Fora de Escopo)
-- **Não** implementar ACME/Let's Encrypt
-- **Não** implementar geração de certificado sob demanda
-- **Não** validar certificados de terceiros
-- **Não** terminar TLS na aplicação
-- **Não** expor porta 443 ou 8443
-- **Não** manter compatibilidade com `DISABLE_HTTP=true` (HTTPS-only)
-
-## Migration Notes (para operadores)
-| Antes | Depois | Ação do Operador |
-|---|---|---|
-| `https://localhost:8443` | `http://localhost:8080` | Atualizar bookmarks/links |
-| `CERT_PATH` / `CERT_BASE64` | — | Remover do `.env`; configurar TLS no proxy reverso |
-| `DISABLE_HTTP=true` | — | Remover; proxy reverso termina TLS |
-| Cookie `Secure=true` | `Secure=false` | Funciona automaticamente behind proxy com `X-Forwarded-Proto` |
-| `docker-compose.yml` ports `8081` | `8080:80` | Atualizar port mapping se customizado |
-
-## Related Specs
-- **Obsoleta**: `https-transporte` (arquivada, mantida para histórico)
-- **Substitui**: todos os requirements de `https-transporte`
