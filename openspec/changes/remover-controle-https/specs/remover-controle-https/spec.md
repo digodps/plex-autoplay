@@ -5,6 +5,13 @@ Remove todo o controle de HTTPS/TLS/certificados da aplicação `plex-autoplay`.
 
 Este delta **substitui** a spec `https-transporte` (que fica obsoleta/arquivada).
 
+## Why
+- **Simplicidade**: O código de certificado auto-assinado, CERT_PATH, CERT_BASE64, DISABLE_HTTP, KestrelSetup, ServerCertificateProvider adiciona ~300 linhas de complexidade.
+- **Separação de responsabilidades**: TLS é preocupação de infraestrutura/rede, não de aplicação.
+- **Flexibilidade**: Usuários em produção já usam reverse proxy (NGINX/Caddy/Traefik) ou cloud LB (ALB, Cloud Run, Azure Container Apps) que terminam TLS na borda.
+- **Menos bugs**: Elimina falhas de handshake IPv6 TLS, certificados expirados, geração de cert auto-assinado, validação de PFX, etc.
+- **Testes mais simples**: E2E roda em HTTP puro sem `ignoreHTTPSErrors` nem `curl -k`.
+
 ## ADDED Requirements
 
 ### Requirement: Servir apenas HTTP
