@@ -1,10 +1,9 @@
 <script setup>
 import { ref, onUnmounted } from "vue";
-import { useRouter } from "vue-router";
+import { useI18n } from "vue-i18n";
 import { apiFetch } from "../api";
-import AppIcon from "@/components/AppIcon.vue";
 
-const router = useRouter();
+const { t } = useI18n();
 
 const status = ref("idle");
 const processed = ref(0);
@@ -32,7 +31,8 @@ const logLevelColors = {
 };
 
 const formatLogTimestamp = (date) => {
-  return date.toLocaleTimeString("pt-BR", {
+  const locale = localStorage.getItem("app.locale") || "pt-BR";
+  return date.toLocaleTimeString(locale === "pt-BR" ? "pt-BR" : "en-US", {
     hour: "2-digit",
     minute: "2-digit",
     second: "2-digit",
@@ -111,10 +111,8 @@ onUnmounted(() => {
     <div class="mx-auto max-w-6xl px-4 py-3">
       <div class="flex items-center justify-between gap-3">
         <div>
-          <h1 class="text-2xl font-bold text-white">Sincronização</h1>
-          <p class="text-sm text-gray-400">
-            Varredura do Plex, progresso em tempo real e console de logs.
-          </p>
+          <h1 class="text-2xl font-bold text-white">{{ t("sync.title") }}</h1>
+          <p class="text-sm text-gray-400">{{ t("sync.subtitle") }}</p>
         </div>
         <div class="flex items-center gap-2">
           <button
@@ -122,20 +120,20 @@ onUnmounted(() => {
             class="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white transition hover:opacity-90"
             @click="startScan"
           >
-            Iniciar Escaneamento
+            {{ t("sync.syncNow") }}
           </button>
           <button
             v-if="status === 'running'"
             class="rounded-lg border border-red-500 bg-red-500/10 px-4 py-2 text-sm font-medium text-red-400 transition hover:bg-red-500/20"
             @click="cancelScan"
           >
-            Cancelar
+            {{ t("common.cancel") }}
           </button>
           <button
             class="rounded-lg border border-gray-700 bg-gray-800 px-4 py-2 text-sm font-medium text-gray-300 transition hover:border-gray-500 hover:text-white"
             @click="clearConsole"
           >
-            Limpar Console
+            {{ t("logs.clearLogs") }}
           </button>
         </div>
       </div>
@@ -143,13 +141,13 @@ onUnmounted(() => {
       <div class="p-4 md:p-6 lg:p-8 max-w-6xl mx-auto space-y-6">
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div class="rounded-xl border border-gray-800 bg-gray-900 p-4">
-            <span class="text-xs text-gray-400 uppercase tracking-wider">Status</span>
+            <span class="text-xs text-gray-400 uppercase tracking-wider">{{ t("sync.status") }}</span>
             <div class="mt-2 text-lg font-semibold uppercase" :class="status === 'running' ? 'text-yellow-400' : status === 'completed' ? 'text-green-400' : 'text-gray-200'">
-              {{ status }}
+              {{ t(`sync.status.${status}`) || status }}
             </div>
           </div>
           <div class="rounded-xl border border-gray-800 bg-gray-900 p-4">
-            <span class="text-xs text-gray-400 uppercase tracking-wider">Processados / Pulados / Erros</span>
+            <span class="text-xs text-gray-400 uppercase tracking-wider">{{ t("sync.processedSkippedErrors") }}</span>
             <div class="mt-2 text-lg font-semibold text-gray-200">
               {{ processed }} / {{ skipped }} / {{ errors }}
             </div>
@@ -158,11 +156,11 @@ onUnmounted(() => {
 
         <section class="rounded-xl border border-gray-800 bg-gray-900 p-5">
           <h2 class="text-sm font-semibold uppercase tracking-wider text-gray-400 mb-4 border-b border-gray-800 pb-2">
-            Console de Log
+            {{ t("sync.logConsole") }}
           </h2>
           <div class="log-container font-mono text-sm space-y-2 max-h-96 overflow-y-auto">
             <div v-if="logEntries.length === 0" class="text-gray-500 italic text-center py-8">
-              Nenhum log disponível. Inicie uma varredura para ver as linhas de log.
+              {{ t("sync.noLogs") }}
             </div>
             <div v-for="(entry, index) in logEntries" :key="index" class="border-b border-gray-800/50 pb-2">
               <div class="flex items-start gap-2">
@@ -171,7 +169,7 @@ onUnmounted(() => {
                 <span class="text-gray-300 flex-1">{{ entry.message }}</span>
               </div>
               <div v-if="entry.suggestion" class="text-xs text-red-400 mt-1 pl-6">
-                <strong>Sugestão:</strong> {{ entry.suggestion }}
+                <strong>{{ t("sync.suggestion") }}:</strong> {{ entry.suggestion }}
               </div>
             </div>
           </div>

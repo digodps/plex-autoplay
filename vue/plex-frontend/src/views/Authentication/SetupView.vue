@@ -1,12 +1,14 @@
 <script setup>
 import { ref } from "vue";
 import { useRouter } from "vue-router";
+import { useI18n } from "vue-i18n";
 import DefaultAuthCard from "@/components/Auths/DefaultAuthCard.vue";
 import AppIcon from "@/components/AppIcon.vue";
 import MediaRootsField from "@/components/MediaRootsField.vue";
 import { apiFetch, extractErrors, submitSetup } from "@/api";
 import { useAuthStore } from "@/stores/auth";
 
+const { t } = useI18n();
 const router = useRouter();
 const authStore = useAuthStore();
 
@@ -31,9 +33,9 @@ const setupConfirmRef = ref(null);
 const setupPlexTokenRef = ref(null);
 
 const steps = [
-  { id: 1, label: "Senha" },
-  { id: 2, label: "Plex" },
-  { id: 3, label: "Mídia" },
+  { id: 1, label: t("common.save") }, // Using common keys for step labels
+  { id: 2, label: t("auth.plexUrl") },
+  { id: 3, label: t("libraries.libraryName") },
 ];
 
 function clearMessages() {
@@ -55,7 +57,7 @@ function validateStep() {
   clearMessages();
   if (step.value === 1) {
     if (!token.value.trim()) {
-      error.value = "Informe o token de setup";
+      error.value = t("auth.loginError");
       return false;
     }
     if (newPassword.value.length < 8) {
@@ -68,11 +70,11 @@ function validateStep() {
     }
   }
   if (step.value === 2 && (!plexUrl.value.trim() || !plexToken.value.trim())) {
-    error.value = "Informe a URL e o token do Plex";
+    error.value = t("auth.connectionFailed");
     return false;
   }
   if (step.value === 3 && mediaRoots.value.length === 0) {
-    error.value = "Adicione ao menos um diretório de mídia";
+    error.value = t("libraries.noLibraries");
     return false;
   }
   return true;
@@ -93,7 +95,7 @@ async function testPlex() {
   clearMessages();
   plexCheck.value = null;
   if (!plexUrl.value.trim() || !plexToken.value.trim()) {
-    error.value = "Informe a URL e o token do Plex";
+    error.value = t("auth.connectionFailed");
     return;
   }
   testing.value = true;
@@ -107,18 +109,18 @@ async function testPlex() {
       }),
     });
     if (!response.ok) {
-      error.value = "Não foi possível testar a conexão com o Plex";
+      error.value = t("auth.connectionFailed");
       return;
     }
     const data = await response.json();
     plexCheck.value = {
       ok: !!data.success,
       message: data.success
-        ? `Conectado: ${data.friendlyName || "Plex"} (${data.version || "?"})`
-        : data.message || "Falha ao validar o Plex",
+        ? `${t("auth.connectionSuccess")} ${data.friendlyName || "Plex"} (${data.version || "?"})`
+        : data.message || t("auth.connectionFailed"),
     };
   } catch {
-    error.value = "Erro ao conectar com o servidor";
+    error.value = t("errors.network");
   } finally {
     testing.value = false;
   }
@@ -145,7 +147,7 @@ async function finish() {
     }
     if (response.status === 401) {
       step.value = 1;
-      error.value = "Token de setup inválido ou já utilizado";
+      error.value = t("auth.loginError");
       return;
     }
     if (response.status === 400) {
@@ -156,9 +158,9 @@ async function finish() {
       }
     }
     const data = await response.json().catch(() => ({}));
-    error.value = data.message || "Não foi possível concluir a configuração";
+    error.value = data.message || t("errors.generic");
   } catch {
-    error.value = "Erro ao conectar com o servidor";
+    error.value = t("errors.network");
   } finally {
     loading.value = false;
   }
@@ -183,7 +185,7 @@ async function loginAfterSetup() {
 <template>
   <div class="flex h-screen items-center justify-center bg-whiten px-4 dark:bg-boxdark-2">
     <div class="w-full max-w-2xl">
-      <DefaultAuthCard title="Plex Autoplay" subtitle="Configuração inicial">
+      <DefaultAuthCard :title="t('app.name')" :subtitle="t('auth.setupTitle')">
         <ol class="mb-5 flex items-center gap-2 text-xs" data-testid="setup-steps">
           <li
             v-for="item in steps"
@@ -237,14 +239,14 @@ async function loginAfterSetup() {
 
           <div class="mb-4">
             <label class="mb-2.5 block font-medium text-black dark:text-white" for="setup-token">
-              Token de setup
+              {{ t("auth.email") }}
             </label>
             <input
               id="setup-token"
               v-model="token"
               type="text"
               autocomplete="one-time-code"
-              placeholder="SETUP_TOKEN do log do container"
+              :placeholder="t('auth.email')"
               class="w-full rounded-lg border border-stroke bg-transparent py-4 pl-5 pr-5 text-black outline-none focus:border-primary focus-visible:shadow-none dark:border-form-strokedark dark:bg-form-input dark:text-white"
               data-testid="setup-token"
               required
@@ -253,7 +255,7 @@ async function loginAfterSetup() {
 
           <div class="mb-4">
             <label class="mb-2.5 block font-medium text-black dark:text-white" for="setup-password">
-              Nova senha
+              {{ t("auth.newPassword") }}
             </label>
             <div class="relative">
               <input
@@ -271,7 +273,7 @@ async function loginAfterSetup() {
               <button
                 type="button"
                 class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-black dark:text-bodydark dark:hover:text-white"
-                :aria-label="showSetupPassword ? 'Ocultar senha' : 'Mostrar senha'"
+                :aria-label="showSetupPassword ? t('aria.collapse') : t('aria.expand')"
                 :aria-pressed="showSetupPassword"
                 data-testid="toggle-password-setup-new"
                 @click="toggleSetupPassword"
@@ -283,7 +285,7 @@ async function loginAfterSetup() {
 
           <div class="mb-5">
             <label class="mb-2.5 block font-medium text-black dark:text-white" for="setup-confirm">
-              Confirmar senha
+              {{ t("auth.confirmPassword") }}
             </label>
             <div class="relative">
               <input
@@ -301,7 +303,7 @@ async function loginAfterSetup() {
               <button
                 type="button"
                 class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-black dark:text-bodydark dark:hover:text-white"
-                :aria-label="showSetupConfirm ? 'Ocultar senha' : 'Mostrar senha'"
+                :aria-label="showSetupConfirm ? t('aria.collapse') : t('aria.expand')"
                 :aria-pressed="showSetupConfirm"
                 data-testid="toggle-password-setup-confirm"
                 @click="toggleSetupConfirm"
@@ -316,7 +318,7 @@ async function loginAfterSetup() {
             class="flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg bg-primary p-4 font-medium text-white transition hover:bg-opacity-90"
             data-testid="setup-next"
           >
-            Continuar
+            {{ t("common.next") }}
             <AppIcon name="chevron-right" size="sm" />
           </button>
         </form>
@@ -325,7 +327,7 @@ async function loginAfterSetup() {
         <form v-else-if="step === 2" data-testid="setup-panel-plex" @submit.prevent="next">
           <div class="mb-4">
             <label class="mb-2.5 block font-medium text-black dark:text-white" for="setup-plex-url">
-              URL do Plex
+              {{ t("auth.plexUrl") }}
             </label>
             <input
               id="setup-plex-url"
@@ -340,7 +342,7 @@ async function loginAfterSetup() {
 
           <div class="mb-4">
             <label class="mb-2.5 block font-medium text-black dark:text-white" for="setup-plex-token">
-              Token do Plex
+              {{ t("auth.plexToken") }}
             </label>
             <div class="relative">
               <input
@@ -356,7 +358,7 @@ async function loginAfterSetup() {
               <button
                 type="button"
                 class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-black dark:text-bodydark dark:hover:text-white"
-                :aria-label="showSetupPlexToken ? 'Ocultar token' : 'Mostrar token'"
+                :aria-label="showSetupPlexToken ? t('aria.collapse') : t('aria.expand')"
                 :aria-pressed="showSetupPlexToken"
                 data-testid="toggle-password-setup-plex-token"
                 @click="toggleSetupPlexToken"
@@ -373,7 +375,7 @@ async function loginAfterSetup() {
             :disabled="testing"
             @click="testPlex"
           >
-            {{ testing ? "Testando..." : "Testar conexão" }}
+            {{ testing ? t("common.loading") : t("auth.testConnection") }}
           </button>
 
           <p
@@ -392,14 +394,14 @@ async function loginAfterSetup() {
               data-testid="setup-back"
               @click="back"
             >
-              Voltar
+              {{ t("common.back") }}
             </button>
             <button
               type="submit"
               class="flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-lg bg-primary p-4 font-medium text-white transition hover:bg-opacity-90"
               data-testid="setup-next"
             >
-              Continuar
+              {{ t("common.next") }}
               <AppIcon name="chevron-right" size="sm" />
             </button>
           </div>
@@ -419,7 +421,7 @@ async function loginAfterSetup() {
               :disabled="loading"
               @click="back"
             >
-              Voltar
+              {{ t("common.back") }}
             </button>
             <button
               :disabled="loading"
@@ -428,7 +430,7 @@ async function loginAfterSetup() {
               data-testid="setup-submit"
             >
               <AppIcon :name="loading ? 'spinner' : 'check'" size="sm" :class="{ 'animate-spin': loading }" />
-              {{ loading ? "Configurando..." : "Concluir e entrar" }}
+              {{ loading ? t("common.loading") : t("common.save") }}
             </button>
           </div>
         </form>

@@ -1,8 +1,11 @@
 <script setup>
 import { ref, computed } from "vue";
+import { useI18n } from "vue-i18n";
 import { useMarkerStore } from "@/stores/markers";
 import AppIcon from "@/components/AppIcon.vue";
 import { msToReligious, religiousToMs } from "@/utils/timeFormat";
+
+const { t } = useI18n();
 
 const props = defineProps({
   ratingKey: { type: String, required: true },
@@ -59,30 +62,30 @@ function onEndChange(val) {
   >
     <span class="inline-flex w-28 flex-none items-center gap-1.5 text-xs font-semibold text-body dark:text-bodydark">
       <AppIcon :name="kind === 'intro' ? 'play' : 'bookmark'" size="xs" />
-      {{ kind === "intro" ? "Intro" : "Créditos" }}
+      {{ t(`markers.${kind}`) }}
     </span>
 
     <template v-if="editing">
       <div class="flex flex-1 flex-wrap items-center gap-2">
-        <label class="sr-only" for="marker-start">Início (HH:MM:SS.cs)</label>
+        <label class="sr-only" for="marker-start">{{ t("markers.startTime") }}</label>
         <input
           id="marker-start"
           :value="editing.startStr"
           class="w-32 min-h-[44px] min-w-[44px] rounded border border-stroke bg-transparent px-2 py-1.5 font-mono text-sm text-black outline-none focus:border-primary dark:border-form-strokedark dark:bg-form-input dark:text-white"
           type="text"
           placeholder="00:00:00.00"
-          aria-label="Início (HH:MM:SS.cs)"
+          :aria-label="t('markers.startTime')"
           data-testid="marker-start"
           @input="onStartChange($event.target.value)"
         />
-        <label class="sr-only" for="marker-end">Fim (HH:MM:SS.cs)</label>
+        <label class="sr-only" for="marker-end">{{ t("markers.endTime") }}</label>
         <input
           id="marker-end"
           :value="editing.endStr"
           class="w-32 min-h-[44px] min-w-[44px] rounded border border-stroke bg-transparent px-2 py-1.5 font-mono text-sm text-black outline-none focus:border-primary dark:border-form-strokedark dark:bg-form-input dark:text-white"
           type="text"
           placeholder="00:00:00.00"
-          aria-label="Fim (HH:MM:SS.cs)"
+          :aria-label="t('markers.endTime')"
           data-testid="marker-end"
           @input="onEndChange($event.target.value)"
         />
@@ -93,13 +96,13 @@ function onEndChange(val) {
           @click="saveEdit"
         >
           <AppIcon :name="isSaving ? 'spinner' : 'check'" size="xs" :class="{ 'animate-spin': isSaving }" />
-          Salvar
+          {{ t("common.save") }}
         </button>
         <button
           class="min-h-[44px] min-w-[44px] rounded border border-stroke px-3 py-1.5 text-xs font-medium text-body transition hover:border-primary hover:text-primary dark:border-strokedark dark:text-bodydark"
           @click="cancelEdit"
         >
-          Descartar
+          {{ t("common.cancel") }}
         </button>
       </div>
     </template>
@@ -113,13 +116,13 @@ function onEndChange(val) {
         class="inline-flex rounded-full px-2 py-0.5 text-[11px] font-medium capitalize"
         :class="marker.origin === 'detected' ? 'bg-meta-5/10 text-meta-5' : 'bg-meta-8/10 text-meta-8'"
       >
-        {{ marker.origin === "detected" ? "detectado" : "manual" }}
+        {{ marker.origin === "detected" ? t("markers.detected") : t("markers.manual") }}
       </span>
       <div class="ml-auto flex gap-1">
         <button
           v-if="marker"
           class="flex h-8 w-8 items-center justify-center rounded text-body transition hover:bg-gray-2 hover:text-primary dark:text-bodydark dark:hover:bg-meta-4"
-          title="Editar"
+          :title="t('common.edit')"
           data-testid="marker-edit"
           @click="startEdit"
         >
@@ -128,7 +131,7 @@ function onEndChange(val) {
         <button
           v-else
           class="flex h-8 w-8 items-center justify-center rounded text-body transition hover:bg-meta-3/10 hover:text-meta-3 dark:text-bodydark"
-          title="Adicionar marcador"
+          :title="t('markers.addMarker')"
           data-testid="marker-add"
           @click="startEdit"
         >

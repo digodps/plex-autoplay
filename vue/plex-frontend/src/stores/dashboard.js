@@ -1,5 +1,6 @@
 import { defineStore } from "pinia";
 import { ref, computed } from "vue";
+import { useI18n } from "vue-i18n";
 import { fetchStatus, fetchLibraries, fetchMarkers } from "../api";
 import {
   createServiceHealthComputed,
@@ -8,6 +9,7 @@ import {
 } from "../composables/useDashboardAggregators";
 
 export const useDashboardStore = defineStore("dashboard", () => {
+  const { t } = useI18n();
   const statusData = ref(null);
   const librariesData = ref([]);
   const markersData = ref([]);
@@ -54,7 +56,7 @@ export const useDashboardStore = defineStore("dashboard", () => {
         libraryError.value = null;
       } else {
         partialErrors.value.libraries = true;
-        libraryError.value = librariesRes.reason?.message || "Falha ao buscar bibliotecas do Plex.";
+        libraryError.value = librariesRes.reason?.message || t("errors.network");
         console.error("[Dashboard] fetchLibraries failed:", librariesRes.reason);
       }
 
@@ -64,9 +66,9 @@ export const useDashboardStore = defineStore("dashboard", () => {
         console.error("[Dashboard] fetchMarkers failed:", markersRes.reason);
       }
 
-      if (isTotalFailure.value) error.value = "Não foi possível carregar os dados do dashboard.";
+      if (isTotalFailure.value) error.value = t("errors.generic");
     } catch (e) {
-      error.value = "Erro inesperado ao carregar dashboard.";
+      error.value = t("errors.generic");
       console.error("[Dashboard] fetchAll unexpected error:", e);
     } finally {
       loading.value = false;

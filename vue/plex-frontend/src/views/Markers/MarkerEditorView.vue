@@ -1,11 +1,13 @@
 <script setup>
 import { computed, onMounted, ref } from "vue";
 import { useRoute } from "vue-router";
+import { useI18n } from "vue-i18n";
 import AppIcon from "@/components/AppIcon.vue";
 import MarkerRow from "@/components/MarkerRow.vue";
 import { useMarkerStore } from "@/stores/markers";
 import { reprocessMarkers } from "@/api";
 
+const { t } = useI18n();
 const route = useRoute();
 const store = useMarkerStore();
 const seriesKey = computed(() => route.params.seriesKey);
@@ -16,10 +18,10 @@ async function handleReprocess() {
   reprocessing.value = true;
   try {
     const res = await reprocessMarkers(seriesKey.value);
-    if (!res.ok) throw new Error("Falha ao reprocessar marcadores");
+    if (!res.ok) throw new Error(t("markers.syncFailed"));
     await store.fetchSeries(seriesKey.value);
   } catch (e) {
-    store.error.value = e.message || "Falha ao reprocessar.";
+    store.error.value = e.message || t("markers.syncFailed");
   } finally {
     reprocessing.value = false;
   }
@@ -49,10 +51,10 @@ const seasons = computed(() => {
         <div class="max-w-2xl mx-auto px-4 py-3 flex items-center gap-3">
           <div class="flex-1 min-w-0">
             <h1 class="text-28 font-bold text-gray-900 dark:text-gray-100">
-              Marcadores da série
+              {{ t("markers.title") }}
             </h1>
             <p class="text-sm text-gray-500 dark:text-gray-400">
-              Selecione um campo de intro ou créditos para editar ou adicionar.
+              {{ t("markers.subtitle") }}
             </p>
           </div>
           <button
@@ -69,10 +71,14 @@ const seasons = computed(() => {
               stroke="currentColor"
               viewBox="0 0 24 24"
             >
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+              />
             </svg>
-            {{ reprocessing ? "Reprocessando…" : "Reprocessar" }}
+            {{ reprocessing ? t("sync.syncing") : t("sync.syncNow") }}
           </button>
         </div>
       </div>
@@ -108,7 +114,7 @@ const seasons = computed(() => {
         <div v-else class="space-y-6">
           <section v-for="{ season, list } in seasons" :key="season" class="rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800">
             <h2 class="border-b border-gray-200 dark:border-gray-600 px-6 py-3 text-title-sm font-semibold text-gray-900 dark:text-gray-100">
-              Temporada {{ season }}
+              {{ t("series.seasons", { season }) }}
             </h2>
 
             <div class="divide-y divide-gray-200 dark:divide-gray-600">
@@ -130,13 +136,12 @@ const seasons = computed(() => {
                     <span
                       class="inline-flex rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-semibold text-gray-700 dark:bg-gray-800 dark:text-gray-200"
                     >
-                      T{{ ep.season }} · E{{ ep.episode }}
+                      {{ t("series.seasonEpisode", { season: ep.season, episode: ep.episode }) }}
                     </span>
                     <h3 class="text-title-sm font-semibold text-gray-900 dark:text-gray-100">{{ ep.title }}</h3>
                   </div>
 
                   <div class="space-y-1">
-                    <!---->
                     <MarkerRow
                       v-for="kind in ['intro', 'credits']"
                       :key="kind"
@@ -155,11 +160,11 @@ const seasons = computed(() => {
           >
             <AppIcon name="tv" size="lg" class="mx-auto text-gray-400 dark:text-gray-600" />
             <p class="mt-3 text-sm font-medium text-gray-300 dark:text-gray-400">
-              Nenhum episódio nesta série.
+              {{ t("series.noSeriesInLibrary") }}
             </p>
           </div>
         </div>
       </div>
-      </div>
     </div>
-  </template>
+  </div>
+</template>

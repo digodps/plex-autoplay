@@ -1,9 +1,11 @@
 import { ref, computed, watch } from "vue";
 import { useRoute } from "vue-router";
+import { useI18n } from "vue-i18n";
 import { apiFetch, extractErrorMessage } from "../api";
 import { useInfiniteScroll } from "./useInfiniteScroll";
 
 export function useSeriesCatalog(options = {}) {
+  const { t } = useI18n();
   const { libraryKey: propLibraryKey, pageSize: propPageSize = 24 } = options;
   const route = useRoute();
   const PAGE_SIZE = propPageSize;
@@ -38,10 +40,10 @@ export function useSeriesCatalog(options = {}) {
     if (res.status === 502) {
       const msg =
         (await extractErrorMessage(res)) ||
-        "Não foi possível consultar o Plex. Verifique a conexão com o servidor.";
+        t("series.plexConnectionError");
       throw new Error(msg);
     }
-    if (!res.ok) throw new Error("Erro ao carregar séries");
+    if (!res.ok) throw new Error(t("series.loadError"));
     return await res.json();
   }
 
@@ -62,7 +64,7 @@ export function useSeriesCatalog(options = {}) {
       seriesTotalSize.value = data.totalSize ?? 0;
       hasMore.value = seriesList.value.length < seriesTotalSize.value && items.length >= PAGE_SIZE;
     } catch (err) {
-      seriesError.value = err.message || "Erro de conexão";
+      seriesError.value = err.message || t("errors.network");
       seriesList.value = [];
       seriesTotalSize.value = 0;
       hasMore.value = false;
@@ -98,7 +100,7 @@ export function useSeriesCatalog(options = {}) {
       if (seriesList.value.length >= seriesTotalSize.value) hasMore.value = false;
       return hasMore.value;
     } catch (err) {
-      seriesError.value = err.message || "Erro ao carregar mais séries";
+      seriesError.value = err.message || t("series.loadMoreError");
       return false;
     } finally {
       isLoadingMore.value = false;
@@ -141,19 +143,22 @@ export function useSeriesCatalog(options = {}) {
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
         syncType.value = "error";
-        syncMessage.value = body.detail || body.message || `Erro ${res.status} ao sincronizar`;
+        syncMessage.value = body.detail || body.message || t("sync.syncError", { status: res.status });
         return false;
       }
       const result = await res.json();
       syncType.value = "success";
-      syncMessage.value = `Catálogo sincronizado: ${result.librariesInserted + result.librariesUpdated} biblioteca(s), ${result.seriesInserted + result.seriesUpdated} série(s)`;
+      syncMessage.value = t("sync.syncCompleteMessage", {
+        libraries: result.librariesInserted + result.librariesUpdated,
+        series: result.seriesInserted + result.seriesUpdated,
+      });
       // Recarrega a lista de séries após sincronizar
       const key = libraryKey.value;
       if (key) loadInitialSeries(key);
       return true;
     } catch (err) {
       syncType.value = "error";
-      syncMessage.value = err.message || "Erro de conexão ao sincronizar";
+      syncMessage.value = err.message || t("errors.network");
       return false;
     } finally {
       syncLoading.value = false;

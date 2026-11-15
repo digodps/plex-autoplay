@@ -1,8 +1,11 @@
 <script setup>
 import { onMounted, onUnmounted } from "vue";
+import { useI18n } from "vue-i18n";
 import DataStatsOne from "@/components/DataStats/DataStatsOne.vue";
+import AppIcon from "@/components/AppIcon.vue";
 import { useDashboardStore } from "@/stores/dashboard";
 
+const { t } = useI18n();
 const store = useDashboardStore();
 
 onMounted(() => {
@@ -19,9 +22,9 @@ onUnmounted(() => {
   <div class="page">
     <div class="mb-6">
       <div>
-        <h1 class="text-2xl font-bold text-black dark:text-white">Visão geral</h1>
+        <h1 class="text-2xl font-bold text-black dark:text-white">{{ t("dashboard.title") }}</h1>
         <p class="mt-2 text-sm font-medium text-gray-600 dark:text-bodydark">
-          Saúde do serviço, sincronização, bibliotecas e marcadores.
+          {{ t("dashboard.subtitle") }}
         </p>
       </div>
     </div>
@@ -36,7 +39,7 @@ onUnmounted(() => {
       <AppIcon name="warning" size="lg" class="mr-3" />
       <p class="flex-1">{{ store.error }}</p>
       <button class="btn btn-md btn-danger" :disabled="store.isLoading" @click="store.retry">
-        Tentar novamente
+        {{ t("common.retry") }}
       </button>
     </div>
 
@@ -49,12 +52,11 @@ onUnmounted(() => {
         <AppIcon name="warning" size="lg" class="text-meta-6" />
         <p class="flex-1 font-medium text-meta-6">{{ store.libraryError }}</p>
         <button class="btn btn-md btn-warning" :disabled="store.isLoading" @click="store.retry">
-          Tentar novamente
+          {{ t("common.retry") }}
         </button>
       </div>
       <p class="mt-3 text-xs text-body dark:text-bodydark">
-        Verifique se o servidor Plex está acessível, se a URL e o token (X-Plex-Token) estão
-        configurados corretamente e se há conectividade de rede.
+        {{ t("dashboard.plexConnectionHelp") }}
       </p>
     </div>
   </div>

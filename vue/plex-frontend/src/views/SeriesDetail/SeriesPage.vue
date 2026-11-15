@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch, nextTick } from "vue";
 import { useRoute, useRouter } from "vue-router";
+import { useI18n } from "vue-i18n";
 import Breadcrumb from "@/components/Breadcrumb.vue";
 import AppIcon from "@/components/AppIcon.vue";
 import VideoPlayer from "@/components/Series/VideoPlayer.vue";
@@ -8,6 +9,7 @@ import EpisodeList from "@/components/Series/EpisodeList.vue";
 import { useSeriesStore } from "@/stores/series";
 import { useBreakpoint, type ViewMode } from "@/composables/useBreakpoint";
 
+const { t } = useI18n();
 const route = useRoute();
 const router = useRouter();
 
@@ -19,8 +21,8 @@ const showEpisodeDrawer = ref(false);
 const showEpisodeSheet = ref(false);
 
 const breadcrumbItems = computed(() => [
-  { label: "Bibliotecas", to: { name: "libraries" } },
-  { label: "Série", current: true },
+  { label: t("nav.libraries"), to: { name: "libraries" } },
+  { label: t("nav.series"), current: true },
 ]);
 
 async function loadSeries() {

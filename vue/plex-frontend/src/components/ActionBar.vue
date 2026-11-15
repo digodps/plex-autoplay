@@ -1,4 +1,8 @@
 <script setup>
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
+
 defineProps({
   /** Alinhamento dos botões: 'right' (padrão) | 'center' | 'between' */
   align: {
@@ -8,7 +12,7 @@ defineProps({
   },
   /** Espaçamento entre botões */
   gap: { type: String, default: "0.75rem" },
-});
+})
 </script>
 
 <template>
@@ -17,7 +21,7 @@ defineProps({
     :class="`action-bar--${align}`"
     :style="{ columnGap: gap }"
     role="group"
-    aria-label="Ações do dashboard"
+    :aria-label="t('aria.dashboardActions')"
   >
     <slot name="secondary" />
     <slot name="primary" />

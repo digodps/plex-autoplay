@@ -41,19 +41,6 @@ function toggleNode(node, level, parentKey = '') {
   }
 }
 
-function isExpanded(node, level, parentKey = '') {
-  const key = getNodeKey(node, level, parentKey)
-  return expandedNodes.value.has(key)
-}
-
-function hasChildren(node) {
-  return node.series && node.series.length > 0
-}
-
-function hasEpisodes(series) {
-  return series.episodes && series.episodes.length > 0
-}
-
 const copyJobId = async () => {
   if (props.log.jobId) {
     await navigator.clipboard.writeText(props.log.jobId)
@@ -74,7 +61,6 @@ const HierarchyNode = {
     
     const isLib = props.level === 0
     const isSeries = props.level === 1
-    const isEpisode = props.level === 2
     
     const children = isLib ? props.node.series : (isSeries ? props.node.episodes : [])
     const hasChildren = children && children.length > 0
@@ -104,7 +90,6 @@ const HierarchyNode = {
       borderLeft: props.level > 0 ? '1px solid rgba(55, 65, 81, 0.5)' : 'none',
     }
     
-    const labelClass = isLib ? 'text-gray-100 font-semibold' : (isSeries ? 'text-gray-200' : 'text-gray-300')
     const valueClass = 'text-gray-200'
     
     return () => {

@@ -1,7 +1,10 @@
 <script setup>
 import { ref, computed, watch, nextTick, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import LogCard from './cards/LogCard.vue'
 import { parseHierarchy, formatTimestamp } from './cards/logHierarchy.js'
+
+const { t } = useI18n()
 
 const props = defineProps({
   items: {
@@ -31,16 +34,16 @@ const groups = computed(() => {
   for (const [index, log] of props.items.entries()) {
     let key
     if (props.groupBy === 'date') {
-      key = formatTimestamp(log.timestamp).date || 'Sem data'
+      key = formatTimestamp(log.timestamp).date || t("logs.noDate")
     } else if (props.groupBy === 'status') {
-      key = log.jobStatus || log.level || 'sem-status'
+      key = log.jobStatus || log.level || t("logs.noStatus")
     } else if (props.groupBy === 'level') {
-      key = log.level || 'sem-tipo'
+      key = log.level || t("logs.noType")
     } else if (props.groupBy === 'library') {
       const hierarchy = parseHierarchy(log.message, log.suggestion)
-      key = hierarchy.library || 'Sem biblioteca'
+      key = hierarchy.library || t("logs.noLibrary")
     } else {
-      key = formatTimestamp(log.timestamp).date || 'Sem data'
+      key = formatTimestamp(log.timestamp).date || t("logs.noDate")
     }
     
     if (!groupMap.has(key)) {
@@ -60,7 +63,7 @@ function toggleCard(globalIndex) {
   emit('toggle-expand', globalIndex)
 }
 
-function handleKeydown(event, globalIndex, groupIndex, itemIndex) {
+function handleKeydown(event, globalIndex, _groupIndex, _itemIndex) {
   const totalItems = props.items.length
   
   switch (event.key) {
@@ -147,7 +150,7 @@ onMounted(() => {
     <div v-if="loading" class="flex items-center justify-center py-12">
       <div class="flex flex-col items-center gap-4 text-gray-400">
         <div class="w-8 h-8 border-3 border-accent/30 border-t-accent rounded-full animate-spin" aria-hidden="true"></div>
-        <span class="text-sm">Carregando logs...</span>
+        <span class="text-sm">{{ t("logs.loading") }}</span>
       </div>
     </div>
 
@@ -158,8 +161,8 @@ onMounted(() => {
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
         </svg>
         <div>
-          <p class="text-lg font-medium text-gray-300">Nenhum log encontrado</p>
-          <p class="text-sm text-gray-500 mt-1">Tente ajustar os filtros ou aguarde novos processamentos</p>
+          <p class="text-lg font-medium text-gray-300">{{ t("logs.noLogs") }}</p>
+          <p class="text-sm text-gray-500 mt-1">{{ t("logs.noLogsHelp") }}</p>
         </div>
       </div>
     </div>
@@ -171,12 +174,12 @@ onMounted(() => {
         <header class="flex items-center justify-between px-2" :data-testid="`log-group-header-${group.key}`">
           <h3 class="text-lg font-semibold text-gray-200 tracking-tight">{{ group.key }}</h3>
           <span class="text-sm font-medium text-gray-500 bg-gray-800/50 px-3 py-1 rounded-full border border-gray-700/50">
-            {{ group.items.length }} {{ group.items.length === 1 ? 'log' : 'logs' }}
+            {{ group.items.length }} {{ group.items.length === 1 ? t("logs.singleLog") : t("logs.multipleLogs") }}
           </span>
         </header>
 
         <!-- Cards Grid -->
-        <div class="space-y-4" role="list" :aria-label="`Grupo: ${group.key}`">
+        <div class="space-y-4" role="list" :aria-label="t('logs.groupAriaLabel', { group: group.key })">
           <LogCard
             v-for="(log, itemIndex) in group.items"
             :key="log.timestamp + '-' + itemIndex"
@@ -184,9 +187,9 @@ onMounted(() => {
             :index="getGlobalIndex(groupIndex, itemIndex)"
             :is-expanded="expandedIndex === getGlobalIndex(groupIndex, itemIndex)"
             :on-toggle="() => toggleCard(getGlobalIndex(groupIndex, itemIndex))"
-            @keydown="handleKeydown($event, getGlobalIndex(groupIndex, itemIndex), groupIndex, itemIndex)"
             :tabindex="focusedIndex === getGlobalIndex(groupIndex, itemIndex) ? 0 : -1"
             role="listitem"
+            @keydown="handleKeydown($event, getGlobalIndex(groupIndex, itemIndex), groupIndex, itemIndex)"
           />
         </div>
       </template>

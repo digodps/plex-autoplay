@@ -1,11 +1,15 @@
 <script setup>
 import { computed, ref } from "vue";
 import { useRouter } from "vue-router";
+import { useI18n } from "vue-i18n";
 import { useThemeStore } from "@/stores/theme";
 import { useAuthStore } from "@/stores/auth";
 import AppIcon from "@/components/AppIcon.vue";
 import AppLogo from "@/components/AppLogo.vue";
 import PasswordModal from "@/components/PasswordModal.vue";
+import LanguageSelector from "@/components/LanguageSelector.vue";
+
+const { t } = useI18n();
 
 defineProps({
   items: { type: Array, default: () => [] },
@@ -77,11 +81,13 @@ function openPassword() {
       </ol>
     </nav>
 
+    <LanguageSelector />
+
     <button
       :class="[iconButton, 'ml-auto']"
       type="button"
-      :aria-label="isDark ? 'Tema claro' : 'Tema escuro'"
-      :title="isDark ? 'Tema claro' : 'Tema escuro'"
+      :aria-label="isDark ? $t('theme.light') : $t('theme.dark')"
+      :title="isDark ? $t('theme.light') : $t('theme.dark')"
       @click="theme.cycleMode"
     >
       <AppIcon :name="isDark ? 'sun' : 'moon'" size="sm" />
@@ -108,7 +114,7 @@ function openPassword() {
           @click="showProfile = false"
         >
           <AppIcon name="settings" size="sm" />
-          Configurações
+          {{ t("userMenu.settings") }}
         </router-link>
         <button
           type="button"
@@ -117,7 +123,7 @@ function openPassword() {
           @click="openPassword"
         >
           <AppIcon name="edit" size="sm" />
-          Alterar senha
+          {{ t("userMenu.changePassword") }}
         </button>
         <button
           type="button"
@@ -125,7 +131,7 @@ function openPassword() {
           @click="logout"
         >
           <AppIcon name="logout" size="sm" />
-          Sair
+          {{ t("userMenu.logout") }}
         </button>
       </div>
     </div>
