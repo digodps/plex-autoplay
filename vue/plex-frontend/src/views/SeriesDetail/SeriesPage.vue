@@ -103,7 +103,6 @@ watch(
               @click="store.toggleAutoPlayPreference(!store.autoPlayEnabled)"
               :aria-pressed="store.autoPlayEnabled"
             >
-              <AppIcon :name="store.autoPlayEnabled ? 'play-circle' : 'pause-circle'" size="sm" />
               <span>{{ store.autoPlayEnabled ? "Auto-play ativado" : "Auto-play desativado" }}</span>
             </button>
           </div>
@@ -135,7 +134,7 @@ watch(
               @click="store.toggleAutoPlayPreference(!store.autoPlayEnabled)"
               :aria-pressed="store.autoPlayEnabled"
             >
-              <AppIcon :name="store.autoPlayEnabled ? 'play-circle' : 'pause-circle'" size="sm" />
+              <span>{{ store.autoPlayEnabled ? "Auto-play" : "Auto-play" }}</span>
             </button>
             <button
               class="btn btn-ghost btn-sm"
@@ -143,7 +142,7 @@ watch(
               :aria-expanded="showEpisodeDrawer"
               aria-label="Lista de episódios"
             >
-              <AppIcon name="list" size="sm" />
+              <span>Episódios</span>
             </button>
           </div>
         </div>
@@ -159,7 +158,7 @@ watch(
           <div class="series-page__drawer-header">
             <h3>Episódios</h3>
             <button class="btn btn-ghost btn-sm" @click="closeDrawer" aria-label="Fechar lista">
-              <AppIcon name="x" size="sm" />
+              <span>Fechar</span>
             </button>
           </div>
           <EpisodeList
@@ -189,7 +188,7 @@ watch(
             @click="store.toggleAutoPlayPreference(!store.autoPlayEnabled)"
             :aria-pressed="store.autoPlayEnabled"
           >
-            <AppIcon :name="store.autoPlayEnabled ? 'play-circle' : 'pause-circle'" size="sm" />
+            <span>{{ store.autoPlayEnabled ? "Auto-play" : "Auto-play" }}</span>
           </button>
           <button
             class="btn btn-ghost btn-sm"
@@ -197,7 +196,7 @@ watch(
             :aria-expanded="showEpisodeSheet"
             aria-label="Lista de episódios"
           >
-            <AppIcon name="list" size="sm" />
+            <span>Episódios</span>
           </button>
         </div>
       </div>
@@ -213,7 +212,7 @@ watch(
           <div class="series-page__sheet-header">
             <h3>Episódios</h3>
             <button class="btn btn-ghost btn-sm" @click="closeSheet" aria-label="Fechar lista">
-              <AppIcon name="x" size="sm" />
+              <span>Fechar</span>
             </button>
           </div>
           <EpisodeList

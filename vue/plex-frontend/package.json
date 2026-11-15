@@ -30,6 +30,7 @@
   "homepage": "https://github.com/digodps/plex-autoplay#readme",
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@playwright/test": "^1.65.1",
     "@vitejs/plugin-vue": "^6.0.10",
     "autoprefixer": "^10.6.2",
     "esbuild": "^0.28.2",
