@@ -8,11 +8,8 @@ services:
     environment:
       PLEX_URL: http://SEU_PLEX:32400
       PLEX_TOKEN: SEU_TOKEN_PLEX
-      JWT_SECRET: mude_em_producao
       ADMIN_PASSWORD: senha_admin
       MEDIA_ROOTS: /mnt/media
-      SQLITE_CONNECTION_STRING: "Data Source=/data/app.db"
-      APP_CONFIG_PATH: /data/app-config.json
       LOG_LEVEL: Information
     ports:
       - "8080:80"

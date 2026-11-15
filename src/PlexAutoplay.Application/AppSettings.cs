@@ -7,6 +7,7 @@ public static class AppSettingKeys
 {
     public const string PlexUrl = "PLEX_URL";
     public const string PlexToken = "PLEX_TOKEN";
+    public const string JwtSecret = "JWT_SECRET";
 
     /// <summary>Chave legada (uma raiz). Lida apenas para migração.</summary>
     public const string MediaRoot = "MEDIA_ROOT";
@@ -19,6 +20,7 @@ public static class AppSettingKeys
     [
         PlexUrl,
         PlexToken,
+        JwtSecret,
         MediaRoots,
         SyncIntervalMinutes,
         AutoPlayEnabled
@@ -30,6 +32,7 @@ public static class AppSettingDefaults
 {
     public const string PlexUrl = "http://localhost:32400";
     public const string PlexToken = "";
+    public const string JwtSecret = "";
     public const string MediaRoot = "/media";
     public const int SyncIntervalMinutes = 5;
     public const bool AutoPlayEnabled = true;
@@ -43,7 +46,8 @@ public sealed record AppSettingsSnapshot(
     string PlexToken,
     IReadOnlyList<string> MediaRoots,
     int SyncIntervalMinutes,
-    bool AutoPlayEnabled)
+    bool AutoPlayEnabled,
+    string JwtSecret = "")
 {
     public bool PlexTokenSet => !string.IsNullOrEmpty(PlexToken);
 
@@ -52,7 +56,8 @@ public sealed record AppSettingsSnapshot(
         AppSettingDefaults.PlexToken,
         AppSettingDefaults.MediaRoots,
         AppSettingDefaults.SyncIntervalMinutes,
-        AppSettingDefaults.AutoPlayEnabled);
+        AppSettingDefaults.AutoPlayEnabled,
+        "");
 }
 
 /// <summary>Porta de leitura/gravação das configurações operacionais no SQLite.</summary>

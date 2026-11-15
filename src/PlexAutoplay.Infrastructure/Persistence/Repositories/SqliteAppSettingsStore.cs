@@ -3,6 +3,7 @@ namespace PlexAutoplay.Infrastructure.Persistence.Repositories;
 using Dapper;
 using Microsoft.Data.Sqlite;
 using PlexAutoplay.Application;
+using System.Security.Cryptography;
 
 /// <summary>Configurações operacionais persistidas no SQLite (tabela AppSetting).</summary>
 public sealed class SqliteAppSettingsStore : IAppSettingsStore
@@ -35,7 +36,8 @@ public sealed class SqliteAppSettingsStore : IAppSettingsStore
             Get(values, AppSettingKeys.PlexToken, defaults.PlexToken),
             mediaRoots,
             GetInt(values, AppSettingKeys.SyncIntervalMinutes, defaults.SyncIntervalMinutes),
-            GetBool(values, AppSettingKeys.AutoPlayEnabled, defaults.AutoPlayEnabled));
+            GetBool(values, AppSettingKeys.AutoPlayEnabled, defaults.AutoPlayEnabled),
+            Get(values, AppSettingKeys.JwtSecret, defaults.JwtSecret));
     }
 
     private static bool GetBool(IReadOnlyDictionary<string, string> values, string key, bool fallback) =>
@@ -51,6 +53,7 @@ public sealed class SqliteAppSettingsStore : IAppSettingsStore
         {
             [AppSettingKeys.PlexUrl] = settings.PlexUrl,
             [AppSettingKeys.PlexToken] = settings.PlexToken,
+            [AppSettingKeys.JwtSecret] = settings.JwtSecret,
             [AppSettingKeys.MediaRoots] = MediaRoots.Serialize(settings.MediaRoots),
             [AppSettingKeys.SyncIntervalMinutes] = settings.SyncIntervalMinutes.ToString(),
             [AppSettingKeys.AutoPlayEnabled] = settings.AutoPlayEnabled.ToString().ToLowerInvariant()
@@ -99,6 +102,7 @@ public static class AppSettingsSeeder
                 {
                     AppSettingKeys.PlexUrl => AppSettingDefaults.PlexUrl,
                     AppSettingKeys.PlexToken => AppSettingDefaults.PlexToken,
+                    AppSettingKeys.JwtSecret => GenerateJwtSecret(),
                     AppSettingKeys.MediaRoots => MediaRoots.Serialize(MediaRootsFromEnvironment()),
                     AppSettingKeys.SyncIntervalMinutes => AppSettingDefaults.SyncIntervalMinutes.ToString(),
                     AppSettingKeys.AutoPlayEnabled => AppSettingDefaults.AutoPlayEnabled.ToString().ToLowerInvariant(),
@@ -116,7 +120,33 @@ public static class AppSettingsSeeder
             return;
         }
 
+        // Garante JWT_SECRET existe (bancos antigos sem essa chave)
+        await EnsureJwtSecretAsync(connection);
+
         await MigrateMediaRootsAsync(connection);
+    }
+
+    private static string GenerateJwtSecret()
+    {
+        using var rng = RandomNumberGenerator.Create();
+        var bytes = new byte[32];
+        rng.GetBytes(bytes);
+        return Convert.ToBase64String(bytes).TrimEnd('=').Replace('+', '-').Replace('/', '_');
+    }
+
+    private static async Task EnsureJwtSecretAsync(SqliteConnection connection)
+    {
+        var existing = await connection.ExecuteScalarAsync<string>(
+            "SELECT Value FROM AppSetting WHERE Key = @Key",
+            new { Key = AppSettingKeys.JwtSecret });
+
+        if (string.IsNullOrWhiteSpace(existing))
+        {
+            var secret = GenerateJwtSecret();
+            await connection.ExecuteAsync(
+                "INSERT INTO AppSetting (Key, Value) VALUES (@Key, @Value)",
+                new { Key = AppSettingKeys.JwtSecret, Value = secret });
+        }
     }
 
     /// <summary>Grava MEDIA_ROOTS derivado de env/MEDIA_ROOT quando a chave não existe.</summary>

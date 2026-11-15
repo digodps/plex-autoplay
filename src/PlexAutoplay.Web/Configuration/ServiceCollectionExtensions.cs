@@ -58,9 +58,15 @@ public static class ServiceCollectionExtensions
         services.AddTransient<CompleteSetupUseCase>();
         services.AddSingleton<ChangePasswordUseCase>();
 
-        // JWT token service
-        var jwtSecret = Environment.GetEnvironmentVariable("JWT_SECRET") ?? "default-secret-change-in-production";
-        services.AddSingleton<JwtTokenService>(sp => new JwtTokenService(jwtSecret, sp.GetRequiredService<ILogger<JwtTokenService>>()));
+        // JWT token service - lê segredo do banco (gerado no primeiro start via AppSettingsSeeder)
+        services.AddSingleton<JwtTokenService>(sp =>
+        {
+            var settingsStore = sp.GetRequiredService<IAppSettingsStore>();
+            var logger = sp.GetRequiredService<ILogger<JwtTokenService>>();
+            var settings = settingsStore.GetAsync().GetAwaiter().GetResult();
+            var jwtSecret = settings.JwtSecret;
+            return new JwtTokenService(jwtSecret, logger);
+        });
         services.AddSingleton<ITokenService>(sp => sp.GetRequiredService<JwtTokenService>());
 
         // Plex configuration is resolved per request from the database
