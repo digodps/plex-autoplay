@@ -13,8 +13,8 @@ const router = useRouter();
 const authStore = useAuthStore();
 
 const step = ref(1);
-const newPassword = ref("123456");
-const confirmPassword = ref("123456");
+const newPassword = ref("");
+const confirmPassword = ref("");
 const plexUrl = ref("");
 const plexToken = ref("");
 const mediaRoots = ref([]);
