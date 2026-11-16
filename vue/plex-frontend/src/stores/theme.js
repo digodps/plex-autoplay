@@ -18,6 +18,7 @@ export const useThemeStore = defineStore("theme", () => {
   function applyTheme() {
     const resolved = effective.value;
     document.documentElement.dataset.theme = resolved;
+    document.documentElement.dataset.tone = resolved;
     document.documentElement.classList.toggle("dark", resolved === "dark");
     document.documentElement.style.colorScheme = resolved;
   }

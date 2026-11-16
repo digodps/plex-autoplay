@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { computed, ref, onMounted, watch } from "vue";
+/* global HTMLElement */
+import { computed, ref, watch, nextTick } from "vue";
 import EpisodeItem from "./EpisodeItem.vue";
-import { useSeriesStore } from "@/stores/series";
 
 interface Props {
   episodes: typeof import("@/stores/series").useSeriesStore extends () => infer T ? T extends { episodes: infer E } ? E : never : never;
@@ -10,8 +10,6 @@ interface Props {
 
 const props = defineProps<Props>();
 const emit = defineEmits<{ play: [episode: Props["episodes"][0]] }>();
-
-const store = useSeriesStore();
 
 const listContainer = ref<HTMLElement | null>(null);
 

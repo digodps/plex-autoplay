@@ -73,7 +73,7 @@ async function handleLogin() {
         role="alert"
         data-testid="error"
       >
-        <AppIcon name="warning" size="sm" />
+        <AppIcon name="triangle-alert" size="sm" />
         {{ error }}
       </div>
 

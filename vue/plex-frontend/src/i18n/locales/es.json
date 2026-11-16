@@ -33,7 +33,13 @@
     "plexToken": "Token de Plex",
     "testConnection": "Probar conexión",
     "connectionSuccess": "¡Conexión exitosa!",
-    "connectionFailed": "Falló la conexión. Verifica URL y token."
+    "connectionFailed": "Falló la conexión. Verifica URL y token.",
+    "stepPassword": "Contraseña",
+    "stepPlex": "Plex",
+    "stepMedia": "Multimedia",
+    "tokenPlaceholder": "Pega el token de configuración aquí",
+    "passwordMinLength": "La contraseña debe tener al menos 8 caracteres",
+    "passwordMismatch": "Las contraseñas no coinciden"
   },
   "dashboard": {
     "title": "Panel",
@@ -96,7 +102,9 @@
     "sortRating": "Valoración",
     "sortYear": "Año",
     "filterGenre": "Filtrar por género",
-    "allGenres": "Todos los géneros"
+    "allGenres": "Todos los géneros",
+    "groupByGenre": "Agrupar por género",
+    "manageMarkers": "Gestionar marcadores"
   },
   "seriesDetail": {
     "title": "Detalles de la serie",
@@ -140,7 +148,21 @@
     "copyMarkers": "Copiar marcadores",
     "pasteMarkers": "Pegar marcadores",
     "detected": "Detectados",
-    "manual": "Manuales"
+    "manual": "Manuales",
+    "add": "Añadir {kind}",
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "auto": "Automático",
+    "confirmDelete": "¿Seguro que quieres eliminar el marcador de {kind}?",
+    "invalidRange": "El tiempo de inicio debe ser anterior al tiempo de fin",
+    "createError": "Error al crear marcador de {kind}",
+    "updateError": "Error al actualizar marcador de {kind}",
+    "deleteError": "Error al eliminar marcador de {kind}",
+    "loadError": "Error al cargar marcadores",
+    "fetchAutoPlayError": "Error al obtener preferencia de auto-play",
+    "saveAutoPlayError": "Error al guardar preferencia de auto-play",
+    "loadMoreError": "Error al cargar más series",
+    "updateProgressError": "Error al actualizar progreso"
   },
   "logs": {
     "title": "Registros",

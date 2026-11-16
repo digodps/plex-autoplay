@@ -36,7 +36,7 @@ onUnmounted(() => {
       class="mt-8 rounded-2xl border border-meta-1/30 bg-meta-1/10 px-6 py-4 text-sm text-meta-1"
       role="alert"
     >
-      <AppIcon name="warning" size="lg" class="mr-3" />
+      <AppIcon name="triangle-alert" size="lg" class="mr-3" />
       <p class="flex-1">{{ store.error }}</p>
       <button class="btn btn-md btn-danger" :disabled="store.isLoading" @click="store.retry">
         {{ t("common.retry") }}
@@ -49,7 +49,7 @@ onUnmounted(() => {
       role="alert"
     >
       <div class="flex flex-wrap items-center gap-3">
-        <AppIcon name="warning" size="lg" class="text-meta-6" />
+        <AppIcon name="triangle-alert" size="lg" class="text-meta-6" />
         <p class="flex-1 font-medium text-meta-6">{{ store.libraryError }}</p>
         <button class="btn btn-md btn-warning" :disabled="store.isLoading" @click="store.retry">
           {{ t("common.retry") }}

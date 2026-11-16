@@ -6,7 +6,7 @@ import AppIcon from "./AppIcon.vue";
 
 <template>
   <div class="card-error">
-    <AppIcon name="warning" size="sm" />
+    <AppIcon name="triangle-alert" size="sm" />
     <span>Erro ao carregar</span>
   </div>
 </template>

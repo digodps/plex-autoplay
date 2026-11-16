@@ -1,30 +1,99 @@
 <!doctype html>
-<html lang="pt-BR">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Plex Autoplay</title>
-    <script>
-      // Anti-FOUC: aplica o tema antes do primeiro paint (script bloqueante).
-      (function () {
-        try {
-          var mode = localStorage.getItem("theme.mode") || "system";
-          var dark =
-            mode === "dark" ||
-            (mode === "system" &&
-              window.matchMedia("(prefers-color-scheme: dark)").matches);
-          document.documentElement.dataset.theme = dark ? "dark" : "light";
-          document.documentElement.classList.toggle("dark", dark);
-          document.documentElement.style.colorScheme = dark ? "dark" : "light";
-        } catch (e) {
-          document.documentElement.dataset.theme = "light";
-        }
-      })();
-    </script>
-  </head>
-  <body>
-    <div id="app"></div>
-    <script type="module" src="/src/main.js"></script>
-  </body>
+<html lang="pt-BR" data-type="software" data-radius="soft" data-ground="sand" data-buttons="pill" data-motion>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Plex Autoplay: Gerenciador de marcadores de intro/créditos para Plex</title>
+<meta name="description" content="Dashboard web para gerenciar marcadores de intro/créditos no Plex via API oficial, gerando SQLite marker database para o PlexAutoSkip.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Plex Autoplay: Gerenciador de marcadores para Plex">
+<meta property="og:description" content="Dashboard web para gerenciar marcadores de intro/créditos no Plex via API oficial.">
+<meta property="og:image" content="/share.jpg">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<meta name="theme-color" content="#0D1117">
+<meta name="site-kind" content="software">
+<meta name="page-type" content="software">
+
+<!-- Taste Skill stylesheets (order matters per system.md) -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wdth,wght@75..100,400..700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/system.css">
+<link rel="stylesheet" href="/assets/ui/base.css">
+<link rel="stylesheet" href="/assets/ui/cards.css">
+<link rel="stylesheet" href="/assets/motion/motion.css">
+<link rel="stylesheet" href="/assets/backgrounds/backgrounds.css">
+<link rel="stylesheet" href="/assets/layout/layout.css">
+<link rel="stylesheet" href="/assets/icons/icon.css">
+
+<!-- Hero entrance guard: wait for motion.js, fade in at 700ms if late -->
+<script>document.documentElement.classList.add('m-enter');setTimeout(()=>document.documentElement.classList.add('m-enter-done'),700)</script>
+
+<!-- Grounds tokens before first paint -->
+<script src="/assets/backgrounds/backgrounds.js"></script>
+
+<!-- Moments: guard + module preloads for dealt moments -->
+<script>document.documentElement.classList.add('mo-js');setTimeout(()=>document.documentElement.classList.add('mo-safe'),2500)</script>
+<link rel="modulepreload" href="/assets/moments/moments.js">
+<link rel="modulepreload" href="/assets/moments/lib.js">
+<link rel="modulepreload" href="/assets/moments/photo-chapters/moment.js">
+<link rel="modulepreload" href="/assets/moments/picture-develops/moment.js">
+<link rel="modulepreload" href="/assets/moments/pinned-chapters/moment.js">
+
+<!-- Page CSS: only visual-internal and --p-h per card group -->
+<style>
+:root {
+  --p-bg: #0a0d14; --p-surface: #131824; --p-ink: #e9edf3; --p-muted: #8891a1;
+  --p-accent: #5ab9fc; --p-accent-ink: #0a0d14; --p-action: #5ab9fc; --p-action-ink: #0a0d14;
+  --p-inv-bg: #e9edf3; --p-inv-surface: #d7dbe1; --p-inv-ink: #0a0d14; --p-inv-muted: #54575f;
+  --p-inv-accent: #0a0d14; --p-inv-accent-ink: #e9edf3; --p-inv-action: #0a0d14; --p-inv-action-ink: #e9edf3;
+  --font-display: "Instrument Sans", system-ui, sans-serif;
+  --font-text: "Instrument Sans", system-ui, sans-serif;
+  --font-mono: "DM Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  --display-weight: 500;
+  --display-tracking: -0.028em;
+  --display-tracking-xl: -0.036em;
+  --display-stretch: 96%;
+  --ly-scale: 1.04;
+}
+  .metrics-grid .panel { --p-h: 280px; }
+  .library-grid .panel { --p-h: 220px; }
+  .series-grid .panel { --p-h: 320px; }
+  @media (max-width: 639px) {
+    .metrics-grid .panel { --p-h: 180px; }
+    .library-grid .panel { --p-h: 160px; }
+    .series-grid .panel { --p-h: 200px; }
+  }
+</style>
+
+<!-- Anti-FOUC: aplica o tema antes do primeiro paint (script bloqueante).
+     system.js will also set data-tone; this is a bridge until system.js loads. -->
+<script>
+  (function () {
+    try {
+      var mode = localStorage.getItem("theme.mode") || "system";
+      var dark =
+        mode === "dark" ||
+        (mode === "system" &&
+          window.matchMedia("(prefers-color-scheme: dark)").matches);
+      document.documentElement.dataset.theme = dark ? "dark" : "light";
+      document.documentElement.classList.toggle("dark", dark);
+      document.documentElement.style.colorScheme = dark ? "dark" : "light";
+    } catch (e) {
+      document.documentElement.dataset.theme = "light";
+    }
+  })();
+</script>
+</head>
+<body>
+<!-- NAV will be rendered by AppHeader.vue using Taste nav-cards pattern -->
+<div id="app"></div>
+
+<!-- Taste Skill system.js: all page behaviour in one module -->
+<script type="module" src="/assets/system.js"></script>
+
+<!-- Vue app entry -->
+<script type="module" src="/src/main.js"></script>
+</body>
 </html>

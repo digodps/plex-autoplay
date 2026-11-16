@@ -33,9 +33,9 @@ const setupConfirmRef = ref(null);
 const setupPlexTokenRef = ref(null);
 
 const steps = [
-  { id: 1, label: t("common.save") }, // Using common keys for step labels
-  { id: 2, label: t("auth.plexUrl") },
-  { id: 3, label: t("libraries.libraryName") },
+  { id: 1, label: t("auth.stepPassword") },
+  { id: 2, label: t("auth.stepPlex") },
+  { id: 3, label: t("auth.stepMedia") },
 ];
 
 function clearMessages() {
@@ -61,11 +61,11 @@ function validateStep() {
       return false;
     }
     if (newPassword.value.length < 8) {
-      error.value = "A senha deve ter pelo menos 8 caracteres";
+      error.value = t("auth.passwordMinLength");
       return false;
     }
     if (newPassword.value !== confirmPassword.value) {
-      error.value = "As senhas não conferem";
+      error.value = t("auth.passwordMismatch");
       return false;
     }
   }
@@ -183,81 +183,66 @@ async function loginAfterSetup() {
 </script>
 
 <template>
-  <div class="flex h-screen items-center justify-center bg-whiten px-4 dark:bg-boxdark-2">
-    <div class="w-full max-w-2xl">
+  <div class="setup-view" style="min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: var(--s-4); background: var(--ground-bg);">
+    <div style="width: 100%; max-width: 640px;">
       <DefaultAuthCard :title="t('app.name')" :subtitle="t('auth.setupTitle')">
-        <ol class="mb-5 flex items-center gap-2 text-xs" data-testid="setup-steps">
+        <!-- Progress Steps -->
+        <ol class="setup-steps" data-testid="setup-steps" style="display: flex; align-items: center; gap: var(--s-2); margin-bottom: var(--s-5);">
           <li
             v-for="item in steps"
             :key="item.id"
-            class="flex flex-1 items-center gap-2"
-            :class="item.id === step ? 'font-semibold text-primary' : 'text-body dark:text-bodydark'"
+            style="flex: 1; display: flex; align-items: center; gap: var(--s-2);"
+            :class="{ 'is-active': item.id === step }"
           >
             <span
-              class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border"
-              :class="
-                item.id === step
-                  ? 'border-primary bg-primary text-white'
-                  : 'border-stroke dark:border-strokedark'
-              "
+              class="step-indicator"
+              style="display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; flex-shrink: 0; border-radius: 50%; border: 2px solid; font-weight: 600; font-size: var(--t-small);"
+              :style="item.id === step ? 'border-color: var(--action); background: var(--action); color: var(--action-ink);' : 'border-color: var(--border); color: var(--muted);'"
             >
               {{ item.id }}
             </span>
-            <span :data-testid="`setup-step-${item.id}`">{{ item.label }}</span>
+            <span :data-testid="`setup-step-${item.id}`" class="t-small" :style="item.id === step ? 'font-weight: 600; color: var(--ink);' : 'color: var(--muted);'">{{ item.label }}</span>
           </li>
         </ol>
 
-        <div
-          v-if="error"
-          class="error alert alert-error mb-4 flex items-center gap-2 rounded-sm border border-meta-1/30 bg-meta-1/10 px-4 py-3 text-sm font-medium text-meta-1"
-          role="alert"
-          data-testid="error"
-        >
-          <AppIcon name="warning" size="sm" />
-          {{ error }}
+        <!-- Error Alert -->
+        <div v-if="error" class="alert alert--error" role="alert" data-testid="error" style="margin-bottom: var(--s-4); display: flex; align-items: flex-start; gap: var(--s-3);">
+          <img src="/assets/icons/ui-triangle-alert.svg" data-icon="ui-triangle-alert" class="icon" width="20" height="20" aria-hidden="true" style="flex-shrink: 0; margin-top: 2px;" />
+          <span>{{ error }}</span>
         </div>
 
-        <ul
-          v-if="errors.length"
-          class="error alert alert-error mb-4 space-y-1 rounded-sm border border-meta-1/30 bg-meta-1/10 px-4 py-3 text-sm font-medium text-meta-1"
-          role="alert"
-        >
-          <li v-for="(item, index) in errors" :key="index" data-testid="setup-error">
-            {{ item }}
-          </li>
+        <!-- Multiple Errors -->
+        <ul v-if="errors.length" class="alert alert--error" role="alert" style="margin-bottom: var(--s-4); padding: var(--s-3) var(--s-4); display: flex; flex-direction: column; gap: var(--s-1);">
+          <li v-for="(item, index) in errors" :key="index" data-testid="setup-error">{{ item }}</li>
         </ul>
 
-        <!-- Passo 1: senha -->
-        <form v-if="step === 1" data-testid="setup-panel-password" @submit.prevent="next">
-          <div
-            class="mb-5 rounded-sm border border-primary/30 bg-primary/5 px-4 py-3 text-sm text-body dark:text-bodydark"
-            data-testid="setup-token-hint"
-          >
-            O token de setup é de <strong>uso único</strong> e está no log do
-            container. Execute <code>docker logs plex-autoplay</code> para obtê-lo.
+        <!-- Step 1: Password -->
+        <form v-if="step === 1" data-testid="setup-panel-password" style="display: flex; flex-direction: column; gap: var(--s-4);" @submit.prevent="next">
+          <div class="alert alert--info" data-testid="setup-token-hint" style="display: flex; align-items: flex-start; gap: var(--s-3); background: color-mix(in oklab, var(--action) 8%, transparent); border-color: color-mix(in oklab, var(--action) 25%, transparent);">
+            <img src="/assets/icons/ui-info.svg" data-icon="ui-info" class="icon" width="20" height="20" aria-hidden="true" style="flex-shrink: 0; margin-top: 2px;" />
+            <div>
+              <p style="margin: 0; font-size: var(--t-small);">O token de setup é de <strong>uso único</strong> e está no log do container.</p>
+              <p style="margin: var(--s-1) 0 0; font-size: var(--t-small);">Execute <code class="mono" style="background: color-mix(in oklab, var(--ink) 8%, transparent); padding: 2px 6px; border-radius: var(--r-sm);">docker logs plex-autoplay</code> para obtê-lo.</p>
+            </div>
           </div>
 
-          <div class="mb-4">
-            <label class="mb-2.5 block font-medium text-black dark:text-white" for="setup-token">
-              {{ t("auth.email") }}
-            </label>
+          <div class="field" style="display: flex; flex-direction: column; gap: var(--s-1);">
+            <label for="setup-token" class="t-label">Token de Setup</label>
             <input
               id="setup-token"
               v-model="token"
               type="text"
               autocomplete="one-time-code"
-              :placeholder="t('auth.email')"
-              class="w-full rounded-lg border border-stroke bg-transparent py-4 pl-5 pr-5 text-black outline-none focus:border-primary focus-visible:shadow-none dark:border-form-strokedark dark:bg-form-input dark:text-white"
+              :placeholder="t('auth.tokenPlaceholder')"
+              class="field__input"
               data-testid="setup-token"
               required
             />
           </div>
 
-          <div class="mb-4">
-            <label class="mb-2.5 block font-medium text-black dark:text-white" for="setup-password">
-              {{ t("auth.newPassword") }}
-            </label>
-            <div class="relative">
+          <div class="field" style="display: flex; flex-direction: column; gap: var(--s-1);">
+            <label for="setup-password" class="t-label">Nova Senha</label>
+            <div class="field__wrapper" style="position: relative; display: flex;">
               <input
                 id="setup-password"
                 ref="setupPasswordRef"
@@ -266,13 +251,15 @@ async function loginAfterSetup() {
                 autocomplete="new-password"
                 minlength="8"
                 maxlength="128"
-                class="w-full rounded-lg border border-stroke bg-transparent py-4 pl-5 pr-12 text-black outline-none focus:border-primary focus-visible:shadow-none dark:border-form-strokedark dark:bg-form-input dark:text-white"
+                class="field__input"
+                style="flex: 1; padding-right: 48px;"
                 data-testid="setup-password"
                 required
               />
               <button
                 type="button"
-                class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-black dark:text-bodydark dark:hover:text-white"
+                class="field__toggle"
+                style="position: absolute; right: var(--s-3); top: 50%; transform: translateY(-50%);"
                 :aria-label="showSetupPassword ? t('aria.collapse') : t('aria.expand')"
                 :aria-pressed="showSetupPassword"
                 data-testid="toggle-password-setup-new"
@@ -283,11 +270,9 @@ async function loginAfterSetup() {
             </div>
           </div>
 
-          <div class="mb-5">
-            <label class="mb-2.5 block font-medium text-black dark:text-white" for="setup-confirm">
-              {{ t("auth.confirmPassword") }}
-            </label>
-            <div class="relative">
+          <div class="field" style="display: flex; flex-direction: column; gap: var(--s-1);">
+            <label for="setup-confirm" class="t-label">Confirmar Senha</label>
+            <div class="field__wrapper" style="position: relative; display: flex;">
               <input
                 id="setup-confirm"
                 ref="setupConfirmRef"
@@ -296,13 +281,15 @@ async function loginAfterSetup() {
                 autocomplete="new-password"
                 minlength="8"
                 maxlength="128"
-                class="w-full rounded-lg border border-stroke bg-transparent py-4 pl-5 pr-12 text-black outline-none focus:border-primary focus-visible:shadow-none dark:border-form-strokedark dark:bg-form-input dark:text-white"
+                class="field__input"
+                style="flex: 1; padding-right: 48px;"
                 data-testid="setup-confirm"
                 required
               />
               <button
                 type="button"
-                class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-black dark:text-bodydark dark:hover:text-white"
+                class="field__toggle"
+                style="position: absolute; right: var(--s-3); top: 50%; transform: translateY(-50%);"
                 :aria-label="showSetupConfirm ? t('aria.collapse') : t('aria.expand')"
                 :aria-pressed="showSetupConfirm"
                 data-testid="toggle-password-setup-confirm"
@@ -315,49 +302,48 @@ async function loginAfterSetup() {
 
           <button
             type="submit"
-            class="flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg bg-primary p-4 font-medium text-white transition hover:bg-opacity-90"
+            class="btn btn--primary btn-lg"
+            style="width: 100%; margin-top: var(--s-2);"
             data-testid="setup-next"
           >
-            {{ t("common.next") }}
-            <AppIcon name="chevron-right" size="sm" />
+            <span>{{ t("common.next") }}</span>
+            <img src="/assets/icons/ui-chevron-right.svg" data-icon="ui-chevron-right" class="icon" width="18" height="18" aria-hidden="true" />
           </button>
         </form>
 
-        <!-- Passo 2: Plex -->
-        <form v-else-if="step === 2" data-testid="setup-panel-plex" @submit.prevent="next">
-          <div class="mb-4">
-            <label class="mb-2.5 block font-medium text-black dark:text-white" for="setup-plex-url">
-              {{ t("auth.plexUrl") }}
-            </label>
+        <!-- Step 2: Plex -->
+        <form v-else-if="step === 2" data-testid="setup-panel-plex" style="display: flex; flex-direction: column; gap: var(--s-4);" @submit.prevent="next">
+          <div class="field" style="display: flex; flex-direction: column; gap: var(--s-1);">
+            <label for="setup-plex-url" class="t-label">URL do Plex</label>
             <input
               id="setup-plex-url"
               v-model="plexUrl"
               type="url"
               placeholder="http://192.168.1.5:32400"
-              class="w-full rounded-lg border border-stroke bg-transparent py-4 pl-5 pr-5 text-black outline-none focus:border-primary focus-visible:shadow-none dark:border-form-strokedark dark:bg-form-input dark:text-white"
+              class="field__input"
               data-testid="setup-plex-url"
               required
             />
           </div>
 
-          <div class="mb-4">
-            <label class="mb-2.5 block font-medium text-black dark:text-white" for="setup-plex-token">
-              {{ t("auth.plexToken") }}
-            </label>
-            <div class="relative">
+          <div class="field" style="display: flex; flex-direction: column; gap: var(--s-1);">
+            <label for="setup-plex-token" class="t-label">Token do Plex</label>
+            <div class="field__wrapper" style="position: relative; display: flex;">
               <input
                 id="setup-plex-token"
                 ref="setupPlexTokenRef"
                 v-model="plexToken"
                 :type="showSetupPlexToken ? 'text' : 'password'"
                 autocomplete="off"
-                class="w-full rounded-lg border border-stroke bg-transparent py-4 pl-5 pr-12 text-black outline-none focus:border-primary focus-visible:shadow-none dark:border-form-strokedark dark:bg-form-input dark:text-white"
+                class="field__input"
+                style="flex: 1; padding-right: 48px;"
                 data-testid="setup-plex-token"
                 required
               />
               <button
                 type="button"
-                class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-black dark:text-bodydark dark:hover:text-white"
+                class="field__toggle"
+                style="position: absolute; right: var(--s-3); top: 50%; transform: translateY(-50%);"
                 :aria-label="showSetupPlexToken ? t('aria.collapse') : t('aria.expand')"
                 :aria-pressed="showSetupPlexToken"
                 data-testid="toggle-password-setup-plex-token"
@@ -370,7 +356,8 @@ async function loginAfterSetup() {
 
           <button
             type="button"
-            class="mb-4 w-full cursor-pointer rounded-lg border border-stroke p-3 font-medium text-black transition hover:bg-gray-2 disabled:opacity-60 dark:border-strokedark dark:text-white dark:hover:bg-meta-4"
+            class="btn btn--secondary btn-lg"
+            style="width: 100%;"
             data-testid="setup-test-plex"
             :disabled="testing"
             @click="testPlex"
@@ -380,17 +367,17 @@ async function loginAfterSetup() {
 
           <p
             v-if="plexCheck"
-            class="mb-4 text-sm"
-            :class="plexCheck.ok ? 'text-meta-3' : 'text-meta-1'"
+            :class="['t-body', plexCheck.ok ? 'text-success' : 'text-danger']"
             data-testid="plex-test-result"
+            style="margin: 0;"
           >
             {{ plexCheck.message }}
           </p>
 
-          <div class="flex gap-2">
+          <div class="btn-row" style="display: flex; gap: var(--s-3); margin-top: var(--s-2);">
             <button
               type="button"
-              class="cursor-pointer rounded-lg border border-stroke px-4 py-4 font-medium text-black transition hover:bg-gray-2 dark:border-strokedark dark:text-white dark:hover:bg-meta-4"
+              class="btn btn--secondary"
               data-testid="setup-back"
               @click="back"
             >
@@ -398,25 +385,26 @@ async function loginAfterSetup() {
             </button>
             <button
               type="submit"
-              class="flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-lg bg-primary p-4 font-medium text-white transition hover:bg-opacity-90"
+              class="btn btn--primary btn-lg"
+              style="flex: 1;"
               data-testid="setup-next"
             >
-              {{ t("common.next") }}
-              <AppIcon name="chevron-right" size="sm" />
+              <span>{{ t("common.next") }}</span>
+              <img src="/assets/icons/ui-chevron-right.svg" data-icon="ui-chevron-right" class="icon" width="18" height="18" aria-hidden="true" />
             </button>
           </div>
         </form>
 
-        <!-- Passo 3: mídia -->
-        <form v-else data-testid="setup-panel-media" @submit.prevent="finish">
-          <div class="mb-5">
+        <!-- Step 3: Media -->
+        <form v-else data-testid="setup-panel-media" style="display: flex; flex-direction: column; gap: var(--s-4);" @submit.prevent="finish">
+          <div>
             <MediaRootsField v-model="mediaRoots" />
           </div>
 
-          <div class="flex gap-2">
+          <div class="btn-row" style="display: flex; gap: var(--s-3);">
             <button
               type="button"
-              class="cursor-pointer rounded-lg border border-stroke px-4 py-4 font-medium text-black transition hover:bg-gray-2 dark:border-strokedark dark:text-white dark:hover:bg-meta-4"
+              class="btn btn--secondary"
               data-testid="setup-back"
               :disabled="loading"
               @click="back"
@@ -426,7 +414,8 @@ async function loginAfterSetup() {
             <button
               :disabled="loading"
               type="submit"
-              class="flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-lg bg-primary p-4 font-medium text-white transition hover:bg-opacity-90 disabled:opacity-60"
+              class="btn btn--primary btn-lg"
+              style="flex: 1;"
               data-testid="setup-submit"
             >
               <AppIcon :name="loading ? 'spinner' : 'check'" size="sm" :class="{ 'animate-spin': loading }" />
@@ -438,3 +427,239 @@ async function loginAfterSetup() {
     </div>
   </div>
 </template>
+
+<style scoped>
+.setup-view {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--s-4);
+  background: var(--ground-bg);
+}
+
+.setup-steps {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  margin-bottom: var(--s-5);
+}
+
+.setup-steps li {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+}
+
+.step-indicator {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  border: 2px solid;
+  font-weight: 600;
+  font-size: var(--t-small);
+  transition: all var(--m-fast) var(--m-ease);
+}
+
+.setup-steps li.is-active .step-indicator {
+  border-color: var(--action);
+  background: var(--action);
+  color: var(--action-ink);
+}
+
+.setup-steps li:not(.is-active) .step-indicator {
+  border-color: var(--border);
+  color: var(--muted);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+}
+
+.field__input {
+  width: 100%;
+  padding: var(--s-3) var(--s-4);
+  font: var(--font-text);
+  font-size: var(--t-body);
+  color: var(--ink);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  transition: border-color var(--m-fast) var(--m-ease), box-shadow var(--m-fast) var(--m-ease);
+}
+
+.field__input:focus {
+  outline: none;
+  border-color: var(--action);
+  box-shadow: 0 0 0 1px var(--action), 0 0 0 4px color-mix(in oklab, var(--action) 20%, transparent);
+}
+
+.field__input.mono {
+  font-family: var(--font-mono);
+}
+
+.field__wrapper {
+  position: relative;
+  display: flex;
+}
+
+.field__toggle {
+  position: absolute;
+  right: var(--s-3);
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--s-1);
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  transition: color var(--m-fast) var(--m-ease);
+}
+
+.field__toggle:hover {
+  color: var(--ink);
+}
+
+.field__toggle:focus-visible {
+  outline: 2px solid var(--action);
+  outline-offset: 2px;
+  border-radius: var(--r-sm);
+}
+
+.btn-row {
+  display: flex;
+  gap: var(--s-3);
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s-2);
+  padding: var(--s-2) var(--s-5);
+  font: var(--font-text);
+  font-size: var(--t-sm);
+  font-weight: 500;
+  border-radius: var(--r-btn);
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: transform var(--m-fast) var(--m-ease), background var(--m-fast) var(--m-ease), border-color var(--m-fast) var(--m-ease), box-shadow var(--m-fast) var(--m-ease);
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn--primary {
+  background: var(--action);
+  color: var(--action-ink);
+  border-color: var(--action);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .btn--primary:hover:not(:disabled) {
+    background: color-mix(in oklab, var(--action) 90%, black);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+  }
+  .btn--primary:active:not(:disabled) {
+    transform: scale(0.98);
+  }
+}
+
+.btn--primary:focus-visible {
+  outline: 2px solid var(--action);
+  outline-offset: 2px;
+}
+
+.btn--secondary {
+  background: var(--surface);
+  color: var(--ink);
+  border-color: var(--border);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .btn--secondary:hover:not(:disabled) {
+    background: var(--card);
+    border-color: color-mix(in oklab, var(--ink) 16%, transparent);
+    transform: translateY(-2px);
+  }
+  .btn--secondary:active:not(:disabled) {
+    transform: scale(0.98);
+  }
+}
+
+.btn--secondary:focus-visible {
+  outline: 2px solid var(--action);
+  outline-offset: 2px;
+}
+
+.btn-lg {
+  padding: var(--s-3) var(--s-6);
+  font-size: var(--t-body);
+}
+
+.btn-sm {
+  padding: var(--s-1) var(--s-3);
+  font-size: var(--t-small);
+}
+
+.alert {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--s-3);
+  padding: var(--s-3) var(--s-4);
+  border-radius: var(--r-md);
+  font-size: var(--t-body);
+  line-height: 1.5;
+}
+
+.alert--error {
+  background: color-mix(in oklab, var(--danger, #e03e3e) 10%, transparent);
+  border: 1px solid color-mix(in oklab, var(--danger, #e03e3e) 25%, transparent);
+  color: var(--ink);
+}
+
+.alert--info {
+  background: color-mix(in oklab, var(--action) 8%, transparent);
+  border: 1px solid color-mix(in oklab, var(--action) 25%, transparent);
+  color: var(--ink);
+}
+
+.alert .icon {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.text-success {
+  color: var(--success, #38a169);
+}
+
+.text-danger {
+  color: var(--danger, #e03e3e);
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.mono {
+  font-family: var(--font-mono);
+}
+</style>

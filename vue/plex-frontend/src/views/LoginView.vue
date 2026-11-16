@@ -61,7 +61,7 @@ const handleLogin = async () => {
       <p>Painel Administrativo</p>
 
       <div v-if="error" class="alert error" role="alert">
-        <AppIcon name="warning" size="sm" />
+        <AppIcon name="triangle-alert" size="sm" />
         {{ error }}
       </div>
 

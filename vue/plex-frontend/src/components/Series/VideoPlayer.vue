@@ -1,4 +1,5 @@
 <script setup lang="ts">
+/* global HTMLVideoElement, KeyboardEvent */
 import { ref, computed, onMounted, onUnmounted, watch, nextTick } from "vue";
 import AutoPlayCountdown from "./AutoPlayCountdown.vue";
 import EpisodeNavigation from "./EpisodeNavigation.vue";
@@ -48,13 +49,6 @@ function handleAutoPlayCancel() {
   showCountdown.value = false;
   countdownCancelled.value = true;
   emit("autoPlayCancelled");
-}
-
-function handleAutoPlayContinue() {
-  if (nextEpisode.value) {
-    showCountdown.value = false;
-    emit("play", nextEpisode.value);
-  }
 }
 
 function play() {

@@ -60,7 +60,7 @@ const breadcrumbItems = computed(() => [
 
     <!-- Error State -->
     <div v-if="seriesError" class="alert" role="alert">
-      <AppIcon name="warning" size="sm" />
+      <AppIcon name="triangle-alert" size="sm" />
       <span>{{ seriesError }}</span>
       <button class="btn btn-ghost btn-sm" @click="refresh">{{ t("common.retry") }}</button>
     </div>

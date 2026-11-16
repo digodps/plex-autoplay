@@ -31,21 +31,21 @@ function getTrack(button) {
   return section?.querySelector(".carousel-track");
 }
 
-function scrollLeft(_genre, e) {
+function scrollLeft(e) {
   const track = getTrack(e.currentTarget);
   if (track) {
     track.scrollBy({ left: -track.clientWidth * 0.8, behavior: "smooth" });
   }
 }
 
-function scrollRight(_genre, e) {
+function scrollRight(e) {
   const track = getTrack(e.currentTarget);
   if (track) {
     track.scrollBy({ left: track.clientWidth * 0.8, behavior: "smooth" });
   }
 }
 
-function onWheel(e, _genre) {
+function onWheel(e) {
   if (e.deltaY !== 0) {
     const track = e.currentTarget;
     track.scrollLeft += e.deltaY;
@@ -93,12 +93,12 @@ function onWheel(e, _genre) {
             class="scroll-btn scroll-btn--left carousel-btn-left"
             type="button"
             :aria-label="t('aria.scrollLeft')"
-            @click="scrollLeft(group.genre, $event)"
+            @click="scrollLeft($event)"
           >
             <AppIcon name="chevron-left" size="md" />
           </button>
 
-          <div class="carousel-track" @wheel="onWheel($event, group.genre)">
+          <div class="carousel-track" @wheel="onWheel($event)">
             <div
               v-for="series in group.series"
               :key="series.ratingKey"

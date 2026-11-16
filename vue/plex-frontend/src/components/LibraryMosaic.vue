@@ -73,7 +73,7 @@ function handleBlur() {
 
     <!-- Error state (optional, could show fallback) -->
     <div v-if="error && !hasPosters" class="mosaic-error" aria-hidden="true">
-      <AppIcon name="alert-circle" size="lg" />
+      <AppIcon name="circle-alert" size="lg" />
     </div>
   </div>
 </template>

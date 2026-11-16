@@ -1,0 +1,58 @@
+{
+ "start": "2026-11-16T22:09:38.670Z",
+ "round": 0,
+ "idle": 0,
+ "errors": 2,
+ "status": "error",
+ "history": [
+  {
+   "at": "2026-11-16T23:04:19.381Z",
+   "mode": "manual",
+   "status": "error",
+   "fails": 0,
+   "round": 0,
+   "reused": false,
+   "stopHookActive": false
+  },
+  {
+   "at": "2026-11-16T23:51:50.729Z",
+   "mode": "manual",
+   "status": "error",
+   "fails": 0,
+   "round": 0,
+   "reused": false,
+   "stopHookActive": false
+  }
+ ],
+ "max": 3,
+ "marker": {
+  "page": "dist/index.html",
+  "dir": "/home/hermes/plex-autoplay-frontend-refactor-taste/vue/plex-frontend",
+  "kind": "software",
+  "start": "2026-11-16T22:09:38.670Z",
+  "by": "start.mjs",
+  "url": null,
+  "root": "dist"
+ },
+ "manual": true,
+ "fp": "d2f9b38b73ca157f",
+ "page": "dist/index.html",
+ "found": {
+  "fails": [],
+  "warns": [],
+  "crashed": [
+   "the copy (the page showed no <main>, <section> or <h1> to lint)",
+   "consistency.mjs gave no report (exit 1: Error: No Chrome, Edge or Chromium found; set CHROME_PATH.)",
+   "check.mjs could not run (exit 2: no Chrome found (set CHROME_PATH))"
+  ],
+  "seconds": {
+   "consistency": 0,
+   "layout": 0
+  }
+ },
+ "open": [],
+ "waived": [],
+ "warnCount": 0,
+ "note": "the copy (the page showed no <main>, <section> or <h1> to lint); consistency.mjs gave no report (exit 1: Error: No Chrome, Edge or Chromium found; set CHROME_PATH.); check.mjs could not run (exit 2: no Chrome found (set CHROME_PATH))",
+ "at": "2026-11-16T23:51:50.730Z"
+}

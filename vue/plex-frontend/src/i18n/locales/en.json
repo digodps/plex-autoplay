@@ -33,7 +33,13 @@
     "plexToken": "Plex Token",
     "testConnection": "Test Connection",
     "connectionSuccess": "Connection successful!",
-    "connectionFailed": "Connection failed. Check URL and token."
+    "connectionFailed": "Connection failed. Check URL and token.",
+    "stepPassword": "Password",
+    "stepPlex": "Plex",
+    "stepMedia": "Media",
+    "tokenPlaceholder": "Paste the setup token here",
+    "passwordMinLength": "Password must be at least 8 characters",
+    "passwordMismatch": "Passwords do not match"
   },
   "dashboard": {
     "title": "Dashboard",
@@ -98,7 +104,9 @@
     "filterGenre": "Filter by genre",
     "allGenres": "All genres",
     "seriesCount": "{count} series",
-    "series": "series"
+    "series": "series",
+    "groupByGenre": "Group by genre",
+    "manageMarkers": "Manage markers"
   },
   "seriesDetail": {
     "title": "Series Details",
@@ -142,7 +150,21 @@
     "copyMarkers": "Copy Markers",
     "pasteMarkers": "Paste Markers",
     "detected": "Detected",
-    "manual": "Manual"
+    "manual": "Manual",
+    "add": "Add {kind}",
+    "save": "Save",
+    "cancel": "Cancel",
+    "auto": "Auto",
+    "confirmDelete": "Are you sure you want to delete the {kind} marker?",
+    "invalidRange": "Start time must be before end time",
+    "createError": "Error creating {kind} marker",
+    "updateError": "Error updating {kind} marker",
+    "deleteError": "Error deleting {kind} marker",
+    "loadError": "Error loading markers",
+    "fetchAutoPlayError": "Error fetching auto-play preference",
+    "saveAutoPlayError": "Error saving auto-play preference",
+    "loadMoreError": "Error loading more series",
+    "updateProgressError": "Error updating progress"
   },
   "logs": {
     "title": "Logs",

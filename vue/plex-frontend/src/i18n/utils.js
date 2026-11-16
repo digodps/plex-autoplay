@@ -3,9 +3,9 @@
 export const SUPPORTED_LOCALES = ['pt-BR', 'en', 'es'];
 
 export const LOCALE_INFO = {
-  'pt-BR': { label: 'Português', flag: '🇧🇷', icon: 'flag-br' },
-  'en': { label: 'English', flag: '🇺🇸', icon: 'flag-us' },
-  'es': { label: 'Español', flag: '🇪🇸', icon: 'flag-es' },
+  'pt-BR': { label: 'Português', flag: '🇧🇷', icon: 'flag' },
+  'en': { label: 'English', flag: '🇺🇸', icon: 'flag' },
+  'es': { label: 'Español', flag: '🇪🇸', icon: 'flag' },
 };
 
 export const DEFAULT_LOCALE = 'pt-BR';

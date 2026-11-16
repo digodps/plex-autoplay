@@ -126,7 +126,7 @@ function onEndChange(val) {
           data-testid="marker-edit"
           @click="startEdit"
         >
-          <AppIcon name="edit" size="sm" />
+          <AppIcon name="pencil" size="sm" />
         </button>
         <button
           v-else
@@ -144,7 +144,7 @@ function onEndChange(val) {
           data-testid="marker-remove"
           @click="removeMarker"
         >
-          <AppIcon name="trash" size="sm" />
+          <AppIcon name="trash-2" size="sm" />
         </button>
       </div>
     </template>

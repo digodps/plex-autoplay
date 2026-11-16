@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import AppIcon from "@/components/AppIcon.vue";
-import { useSeriesStore } from "@/stores/series";
 
 interface Props {
   episode: {
@@ -19,8 +18,6 @@ interface Props {
 
 const props = defineProps<Props>();
 const emit = defineEmits<{ play: [episode: typeof props.episode] }>();
-
-const store = useSeriesStore();
 
 const progressPercent = computed(() => props.episode.watch_progress || 0);
 const isWatched = computed(() => props.episode.watched);

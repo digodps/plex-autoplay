@@ -1,0 +1,9 @@
+{
+ "page": "dist/index.html",
+ "dir": "/home/hermes/plex-autoplay-frontend-refactor-taste/vue/plex-frontend",
+ "kind": "software",
+ "start": "2026-11-16T22:09:38.670Z",
+ "by": "start.mjs",
+ "url": null,
+ "root": "dist"
+}

@@ -5,27 +5,13 @@ defineProps({
 </script>
 
 <template>
-  <svg
+  <img
+    :src="`/assets/icons/plex.svg`"
     :width="size"
     :height="size"
-    viewBox="0 0 64 64"
-    role="img"
-    aria-label="Plex Autoplay"
+    alt="Plex"
+    aria-hidden="true"
     class="shrink-0"
-  >
-    <path
-      d="M18 18 38 32 18 46Z"
-      fill="none"
-      stroke="currentColor"
-      stroke-width="3"
-      stroke-linejoin="round"
-    />
-    <path
-      d="M48 20v24"
-      fill="none"
-      stroke="currentColor"
-      stroke-width="3"
-      stroke-linecap="round"
-    />
-  </svg>
+    loading="lazy"
+  />
 </template>

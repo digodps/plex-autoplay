@@ -70,76 +70,60 @@ onUnmounted(() => window.removeEventListener("keydown", handleKeydown));
 <template>
   <div
     v-if="open"
-    class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+    class="modal-overlay"
     data-testid="directory-picker"
     @click.self="emit('close')"
   >
-    <div
-      class="w-full max-w-lg rounded-lg border border-gray-200 bg-white p-4 shadow-lg dark:border-gray-600 dark:bg-gray-800"
-    >
-      <div class="mb-3 flex items-center justify-between gap-2">
-        <p
-          class="truncate font-mono text-sm text-gray-700 dark:text-gray-300"
-          data-testid="directory-picker-path"
-        >
+    <div class="modal panel" style="max-width: 560px; width: 100%;">
+      <header class="modal__header">
+        <p class="t-body mono truncate" data-testid="directory-picker-path">
           {{ currentPath || startPath }}
         </p>
         <button
           type="button"
-          class="rounded border border-gray-200 px-2 py-1 text-sm text-gray-700 transition hover:bg-gray-100 disabled:opacity-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
+          class="btn btn--secondary btn-sm"
           :disabled="parent === null || loading"
           data-testid="directory-picker-up"
           @click="parent !== null && load(parent)"
         >
-          ↑ Pai
+          <img src="/assets/icons/ui-chevron-up.svg" data-icon="ui-chevron-up" class="icon" width="16" height="16" aria-hidden="true" />
+          <span>Pai</span>
         </button>
-      </div>
+      </header>
 
-      <form class="mb-3 flex items-center gap-2" @submit.prevent="goTo">
-        <input
-          v-model="gotoPath"
-          type="text"
-          placeholder="/caminho/para/abrir"
-          class="min-w-0 flex-1 rounded border border-gray-300 bg-gray-100 px-3 py-2 font-mono text-sm text-black focus:border-primary focus:bg-white focus:text-black dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-          data-testid="directory-picker-goto"
-        />
-        <button
-          type="submit"
-          class="rounded border border-gray-200 px-3 py-2 text-sm text-gray-700 transition hover:bg-gray-100 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
-        >
-          Ir
-        </button>
+      <form class="modal__form" @submit.prevent="goTo">
+        <div class="field-row">
+          <input
+            v-model="gotoPath"
+            type="text"
+            placeholder="/caminho/para/abrir"
+            class="field__input mono"
+            data-testid="directory-picker-goto"
+          />
+          <button
+            type="submit"
+            class="btn btn--secondary btn-sm"
+          >
+            Ir
+          </button>
+        </div>
       </form>
 
-      <p
-        v-if="error"
-        class="mb-3 text-sm text-red-600 dark:text-red-400"
-        role="alert"
-      >
+      <p v-if="error" class="alert alert--error" role="alert">
+        <img src="/assets/icons/ui-triangle-alert.svg" data-icon="ui-triangle-alert" class="icon" width="16" height="16" aria-hidden="true" />
         {{ error }}
       </p>
 
-      <div
-        class="mb-4 h-64 overflow-y-auto rounded border border-gray-200 dark:border-gray-600"
-      >
-        <p
-          v-if="loading"
-          class="p-3 text-sm text-gray-500 dark:text-gray-400"
-        >
-          Carregando...
-        </p>
-        <p
-          v-else-if="entries.length === 0"
-          class="p-3 text-sm text-gray-500 dark:text-gray-400"
-        >
-          Nenhum diretório encontrado.
-        </p>
+      <div class="modal__list" role="listbox" aria-label="Diretórios">
+        <p v-if="loading" class="muted text-center" style="padding: var(--s-4);">Carregando...</p>
+        <p v-else-if="entries.length === 0" class="muted text-center" style="padding: var(--s-4);">Nenhum diretório encontrado.</p>
         <template v-else>
           <button
             v-for="entry in entries"
             :key="entry.path"
             type="button"
-            class="block w-full truncate px-3 py-2 text-left text-sm text-gray-700 transition hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
+            class="modal__item"
+            role="option"
             data-testid="directory-picker-entry"
             @click="load(entry.path)"
           >
@@ -148,10 +132,10 @@ onUnmounted(() => window.removeEventListener("keydown", handleKeydown));
         </template>
       </div>
 
-      <div class="flex items-center justify-end gap-2">
+      <footer class="modal__footer">
         <button
           type="button"
-          class="rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-100 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
+          class="btn btn--secondary"
           data-testid="directory-picker-cancel"
           @click="emit('close')"
         >
@@ -159,14 +143,100 @@ onUnmounted(() => window.removeEventListener("keydown", handleKeydown));
         </button>
         <button
           type="button"
-          class="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-50"
+          class="btn btn--primary"
           :disabled="loading || !currentPath"
           data-testid="directory-picker-select"
           @click="emit('select', currentPath)"
         >
           Selecionar este diretório
         </button>
-      </div>
+      </footer>
     </div>
   </div>
 </template>
+
+<style scoped>
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--s-4);
+  background: color-mix(in oklab, var(--ink) 50%, transparent);
+}
+
+.modal {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-xl);
+  overflow: hidden;
+}
+
+.modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-2);
+  padding: var(--s-4);
+  border-bottom: 1px solid var(--border);
+}
+
+.modal__header .t-body {
+  margin: 0;
+}
+
+.modal__form {
+  padding: var(--s-4);
+  border-bottom: 1px solid var(--border);
+}
+
+.field-row {
+  display: flex;
+  gap: var(--s-2);
+}
+
+.field-row .field__input {
+  flex: 1;
+  min-width: 0;
+}
+
+.modal__list {
+  max-height: 256px;
+  overflow-y: auto;
+  border-bottom: 1px solid var(--border);
+}
+
+.modal__item {
+  display: block;
+  width: 100%;
+  padding: var(--s-3) var(--s-4);
+  text-align: left;
+  border: none;
+  background: transparent;
+  font: var(--font-text);
+  font-size: var(--t-body);
+  color: var(--ink);
+  transition: background var(--m-fast) var(--m-ease);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .modal__item:hover {
+    background: var(--surface);
+  }
+}
+
+.modal__item:focus-visible {
+  outline: 2px solid var(--action);
+  outline-offset: -2px;
+}
+
+.modal__footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--s-3);
+  padding: var(--s-4);
+}
+</style>

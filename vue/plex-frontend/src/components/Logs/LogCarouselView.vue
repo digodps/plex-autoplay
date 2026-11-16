@@ -63,7 +63,7 @@ function toggleCard(globalIndex) {
   emit('toggle-expand', globalIndex)
 }
 
-function handleKeydown(event, globalIndex, _groupIndex, _itemIndex) {
+function handleKeydown(event, globalIndex) {
   const totalItems = props.items.length
   
   switch (event.key) {

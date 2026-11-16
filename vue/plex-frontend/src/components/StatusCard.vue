@@ -1,26 +1,15 @@
 <script setup>
 import { computed } from "vue";
 import { useRoute } from "vue-router";
-import AppIcon from "./AppIcon.vue";
-import StatusCardSkeleton from "./StatusCardSkeleton.vue";
-import StatusCardError from "./StatusCardError.vue";
 
 const props = defineProps({
-  /** Nome do ícone (do sprite /icons.svg#ui-*) */
   icon: { type: String, required: true },
-  /** Rótulo principal do card */
   label: { type: String, required: true },
-  /** Valor principal (número ou string) */
   value: { type: [String, Number], default: "" },
-  /** Linhas de detalhamento opcionais: array de {label, value, class?} */
   breakdown: { type: Array, default: () => [] },
-  /** Badge opcional: { text, variant } — variant: 'success' | 'warning' | 'danger' | 'neutral' */
   badge: { type: Object, default: null },
-  /** Rota de destino (se clicável). Se não informado, card não é link. */
   href: { type: String, default: null },
-  /** Estado de carregamento: mostra skeleton */
   loading: { type: Boolean, default: false },
-  /** Estado de erro: mostra badge de erro */
   error: { type: Boolean, default: false },
 });
 
@@ -30,22 +19,18 @@ const isActiveRoute = computed(() => props.href && route.path === props.href);
 
 const badgeClasses = computed(() => {
   if (!props.badge) return "";
-  const base = "badge";
   const variants = {
-    success: "badge-success",
-    warning: "badge-warning",
-    danger: "badge-danger",
-    neutral: "",
+    success: "badge badge--success",
+    warning: "badge badge--warning",
+    danger: "badge badge--danger",
+    neutral: "badge badge--neutral",
   };
-  return `${base} ${variants[props.badge.variant] ?? ""}`.trim();
+  return variants[props.badge.variant] ?? "badge badge--neutral";
 });
 
 function handleClick(e) {
-  // Se for link, o router-link cuida da navegação.
-  // Se não, emite evento para pai decidir (ex.: abrir modal).
   if (!props.href) {
     e.preventDefault();
-    // opcional: emitir evento customizado
   }
 }
 </script>
@@ -54,149 +39,244 @@ function handleClick(e) {
   <component
     :is="href ? 'router-link' : 'article'"
     :to="href"
-    class="status-card"
+    class="panel"
     :class="{
-      'status-card--clickable': href,
-      'status-card--active': isActiveRoute,
-      'status-card--error': error,
+      'panel--clickable': href,
+      'panel--active': isActiveRoute,
+      'panel--error': error,
     }"
     :aria-label="href ? `Ir para ${label}` : undefined"
     @click="handleClick"
+    role="listitem"
   >
     <!-- Skeleton loading -->
-    <StatusCardSkeleton v-if="loading" />
+    <div v-if="loading" class="panel__skeleton" aria-hidden="true">
+      <div class="skeleton skeleton--icon" />
+      <div class="skeleton skeleton--label" />
+      <div class="skeleton skeleton--value" />
+      <div class="skeleton skeleton--breakdown" v-if="breakdown.length" />
+    </div>
 
     <!-- Conteúdo real -->
     <template v-else>
-      <header class="card-header">
-        <AppIcon :name="icon" size="lg" aria-hidden="true" />
-        <span class="card-label">{{ label }}</span>
+      <header class="panel__header">
+        <img
+          :src="`/assets/icons/${icon}.svg`"
+          :data-icon="icon"
+          class="panel__icon"
+          :width="32"
+          :height="32"
+          aria-hidden="true"
+          loading="lazy"
+        />
+        <span class="panel__label">{{ label }}</span>
         <span v-if="badge" :class="badgeClasses">{{ badge.text }}</span>
       </header>
 
-      <div class="card-value">{{ value }}</div>
+      <div class="panel__value">{{ value }}</div>
 
-      <dl v-if="breakdown.length" class="card-breakdown">
-        <div v-for="(row, idx) in breakdown" :key="idx" class="breakdown-row">
+      <dl v-if="breakdown.length" class="panel__breakdown">
+        <div v-for="(row, idx) in breakdown" :key="idx" class="panel__breakdown-row">
           <dt :class="row.class">{{ row.label }}</dt>
           <dd>{{ row.value }}</dd>
         </div>
       </dl>
 
-      <StatusCardError v-if="error" />
+      <div v-if="error" class="panel__error">
+        <img src="/assets/icons/warning.svg" data-icon="warning" class="icon" width="16" height="16" aria-hidden="true" />
+        Erro ao carregar
+      </div>
     </template>
   </component>
 </template>
 
 <style scoped>
-.status-card {
+.panel {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
-  padding: 1rem 1.25rem;
-  background: var(--surface);
+  gap: var(--s-3);
+  padding: var(--s-4) var(--s-5);
+  background: var(--p-surface);
   border: 1px solid var(--border);
-  border-radius: var(--radius);
+  border-radius: var(--r-lg);
   box-shadow: var(--shadow-1);
+  min-height: var(--p-h, 180px);
   transition:
+    transform var(--speed) var(--ease),
     box-shadow var(--speed) var(--ease),
     border-color var(--speed) var(--ease);
-  min-height: 140px; /* altura mínima para alinhar cards no grid */
 }
 
-.status-card:hover {
+.panel:hover {
+  transform: translateY(-2px);
   box-shadow: var(--shadow-2);
-  border-color: var(--border-strong);
+  border-color: var(--p-accent);
 }
 
-.status-card--clickable {
+.panel--clickable {
   cursor: pointer;
   text-decoration: none;
   color: inherit;
 }
 
-.status-card--clickable:focus-visible {
-  outline: 2px solid var(--accent);
+.panel--clickable:focus-visible {
+  outline: 2px solid var(--p-accent);
   outline-offset: 2px;
 }
 
-.status-card--active {
-  border-color: var(--accent);
+.panel--active {
+  border-color: var(--p-accent);
   box-shadow:
-    0 0 0 1px var(--accent),
+    0 0 0 1px var(--p-accent),
     var(--shadow-1);
 }
 
-.status-card--error {
+.panel--error {
   border-color: var(--danger);
 }
 
-.card-header {
+.panel__header {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: var(--s-3);
   flex-wrap: wrap;
 }
 
-.card-label {
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: var(--text-secondary);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
+.panel__icon {
+  flex-shrink: 0;
+  color: var(--p-accent);
 }
 
-.card-value {
-  font-size: 2rem;
+.panel__label {
+  font: var(--font-text);
+  font-size: var(--t-xs);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--p-muted);
+}
+
+.panel__value {
+  font: var(--font-display);
+  font-size: var(--t-2xl);
   font-weight: 700;
-  color: var(--text);
   line-height: 1.2;
+  color: var(--p-ink);
   font-variant-numeric: tabular-nums;
 }
 
-.card-breakdown {
+.panel__breakdown {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
-  gap: 0.25rem 0.5rem;
-  margin-top: 0.25rem;
-  padding-top: 0.5rem;
+  gap: var(--s-2) var(--s-3);
+  margin-top: var(--s-2);
+  padding-top: var(--s-3);
   border-top: 1px solid var(--border);
 }
 
-.breakdown-row {
+.panel__breakdown-row {
   display: flex;
   flex-direction: column;
-  gap: 0.1rem;
+  gap: 2px;
 }
 
-.breakdown-row dt {
-  font-size: 0.65rem;
+.panel__breakdown-row dt {
+  font-size: var(--t-xs);
   font-weight: 600;
-  color: var(--text-tertiary);
   text-transform: uppercase;
   letter-spacing: 0.03em;
+  color: var(--p-muted);
 }
 
-.breakdown-row dd {
-  font-size: 0.9rem;
+.panel__breakdown-row dd {
+  font: var(--font-text);
+  font-size: var(--t-sm);
   font-weight: 600;
-  color: var(--text);
+  color: var(--p-ink);
   font-variant-numeric: tabular-nums;
 }
 
-/* Badge variants (reusa .badge do style.css global) */
-.badge-success {
+.panel__error {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s-2);
+  margin-top: var(--s-2);
+  padding: var(--s-2);
+  background: color-mix(in srgb, var(--danger) 8%, transparent);
+  border: 1px solid color-mix(in srgb, var(--danger) 25%, transparent);
+  border-radius: var(--r-md);
+  color: var(--danger);
+  font-size: var(--t-sm);
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px var(--s-2);
+  font-size: var(--t-xs);
+  font-weight: 600;
+  border-radius: var(--r-full);
+  border: 1px solid transparent;
+}
+.badge--success {
   color: var(--success);
+  background: color-mix(in srgb, var(--success) 10%, transparent);
   border-color: color-mix(in srgb, var(--success) 35%, transparent);
 }
-
-.badge-warning {
-  color: var(--accent);
-  border-color: color-mix(in srgb, var(--accent) 40%, transparent);
+.badge--warning {
+  color: var(--warning);
+  background: color-mix(in srgb, var(--warning) 10%, transparent);
+  border-color: color-mix(in srgb, var(--warning) 35%, transparent);
+}
+.badge--danger {
+  color: var(--danger);
+  background: color-mix(in srgb, var(--danger) 10%, transparent);
+  border-color: color-mix(in srgb, var(--danger) 35%, transparent);
+}
+.badge--neutral {
+  color: var(--p-muted);
+  background: var(--p-muted);
+  border-color: var(--border);
 }
 
-.badge-danger {
-  color: var(--danger);
-  border-color: color-mix(in srgb, var(--danger) 35%, transparent);
+/* Skeleton */
+.panel__skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+  height: 100%;
+}
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--p-muted) 25%,
+    color-mix(in srgb, var(--p-muted) 50%, transparent) 50%,
+    var(--p-muted) 75%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-loading 1.5s ease-in-out infinite;
+  border-radius: var(--r-sm);
+}
+.skeleton--icon { width: 32px; height: 32px; border-radius: var(--r-full); }
+.skeleton--label { width: 60%; height: 12px; }
+.skeleton--value { width: 40%; height: 28px; margin-top: var(--s-2); }
+.skeleton--breakdown { width: 100%; height: 40px; margin-top: var(--s-3); }
+
+@keyframes skeleton-loading {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .panel,
+  .skeleton {
+    animation: none;
+    transition: none;
+  }
+  .panel:hover {
+    transform: none;
+  }
 }
 </style>

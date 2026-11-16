@@ -36,48 +36,46 @@ function handleSelect(path) {
 </script>
 
 <template>
-  <div class="space-y-3">
+  <div class="media-roots-field" style="display: flex; flex-direction: column; gap: var(--s-3);">
     <div>
-      <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ label }}</label>
-      <p class="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
-        Caminhos existentes dentro do container. Use quantos precisar.
-      </p>
+      <label class="t-label" style="display: block; margin-bottom: var(--s-2);">{{ label }}</label>
+      <p class="t-small muted" style="margin: 0;">Caminhos existentes dentro do container. Use quantos precisar.</p>
     </div>
 
-    <p v-if="!modelValue.length" class="text-sm text-gray-500 dark:text-gray-400">
-      Nenhum diretório adicionado.
-    </p>
+    <p v-if="!modelValue.length" class="t-body muted" style="margin: 0;">Nenhum diretório adicionado.</p>
 
-    <ul class="space-y-2">
+    <ul style="list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: var(--s-2);">
       <li
         v-for="path in modelValue"
         :key="path"
-        class="flex items-center justify-between gap-3 rounded-lg border border-stroke bg-white dark:bg-gray-800 px-4 py-2.5 text-sm dark:border-gray-700"
+        class="media-root-item"
+        style="display: flex; align-items: center; justify-content: space-between; gap: var(--s-3); padding: var(--s-3) var(--s-4); background: var(--card); border: 1px solid var(--border); border-radius: var(--r-md);"
       >
-        <span class="truncate font-mono text-gray-700 dark:text-gray-300">{{ path }}</span>
+        <span class="mono truncate" style="flex: 1; min-width: 0; font-size: var(--t-body);">{{ path }}</span>
         <button
           type="button"
-          class="shrink-0 text-red-600 dark:text-red-400 transition hover:text-red-700 dark:hover:text-red-300"
+          class="btn btn--secondary btn-sm"
           :aria-label="`Remover ${path}`"
           data-testid="media-root-remove"
           @click="remove(path)"
         >
-          Remove
+          Remover
         </button>
       </li>
     </ul>
 
-    <div class="flex flex-wrap items-center gap-2">
+    <div style="display: flex; flex-wrap: wrap; gap: var(--s-2);">
       <input
         v-model="draft"
         type="text"
         placeholder="/media"
-        class="min-w-0 flex-1 rounded-lg border border-stroke bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 px-4 py-2.5 focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent/30 dark:border-gray-600"
+        class="field__input mono"
+        style="flex: 1; min-width: 200px;"
         @keydown.enter.prevent="addDraft"
       />
       <button
         type="button"
-        class="rounded-lg border border-stroke px-4 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 transition hover:border-accent hover:text-accent dark:border-strokedark dark:hover:border-accent"
+        class="btn btn--secondary"
         data-testid="media-root-add"
         @click="addDraft"
       >
@@ -85,7 +83,7 @@ function handleSelect(path) {
       </button>
       <button
         type="button"
-        class="rounded-lg border border-stroke px-4 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 transition hover:border-accent hover:text-accent dark:border-strokedark dark:hover:border-accent"
+        class="btn btn--secondary"
         data-testid="media-root-open-picker"
         @click="pickerOpen = true"
       >
@@ -100,3 +98,22 @@ function handleSelect(path) {
     />
   </div>
 </template>
+
+<style scoped>
+.media-roots-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+}
+
+.media-root-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-3);
+  padding: var(--s-3) var(--s-4);
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+}
+</style>

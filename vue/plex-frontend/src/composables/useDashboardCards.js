@@ -60,7 +60,7 @@ export function useDashboardCards() {
     if (!h) return { loading: true };
     const variant = statusVariant.value(h.lastJob?.status);
     return {
-      icon: "library",
+      icon: "ui-server",
       label: t("dashboard.serviceHealth"),
       value: h.uptime,
       breakdown: [
@@ -80,7 +80,7 @@ export function useDashboardCards() {
     const job = h.lastJob;
     if (!job) {
       return {
-        icon: "sync",
+        icon: "ui-refresh-cw",
         label: t("dashboard.lastSync"),
         value: t("dashboard.neverRun"),
         badge: { text: t("dashboard.pending"), variant: "neutral" },
@@ -95,7 +95,7 @@ export function useDashboardCards() {
       : "—";
     const variant = statusVariant.value(job.status);
     return {
-      icon: "sync",
+      icon: "ui-refresh-cw",
       label: t("dashboard.lastSync"),
       value: updatedAt,
       breakdown: [
@@ -115,7 +115,7 @@ export function useDashboardCards() {
     const m = store.markersSummary;
     const locale = localStorage.getItem("app.locale") || "pt-BR";
     return {
-      icon: "library",
+      icon: "ui-database",
       label: t("nav.libraries"),
       value: s.count.toLocaleString(locale),
       breakdown: [
@@ -132,7 +132,7 @@ export function useDashboardCards() {
   });
 
   const skipSessionsCard = computed(() => ({
-    icon: "tv",
+    icon: "ui-tv",
     label: t("nav.sessions"),
     value: skipSessionsCount.value === 0 ? "—" : skipSessionsCount.value.toString(),
     breakdown: [

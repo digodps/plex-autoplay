@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { computed } from "vue";
+/* global KeyboardEvent */
+import { ref } from "vue";
 import AppIcon from "@/components/AppIcon.vue";
 
 interface Props {

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+/* global Event, KeyboardEvent */
 import { ref, onMounted, onUnmounted, computed } from "vue";
 import AppIcon from "@/components/AppIcon.vue";
 
@@ -38,8 +39,8 @@ function handleCancel() {
   emit("cancel");
 }
 
-function handleKeydown(e: KeyboardEvent) {
-  if (e.key === "Escape") {
+function handleKeydown(e: Event) {
+  if ((e as KeyboardEvent).key === "Escape") {
     handleCancel();
   }
 }
