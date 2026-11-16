@@ -13,9 +13,8 @@ const router = useRouter();
 const authStore = useAuthStore();
 
 const step = ref(1);
-const token = ref("");
-const newPassword = ref("");
-const confirmPassword = ref("");
+const newPassword = ref("123456");
+const confirmPassword = ref("123456");
 const plexUrl = ref("");
 const plexToken = ref("");
 const mediaRoots = ref([]);
@@ -33,7 +32,7 @@ const setupConfirmRef = ref(null);
 const setupPlexTokenRef = ref(null);
 
 const steps = [
-  { id: 1, label: t("common.save") }, // Using common keys for step labels
+  { id: 1, label: t("auth.newPassword") },
   { id: 2, label: t("auth.plexUrl") },
   { id: 3, label: t("libraries.libraryName") },
 ];
@@ -56,10 +55,6 @@ const toggleSetupPlexToken = makeTogglePassword(showSetupPlexToken, setupPlexTok
 function validateStep() {
   clearMessages();
   if (step.value === 1) {
-    if (!token.value.trim()) {
-      error.value = t("auth.loginError");
-      return false;
-    }
     if (newPassword.value.length < 8) {
       error.value = "A senha deve ter pelo menos 8 caracteres";
       return false;
@@ -131,7 +126,6 @@ async function finish() {
   loading.value = true;
   try {
     const response = await submitSetup(
-      token.value.trim(),
       newPassword.value,
       plexUrl.value.trim(),
       plexToken.value.trim(),
@@ -229,30 +223,6 @@ async function loginAfterSetup() {
 
         <!-- Passo 1: senha -->
         <form v-if="step === 1" data-testid="setup-panel-password" @submit.prevent="next">
-          <div
-            class="mb-5 rounded-sm border border-primary/30 bg-primary/5 px-4 py-3 text-sm text-body dark:text-bodydark"
-            data-testid="setup-token-hint"
-          >
-            O token de setup é de <strong>uso único</strong> e está no log do
-            container. Execute <code>docker logs plex-autoplay</code> para obtê-lo.
-          </div>
-
-          <div class="mb-4">
-            <label class="mb-2.5 block font-medium text-black dark:text-white" for="setup-token">
-              {{ t("auth.email") }}
-            </label>
-            <input
-              id="setup-token"
-              v-model="token"
-              type="text"
-              autocomplete="one-time-code"
-              :placeholder="t('auth.email')"
-              class="w-full rounded-lg border border-stroke bg-transparent py-4 pl-5 pr-5 text-black outline-none focus:border-primary focus-visible:shadow-none dark:border-form-strokedark dark:bg-form-input dark:text-white"
-              data-testid="setup-token"
-              required
-            />
-          </div>
-
           <div class="mb-4">
             <label class="mb-2.5 block font-medium text-black dark:text-white" for="setup-password">
               {{ t("auth.newPassword") }}
