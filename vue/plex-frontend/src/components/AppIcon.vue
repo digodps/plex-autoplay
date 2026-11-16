@@ -116,20 +116,104 @@ const sizeClass = computed(() => {
       <path d="M12 8.5V15.5" />
       <path d="M8.5 12H15.5" />
     </svg>
-    <svg v-else-if="name === 'flag-br'" viewBox="0 0 24 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" width="100%" height="100%">
-      <rect x="1" y="1" width="22" height="14" rx="1.5" />
-      <path d="M12 4l6 7-6 7-6-7 6-7z" stroke-width="1" />
-      <circle cx="12" cy="11" r="3" stroke-width="1" />
+    <svg v-else-if="name === 'flag-br'" viewBox="0 0 24 16" width="100%" height="100%">
+      <rect width="24" height="16" fill="#009B3A" />
+      <polygon points="12,4 18,11 12,18 6,11" fill="#FFDF00" />
+      <circle cx="12" cy="11" r="4" fill="#002776" />
     </svg>
-    <svg v-else-if="name === 'flag-us'" viewBox="0 0 24 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" width="100%" height="100%">
-      <rect x="1" y="1" width="22" height="14" rx="1.5" />
-      <rect x="1" y="1" width="9" height="8" stroke-width="1" />
-      <path d="M2 3h6M2 4.5h6M2 6h6" stroke-width="0.8" />
-      <path d="M3 10h5M3 11.5h5M3 13h5" stroke-width="0.8" />
+    <svg v-else-if="name === 'flag-us'" viewBox="0 0 24 16" width="100%" height="100%">
+      <rect width="24" height="16" fill="#FFFFFF" />
+      <rect width="9.6" height="7.2" fill="#002868" />
+      <g fill="#FFFFFF">
+        <rect x="0.6" y="0.4" width="0.6" height="0.6" />
+        <rect x="1.8" y="0.4" width="0.6" height="0.6" />
+        <rect x="3.0" y="0.4" width="0.6" height="0.6" />
+        <rect x="4.2" y="0.4" width="0.6" height="0.6" />
+        <rect x="5.4" y="0.4" width="0.6" height="0.6" />
+        <rect x="6.6" y="0.4" width="0.6" height="0.6" />
+        <rect x="7.8" y="0.4" width="0.6" height="0.6" />
+        <rect x="9.0" y="0.4" width="0.6" height="0.6" />
+        <rect x="0.6" y="1.2" width="0.6" height="0.6" />
+        <rect x="1.8" y="1.2" width="0.6" height="0.6" />
+        <rect x="3.0" y="1.2" width="0.6" height="0.6" />
+        <rect x="4.2" y="1.2" width="0.6" height="0.6" />
+        <rect x="5.4" y="1.2" width="0.6" height="0.6" />
+        <rect x="6.6" y="1.2" width="0.6" height="0.6" />
+        <rect x="7.8" y="1.2" width="0.6" height="0.6" />
+        <rect x="9.0" y="1.2" width="0.6" height="0.6" />
+        <rect x="0.6" y="2.0" width="0.6" height="0.6" />
+        <rect x="1.8" y="2.0" width="0.6" height="0.6" />
+        <rect x="3.0" y="2.0" width="0.6" height="0.6" />
+        <rect x="4.2" y="2.0" width="0.6" height="0.6" />
+        <rect x="5.4" y="2.0" width="0.6" height="0.6" />
+        <rect x="6.6" y="2.0" width="0.6" height="0.6" />
+        <rect x="7.8" y="2.0" width="0.6" height="0.6" />
+        <rect x="9.0" y="2.0" width="0.6" height="0.6" />
+        <rect x="0.6" y="2.8" width="0.6" height="0.6" />
+        <rect x="1.8" y="2.8" width="0.6" height="0.6" />
+        <rect x="3.0" y="2.8" width="0.6" height="0.6" />
+        <rect x="4.2" y="2.8" width="0.6" height="0.6" />
+        <rect x="5.4" y="2.8" width="0.6" height="0.6" />
+        <rect x="6.6" y="2.8" width="0.6" height="0.6" />
+        <rect x="7.8" y="2.8" width="0.6" height="0.6" />
+        <rect x="9.0" y="2.8" width="0.6" height="0.6" />
+        <rect x="0.6" y="3.6" width="0.6" height="0.6" />
+        <rect x="1.8" y="3.6" width="0.6" height="0.6" />
+        <rect x="3.0" y="3.6" width="0.6" height="0.6" />
+        <rect x="4.2" y="3.6" width="0.6" height="0.6" />
+        <rect x="5.4" y="3.6" width="0.6" height="0.6" />
+        <rect x="6.6" y="3.6" width="0.6" height="0.6" />
+        <rect x="7.8" y="3.6" width="0.6" height="0.6" />
+        <rect x="9.0" y="3.6" width="0.6" height="0.6" />
+        <rect x="0.6" y="4.4" width="0.6" height="0.6" />
+        <rect x="1.8" y="4.4" width="0.6" height="0.6" />
+        <rect x="3.0" y="4.4" width="0.6" height="0.6" />
+        <rect x="4.2" y="4.4" width="0.6" height="0.6" />
+        <rect x="5.4" y="4.4" width="0.6" height="0.6" />
+        <rect x="6.6" y="4.4" width="0.6" height="0.6" />
+        <rect x="7.8" y="4.4" width="0.6" height="0.6" />
+        <rect x="9.0" y="4.4" width="0.6" height="0.6" />
+        <rect x="0.6" y="5.2" width="0.6" height="0.6" />
+        <rect x="1.8" y="5.2" width="0.6" height="0.6" />
+        <rect x="3.0" y="5.2" width="0.6" height="0.6" />
+        <rect x="4.2" y="5.2" width="0.6" height="0.6" />
+        <rect x="5.4" y="5.2" width="0.6" height="0.6" />
+        <rect x="6.6" y="5.2" width="0.6" height="0.6" />
+        <rect x="7.8" y="5.2" width="0.6" height="0.6" />
+        <rect x="9.0" y="5.2" width="0.6" height="0.6" />
+        <rect x="0.6" y="6.0" width="0.6" height="0.6" />
+        <rect x="1.8" y="6.0" width="0.6" height="0.6" />
+        <rect x="3.0" y="6.0" width="0.6" height="0.6" />
+        <rect x="4.2" y="6.0" width="0.6" height="0.6" />
+        <rect x="5.4" y="6.0" width="0.6" height="0.6" />
+        <rect x="6.6" y="6.0" width="0.6" height="0.6" />
+        <rect x="7.8" y="6.0" width="0.6" height="0.6" />
+        <rect x="9.0" y="6.0" width="0.6" height="0.6" />
+        <rect x="0.6" y="6.8" width="0.6" height="0.6" />
+        <rect x="1.8" y="6.8" width="0.6" height="0.6" />
+        <rect x="3.0" y="6.8" width="0.6" height="0.6" />
+        <rect x="4.2" y="6.8" width="0.6" height="0.6" />
+        <rect x="5.4" y="6.8" width="0.6" height="0.6" />
+        <rect x="6.6" y="6.8" width="0.6" height="0.6" />
+        <rect x="7.8" y="6.8" width="0.6" height="0.6" />
+        <rect x="9.0" y="6.8" width="0.6" height="0.6" />
+      </g>
+      <g fill="#BF0A30">
+        <rect x="0" y="0.8" width="24" height="0.8" />
+        <rect x="0" y="2.4" width="24" height="0.8" />
+        <rect x="0" y="4.0" width="24" height="0.8" />
+        <rect x="0" y="5.6" width="24" height="0.8" />
+        <rect x="0" y="7.2" width="24" height="0.8" />
+        <rect x="0" y="8.8" width="24" height="0.8" />
+        <rect x="0" y="10.4" width="24" height="0.8" />
+        <rect x="0" y="12.0" width="24" height="0.8" />
+        <rect x="0" y="13.6" width="24" height="0.8" />
+      </g>
     </svg>
-    <svg v-else-if="name === 'flag-es'" viewBox="0 0 24 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" width="100%" height="100%">
-      <rect x="1" y="1" width="22" height="14" rx="1.5" />
-      <path d="M1 5h22M1 12h22" stroke-width="1" />
+    <svg v-else-if="name === 'flag-es'" viewBox="0 0 24 16" width="100%" height="100%">
+      <rect width="24" height="16" fill="#AA151B" />
+      <rect y="2.67" width="24" height="10.66" fill="#F1BF00" />
+      <rect y="2.67" width="24" height="5.33" fill="#AA151B" />
     </svg>
     <svg v-else viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="100%" height="100%">
       <circle cx="12" cy="12" r="10" />

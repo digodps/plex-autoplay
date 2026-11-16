@@ -1,10 +1,9 @@
 import { test, expect } from '@playwright/test';
 
 const PASSWORD = 'admin123';
-const BASE = 'http://localhost:8080';
 
 async function login(page) {
-  await page.goto(`${BASE}/login`, { waitUntil: 'networkidle' });
+  await page.goto('/login', { waitUntil: 'networkidle' });
   await page.fill('[data-testid="password-input"]', PASSWORD);
   await page.click('[data-testid="login-submit"]');
   await page.waitForSelector('[data-testid="app-header"]', { state: 'visible', timeout: 30000 });
@@ -29,13 +28,13 @@ async function selectLanguage(page, languageLabel) {
 
 test.describe('Globalization QA - Final Validation', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto(`${BASE}/login`, { waitUntil: 'networkidle' });
+    await page.goto('/login', { waitUntil: 'networkidle' });
     await page.evaluate(() => localStorage.clear());
     await page.reload({ waitUntil: 'networkidle' });
   });
 
   test('Default locale is pt-BR on first visit', async ({ page }) => {
-    await page.goto(`${BASE}/login`, { waitUntil: 'networkidle' });
+    await page.goto('/login', { waitUntil: 'networkidle' });
     await page.evaluate(() => localStorage.setItem('app.locale', 'pt-BR'));
     await page.reload({ waitUntil: 'networkidle' });
     await page.waitForTimeout(500);
@@ -43,7 +42,7 @@ test.describe('Globalization QA - Final Validation', () => {
   });
 
   test('Language selector in user menu shows pt-BR by default after login', async ({ page }) => {
-    await page.goto(`${BASE}/login`, { waitUntil: 'networkidle' });
+    await page.goto('/login', { waitUntil: 'networkidle' });
     await page.evaluate(() => localStorage.setItem('app.locale', 'pt-BR'));
     await page.reload({ waitUntil: 'networkidle' });
     await login(page);
@@ -93,7 +92,7 @@ test.describe('Globalization QA - Final Validation', () => {
     await login(page);
     const pages = ['/', '/libraries', '/series', '/markers', '/logs', '/sync', '/settings', '/sessions'];
     for (const path of pages) {
-      await page.goto(`${BASE}${path}`, { waitUntil: 'networkidle' });
+      await page.goto(path, { waitUntil: 'networkidle' });
       await page.waitForSelector('[data-testid="app-header"]', { state: 'visible' });
       const bodyText = await page.locator('body').innerText();
       // Check for common missing translation patterns
@@ -104,7 +103,7 @@ test.describe('Globalization QA - Final Validation', () => {
   });
 
   test('Language switcher works on all pages', async ({ page }) => {
-    await page.goto(`${BASE}/login`, { waitUntil: 'networkidle' });
+    await page.goto('/login', { waitUntil: 'networkidle' });
     await page.evaluate(() => localStorage.setItem('app.locale', 'pt-BR'));
     await page.reload({ waitUntil: 'networkidle' });
     await login(page);
@@ -118,7 +117,7 @@ test.describe('Globalization QA - Final Validation', () => {
   });
 
   test('Login error message says "password" not "email or password"', async ({ page }) => {
-    await page.goto(`${BASE}/login`, { waitUntil: 'networkidle' });
+    await page.goto('/login', { waitUntil: 'networkidle' });
     await page.fill('[data-testid="password-input"]', 'wrongpassword');
     await page.click('[data-testid="login-submit"]');
     await page.waitForTimeout(1000);
@@ -130,11 +129,11 @@ test.describe('Globalization QA - Final Validation', () => {
   });
 
   test('Breadcrumb translations work correctly', async ({ page }) => {
-    await page.goto(`${BASE}/login`, { waitUntil: 'networkidle' });
+    await page.goto('/login', { waitUntil: 'networkidle' });
     await page.evaluate(() => localStorage.setItem('app.locale', 'pt-BR'));
     await page.reload({ waitUntil: 'networkidle' });
     await login(page);
-    await page.goto(`${BASE}/libraries`, { waitUntil: 'networkidle' });
+    await page.goto('/libraries', { waitUntil: 'networkidle' });
     await page.waitForSelector('[data-testid="app-header"]', { state: 'visible' });
     const breadcrumb = page.locator('nav[aria-label="Breadcrumb"]').first();
     await expect(breadcrumb).toBeVisible({ timeout: 5000 });

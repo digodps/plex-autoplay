@@ -169,13 +169,6 @@ function selectLocale(code) {
             >
               <AppIcon :name="locale.icon" size="sm" class="w-6 h-4" aria-hidden="true" />
               <span class="font-medium">{{ locale.label }}</span>
-              <AppIcon
-                v-if="locale.code === localeStore.locale"
-                name="check"
-                size="sm"
-                class="ml-auto text-primary"
-                aria-hidden="true"
-              />
             </button>
           </div>
         </div>
