@@ -1,11 +1,13 @@
 <script setup>
 import { onMounted, ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
+import { useI18n } from "vue-i18n";
 import DefaultAuthCard from "@/components/Auths/DefaultAuthCard.vue";
 import AppIcon from "@/components/AppIcon.vue";
 import { AUTH_COOKIE, deleteCookie } from "@/api";
 import { useAuthStore } from "@/stores/auth";
 
+const { t } = useI18n();
 const authStore = useAuthStore();
 const route = useRoute();
 const router = useRouter();
@@ -52,10 +54,10 @@ async function handleLogin() {
       authStore.login(data.token);
       await router.push(getRedirect());
     } else {
-      error.value = "Senha inválida";
+      error.value = t("auth.loginError");
     }
   } catch {
-    error.value = "Erro ao conectar com o servidor";
+    error.value = t("errors.network");
   } finally {
     loading.value = false;
   }
@@ -64,7 +66,7 @@ async function handleLogin() {
 
 <template>
   <div class="flex h-screen items-center justify-center bg-whiten px-4 dark:bg-boxdark-2">
-    <DefaultAuthCard title="Plex Autoplay" subtitle="Painel administrativo">
+    <DefaultAuthCard :title="t('app.name')" :subtitle="t('app.description')">
       <div
         v-if="error"
         class="error alert alert-error mb-4 flex items-center gap-2 rounded-sm border border-meta-1/30 bg-meta-1/10 px-4 py-3 text-sm font-medium text-meta-1"
@@ -78,7 +80,7 @@ async function handleLogin() {
       <form data-testid="login-form" @submit.prevent="handleLogin">
         <div class="mb-5">
           <label class="mb-2.5 block font-medium text-black dark:text-white" for="password">
-            Senha
+            {{ t("auth.password") }}
           </label>
           <div class="relative">
             <input
@@ -86,7 +88,7 @@ async function handleLogin() {
               ref="passwordRef"
               v-model="password"
               :type="showPassword ? 'text' : 'password'"
-              placeholder="Digite a senha"
+              :placeholder="t('auth.password')"
               autocomplete="current-password"
               class="w-full rounded-lg border border-stroke bg-transparent py-4 pl-5 pr-12 text-black outline-none focus:border-primary focus-visible:shadow-none dark:border-form-strokedark dark:bg-form-input dark:text-white"
               required
@@ -95,7 +97,7 @@ async function handleLogin() {
             <button
               type="button"
               class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-black dark:text-bodydark dark:hover:text-white"
-              :aria-label="showPassword ? 'Ocultar senha' : 'Mostrar senha'"
+              :aria-label="showPassword ? t('aria.collapse') : t('aria.expand')"
               :aria-pressed="showPassword"
               data-testid="toggle-password-signin"
               @click="togglePassword"
@@ -112,7 +114,7 @@ async function handleLogin() {
           class="flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg bg-primary p-4 font-medium text-white transition hover:bg-opacity-90 disabled:opacity-60"
         >
           <AppIcon :name="loading ? 'spinner' : 'check'" size="sm" :class="{ 'animate-spin': loading }" />
-          {{ loading ? "Entrando..." : "Entrar" }}
+          {{ loading ? t("common.loading") : t("auth.signIn") }}
         </button>
       </form>
     </DefaultAuthCard>

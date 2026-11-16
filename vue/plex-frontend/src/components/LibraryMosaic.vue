@@ -16,6 +16,7 @@ const mosaicStyle = computed(() => ({
   "--mosaic-columns": 3,
   "--mosaic-rows": 2,
 }));
+const ariaLabel = computed(() => `Mosaic de posters da biblioteca ${props.libraryKey}`);
 
 function handleMouseEnter() {
   startHover();
@@ -38,17 +39,17 @@ function handleBlur() {
   <div
     class="library-mosaic"
     :style="mosaicStyle"
+    tabindex="0"
+    role="img"
+    :aria-label="ariaLabel"
     @mouseenter="handleMouseEnter"
     @mouseleave="handleMouseLeave"
     @focusin="handleFocus"
     @focusout="handleBlur"
-    tabindex="0"
-    role="img"
-    :aria-label="ariaLabel"
   >
     <!-- Skeleton loading state -->
     <div v-if="isLoading && !hasPosters" class="mosaic-skeleton" aria-hidden="true">
-      <div class="skeleton-item" v-for="i in 6" :key="i" />
+      <div v-for="i in 6" :key="i" class="skeleton-item" />
     </div>
 
     <!-- Mosaic grid with posters -->

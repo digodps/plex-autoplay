@@ -1,9 +1,12 @@
 <script setup>
 import { ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
+import { useI18n } from "vue-i18n";
 import { apiFetch } from "@/api";
 import LibraryMosaic from "@/components/LibraryMosaic.vue";
+import AppIcon from "@/components/AppIcon.vue";
 
+const { t } = useI18n();
 const router = useRouter();
 const libraries = ref([]);
 const error = ref("");
@@ -15,9 +18,9 @@ async function loadLibraries() {
   try {
     const response = await apiFetch("/api/plex/libraries");
     if (response.ok) libraries.value = await response.json();
-    else error.value = "Erro ao carregar bibliotecas";
+    else error.value = t("libraries.error");
   } catch {
-    error.value = "Erro de conexão";
+    error.value = t("errors.network");
   } finally {
     loading.value = false;
   }
@@ -38,9 +41,9 @@ function navigateToSeries(libraryKey, libraryTitle) {
   <div class="mx-auto max-w-6xl px-4 py-3">
     <div class="flex items-center justify-between gap-3">
       <div>
-        <h1 class="text-2xl font-semibold text-gray-900 dark:text-gray-100">Bibliotecas</h1>
+        <h1 class="text-2xl font-semibold text-gray-900 dark:text-gray-100">{{ t("libraries.title") }}</h1>
         <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-          Bibliotecas de séries detectadas no Plex.
+          {{ t("libraries.subtitle") }}
         </p>
       </div>
       <div class="flex items-center gap-2">
@@ -48,7 +51,7 @@ function navigateToSeries(libraryKey, libraryTitle) {
           class="rounded-lg border border-stroke px-4 py-2 text-sm font-medium text-gray-700 transition hover:border-accent hover:text-accent dark:border-strokedark dark:text-bodydark"
           @click="loadLibraries"
         >
-          Atualizar
+          {{ t("common.refresh") }}
         </button>
       </div>
     </div>
@@ -76,7 +79,7 @@ function navigateToSeries(libraryKey, libraryTitle) {
           <LibraryMosaic :library-key="lib.key" />
           <h3 class="mt-4 text-xl font-semibold text-gray-900 dark:text-gray-100 tracking-tight">{{ lib.title }}</h3>
           <span class="mt-6 flex items-center gap-1 text-sm font-medium text-gray-500 dark:text-gray-400 group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">
-            Ver séries
+            {{ t("series.seriesCount", { count: lib.seriesCount || 0 }) }}
             <span class="transform transition-transform group-hover:translate-x-0.5">›</span>
           </span>
         </button>
@@ -85,7 +88,7 @@ function navigateToSeries(libraryKey, libraryTitle) {
       <div v-else class="rounded-xl border border-stroke bg-white dark:bg-gray-800 p-12 text-center dark:border-gray-700">
         <AppIcon name="tv" size="lg" class="mx-auto text-gray-500 dark:text-gray-400" />
         <p class="mt-3 text-sm font-medium text-gray-500 dark:text-gray-400">
-          Nenhuma biblioteca de séries encontrada.
+          {{ t("libraries.noLibraries") }}
         </p>
       </div>
     </div>

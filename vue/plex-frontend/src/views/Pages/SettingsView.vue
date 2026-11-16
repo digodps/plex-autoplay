@@ -1,8 +1,11 @@
 <script setup>
 import { onMounted, reactive, ref } from "vue";
+import { useI18n } from "vue-i18n";
 import { apiFetch, extractErrorMessage } from "@/api";
 import AppIcon from "@/components/AppIcon.vue";
 import MediaRootsField from "@/components/MediaRootsField.vue";
+
+const { t } = useI18n();
 
 const form = reactive({
   plex_url: "",
@@ -36,7 +39,7 @@ async function loadSettings() {
   error.value = "";
   try {
     const res = await apiFetch("/api/settings");
-    if (!res.ok) throw new Error(await extractErrorMessage(res) || "Erro ao carregar configurações");
+    if (!res.ok) throw new Error(await extractErrorMessage(res) || t("errors.generic"));
     applySettings(await res.json());
   } catch (err) {
     error.value = err.message;
@@ -47,7 +50,7 @@ async function loadSettings() {
 
 async function saveSettings() {
   if (mediaRoots.value.length === 0) {
-    error.value = "Adicione ao menos um diretório de mídia";
+    error.value = t("settings.mediaRootsRequired");
     return;
   }
   saving.value = true;
@@ -66,10 +69,10 @@ async function saveSettings() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     });
-    if (!res.ok) throw new Error(await extractErrorMessage(res) || "Erro ao salvar configurações");
+    if (!res.ok) throw new Error(await extractErrorMessage(res) || t("errors.generic"));
 
     applySettings(await res.json());
-    message.value = "Configurações salvas com sucesso";
+    message.value = t("settings.changesSaved");
   } catch (err) {
     error.value = err.message;
   } finally {
@@ -84,9 +87,9 @@ onMounted(loadSettings);
   <div class="mx-auto max-w-6xl px-4 py-3">
     <div class="flex items-center justify-between gap-3 flex-wrap mb-6">
       <div>
-        <h1 class="text-2xl font-semibold text-gray-900 dark:text-gray-100">Ajustes</h1>
+        <h1 class="text-2xl font-semibold text-gray-900 dark:text-gray-100">{{ t("settings.title") }}</h1>
         <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-          Configurações do Plex e sincronização, persistidas no banco.
+          {{ t("settings.subtitle") }}
         </p>
       </div>
       <div class="flex items-center gap-2">
@@ -96,7 +99,7 @@ onMounted(loadSettings);
           :disabled="saving"
           @click="loadSettings"
         >
-          Recarregar
+          {{ t("common.refresh") }}
         </button>
         <button
           type="submit"
@@ -104,18 +107,18 @@ onMounted(loadSettings);
           class="rounded-lg border border-stroke px-4 py-2 text-sm font-medium text-gray-700 transition hover:border-accent hover:text-accent dark:border-strokedark dark:text-bodydark disabled:opacity-50"
           :disabled="saving"
         >
-          {{ saving ? "Salvando..." : "Salvar Configurações" }}
+          {{ saving ? t("common.loading") : t("common.save") }}
         </button>
       </div>
     </div>
 
     <div class="p-4 md:p-6 lg:p-8 max-w-6xl mx-auto">
-      <div v-if="loading" class="text-sm text-gray-500 dark:text-gray-400">Carregando...</div>
+      <div v-if="loading" class="text-sm text-gray-500 dark:text-gray-400">{{ t("common.loading") }}</div>
 
       <form v-else id="settings-form" class="space-y-6" @submit.prevent="saveSettings">
         <div class="rounded-xl border border-stroke bg-white dark:bg-gray-800 p-5 dark:border-gray-700">
           <label class="block text-sm font-medium text-gray-700 dark:text-gray-300" for="sync-interval">
-            Intervalo de Sincronização (minutos)
+            {{ t("settings.syncInterval") }}
           </label>
           <input
             id="sync-interval"
@@ -127,13 +130,13 @@ onMounted(loadSettings);
             class="w-full rounded-lg border border-stroke bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 px-4 py-2.5 focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent/30 dark:border-gray-600"
           />
           <p class="text-xs text-gray-500 dark:text-gray-400">
-            Intervalo entre varreduras automáticas das bibliotecas.
+            {{ t("settings.syncIntervalHelp") }}
           </p>
         </div>
 
         <div class="rounded-xl border border-stroke bg-white dark:bg-gray-800 p-5 dark:border-gray-700">
           <label class="block text-sm font-medium text-gray-700 dark:text-gray-300" for="plex-url">
-            URL do Plex
+            {{ t("auth.plexUrl") }}
           </label>
           <input
             id="plex-url"
@@ -147,7 +150,7 @@ onMounted(loadSettings);
 
         <div class="rounded-xl border border-stroke bg-white dark:bg-gray-800 p-5 dark:border-gray-700">
           <label class="block text-sm font-medium text-gray-700 dark:text-gray-300" for="plex-token">
-            Token do Plex
+            {{ t("auth.plexToken") }}
           </label>
           <div class="relative">
             <input
@@ -156,14 +159,14 @@ onMounted(loadSettings);
               v-model="plexToken"
               :type="showPlexToken ? 'text' : 'password'"
               autocomplete="new-password"
-              :placeholder="plexTokenSet ? 'Token configurado — deixe vazio para manter' : 'Informe o token do Plex'"
+              :placeholder="plexTokenSet ? t('settings.tokenConfigured') : t('settings.enterToken')"
               class="w-full rounded-lg border border-stroke bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 px-4 py-2.5 pr-12 focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent/30 dark:border-gray-600"
               data-testid="plex-token"
             />
             <button
               type="button"
               class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition"
-              :aria-label="showPlexToken ? 'Ocultar token' : 'Mostrar token'"
+              :aria-label="showPlexToken ? t('aria.collapse') : t('aria.expand')"
               :aria-pressed="showPlexToken"
               data-testid="toggle-password-plex-token"
               @click="togglePlexToken"
@@ -172,12 +175,12 @@ onMounted(loadSettings);
             </button>
           </div>
           <p class="text-xs text-gray-500 dark:text-gray-400">
-            {{ plexTokenSet ? "Token já configurado. Preencha apenas para substituir." : "Nenhum token configurado." }}
+            {{ plexTokenSet ? t("settings.tokenConfiguredHelp") : t("settings.noTokenConfigured") }}
           </p>
         </div>
 
         <div class="rounded-xl border border-stroke bg-white dark:bg-gray-800 p-5 dark:border-gray-700">
-          <MediaRootsField v-model="mediaRoots" label="Diretórios de Mídia (MEDIA_ROOTS)" />
+          <MediaRootsField v-model="mediaRoots" :label="t('settings.mediaRootsLabel')" />
         </div>
 
         <p v-if="message" class="text-sm text-green-600 dark:text-green-400">{{ message }}</p>

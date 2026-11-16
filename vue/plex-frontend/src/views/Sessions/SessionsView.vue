@@ -1,6 +1,9 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted, watch } from "vue";
+import { useI18n } from "vue-i18n";
 import { apiFetch } from "@/api";
+
+const { t } = useI18n();
 
 const POLL_INTERVAL = 5000;
 let timer = null;
@@ -20,7 +23,7 @@ async function load() {
     recentSkips.value = data.recentSkips ?? [];
     error.value = null;
   } catch (e) {
-    error.value = e.message || "Falha ao carregar sessões e skips.";
+    error.value = e.message || t("errors.generic");
     console.warn("[Sessions] load failed:", e);
   } finally {
     loading.value = false;
@@ -72,39 +75,39 @@ function fmtMs(ms) {
 function fmtTime(iso) {
   if (!iso) return "—";
   try {
-    return new Date(iso).toLocaleString("pt-BR", {
+    const locale = localStorage.getItem("app.locale") || "pt-BR";
+    return new Date(iso).toLocaleString(locale === "pt-BR" ? "pt-BR" : "en-US", {
       dateStyle: "short",
-      timeStyle: "short"
+      timeStyle: "short",
     });
   } catch {
     return iso;
   }
 }
-
 </script>
 
 <template>
   <div class="mx-auto max-w-6xl px-4 py-3">
     <div class="flex items-center justify-between gap-3">
-        <div>
-          <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">Sessões &amp; Skips</h1>
-          <p class="text-sm text-gray-500 dark:text-gray-400">
-            Sessões ativas no Plex, próximo skip e histórico de skips executados.
-          </p>
-        </div>
+      <div>
+        <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">{{ t("sessions.title") }}</h1>
+        <p class="text-sm text-gray-500 dark:text-gray-400">
+          {{ t("sessions.subtitle") }}
+        </p>
       </div>
+    </div>
 
     <div class="p-4 md:p-6 lg:p-8 max-w-6xl mx-auto">
       <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
         <section class="rounded-xl border border-stroke bg-white dark:bg-gray-800 p-5 dark:border-gray-700">
           <h2 class="text-sm font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-4 border-b border-stroke pb-2 dark:border-gray-700">
-            Sessões ativas
+            {{ t("sessions.activeSessions") }}
           </h2>
-          <div v-if="loading" class="text-sm text-gray-500">Carregando...</div>
+          <div v-if="loading" class="text-sm text-gray-500">{{ t("common.loading") }}</div>
           <div v-else-if="error" class="text-xs text-meta-1">{{ error }}</div>
           <template v-else>
-            <div v-if="activeSessions.length === 0" class="py-4 text-center text-gray-500 dark:text-gray-400 text-sm">
-              Nenhuma sessão ativa no momento.
+            <div class="py-4 text-center text-gray-500 dark:text-gray-400 text-sm" v-if="activeSessions.length === 0">
+              {{ t("sessions.noSessions") }}
             </div>
 
             <!-- Mobile cards view (< md) -->
@@ -128,7 +131,7 @@ function fmtTime(iso) {
                     "
                   >
                     <span class="h-1.5 w-1.5 rounded-full" :style="{ backgroundColor: s.state === 'playing' ? 'var(--success)' : 'var(--warning)' }" />
-                    {{ s.state }}
+                    {{ t(`sessions.${s.state}`) }}
                   </span>
                 </div>
 
@@ -142,7 +145,7 @@ function fmtTime(iso) {
                       <span class="h-1.5 w-1.5 rounded-full bg-warning" />
                       {{ s.nextMarker.kind }} em {{ fmtMs(s.nextMarker.msUntilSkip) }}
                     </span>
-                    <span v-else>Sem marcador</span>
+                    <span v-else>{{ t("sessions.noMarker") }}</span>
                   </div>
                   <div class="w-full h-1 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden mt-1">
                     <div
@@ -155,13 +158,13 @@ function fmtTime(iso) {
             </div>
 
             <!-- Desktop table view (>= md) -->
-            <table v-if="activeSessions.length > 0" class="hidden md:table w-full text-left text-sm">
+            <table class="hidden md:table w-full text-left text-sm" v-if="activeSessions.length > 0">
               <thead>
                 <tr class="border-b border-stroke dark:border-gray-700">
-                  <th class="pb-2 font-medium text-gray-600 dark:text-gray-300">Cliente</th>
-                  <th class="pb-2 font-medium text-gray-600 dark:text-gray-300">Posição / Duração</th>
-                  <th class="pb-2 font-medium text-gray-600 dark:text-gray-300">Próximo skip</th>
-                  <th class="pb-2 font-medium text-gray-600 dark:text-gray-300">Estado</th>
+                  <th class="pb-2 font-medium text-gray-600 dark:text-gray-300">{{ t("sessions.client") }}</th>
+                  <th class="pb-2 font-medium text-gray-600 dark:text-gray-300">{{ t("sessions.positionDuration") }}</th>
+                  <th class="pb-2 font-medium text-gray-600 dark:text-gray-300">{{ t("sessions.nextSkip") }}</th>
+                  <th class="pb-2 font-medium text-gray-600 dark:text-gray-300">{{ t("sessions.state") }}</th>
                 </tr>
               </thead>
               <tbody>
@@ -178,15 +181,9 @@ function fmtTime(iso) {
                     <div class="font-medium text-gray-900 dark:text-white">
                       {{ fmtMs(s.positionMs) }} / {{ fmtMs(s.durationMs) }}
                     </div>
-                    <div
-                      class="w-full h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden mt-1"
-                    >
+                    <div class="w-full h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden mt-1">
                       <div
-                        :class="
-                          s.durationMs > 0
-                            ? 'h-full bg-accent'
-                            : 'h-full bg-gray-400 dark:bg-gray-500'
-                        "
+                        :class="s.durationMs > 0 ? 'h-full bg-accent' : 'h-full bg-gray-400 dark:bg-gray-500'"
                         :style="{ width: s.durationMs > 0 ? ((s.positionMs / s.durationMs) * 100).toFixed(0) + '%' : '100%' }"
                       />
                     </div>
@@ -199,7 +196,7 @@ function fmtTime(iso) {
                       <span class="h-1.5 w-1.5 rounded-full bg-warning" />
                       {{ s.nextMarker.kind }} em {{ fmtMs(s.nextMarker.msUntilSkip) }}
                     </span>
-                    <span v-else class="text-xs text-gray-500 dark:text-gray-400">Sem marcador à frente</span>
+                    <span v-else class="text-xs text-gray-500 dark:text-gray-400">{{ t("sessions.noMarkerAhead") }}</span>
                   </td>
                   <td class="py-3">
                     <span
@@ -211,7 +208,7 @@ function fmtTime(iso) {
                       "
                     >
                       <span class="h-1.5 w-1.5 rounded-full" :style="{ backgroundColor: s.state === 'playing' ? 'var(--success)' : 'var(--warning)' }" />
-                      {{ s.state }}
+                      {{ t(`sessions.${s.state}`) }}
                     </span>
                   </td>
                 </tr>
@@ -222,13 +219,13 @@ function fmtTime(iso) {
 
         <section class="rounded-xl border border-stroke bg-white dark:bg-gray-800 p-5 dark:border-gray-700 col-span-1 md:col-span-2">
           <h2 class="text-sm font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-4 border-b border-stroke pb-2 dark:border-gray-700">
-            Histórico de skips (últimos 50)
+            {{ t("sessions.skipHistory") }}
           </h2>
-          <div v-if="loading" class="text-sm text-gray-500">Carregando...</div>
+          <div v-if="loading" class="text-sm text-gray-500">{{ t("common.loading") }}</div>
           <div v-else-if="error" class="text-xs text-meta-1">{{ error }}</div>
           <template v-else>
-            <div v-if="recentSkips.length === 0" class="py-4 text-center text-gray-500 dark:text-gray-400 text-sm">
-              Nenhum skip executado ainda.
+            <div class="py-4 text-center text-gray-500 dark:text-gray-400 text-sm" v-if="recentSkips.length === 0">
+              {{ t("sessions.noSkipsYet") }}
             </div>
 
             <!-- Mobile cards view (< md) -->
@@ -262,13 +259,13 @@ function fmtTime(iso) {
             </div>
 
             <!-- Desktop table view (>= md) -->
-            <table v-if="recentSkips.length > 0" class="hidden md:table w-full text-left text-sm">
+            <table class="hidden md:table w-full text-left text-sm" v-if="recentSkips.length > 0">
               <thead>
                 <tr class="border-b border-stroke dark:border-gray-700">
-                  <th class="pb-2 font-medium text-gray-600 dark:text-gray-300">Data/Hora</th>
-                  <th class="pb-2 font-medium text-gray-600 dark:text-gray-300">Cliente</th>
-                  <th class="pb-2 font-medium text-gray-600 dark:text-gray-300">Tipo</th>
-                  <th class="pb-2 font-medium text-gray-600 dark:text-gray-300">De → Para</th>
+                  <th class="pb-2 font-medium text-gray-600 dark:text-gray-300">{{ t("sessions.datetime") }}</th>
+                  <th class="pb-2 font-medium text-gray-600 dark:text-gray-300">{{ t("sessions.client") }}</th>
+                  <th class="pb-2 font-medium text-gray-600 dark:text-gray-300">{{ t("sessions.type") }}</th>
+                  <th class="pb-2 font-medium text-gray-600 dark:text-gray-300">{{ t("sessions.fromTo") }}</th>
                 </tr>
               </thead>
               <tbody>

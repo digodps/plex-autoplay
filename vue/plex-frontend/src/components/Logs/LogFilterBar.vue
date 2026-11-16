@@ -1,16 +1,18 @@
 <script setup>
 import { ref } from "vue";
+import { useI18n } from "vue-i18n";
 import { useLogsStore } from "@/stores/logs";
 
+const { t } = useI18n();
 const logsStore = useLogsStore();
 
 const levels = ["info", "success", "warning", "error", "skip"];
-const groupingOptions = [
-  { value: "date", label: "Data" },
-  { value: "status", label: "Status" },
-  { value: "level", label: "Tipo" },
-  { value: "library", label: "Biblioteca" },
-];
+const groupingOptions = ref([
+  { value: "date", label: t("logs.groupBy.date") },
+  { value: "status", label: t("logs.groupBy.status") },
+  { value: "level", label: t("logs.groupBy.level") },
+  { value: "library", label: t("logs.groupBy.library") },
+]);
 
 const textInput = ref(logsStore.filters.text);
 const fromInput = ref(logsStore.filters.from);
@@ -37,30 +39,30 @@ function onGroupingChange(event) {
   <div class="mb-6 rounded-xl border border-stroke bg-white dark:bg-gray-800 p-5 dark:border-gray-700">
     <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-5">
       <label class="flex flex-col gap-1.5 lg:col-span-2">
-        <span class="text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">Busca textual</span>
+        <span class="text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">{{ t("logs.filter.text") }}</span>
         <input
           v-model="textInput"
           type="search"
-          placeholder="Filtrar mensagens..."
+          :placeholder="t('logs.filter.placeholder')"
           data-testid="log-filter-text"
           class="log-filter-input w-full rounded-lg border border-stroke bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 px-3.5 py-2.5 text-sm focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent/30 dark:border-gray-600"
           @input="onTextInput"
         />
       </label>
       <label class="flex flex-col gap-1.5">
-        <span class="text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">Nível</span>
+        <span class="text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">{{ t("logs.filter.level") }}</span>
         <select
           :value="logsStore.filters.level"
           data-testid="log-filter-level"
           class="log-filter-input w-full rounded-lg border border-stroke bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 px-3.5 py-2.5 text-sm focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent/30 dark:border-gray-600"
           @change="onLevelChange"
         >
-          <option value="">Todos</option>
-          <option v-for="level in levels" :key="level" :value="level">{{ level }}</option>
+          <option value="">{{ t("common.all") }}</option>
+          <option v-for="level in levels" :key="level" :value="level">{{ t(`logs.levels.${level}`) }}</option>
         </select>
       </label>
       <label class="flex flex-col gap-1.5">
-        <span class="text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">De</span>
+        <span class="text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">{{ t("logs.filter.from") }}</span>
         <input
           v-model="fromInput"
           type="date"
@@ -69,7 +71,7 @@ function onGroupingChange(event) {
         />
       </label>
       <label class="flex flex-col gap-1.5">
-        <span class="text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">Até</span>
+        <span class="text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">{{ t("logs.filter.to") }}</span>
         <input
           v-model="toInput"
           type="date"
@@ -79,9 +81,9 @@ function onGroupingChange(event) {
       </label>
     </div>
     <div class="mt-4 flex flex-wrap items-center gap-2">
-      <span class="text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400 mr-2">Agrupar por</span>
+      <span class="text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400 mr-2">{{ t("logs.groupBy.label") }}</span>
       <button
-        v-for="option in groupingOptions"
+        v-for="option in groupingOptions.value"
         :key="option.value"
         type="button"
         data-testid="log-groupby"

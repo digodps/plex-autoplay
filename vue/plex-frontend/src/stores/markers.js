@@ -1,8 +1,10 @@
 import { defineStore } from "pinia";
 import { ref } from "vue";
+import { useI18n } from "vue-i18n";
 import { apiFetch, extractErrorMessage } from "../api";
 
 export const useMarkerStore = defineStore("markers", () => {
+  const { t } = useI18n();
   const episodesMap = ref({});
   const markersMap = ref({});
   const loading = ref(false);
@@ -25,7 +27,7 @@ export const useMarkerStore = defineStore("markers", () => {
       if (!episodesRes.ok || !markersRes.ok) {
         const failedRes = episodesRes.ok ? markersRes : episodesRes;
         const detail = await extractErrorMessage(failedRes);
-        throw new Error(detail || "Erro ao carregar série");
+        throw new Error(detail || t("markers.loadError"));
       }
 
       const episodes = await episodesRes.json();
@@ -44,14 +46,8 @@ export const useMarkerStore = defineStore("markers", () => {
       }
       episodesMap.value = episodesById;
 
-      // Initialize markersMap: create entry per episode rating key, and also capture
-      // any markers that don't match an episode rating key (they remain available
-      // globally but are shown under the series that fetched them).
       const markers = {};
-      // One entry per known episode rating key
       for (const ratingKey of Object.keys(episodesById)) markers[ratingKey] = { intro: null, credits: null };
-      // Also add any markers whose ratingKey doesn't correspond to a fetched episode;
-      // keep them under their own ratingKey so they can be displayed/edited later.
       for (const m of allMarkers) {
         const key = m.ratingKey ?? m.rating_key;
         if (!markers[key]) markers[key] = { intro: null, credits: null };
@@ -64,7 +60,7 @@ export const useMarkerStore = defineStore("markers", () => {
       }
       markersMap.value = markers;
     } catch (e) {
-      error.value = e.message || "Não foi possível carregar os dados da série.";
+      error.value = e.message || t("markers.loadError");
     } finally {
       loading.value = false;
     }
@@ -79,13 +75,13 @@ export const useMarkerStore = defineStore("markers", () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ratingKey, kind, startMs, endMs }),
       });
-      if (!res.ok) throw new Error("Erro ao criar marcador");
+      if (!res.ok) throw new Error(t("markers.createError", { kind }));
       if (!markersMap.value[ratingKey])
         markersMap.value[ratingKey] = { intro: null, credits: null };
       markersMap.value[ratingKey][kind] = { startMs, endMs, origin: "manual" };
       return true;
     } catch {
-      error.value = `Erro ao salvar marcador de ${kind}.`;
+      error.value = t("markers.saveError", { kind });
       return false;
     } finally {
       delete savingKeys.value[key];
@@ -110,11 +106,11 @@ export const useMarkerStore = defineStore("markers", () => {
       );
       if (!res.ok) {
         markersMap.value[ratingKey][kind] = previous;
-        throw new Error("PUT falhou");
+        throw new Error(t("markers.updateError", { kind }));
       }
       return true;
     } catch {
-      error.value = `Erro ao atualizar marcador de ${kind}.`;
+      error.value = t("markers.updateError", { kind });
       return false;
     } finally {
       delete savingKeys.value[key];
@@ -135,11 +131,11 @@ export const useMarkerStore = defineStore("markers", () => {
       );
       if (!res.ok) {
         markersMap.value[ratingKey][kind] = previous;
-        throw new Error("DELETE falhou");
+        throw new Error(t("markers.deleteError", { kind }));
       }
       return true;
     } catch {
-      error.value = `Erro ao remover marcador de ${kind}.`;
+      error.value = t("markers.deleteError", { kind });
       return false;
     } finally {
       delete savingKeys.value[key];

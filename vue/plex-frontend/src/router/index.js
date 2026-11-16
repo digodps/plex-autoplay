@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory } from "vue-router";
+import i18n from "../i18n";
 import SigninView from "../views/Authentication/SigninView.vue";
 import SeriesView from "../views/Series/SeriesView.vue";
 
@@ -8,70 +9,70 @@ const routes = [
     path: "/login",
     name: "login",
     component: SigninView,
-    meta: { title: "Entrar" },
+    meta: { titleKey: "auth.login" },
   },
   {
     path: "/setup",
     name: "setup",
     component: () => import("../views/Authentication/SetupView.vue"),
-    meta: { title: "Configuração inicial" },
+    meta: { titleKey: "auth.setupTitle" },
   },
   {
     path: "/dashboard",
     name: "dashboard",
     component: () => import("../views/Dashboard/DashboardView.vue"),
-    meta: { title: "Dashboard" },
+    meta: { titleKey: "nav.dashboard" },
   },
   {
     path: "/libraries",
     name: "libraries",
     component: () => import("../views/Libraries/LibrariesView.vue"),
-    meta: { title: "Bibliotecas" },
+    meta: { titleKey: "nav.libraries" },
   },
   {
     path: "/libraries/:key/series",
     name: "series",
     component: SeriesView,
     props: true,
-    meta: { title: "Biblioteca" },
+    meta: { titleKey: "nav.series" },
   },
   {
     path: "/series/:seriesKey",
     name: "series-detail",
     component: () => import("../views/SeriesDetail/SeriesPage.vue"),
     props: true,
-    meta: { title: "Série" },
+    meta: { titleKey: "nav.series" },
   },
   {
     path: "/series/:seriesKey/markers",
     name: "series-markers",
     component: () => import("../views/Markers/MarkerEditorView.vue"),
-    meta: { title: "Marcadores" },
+    meta: { titleKey: "nav.markers" },
   },
 
   {
     path: "/logs",
     name: "logs",
     component: () => import("../views/Logs/LogsView.vue"),
-    meta: { title: "Logs de processamento" },
+    meta: { titleKey: "nav.logs" },
   },
   {
     path: "/sync",
     name: "sync",
     component: () => import("../views/SyncView.vue"),
-    meta: { title: "Sincronização" },
+    meta: { titleKey: "nav.sync" },
   },
   {
     path: "/settings",
     name: "settings",
     component: () => import("../views/Pages/SettingsView.vue"),
-    meta: { title: "Ajustes" },
+    meta: { titleKey: "nav.settings" },
   },
   {
     path: "/sessions",
     name: "sessions",
     component: () => import("../views/Sessions/SessionsView.vue"),
-    meta: { title: "Sessões e Skips" },
+    meta: { titleKey: "nav.sessions" },
   },
   { path: "/ajustes", redirect: "/settings" },
 ];
@@ -85,9 +86,17 @@ const router = createRouter({
 });
 
 router.beforeEach(async (to) => {
+  const { t } = i18n.global;
+
+  // Update document title and lang attribute
   if (to.name !== "login" && to.name !== "setup") {
-    document.title = `${to.meta.title ?? "Plex Autoplay"} | Plex Autoplay`;
+    const title = to.meta.titleKey ? t(to.meta.titleKey) : "Plex Autoplay";
+    document.title = `${title} | Plex Autoplay`;
   }
+
+  // Update html lang attribute based on current locale
+  const locale = localStorage.getItem("app.locale") || "pt-BR";
+  document.documentElement.lang = locale;
 
   // Setup inicial é público e tem prioridade sobre o guard de sessão.
   const setupStatus = await fetch("/api/auth/setup/status")

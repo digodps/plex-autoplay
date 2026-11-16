@@ -1,8 +1,10 @@
 import { defineStore } from "pinia";
 import { ref, computed } from "vue";
+import { useI18n } from "vue-i18n";
 import { apiFetch, throwHttpError } from "../api";
 
 export const useSeriesStore = defineStore("series", () => {
+  const { t } = useI18n();
   const episodes = ref([]);
   const currentEpisode = ref(null);
   const autoPlayEnabled = ref(true);
@@ -41,11 +43,11 @@ export const useSeriesStore = defineStore("series", () => {
     seriesKey.value = key;
     try {
       const res = await apiFetch(`/api/series/${encodeURIComponent(key)}/episodes`);
-      if (!res.ok) await throwHttpError(res, "Falha ao buscar episódios");
+      if (!res.ok) await throwHttpError(res, t("series.loadError"));
       const data = await res.json();
       episodes.value = data;
     } catch (err) {
-      error.value = err.message || "Erro de conexão";
+      error.value = err.message || t("errors.network");
       episodes.value = [];
     } finally {
       loading.value = false;
@@ -55,7 +57,7 @@ export const useSeriesStore = defineStore("series", () => {
   async function fetchAutoPlayPreference() {
     try {
       const res = await apiFetch("/api/user/preferences/autoplay");
-      if (!res.ok) await throwHttpError(res, "Falha ao buscar preferência de auto-play");
+      if (!res.ok) await throwHttpError(res, t("series.fetchAutoPlayError"));
       const data = await res.json();
       autoPlayEnabled.value = data.enabled ?? true;
     } catch (err) {
@@ -71,7 +73,7 @@ export const useSeriesStore = defineStore("series", () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ enabled }),
       });
-      if (!res.ok) await throwHttpError(res, "Falha ao salvar preferência de auto-play");
+      if (!res.ok) await throwHttpError(res, t("series.saveAutoPlayError"));
       autoPlayEnabled.value = enabled;
     } catch (err) {
       console.error("Failed to set auto-play preference:", err);
@@ -86,7 +88,7 @@ export const useSeriesStore = defineStore("series", () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ watched, watch_progress: watchProgress }),
       });
-      if (!res.ok) await throwHttpError(res, "Falha ao atualizar progresso");
+      if (!res.ok) await throwHttpError(res, t("series.updateProgressError"));
 
       const episode = episodes.value.find((e) => e.rating_key === ratingKey);
       if (episode) {

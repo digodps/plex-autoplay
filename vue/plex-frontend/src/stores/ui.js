@@ -1,35 +1,36 @@
-import { defineStore } from "pinia";
-import { ref } from "vue";
+import { defineStore } from 'pinia';
+import { ref } from 'vue';
 
-const empty = () => ({ libraryTitle: "", seriesTitle: "", title: "" });
+export const useUIStore = defineStore('ui', () => {
+  const showProfile = ref(false);
+  const showLanguageMenu = ref(false);
 
-export const useUiStore = defineStore("ui", () => {
-  const libraryTitle = ref("");
-  const seriesTitle = ref("");
-  const breadcrumbTitle = ref("");
-
-  function setLibraryTitle(title) {
-    libraryTitle.value = title;
+  function toggleProfile() {
+    showProfile.value = !showProfile.value;
+    if (!showProfile.value) {
+      showLanguageMenu.value = false;
+    }
   }
 
-  function setSeriesTitle(title) {
-    seriesTitle.value = title;
+  function closeProfile() {
+    showProfile.value = false;
+    showLanguageMenu.value = false;
   }
 
-  function reset() {
-    libraryTitle.value = "";
-    seriesTitle.value = "";
-    breadcrumbTitle.value = "";
+  function toggleLanguageMenu() {
+    showLanguageMenu.value = !showLanguageMenu.value;
+  }
+
+  function closeLanguageMenu() {
+    showLanguageMenu.value = false;
   }
 
   return {
-    libraryTitle,
-    seriesTitle,
-    breadcrumbTitle,
-    setLibraryTitle,
-    setSeriesTitle,
-    reset,
+    showProfile,
+    showLanguageMenu,
+    toggleProfile,
+    closeProfile,
+    toggleLanguageMenu,
+    closeLanguageMenu,
   };
 });
-
-export default empty();

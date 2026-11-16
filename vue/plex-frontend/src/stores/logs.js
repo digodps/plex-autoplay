@@ -1,5 +1,5 @@
 import { defineStore } from "pinia";
-import { ref, computed } from "vue";
+import { ref } from "vue";
 import { apiFetch } from "@/api";
 
 export const useLogsStore = defineStore("logs", () => {
@@ -42,7 +42,6 @@ export const useLogsStore = defineStore("logs", () => {
 
   async function fetchLogs() {
     loadingLogs.value = true;
-    error.value = null;
     try {
       const params = new URLSearchParams();
       if (filters.value.jobId) params.set("jobId", filters.value.jobId);
@@ -50,10 +49,10 @@ export const useLogsStore = defineStore("logs", () => {
       if (filters.value.to) params.set("to", filters.value.to);
       if (filters.value.level) params.set("level", filters.value.level);
       if (filters.value.text) params.set("text", filters.value.text);
-      params.set("page", filters.value.page);
-      params.set("pageSize", filters.value.pageSize);
+      params.set("page", "1");
+      params.set("pageSize", "1000");
 
-      const res = await apiFetch(`/api/sync/logs?${params.toString()}`);
+      const res = await apiFetch(`/api/sync/logs?${params}`);
       if (res.ok) {
         logs.value = await res.json();
       }
@@ -64,95 +63,56 @@ export const useLogsStore = defineStore("logs", () => {
     }
   }
 
-  // Live text filter debounced
   function setTextFilter(text) {
     filters.value.text = text;
-    if (debounceTimer) clearTimeout(debounceTimer);
+    filters.value.page = 1;
+    clearTimeout(debounceTimer);
     debounceTimer = setTimeout(() => {
-      filters.value.page = 1;
       fetchLogs();
-    }, 200);
+    }, 300);
   }
 
   function setLevelFilter(level) {
-    filters.value.level = level || "";
+    filters.value.level = level;
     filters.value.page = 1;
     fetchLogs();
   }
 
   function setDateRange(from, to) {
-    filters.value.from = from || "";
-    filters.value.to = to || "";
+    filters.value.from = from;
+    filters.value.to = to;
     filters.value.page = 1;
     fetchLogs();
   }
 
-  function setGroupBy(mode) {
-    groupBy.value = mode;
+  function setGroupBy(value) {
+    groupBy.value = value;
   }
-
-  function resetFilters() {
-    filters.value = {
-      jobId: "",
-      from: "",
-      to: "",
-      level: "",
-      text: "",
-      page: 1,
-      pageSize: 100,
-    };
-    fetchLogs();
-  }
-
-  // Agrupamento
-  const groupedLogs = computed(() => {
-    const groups = {};
-    const items = logs.value || [];
-
-    for (const log of items) {
-      let key;
-      if (groupBy.value === "date") {
-        key = log.timestamp.split("T")[0]; // YYYY-MM-DD
-      } else if (groupBy.value === "status") {
-        key = log.jobStatus || log.level || 'sem-status';
-      } else if (groupBy.value === "library") {
-        // Extract library from message/suggestion
-        const text = `${log.message} ${log.suggestion || ''}`;
-        const libMatch = text.match(/(?:processing|library|biblioteca)\s*[:=]\s*([^,\n\r]+)/i) ||
-                         text.match(/scan\s+completed\s+for\s+library\s*[:=]\s*([^,\n\r]+)/i);
-        key = libMatch ? libMatch[1].trim() : 'Sem biblioteca';
-      } else {
-        key = log.level; // "level" (info, error, warning, skip, success)
-      }
-      if (!groups[key]) groups[key] = [];
-      groups[key].push(log);
-    }
-
-    // Ordena chaves decrescente (mais recente primeiro)
-    const sortedKeys = Object.keys(groups).sort((a, b) => b.localeCompare(a));
-    const result = {};
-    for (const k of sortedKeys) result[k] = groups[k];
-    return result;
-  });
 
   async function clearLogs() {
-    const res = await apiFetch("/api/sync/logs/clear", { method: "POST" });
-    if (res.ok) {
-      logs.value = [];
-      await fetchJobs();
-      return res.json();
+    try {
+      const res = await apiFetch("/api/sync/logs/clear", { method: "DELETE" });
+      if (res.ok) {
+        logs.value = [];
+      }
+    } catch (e) {
+      error.value = e.message;
     }
-    throw new Error("Falha ao limpar logs");
   }
 
-  async function cleanupLogs(retentionDays = 30) {
-    const res = await apiFetch(`/api/sync/logs/cleanup?retentionDays=${retentionDays}`, { method: "POST" });
-    if (res.ok) {
-      await fetchLogs();
-      await fetchJobs();
-      return res.json();
+  async function cleanupLogs(days) {
+    try {
+      const res = await apiFetch("/api/sync/logs/cleanup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ days }),
+      });
+      if (res.ok) {
+        await fetchLogs();
+      }
+    } catch (e) {
+      error.value = e.message;
     }
-    throw new Error("Falha ao limpar logs antigos");
   }
 
   return {
@@ -163,14 +123,12 @@ export const useLogsStore = defineStore("logs", () => {
     error,
     filters,
     groupBy,
-    groupedLogs,
     fetchJobs,
     fetchLogs,
     setTextFilter,
     setLevelFilter,
     setDateRange,
     setGroupBy,
-    resetFilters,
     clearLogs,
     cleanupLogs,
   };

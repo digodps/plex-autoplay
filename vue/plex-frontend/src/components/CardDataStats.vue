@@ -1,7 +1,10 @@
 <script setup>
 import { computed } from "vue";
 import { useRoute } from "vue-router";
+import { useI18n } from "vue-i18n";
 import AppIcon from "@/components/AppIcon.vue";
+
+const { t } = useI18n();
 
 const props = defineProps({
   icon: { type: String, default: "library" },
@@ -117,7 +120,7 @@ const pillStyle = computed(() => ({
       </dl>
 
       <p v-if="error" class="mt-4 text-xs font-medium text-meta-1">
-        Falha ao carregar este dado.
+        {{ t("common.errorLoading") }}
       </p>
     </template>
   </component>

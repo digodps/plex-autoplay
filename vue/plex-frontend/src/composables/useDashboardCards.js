@@ -1,8 +1,10 @@
 import { ref, computed, onMounted, onUnmounted } from "vue";
+import { useI18n } from "vue-i18n";
 import { useDashboardStore } from "../stores/dashboard";
 import { apiFetch } from "../api";
 
 export function useDashboardCards() {
+  const { t } = useI18n();
   const store = useDashboardStore();
 
   const statusVariant = computed(() => (status) => {
@@ -25,9 +27,11 @@ export function useDashboardCards() {
         skipSessionsCount.value = data.activeSessions?.length ?? 0;
         if (data.recentSkips?.length > 0) {
           const last = data.recentSkips[0];
-          lastSkipAt.value = new Date(last.timestamp).toLocaleString("pt-BR", {
-            dateStyle: "short", timeStyle: "short"
-          });
+          const locale = localStorage.getItem("app.locale") || "pt-BR";
+          lastSkipAt.value = new Date(last.timestamp).toLocaleString(
+            locale === "pt-BR" ? "pt-BR" : "en-US",
+            { dateStyle: "short", timeStyle: "short" }
+          );
         }
       }
     } catch (e) {
@@ -57,13 +61,13 @@ export function useDashboardCards() {
     const variant = statusVariant.value(h.lastJob?.status);
     return {
       icon: "library",
-      label: "Serviço",
+      label: t("dashboard.serviceHealth"),
       value: h.uptime,
       breakdown: [
-        { label: "CPU", value: h.cpuPercent },
-        { label: "RAM", value: `${h.memMB} MB` },
+        { label: t("dashboard.cpu"), value: h.cpuPercent },
+        { label: t("dashboard.ram"), value: `${h.memMB} MB` },
       ],
-      badge: h.lastJob ? { text: h.lastJob.status, variant } : { text: "Online", variant: "success" },
+      badge: h.lastJob ? { text: h.lastJob.status, variant } : { text: t("dashboard.online"), variant: "success" },
       href: "/settings",
       loading: store.loading && !h,
       error: store.partialErrors.status,
@@ -77,26 +81,27 @@ export function useDashboardCards() {
     if (!job) {
       return {
         icon: "sync",
-        label: "Última Sincronização",
-        value: "Nunca executado",
-        badge: { text: "Pendente", variant: "neutral" },
+        label: t("dashboard.lastSync"),
+        value: t("dashboard.neverRun"),
+        badge: { text: t("dashboard.pending"), variant: "neutral" },
         href: "/logs",
         loading: store.loading && !h,
         error: store.partialErrors.status,
       };
     }
+    const locale = localStorage.getItem("app.locale") || "pt-BR";
     const updatedAt = job.updatedAt
-      ? new Date(job.updatedAt).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" })
+      ? new Date(job.updatedAt).toLocaleString(locale === "pt-BR" ? "pt-BR" : "en-US", { dateStyle: "short", timeStyle: "short" })
       : "—";
     const variant = statusVariant.value(job.status);
     return {
       icon: "sync",
-      label: "Última Sincronização",
+      label: t("dashboard.lastSync"),
       value: updatedAt,
       breakdown: [
-        { label: "Processados", value: job.processed.toLocaleString("pt-BR"), class: "text-success" },
-        { label: "Pulados", value: job.skipped.toLocaleString("pt-BR") },
-        { label: "Erros", value: job.errors.toLocaleString("pt-BR"), class: job.errors > 0 ? "text-danger" : "" },
+        { label: t("dashboard.processed"), value: job.processed.toLocaleString(locale), class: "text-success" },
+        { label: t("dashboard.skipped"), value: job.skipped.toLocaleString(locale) },
+        { label: t("dashboard.errors"), value: job.errors.toLocaleString(locale), class: job.errors > 0 ? "text-danger" : "" },
       ],
       badge: { text: job.status, variant },
       href: "/logs",
@@ -108,17 +113,18 @@ export function useDashboardCards() {
   const librariesCard = computed(() => {
     const s = store.librariesSummary;
     const m = store.markersSummary;
+    const locale = localStorage.getItem("app.locale") || "pt-BR";
     return {
       icon: "library",
-      label: "Bibliotecas",
-      value: s.count.toLocaleString("pt-BR"),
+      label: t("nav.libraries"),
+      value: s.count.toLocaleString(locale),
       breakdown: [
-        { label: "Intro", value: m.byKind.intro.toLocaleString("pt-BR") },
-        { label: "Créditos", value: m.byKind.credits.toLocaleString("pt-BR") },
-        { label: "Detectados", value: m.byOrigin.detected.toLocaleString("pt-BR") },
-        { label: "Manuais", value: m.byOrigin.manual.toLocaleString("pt-BR") },
+        { label: t("markers.intro"), value: m.byKind.intro.toLocaleString(locale) },
+        { label: t("markers.credits"), value: m.byKind.credits.toLocaleString(locale) },
+        { label: t("markers.detected"), value: m.byOrigin.detected.toLocaleString(locale) },
+        { label: t("markers.manual"), value: m.byOrigin.manual.toLocaleString(locale) },
       ],
-      badge: s.count ? { text: `${s.count} libs`, variant: "neutral" } : { text: "Vazio", variant: "warning" },
+      badge: s.count ? { text: `${s.count} ${t("common.libs")}`, variant: "neutral" } : { text: t("dashboard.empty"), variant: "warning" },
       href: "/libraries",
       loading: store.loading && (!store.librariesData.length || !store.markersData.length),
       error: store.partialErrors.libraries || store.partialErrors.markers,
@@ -127,13 +133,13 @@ export function useDashboardCards() {
 
   const skipSessionsCard = computed(() => ({
     icon: "tv",
-    label: "Sessões & Skips",
+    label: t("nav.sessions"),
     value: skipSessionsCount.value === 0 ? "—" : skipSessionsCount.value.toString(),
     breakdown: [
-      { label: "Sessões ativas", value: skipSessionsCount.value.toString() },
-      { label: "Último skip", value: lastSkipAt.value ?? "—" },
+      { label: t("sessions.activeSessions"), value: skipSessionsCount.value.toString() },
+      { label: t("sessions.lastSkip"), value: lastSkipAt.value ?? "—" },
     ],
-    badge: skipSessionsCount.value > 0 ? { text: `${skipSessionsCount.value} ativas`, variant: "warning" } : { text: "Sem sessões", variant: "neutral" },
+    badge: skipSessionsCount.value > 0 ? { text: `${skipSessionsCount.value} ${t("sessions.active")}`, variant: "warning" } : { text: t("sessions.noSessions"), variant: "neutral" },
     href: "/sessions",
     loading: store.loading,
     error: false,

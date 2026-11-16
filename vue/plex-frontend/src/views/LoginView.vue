@@ -40,7 +40,8 @@ const handleLogin = async () => {
     });
 
     if (response.ok) {
-      authStore.login();
+      const data = await response.json();
+      authStore.login(data.token);
       await router.push(getRedirect());
     } else {
       error.value = "Senha inválida";
@@ -67,10 +68,20 @@ const handleLogin = async () => {
       <form @submit.prevent="handleLogin">
         <div class="form-group">
           <label for="password">Senha</label>
-          <input id="password" v-model="password" type="password" placeholder="Digite a senha" />
+          <input
+            id="password"
+            v-model="password"
+            type="password"
+            placeholder="Digite a senha"
+            data-testid="password-input"
+          />
         </div>
 
-        <button :disabled="loading" type="submit">
+        <button
+          :disabled="loading"
+          type="submit"
+          data-testid="login-submit"
+        >
           <AppIcon v-if="!loading" name="check" size="sm" />
           <AppIcon v-else name="spinner" size="sm" class="spin" />
           {{ loading ? "Entrando..." : "Entrar" }}

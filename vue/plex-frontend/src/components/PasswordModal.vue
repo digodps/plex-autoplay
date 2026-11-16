@@ -1,6 +1,10 @@
 <script setup>
 import { onMounted, onUnmounted, ref } from "vue";
+import { useI18n } from "vue-i18n";
 import { changePassword } from "@/api";
+import AppIcon from "@/components/AppIcon.vue";
+
+const { t } = useI18n();
 
 const props = defineProps({
   isOpen: { type: Boolean, default: false },
@@ -51,11 +55,11 @@ async function apply() {
   error.value = "";
 
   if (newPassword.value.length < 8) {
-    error.value = "A senha deve ter pelo menos 8 caracteres";
+    error.value = t("auth.passwordMinLength");
     return;
   }
   if (newPassword.value !== confirmPassword.value) {
-    error.value = "As senhas não conferem";
+    error.value = t("auth.passwordsMismatch");
     return;
   }
 
@@ -67,13 +71,13 @@ async function apply() {
       return;
     }
     if (response.status === 403) {
-      error.value = "Senha atual incorreta";
+      error.value = t("auth.currentPasswordIncorrect");
       return;
     }
     const data = await response.json().catch(() => ({}));
-    error.value = data.message || "Não foi possível alterar a senha";
+    error.value = data.message || t("errors.generic");
   } catch {
-    error.value = "Erro ao conectar com o servidor";
+    error.value = t("errors.network");
   } finally {
     loading.value = false;
   }
@@ -101,11 +105,11 @@ onUnmounted(() => document.removeEventListener("keydown", onKeydown));
       class="w-full max-w-md rounded-lg border border-gray-300 bg-white p-6 shadow-lg dark:border-gray-700 dark:bg-gray-900"
     >
       <h2 id="password-title" class="mb-4 text-lg font-semibold text-black dark:text-white">
-        Alterar senha
+        {{ t("auth.changePassword") }}
       </h2>
 
       <label class="mb-1 block text-sm text-gray-700 dark:text-bodydark" for="password-current">
-        Senha atual
+        {{ t("auth.currentPassword") }}
       </label>
       <div class="mb-3 relative">
         <input
@@ -121,7 +125,7 @@ onUnmounted(() => document.removeEventListener("keydown", onKeydown));
         <button
           type="button"
           class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-black dark:text-bodydark dark:hover:text-white"
-          :aria-label="showCurrentPassword ? 'Ocultar senha' : 'Mostrar senha'"
+          :aria-label="showCurrentPassword ? t('aria.collapse') : t('aria.expand')"
           :aria-pressed="showCurrentPassword"
           data-testid="toggle-password-current"
           @click="toggleCurrentPassword"
@@ -131,7 +135,7 @@ onUnmounted(() => document.removeEventListener("keydown", onKeydown));
       </div>
 
       <label class="mb-1 block text-sm text-gray-700 dark:text-bodydark" for="password-new">
-        Nova senha
+        {{ t("auth.newPassword") }}
       </label>
       <div class="mb-3 relative">
         <input
@@ -149,7 +153,7 @@ onUnmounted(() => document.removeEventListener("keydown", onKeydown));
         <button
           type="button"
           class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-black dark:text-bodydark dark:hover:text-white"
-          :aria-label="showNewPassword ? 'Ocultar senha' : 'Mostrar senha'"
+          :aria-label="showNewPassword ? t('aria.collapse') : t('aria.expand')"
           :aria-pressed="showNewPassword"
           data-testid="toggle-password-new"
           @click="toggleNewPassword"
@@ -159,7 +163,7 @@ onUnmounted(() => document.removeEventListener("keydown", onKeydown));
       </div>
 
       <label class="mb-1 block text-sm text-gray-700 dark:text-bodydark" for="password-confirm">
-        Confirmar nova senha
+        {{ t("auth.confirmPassword") }}
       </label>
       <div class="mb-2 relative">
         <input
@@ -177,7 +181,7 @@ onUnmounted(() => document.removeEventListener("keydown", onKeydown));
         <button
           type="button"
           class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-black dark:text-bodydark dark:hover:text-white"
-          :aria-label="showConfirmPassword ? 'Ocultar senha' : 'Mostrar senha'"
+          :aria-label="showConfirmPassword ? t('aria.collapse') : t('aria.expand')"
           :aria-pressed="showConfirmPassword"
           data-testid="toggle-password-confirm"
           @click="toggleConfirmPassword"
@@ -195,7 +199,7 @@ onUnmounted(() => document.removeEventListener("keydown", onKeydown));
           data-testid="password-cancel"
           @click="close"
         >
-          Cancelar
+          {{ t("common.cancel") }}
         </button>
         <button
           type="button"
@@ -204,7 +208,7 @@ onUnmounted(() => document.removeEventListener("keydown", onKeydown));
           data-testid="password-submit"
           @click="apply"
         >
-          {{ loading ? "Salvando..." : "Alterar senha" }}
+          {{ loading ? t("common.loading") : t("auth.changePassword") }}
         </button>
       </div>
     </div>

@@ -1,11 +1,12 @@
 <script setup>
 import { computed } from "vue";
 import { useRoute, useRouter } from "vue-router";
+import { useI18n } from "vue-i18n";
 import AppIcon from "@/components/AppIcon.vue";
 import Breadcrumb from "@/components/Breadcrumb.vue";
 import { useSeriesCatalog } from "@/composables/useSeriesCatalog";
-import "./SeriesView.css";
 
+const { t } = useI18n();
 const route = useRoute();
 const router = useRouter();
 
@@ -28,11 +29,11 @@ const {
 } = useSeriesCatalog({ libraryKey: libraryKey.value });
 
 const libraryTitle = computed(() => {
-  return libraryKey.value ? `Biblioteca ${libraryKey.value}` : "Biblioteca";
+  return libraryKey.value ? `Biblioteca ${libraryKey.value}` : t("nav.libraries");
 });
 
 const breadcrumbItems = computed(() => [
-  { label: "Bibliotecas", to: { name: "libraries" } },
+  { label: t("nav.libraries"), to: { name: "libraries" } },
   { label: libraryTitle.value, current: true },
 ]);
 </script>
@@ -50,18 +51,18 @@ const breadcrumbItems = computed(() => [
           v-model="seriesQuery"
           class="input"
           type="search"
-          placeholder="Buscar série..."
-          aria-label="Buscar série"
+          :placeholder="t('series.searchPlaceholder')"
+          :aria-label="t('series.searchPlaceholder')"
         />
       </div>
-      <span v-if="!seriesLoading" class="count">{{ seriesTotalSize }} série(s)</span>
+      <span v-if="!seriesLoading" class="count">{{ seriesTotalSize }} {{ t('series.series') }}</span>
     </div>
 
     <!-- Error State -->
     <div v-if="seriesError" class="alert" role="alert">
       <AppIcon name="warning" size="sm" />
       <span>{{ seriesError }}</span>
-      <button class="btn btn-ghost btn-sm" @click="refresh">Tentar novamente</button>
+      <button class="btn btn-ghost btn-sm" @click="refresh">{{ t("common.retry") }}</button>
     </div>
 
     <!-- Loading Skeletons -->
@@ -111,14 +112,14 @@ const breadcrumbItems = computed(() => [
 
       <!-- End of catalog indicator -->
       <div v-if="!hasMore && seriesList.length > 0" class="end-of-catalog">
-        <span>Fim do catálogo</span>
+        <span>{{ t("series.noSeries") }}</span>
       </div>
     </div>
 
     <!-- Empty State -->
     <div v-else-if="!seriesLoading && !seriesError" class="empty">
       <AppIcon name="tv" size="lg" />
-      <p>Nenhuma série encontrada.</p>
+      <p>{{ t("series.noSeries") }}</p>
     </div>
   </div>
 </template>

@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { computed } from 'vue'
 import LogCardHeader from './LogCardHeader.vue'
 import LogCardContent from './LogCardContent.vue'
 

@@ -1,13 +1,13 @@
 <script setup>
 import { onMounted } from "vue";
-import { useRouter } from "vue-router";
+import { useI18n } from "vue-i18n";
 import LogFilterBar from "@/components/Logs/LogFilterBar.vue";
 import LogCarouselView from "@/components/Logs/LogCarouselView.vue";
 import { useLogsStore } from "@/stores/logs";
 import { apiFetch } from "@/api";
 
+const { t } = useI18n();
 const logsStore = useLogsStore();
-const router = useRouter();
 
 onMounted(() => {
   logsStore.fetchLogs();
@@ -27,35 +27,35 @@ async function handleStartScan() {
       }, 2000);
       setTimeout(() => clearInterval(interval), 30000); // Para após 30 segundos
     } else {
-      window.alert("Erro ao iniciar escaneamento");
+      window.alert(t("logs.syncFailed"));
     }
   } catch (e) {
-    window.alert("Erro ao iniciar escaneamento: " + e.message);
+    window.alert(t("logs.syncFailed") + ": " + e.message);
   }
 }
 
 async function handleClearLogs() {
-  if (!window.confirm("Confirma limpeza de TODOS os logs? Esta ação não pode ser desfeita.")) return;
+  if (!window.confirm(t("logs.confirmClearLogs"))) return;
   try {
     await logsStore.clearLogs();
-    window.alert("Logs limpos com sucesso");
+    window.alert(t("logs.logsCleared"));
   } catch (e) {
-    window.alert("Erro ao limpar logs: " + e.message);
+    window.alert(t("errors.generic") + ": " + e.message);
   }
 }
 
 async function handleCleanup() {
-  const days = window.prompt("Retenção em dias (padrão 30):", "30");
+  const days = window.prompt(t("logs.cleanupPrompt"), "30");
   if (days === null) return;
   if (!days.match(/^\d+$/)) {
-    window.alert("Valor inválido");
+    window.alert(t("errors.validation"));
     return;
   }
   try {
     await logsStore.cleanupLogs(parseInt(days));
-    window.alert("Limpeza de logs antigos concluída");
+    window.alert(t("logs.cleanupComplete"));
   } catch (e) {
-    window.alert("Erro na limpeza: " + e.message);
+    window.alert(t("errors.generic") + ": " + e.message);
   }
 }
 </script>
@@ -65,32 +65,32 @@ async function handleCleanup() {
     <div class="mx-auto max-w-6xl px-4 py-6">
       <div class="flex items-center justify-between gap-3 flex-wrap">
         <div>
-          <h1 class="text-2xl font-bold text-white">Logs de processamento</h1>
-          <p class="mt-1 text-sm text-gray-400">
-            Histórico de varreduras, filtros e agrupamento.
+          <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">{{ t("logs.title") }}</h1>
+          <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+            {{ t("logs.subtitle") }}
           </p>
         </div>
         <div class="flex items-center gap-2 flex-wrap">
           <button
             data-testid="log-btn-scan"
-            class="rounded-lg border border-gray-700 bg-gray-800 px-4 py-2 text-sm font-medium text-gray-300 transition hover:border-gray-500 hover:text-white"
+            class="rounded-lg border border-stroke px-4 py-2 text-sm font-medium text-gray-700 transition hover:border-accent hover:text-accent dark:border-strokedark dark:text-bodydark"
             @click="handleStartScan"
           >
-            Iniciar Escaneamento
+            {{ t("sync.syncNow") }}
           </button>
           <button
             data-testid="log-btn-clear"
-            class="rounded-lg border border-gray-700 bg-gray-800 px-4 py-2 text-sm font-medium text-gray-300 transition hover:border-gray-500 hover:text-white"
+            class="rounded-lg border border-stroke px-4 py-2 text-sm font-medium text-gray-700 transition hover:border-accent hover:text-accent dark:border-strokedark dark:text-bodydark"
             @click="handleClearLogs"
           >
-            Limpar Logs
+            {{ t("logs.clearLogs") }}
           </button>
           <button
             data-testid="log-btn-cleanup"
-            class="rounded-lg border border-gray-700 bg-gray-800 px-4 py-2 text-sm font-medium text-gray-300 transition hover:border-gray-500 hover:text-white"
+            class="rounded-lg border border-stroke px-4 py-2 text-sm font-medium text-gray-700 transition hover:border-accent hover:text-accent dark:border-strokedark dark:text-bodydark"
             @click="handleCleanup"
           >
-            Limpar > 30 dias
+            {{ t("logs.cleanupLogs") }}
           </button>
         </div>
       </div>

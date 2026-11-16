@@ -1,9 +1,11 @@
 <script setup>
-import { ref, onBeforeUnmount } from "vue";
 import { useRouter } from "vue-router";
+import { useI18n } from "vue-i18n";
 import AppIcon from "./AppIcon.vue";
 
-const props = defineProps({
+const { t } = useI18n();
+
+defineProps({
   genreGroups: {
     type: Array,
     required: true,
@@ -29,21 +31,21 @@ function getTrack(button) {
   return section?.querySelector(".carousel-track");
 }
 
-function scrollLeft(genre, e) {
+function scrollLeft(_genre, e) {
   const track = getTrack(e.currentTarget);
   if (track) {
     track.scrollBy({ left: -track.clientWidth * 0.8, behavior: "smooth" });
   }
 }
 
-function scrollRight(genre, e) {
+function scrollRight(_genre, e) {
   const track = getTrack(e.currentTarget);
   if (track) {
     track.scrollBy({ left: track.clientWidth * 0.8, behavior: "smooth" });
   }
 }
 
-function onWheel(e, genre) {
+function onWheel(e, _genre) {
   if (e.deltaY !== 0) {
     const track = e.currentTarget;
     track.scrollLeft += e.deltaY;
@@ -82,16 +84,16 @@ function onWheel(e, genre) {
       >
         <header class="genre-header">
           <h2 class="genre-title">{{ group.genre }}</h2>
-          <span class="genre-count">{{ group.series.length }} série(s)</span>
+          <span class="genre-count">{{ t("series.seriesCount", { count: group.series.length }) }}</span>
         </header>
 
         <div class="carousel-wrapper">
           <button
             v-if="group.series.length > 2"
             class="scroll-btn scroll-btn--left carousel-btn-left"
-            @click="scrollLeft(group.genre, $event)"
-            aria-label="Rolar para a esquerda"
             type="button"
+            :aria-label="t('aria.scrollLeft')"
+            @click="scrollLeft(group.genre, $event)"
           >
             <AppIcon name="chevron-left" size="md" />
           </button>
@@ -122,9 +124,9 @@ function onWheel(e, genre) {
           <button
             v-if="group.series.length > 2"
             class="scroll-btn scroll-btn--right carousel-btn-right"
-            @click="scrollRight(group.genre, $event)"
-            aria-label="Rolar para a direita"
             type="button"
+            :aria-label="t('aria.scrollRight')"
+            @click="scrollRight(group.genre, $event)"
           >
             <AppIcon name="chevron-right" size="md" />
           </button>
@@ -133,7 +135,7 @@ function onWheel(e, genre) {
     </div>
 
     <div v-else-if="!isLoading && !error" class="empty">
-      <p>Nenhuma série encontrada nesta biblioteca.</p>
+      <p>{{ t("series.noSeriesInLibrary") }}</p>
     </div>
   </div>
 </template>
