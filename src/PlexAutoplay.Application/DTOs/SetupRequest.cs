@@ -7,9 +7,6 @@ using System.Text.Json.Serialization;
 /// </summary>
 public record SetupRequest
 {
-    [JsonPropertyName("token")]
-    public string Token { get; init; } = "";
-
     [JsonPropertyName("newPassword")]
     public string NewPassword { get; init; } = "";
 

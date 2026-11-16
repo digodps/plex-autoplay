@@ -22,7 +22,6 @@ public static class AuthEndpoints
             [FromBody(EmptyBodyBehavior = EmptyBodyBehavior.Allow)] SetupRequest? request) =>
         {
             var result = await setupUseCase.ExecuteAsync(new CompleteSetupRequest(
-                request?.Token,
                 request?.NewPassword,
                 request?.PlexUrl,
                 request?.PlexToken,
@@ -31,9 +30,6 @@ public static class AuthEndpoints
             return result.Status switch
             {
                 SetupStatus.Success => Results.NoContent(),
-                SetupStatus.InvalidToken => Results.Json(
-                    new { message = "Token de setup inválido ou já utilizado" },
-                    statusCode: StatusCodes.Status401Unauthorized),
                 SetupStatus.InvalidPassword => Results.BadRequest(new { errors = result.Errors }),
                 SetupStatus.InvalidSettings => Results.BadRequest(new { errors = result.Errors }),
                 SetupStatus.AlreadyConfigured => Results.Json(
