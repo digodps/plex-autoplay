@@ -96,7 +96,7 @@ import { nextTick } from 'vue';
       data-testid="language-selector-button"
       @click="toggle"
     >
-      <span class="text-lg" aria-hidden="true">{{ currentLocale.flag }}</span>
+      <AppIcon name="globe" size="sm" class="text-gray-500" />
       <span class="hidden sm:inline font-medium">{{ currentLocale.label }}</span>
       <AppIcon name="chevron-down" size="sm" class="text-gray-500" />
     </button>

@@ -25,7 +25,7 @@
     "forgotPassword": "Esqueci a senha",
     "noAccount": "Não tem conta?",
     "createAccount": "Criar conta",
-    "loginError": "E-mail ou senha inválidos",
+    "loginError": "Senha inválida",
     "setupRequired": "Configuração inicial necessária",
     "welcome": "Bem-vindo ao Plex Autoplay",
     "configureServer": "Configure seu servidor Plex para continuar",
@@ -46,7 +46,18 @@
     "quickActions": "Ações Rápidas",
     "syncNow": "Sincronizar Agora",
     "manageMarkers": "Gerenciar Marcadores",
-    "viewLogs": "Ver Logs"
+    "viewLogs": "Ver Logs",
+    "lastSync": "Última sincronização",
+    "serviceHealth": "Saúde do serviço",
+    "cpu": "CPU",
+    "ram": "RAM",
+    "online": "Online",
+    "neverRun": "Nunca executado",
+    "pending": "Pendente",
+    "empty": "Vazio",
+    "processed": "Processados",
+    "skipped": "Ignorados",
+    "errors": "Erros"
   },
   "libraries": {
     "title": "Bibliotecas",
@@ -85,7 +96,9 @@
     "sortRating": "Avaliação",
     "sortYear": "Ano",
     "filterGenre": "Filtrar por gênero",
-    "allGenres": "Todos os gêneros"
+    "allGenres": "Todos os gêneros",
+    "seriesCount": "{count} séries",
+    "series": "séries"
   },
   "seriesDetail": {
     "title": "Detalhes da Série",
@@ -127,7 +140,9 @@
     "bulkActions": "Ações em Lote",
     "applyToAllEpisodes": "Aplicar a todos os episódios",
     "copyMarkers": "Copiar Marcadores",
-    "pasteMarkers": "Colar Marcadores"
+    "pasteMarkers": "Colar Marcadores",
+    "detected": "Detectados",
+    "manual": "Manuais"
   },
   "logs": {
     "title": "Logs",
@@ -144,6 +159,17 @@
     "noLogs": "Nenhum log encontrado",
     "loading": "Carregando logs...",
     "error": "Erro ao carregar logs",
+    "clearLogs": "Limpar Logs",
+    "cleanupLogs": "Limpar Logs Antigos",
+    "filter": {
+      "text": "Texto",
+      "level": "Nível",
+      "from": "De",
+      "to": "Até"
+    },
+    "groupBy": {
+      "label": "Agrupar por"
+    },
     "levels": {
       "debug": "Debug",
       "info": "Info",
@@ -189,7 +215,15 @@
     "saveChanges": "Salvar Alterações",
     "changesSaved": "Alterações salvas com sucesso",
     "languageLabel": "Idioma da Interface",
-    "languageChanged": "Idioma alterado para {language}"
+    "languageChanged": "Idioma alterado para {language}",
+    "syncInterval": "Intervalo de Sincronização",
+    "syncIntervalHelp": "Intervalo em minutos entre sincronizações automáticas",
+    "mediaRootsLabel": "Caminhos de Mídia",
+    "tokenConfiguredHelp": "Token configurado. Deixe em branco para manter o atual.",
+    "tokenConfigured": "Token configurado",
+    "noTokenConfigured": "Nenhum token configurado",
+    "enterToken": "Digite o token",
+    "mediaRootsRequired": "Pelo menos um caminho de mídia é obrigatório"
   },
   "sessions": {
     "title": "Sessões Ativas",
@@ -208,7 +242,20 @@
     "directPlay": "Direct Play",
     "directStream": "Direct Stream",
     "bandwidth": "Largura de Banda",
-    "refresh": "Atualizar"
+    "refresh": "Atualizar",
+    "activeSessions": "Sessões ativas",
+    "lastSkip": "Último skip",
+    "active": "ativas",
+    "client": "Cliente",
+    "positionDuration": "Posição / Duração",
+    "nextSkip": "Próximo Skip",
+    "noMarker": "Sem marcador",
+    "noMarkerAhead": "Sem marcador à frente",
+    "skipHistory": "Histórico de Skips",
+    "noSkipsYet": "Nenhum skip realizado ainda",
+    "datetime": "Data/Hora",
+    "type": "Tipo",
+    "fromTo": "De → Para"
   },
   "common": {
     "save": "Salvar",
@@ -279,7 +326,8 @@
     "timeout": "Tempo limite excedido.",
     "unknown": "Erro desconhecido.",
     "tryAgain": "Tente novamente.",
-    "contactSupport": "Entre em contato com o suporte se o problema persistir."
+    "contactSupport": "Entre em contato com o suporte se o problema persistir.",
+    "libs": "bibliotecas"
   },
   "aria": {
     "close": "Fechar",
@@ -326,7 +374,7 @@
   },
   "breadcrumb": {
     "home": "Início",
-    "dashboard": "Dashboard",
+    "dashboard": "Painel",
     "libraries": "Bibliotecas",
     "series": "Séries",
     "seriesDetail": "Série",
@@ -334,7 +382,10 @@
     "logs": "Logs",
     "sync": "Sincronização",
     "settings": "Configurações",
-    "sessions": "Sessões"
+    "sessions": "Sessões",
+    "library": "Biblioteca",
+    "libraryUnavailable": "Biblioteca indisponível",
+    "page": "Página"
   },
   "app": {
     "name": "Plex Autoplay",

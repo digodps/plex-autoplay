@@ -25,7 +25,7 @@
     "forgotPassword": "Forgot password",
     "noAccount": "Don't have an account?",
     "createAccount": "Create account",
-    "loginError": "Invalid email or password",
+    "loginError": "Invalid password",
     "setupRequired": "Initial setup required",
     "welcome": "Welcome to Plex Autoplay",
     "configureServer": "Configure your Plex server to continue",
@@ -46,7 +46,18 @@
     "quickActions": "Quick Actions",
     "syncNow": "Sync Now",
     "manageMarkers": "Manage Markers",
-    "viewLogs": "View Logs"
+    "viewLogs": "View Logs",
+    "lastSync": "Last Sync",
+    "serviceHealth": "Service Health",
+    "cpu": "CPU",
+    "ram": "RAM",
+    "online": "Online",
+    "neverRun": "Never run",
+    "pending": "Pending",
+    "empty": "Empty",
+    "processed": "Processed",
+    "skipped": "Skipped",
+    "errors": "Errors"
   },
   "libraries": {
     "title": "Libraries",
@@ -85,7 +96,9 @@
     "sortRating": "Rating",
     "sortYear": "Year",
     "filterGenre": "Filter by genre",
-    "allGenres": "All genres"
+    "allGenres": "All genres",
+    "seriesCount": "{count} series",
+    "series": "series"
   },
   "seriesDetail": {
     "title": "Series Details",
@@ -127,7 +140,9 @@
     "bulkActions": "Bulk Actions",
     "applyToAllEpisodes": "Apply to all episodes",
     "copyMarkers": "Copy Markers",
-    "pasteMarkers": "Paste Markers"
+    "pasteMarkers": "Paste Markers",
+    "detected": "Detected",
+    "manual": "Manual"
   },
   "logs": {
     "title": "Logs",
@@ -144,6 +159,17 @@
     "noLogs": "No logs found",
     "loading": "Loading logs...",
     "error": "Error loading logs",
+    "clearLogs": "Clear Logs",
+    "cleanupLogs": "Cleanup Old Logs",
+    "filter": {
+      "text": "Text",
+      "level": "Level",
+      "from": "From",
+      "to": "To"
+    },
+    "groupBy": {
+      "label": "Group By"
+    },
     "levels": {
       "debug": "Debug",
       "info": "Info",
@@ -189,7 +215,15 @@
     "saveChanges": "Save Changes",
     "changesSaved": "Changes saved successfully",
     "languageLabel": "Interface Language",
-    "languageChanged": "Language changed to {language}"
+    "languageChanged": "Language changed to {language}",
+    "syncInterval": "Sync Interval",
+    "syncIntervalHelp": "Interval in minutes between automatic syncs",
+    "mediaRootsLabel": "Media Paths",
+    "tokenConfiguredHelp": "Token configured. Leave blank to keep current.",
+    "tokenConfigured": "Token configured",
+    "noTokenConfigured": "No token configured",
+    "enterToken": "Enter token",
+    "mediaRootsRequired": "At least one media path is required"
   },
   "sessions": {
     "title": "Active Sessions",
@@ -208,7 +242,20 @@
     "directPlay": "Direct Play",
     "directStream": "Direct Stream",
     "bandwidth": "Bandwidth",
-    "refresh": "Refresh"
+    "refresh": "Refresh",
+    "activeSessions": "Active sessions",
+    "lastSkip": "Last skip",
+    "active": "active",
+    "client": "Client",
+    "positionDuration": "Position / Duration",
+    "nextSkip": "Next Skip",
+    "noMarker": "No marker",
+    "noMarkerAhead": "No marker ahead",
+    "skipHistory": "Skip History",
+    "noSkipsYet": "No skips yet",
+    "datetime": "Date/Time",
+    "type": "Type",
+    "fromTo": "From → To"
   },
   "common": {
     "save": "Save",
@@ -279,7 +326,8 @@
     "timeout": "Request timed out.",
     "unknown": "Unknown error.",
     "tryAgain": "Please try again.",
-    "contactSupport": "Contact support if the problem persists."
+    "contactSupport": "Contact support if the problem persists.",
+    "libs": "libraries"
   },
   "aria": {
     "close": "Close",
@@ -334,7 +382,10 @@
     "logs": "Logs",
     "sync": "Sync",
     "settings": "Settings",
-    "sessions": "Sessions"
+    "sessions": "Sessions",
+    "library": "Library",
+    "libraryUnavailable": "Library unavailable",
+    "page": "Page"
   },
   "app": {
     "name": "Plex Autoplay",

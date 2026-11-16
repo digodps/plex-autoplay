@@ -25,7 +25,7 @@
     "forgotPassword": "Olvidé la contraseña",
     "noAccount": "¿No tienes cuenta?",
     "createAccount": "Crear cuenta",
-    "loginError": "Correo o contraseña inválidos",
+    "loginError": "Contraseña inválida",
     "setupRequired": "Se requiere configuración inicial",
     "welcome": "Bienvenido a Plex Autoplay",
     "configureServer": "Configura tu servidor Plex para continuar",
@@ -46,7 +46,18 @@
     "quickActions": "Acciones rápidas",
     "syncNow": "Sincronizar ahora",
     "manageMarkers": "Gestionar marcadores",
-    "viewLogs": "Ver registros"
+    "viewLogs": "Ver registros",
+    "lastSync": "Última sincronización",
+    "serviceHealth": "Salud del servicio",
+    "cpu": "CPU",
+    "ram": "RAM",
+    "online": "En línea",
+    "neverRun": "Nunca ejecutado",
+    "pending": "Pendiente",
+    "empty": "Vacío",
+    "processed": "Procesados",
+    "skipped": "Omitidos",
+    "errors": "Errores"
   },
   "libraries": {
     "title": "Bibliotecas",
@@ -127,7 +138,9 @@
     "bulkActions": "Acciones en lote",
     "applyToAllEpisodes": "Aplicar a todos los episodios",
     "copyMarkers": "Copiar marcadores",
-    "pasteMarkers": "Pegar marcadores"
+    "pasteMarkers": "Pegar marcadores",
+    "detected": "Detectados",
+    "manual": "Manuales"
   },
   "logs": {
     "title": "Registros",
@@ -189,7 +202,15 @@
     "saveChanges": "Guardar cambios",
     "changesSaved": "Cambios guardados correctamente",
     "languageLabel": "Idioma de la interfaz",
-    "languageChanged": "Idioma cambiado a {language}"
+    "languageChanged": "Idioma cambiado a {language}",
+    "syncInterval": "Intervalo de Sincronización",
+    "syncIntervalHelp": "Intervalo en minutos entre sincronizaciones automáticas",
+    "mediaRootsLabel": "Rutas de Medios",
+    "tokenConfiguredHelp": "Token configurado. Deja en blanco para mantener el actual.",
+    "tokenConfigured": "Token configurado",
+    "noTokenConfigured": "Ningún token configurado",
+    "enterToken": "Introduce el token",
+    "mediaRootsRequired": "Se requiere al menos una ruta de medios"
   },
   "sessions": {
     "title": "Sesiones activas",
@@ -208,7 +229,20 @@
     "directPlay": "Direct Play",
     "directStream": "Direct Stream",
     "bandwidth": "Ancho de banda",
-    "refresh": "Actualizar"
+    "refresh": "Actualizar",
+    "activeSessions": "Sesiones activas",
+    "lastSkip": "Último skip",
+    "active": "activas",
+    "client": "Cliente",
+    "positionDuration": "Posición / Duración",
+    "nextSkip": "Próximo Skip",
+    "noMarker": "Sin marcador",
+    "noMarkerAhead": "Sin marcador adelante",
+    "skipHistory": "Historial de Skips",
+    "noSkipsYet": "Ningún skip realizado aún",
+    "datetime": "Fecha/Hora",
+    "type": "Tipo",
+    "fromTo": "De → Para"
   },
   "common": {
     "save": "Guardar",
@@ -279,7 +313,8 @@
     "timeout": "Tiempo de espera agotado.",
     "unknown": "Error desconocido.",
     "tryAgain": "Inténtalo de nuevo.",
-    "contactSupport": "Contacta con soporte si el problema persiste."
+    "contactSupport": "Contacta con soporte si el problema persiste.",
+    "libs": "bibliotecas"
   },
   "aria": {
     "close": "Cerrar",
@@ -334,7 +369,10 @@
     "logs": "Registros",
     "sync": "Sincronización",
     "settings": "Ajustes",
-    "sessions": "Sesiones"
+    "sessions": "Sesiones",
+    "library": "Biblioteca",
+    "libraryUnavailable": "Biblioteca no disponible",
+    "page": "Página"
   },
   "app": {
     "name": "Plex Autoplay",

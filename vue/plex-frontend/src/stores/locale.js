@@ -28,10 +28,19 @@ export const useLocaleStore = defineStore('locale', () => {
     if (isInitialized.value) return;
 
     const stored = getStoredLocale();
-    const initialLocale = stored || detectLocale();
+    let initialLocale;
+    if (stored) {
+      initialLocale = stored;
+    } else {
+      initialLocale = detectLocale();
+      // Don't persist auto-detected locale to localStorage
+      // User must explicitly choose a locale to persist it
+    }
 
     locale.value = initialLocale;
-    setStoredLocale(initialLocale);
+    if (stored) {
+      setStoredLocale(initialLocale);
+    }
     loadAndSetLocale(initialLocale);
     isInitialized.value = true;
   }

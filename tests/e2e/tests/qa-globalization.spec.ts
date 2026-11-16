@@ -17,65 +17,76 @@ test.describe('Globalization QA', () => {
 
   test.use({ locale: 'pt-BR' });
 
-  test('language selector button visible and shows pt-BR by default', async ({ page }) => {
-    await page.goto(`${BASE_URL}/dashboard`, { waitUntil: 'domcontentloaded' });
-    await page.waitForSelector('[data-testid="language-selector-button"]', { state: 'visible', timeout: 15000 });
+  async function openUserMenu(page) {
+    await page.click('button[aria-label*="Menu do usuário"]');
+    await page.waitForTimeout(300);
+  }
 
-    const button = page.locator('[data-testid="language-selector-button"]');
-    await expect(button).toBeVisible();
-    await expect(button).toContainText('Português');
-    await expect(button).toContainText('🇧🇷');
+  async function selectLanguage(page, index) {
+    await openUserMenu(page);
+    await page.locator('[data-testid="language-selector-menu"]').selectOption({ index });
+    await page.waitForTimeout(1500);
+  }
+
+  async function reopenUserMenuAndWait(page) {
+    // Locale change triggers page reload; wait for app to remount
+    await page.waitForTimeout(1500);
+    // Menu might already be open after reload; check and wait for select
+    const menuBtn = page.locator('button[aria-label*="Menu do usuário"]');
+    const isExpanded = await menuBtn.getAttribute('aria-expanded');
+    if (isExpanded === 'true') {
+      // Menu already open, just wait for select
+      await page.waitForSelector('[data-testid="language-selector-menu"]', { state: 'visible', timeout: 10000 });
+    } else {
+      // Menu closed, open it
+      await openUserMenu(page);
+      await page.waitForSelector('[data-testid="language-selector-menu"]', { state: 'visible', timeout: 10000 });
+    }
+  }
+
+  test('language selector in user menu shows pt-BR by default', async ({ page }) => {
+    await page.goto(`${BASE_URL}/dashboard`, { waitUntil: 'domcontentloaded' });
+    await page.waitForLoadState('networkidle');
+
+    await openUserMenu(page);
+    await expect(page.locator('[data-testid="language-selector-menu"]')).toBeVisible();
+
+    const select = page.locator('[data-testid="language-selector-menu"]');
+    await expect(select).toHaveValue('pt-BR');
 
     await page.screenshot({ path: `${EVIDENCE}/01-lang-default-ptbr.png`, fullPage: true });
   });
 
   test('language selector dropdown opens and shows all languages', async ({ page }) => {
     await page.goto(`${BASE_URL}/dashboard`, { waitUntil: 'domcontentloaded' });
-    await page.waitForSelector('[data-testid="language-selector-button"]', { state: 'visible', timeout: 15000 });
+    await page.waitForLoadState('networkidle');
 
-    const button = page.locator('[data-testid="language-selector-button"]');
-    await button.click();
+    await openUserMenu(page);
+    await expect(page.locator('[data-testid="language-selector-menu"]')).toBeVisible();
 
-    await page.waitForSelector('[data-testid="language-selector-dropdown"]', { state: 'visible', timeout: 5000 });
-
-    const dropdown = page.locator('[data-testid="language-selector-dropdown"]');
-    await expect(dropdown).toBeVisible();
-
-    const options = page.locator('[data-testid="language-option"]');
+    const options = page.locator('[data-testid="language-selector-menu"] option');
     await expect(options).toHaveCount(3);
 
     // Check pt-BR
     await expect(options.nth(0)).toContainText('Português');
-    await expect(options.nth(0)).toContainText('🇧🇷');
+    await expect(options.nth(0)).toHaveAttribute('value', 'pt-BR');
 
     // Check English
     await expect(options.nth(1)).toContainText('English');
-    await expect(options.nth(1)).toContainText('🇺🇸');
+    await expect(options.nth(1)).toHaveAttribute('value', 'en');
 
     // Check Spanish
     await expect(options.nth(2)).toContainText('Español');
-    await expect(options.nth(2)).toContainText('🇪🇸');
+    await expect(options.nth(2)).toHaveAttribute('value', 'es');
 
     await page.screenshot({ path: `${EVIDENCE}/02-lang-dropdown-open.png`, fullPage: true });
   });
 
   test('can switch to English and UI updates', async ({ page }) => {
     await page.goto(`${BASE_URL}/dashboard`, { waitUntil: 'domcontentloaded' });
-    await page.waitForSelector('[data-testid="language-selector-button"]', { state: 'visible', timeout: 15000 });
+    await page.waitForLoadState('networkidle');
 
-    const button = page.locator('[data-testid="language-selector-button"]');
-    await button.click();
-    await page.waitForSelector('[data-testid="language-selector-dropdown"]', { state: 'visible', timeout: 5000 });
-
-    const englishOption = page.locator('[data-testid="language-option"]').nth(1);
-    await englishOption.click();
-
-    // Wait for locale to change and UI to update
-    await page.waitForTimeout(1000);
-
-    // Verify button now shows English
-    await expect(button).toContainText('English');
-    await expect(button).toContainText('🇺🇸');
+    await selectLanguage(page, 1); // English
 
     // Verify html lang attribute changed
     const htmlLang = await page.evaluate(() => document.documentElement.lang);
@@ -84,61 +95,53 @@ test.describe('Globalization QA', () => {
     // Verify page title translated
     await expect(page.locator('text="Dashboard"')).toBeVisible({ timeout: 5000 });
 
+    // Verify select shows English (reopen menu after locale change)
+    await reopenUserMenuAndWait(page);
+    await expect(page.locator('[data-testid="language-selector-menu"]')).toHaveValue('en');
+
     await page.screenshot({ path: `${EVIDENCE}/03-lang-switched-en.png`, fullPage: true });
   });
 
   test('can switch to Spanish and UI updates', async ({ page }) => {
     await page.goto(`${BASE_URL}/dashboard`, { waitUntil: 'domcontentloaded' });
-    await page.waitForSelector('[data-testid="language-selector-button"]', { state: 'visible', timeout: 15000 });
+    await page.waitForLoadState('networkidle');
 
-    const button = page.locator('[data-testid="language-selector-button"]');
-    await button.click();
-    await page.waitForSelector('[data-testid="language-selector-dropdown"]', { state: 'visible', timeout: 5000 });
-
-    const spanishOption = page.locator('[data-testid="language-option"]').nth(2);
-    await spanishOption.click();
-
-    await page.waitForTimeout(1000);
-
-    await expect(button).toContainText('Español');
-    await expect(button).toContainText('🇪🇸');
+    await selectLanguage(page, 2); // Spanish
 
     const htmlLang = await page.evaluate(() => document.documentElement.lang);
     expect(htmlLang).toBe('es');
 
     await expect(page.locator('text="Panel"')).toBeVisible({ timeout: 5000 });
 
+    await reopenUserMenuAndWait(page);
+    await expect(page.locator('[data-testid="language-selector-menu"]')).toHaveValue('es');
+
     await page.screenshot({ path: `${EVIDENCE}/04-lang-switched-es.png`, fullPage: true });
   });
 
   test('language persists after page reload', async ({ page }) => {
     await page.goto(`${BASE_URL}/dashboard`, { waitUntil: 'domcontentloaded' });
-    await page.waitForSelector('[data-testid="language-selector-button"]', { state: 'visible', timeout: 15000 });
+    await page.waitForLoadState('networkidle');
 
-    const button = page.locator('[data-testid="language-selector-button"]');
-    await button.click();
-    await page.waitForSelector('[data-testid="language-selector-dropdown"]', { state: 'visible', timeout: 5000 });
-
-    const englishOption = page.locator('[data-testid="language-option"]').nth(1);
-    await englishOption.click();
-    await page.waitForTimeout(1000);
+    await selectLanguage(page, 1); // English
+    await page.waitForTimeout(500);
 
     await page.reload({ waitUntil: 'domcontentloaded' });
-    await page.waitForSelector('[data-testid="language-selector-button"]', { state: 'visible', timeout: 15000 });
+    await page.waitForLoadState('networkidle');
 
     // Should still show English
-    await expect(button).toContainText('English');
-    await expect(button).toContainText('🇺🇸');
-
     const htmlLang = await page.evaluate(() => document.documentElement.lang);
     expect(htmlLang).toBe('en');
+
+    await openUserMenu(page);
+    await expect(page.locator('[data-testid="language-selector-menu"]')).toHaveValue('en');
 
     await page.screenshot({ path: `${EVIDENCE}/05-lang-persist-reload.png`, fullPage: true });
   });
 
   test('theme toggle works', async ({ page }) => {
     await page.goto(`${BASE_URL}/dashboard`, { waitUntil: 'domcontentloaded' });
-    await page.waitForSelector('[data-testid="language-selector-button"]', { state: 'visible', timeout: 15000 });
+    await page.waitForLoadState('networkidle');
 
     // Get initial theme
     const initialTheme = await page.evaluate(() => document.documentElement.dataset.theme || 'light');
@@ -160,11 +163,9 @@ test.describe('Globalization QA', () => {
       await page.screenshot({ path: `${EVIDENCE}/07-theme-${newTheme}.png`, fullPage: true });
 
       // Language selector still works after theme change
-      const langButton = page.locator('[data-testid="language-selector-button"]');
-      await expect(langButton).toBeVisible();
-      await langButton.click();
-      await page.waitForSelector('[data-testid="language-selector-dropdown"]', { state: 'visible', timeout: 5000 });
-      await expect(page.locator('[data-testid="language-option"]')).toHaveCount(3);
+      await openUserMenu(page);
+      const options = page.locator('[data-testid="language-selector-menu"] option');
+      await expect(options).toHaveCount(3);
     } else {
       console.log('NO THEME TOGGLE FOUND');
     }
@@ -190,8 +191,9 @@ test.describe('Globalization QA', () => {
       await expect(page.locator('[data-testid="app-header"]')).toBeVisible({ timeout: 10000 });
 
       // Verify language selector still works on each page
-      const langButton = page.locator('[data-testid="language-selector-button"]');
-      await expect(langButton).toBeVisible();
+      await openUserMenu(page);
+      await expect(page.locator('[data-testid="language-selector-menu"]')).toBeVisible();
+      await page.keyboard.press('Escape'); // Close menu
 
       await page.screenshot({ path: `${EVIDENCE}/08-nav-${pg.path.replace('/', '')}.png`, fullPage: true });
     }
@@ -199,20 +201,18 @@ test.describe('Globalization QA', () => {
 
   test('keyboard navigation in language selector', async ({ page }) => {
     await page.goto(`${BASE_URL}/dashboard`, { waitUntil: 'domcontentloaded' });
-    await page.waitForSelector('[data-testid="language-selector-button"]', { state: 'visible', timeout: 15000 });
+    await page.waitForLoadState('networkidle');
 
-    const button = page.locator('[data-testid="language-selector-button"]');
-    await button.focus();
-    await page.keyboard.press('Enter');
-    await page.waitForSelector('[data-testid="language-selector-dropdown"]', { state: 'visible', timeout: 5000 });
-
-    // Navigate with arrow keys
+    await openUserMenu(page);
+    const select = page.locator('[data-testid="language-selector-menu"]');
+    await select.focus();
     await page.keyboard.press('ArrowDown');
     await page.keyboard.press('ArrowDown');
     await page.keyboard.press('Enter');
+    await page.waitForTimeout(500);
 
-    await page.waitForTimeout(1000);
-    await expect(button).toContainText('Español');
+    const htmlLang = await page.evaluate(() => document.documentElement.lang);
+    expect(htmlLang).toBe('es');
 
     await page.screenshot({ path: `${EVIDENCE}/09-lang-keyboard-nav.png`, fullPage: true });
   });
@@ -220,24 +220,19 @@ test.describe('Globalization QA', () => {
   test('all pages show correct html lang attribute', async ({ page }) => {
     // Test with pt-BR
     await page.goto(`${BASE_URL}/dashboard`, { waitUntil: 'domcontentloaded' });
-    await page.waitForSelector('[data-testid="language-selector-button"]', { state: 'visible', timeout: 15000 });
+    await page.waitForLoadState('networkidle');
 
     let htmlLang = await page.evaluate(() => document.documentElement.lang);
     expect(htmlLang).toBe('pt-BR');
 
     // Switch to English
-    const button = page.locator('[data-testid="language-selector-button"]');
-    await button.click();
-    await page.waitForSelector('[data-testid="language-selector-dropdown"]', { state: 'visible', timeout: 5000 });
-    await page.locator('[data-testid="language-option"]').nth(1).click();
-    await page.waitForTimeout(1000);
-
+    await selectLanguage(page, 1);
     htmlLang = await page.evaluate(() => document.documentElement.lang);
     expect(htmlLang).toBe('en');
 
     // Navigate to another page and verify lang persisted
     await page.goto(`${BASE_URL}/settings`, { waitUntil: 'domcontentloaded' });
-    await page.waitForLoadState('networkidle', { timeout: 15000 });
+    await page.waitForLoadState('networkidle');
 
     htmlLang = await page.evaluate(() => document.documentElement.lang);
     expect(htmlLang).toBe('en');

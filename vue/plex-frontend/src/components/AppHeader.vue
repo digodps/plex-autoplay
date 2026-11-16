@@ -1,15 +1,18 @@
 <script setup>
-import { computed, ref } from "vue";
+import { computed, ref, onMounted, onUnmounted, watch } from "vue";
 import { useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
 import { useThemeStore } from "@/stores/theme";
 import { useAuthStore } from "@/stores/auth";
+import { useLocaleStore } from "@/stores/locale";
+import { useUIStore } from "@/stores/ui";
 import AppIcon from "@/components/AppIcon.vue";
 import AppLogo from "@/components/AppLogo.vue";
 import PasswordModal from "@/components/PasswordModal.vue";
-import LanguageSelector from "@/components/LanguageSelector.vue";
 
 const { t } = useI18n();
+const localeStore = useLocaleStore();
+const uiStore = useUIStore();
 
 defineProps({
   items: { type: Array, default: () => [] },
@@ -19,23 +22,44 @@ const router = useRouter();
 const theme = useThemeStore();
 const auth = useAuthStore();
 
-const showProfile = ref(false);
 const showPassword = ref(false);
+const languageMenuRef = ref(null);
+
+function handleClickOutside(event) {
+  if (languageMenuRef.value && !languageMenuRef.value.contains(event.target)) {
+    uiStore.closeLanguageMenu();
+  }
+}
+
+onMounted(() => {
+  document.addEventListener("click", handleClickOutside);
+});
+
+onUnmounted(() => {
+  document.removeEventListener("click", handleClickOutside);
+});
 
 const isDark = computed(() => theme.effective === "dark");
 
 const iconButton =
   "flex items-center gap-2 rounded-lg p-2 text-gray-700 hover:text-primary hover:bg-gray-100 dark:text-bodydark dark:hover:bg-gray-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary";
 
+const menuItem = "flex w-full items-center gap-2 rounded px-3 py-2 text-left text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700";
+
 function logout() {
-  showProfile.value = false;
+  uiStore.closeProfile();
   auth.logout();
   router.push({ name: "login" });
 }
 
 function openPassword() {
-  showProfile.value = false;
+  uiStore.closeProfile();
   showPassword.value = true;
+}
+
+function selectLocale(code) {
+  localeStore.setLocale(code);
+  uiStore.closeProfile();
 }
 </script>
 
@@ -68,20 +92,18 @@ function openPassword() {
             :to="item.to"
             class="hover:text-primary"
           >
-            {{ item.label }}
+            {{ $t(item.label) }}
           </RouterLink>
           <span
             v-else
             :class="item.isCurrent ? 'font-medium text-black dark:text-white' : ''"
             :aria-current="item.isCurrent ? 'page' : undefined"
           >
-            {{ item.label }}
+            {{ $t(item.label) }}
           </span>
         </li>
       </ol>
     </nav>
-
-    <LanguageSelector />
 
     <button
       :class="[iconButton, 'ml-auto']"
@@ -98,24 +120,65 @@ function openPassword() {
         :class="iconButton"
         type="button"
         aria-label="Menu do usuário"
-        :aria-expanded="showProfile"
-        @click="showProfile = !showProfile"
+        :aria-expanded="uiStore.showProfile"
+        @click="uiStore.toggleProfile"
+        data-testid="user-menu-button"
       >
         <AppIcon name="user" size="sm" />
       </button>
 
       <div
-        v-if="showProfile"
+        v-if="uiStore.showProfile"
         class="absolute right-0 mt-2 w-44 rounded-lg border border-gray-300 bg-white p-1 shadow-lg dark:border-gray-700 dark:bg-gray-800"
       >
         <router-link
           to="/settings"
           class="flex items-center gap-2 rounded px-3 py-2 text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700"
-          @click="showProfile = false"
+          @click="uiStore.closeProfile"
         >
           <AppIcon name="settings" size="sm" />
           {{ t("userMenu.settings") }}
         </router-link>
+        <div class="border-t border-gray-200 dark:border-gray-700 my-1" />
+        <div class="relative" ref="languageMenuRef">
+          <button
+            type="button"
+            :class="menuItem"
+            :aria-expanded="uiStore.showLanguageMenu"
+            aria-haspopup="menu"
+            aria-label="Selecionar idioma"
+            @click="uiStore.toggleLanguageMenu"
+            data-testid="language-selector-button"
+          >
+            <AppIcon :name="localeStore.currentLocaleInfo.icon" size="sm" class="w-6 h-4" aria-hidden="true" />
+            <span>{{ localeStore.currentLocaleInfo.label }}</span>
+            <AppIcon name="chevron-down" size="sm" class="ml-1 text-gray-500" />
+          </button>
+          <div
+            v-if="uiStore.showLanguageMenu"
+            class="absolute right-0 mt-1 w-40 rounded-lg border border-gray-300 bg-white shadow-lg py-1 dark:border-gray-700 dark:bg-gray-800 z-50"
+            data-testid="language-selector-dropdown"
+          >
+            <button
+              v-for="locale in localeStore.availableLocales"
+              :key="locale.code"
+              type="button"
+              :class="['flex w-full items-center gap-2 px-3 py-2 text-left text-sm', locale.code === localeStore.locale ? 'bg-gray-100 dark:bg-gray-700' : 'text-gray-700 hover:bg-gray-100', 'dark:text-gray-200 dark:hover:bg-gray-700']"
+              @click="selectLocale(locale.code)"
+              data-testid="language-option"
+            >
+              <AppIcon :name="locale.icon" size="sm" class="w-6 h-4" aria-hidden="true" />
+              <span class="font-medium">{{ locale.label }}</span>
+              <AppIcon
+                v-if="locale.code === localeStore.locale"
+                name="check"
+                size="sm"
+                class="ml-auto text-primary"
+                aria-hidden="true"
+              />
+            </button>
+          </div>
+        </div>
         <button
           type="button"
           class="flex w-full items-center gap-2 rounded px-3 py-2 text-left text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700"

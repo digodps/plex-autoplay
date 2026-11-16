@@ -1,5 +1,11 @@
 // ponytail: acesso à home fica com o logo do AppHeader; a trilha começa abaixo dela.
-const LIBRARIES = { label: "Bibliotecas", to: { name: "libraries" } };
+import i18n from '@/i18n';
+
+function t(key) {
+  return i18n.global.t(key);
+}
+
+const LIBRARIES = { label: "breadcrumb.libraries", to: { name: "libraries" } };
 
 function text(value) {
   return Array.isArray(value) ? String(value[0] ?? "") : value ? String(value) : "";
@@ -24,7 +30,7 @@ export function buildBreadcrumb(route, libraries = [], { loading = false } = {})
     items.push({ ...LIBRARIES });
   } else if (name === "series") {
     items.push({ ...LIBRARIES });
-    if (!loading) items.push({ label: lib || "Biblioteca indisponível" });
+    if (!loading) items.push({ label: lib || t("breadcrumb.libraryUnavailable") });
   } else if (name === "series-markers") {
     items.push({ ...LIBRARIES });
     if (lib) {
@@ -33,9 +39,9 @@ export function buildBreadcrumb(route, libraries = [], { loading = false } = {})
         to: key ? { name: "series", params: { key } } : undefined,
       });
     }
-    items.push({ label: text(query.seriesTitle) || lib || "Biblioteca" });
+    items.push({ label: text(query.seriesTitle) || lib || t("breadcrumb.library") });
   } else {
-    items.push({ label: route?.meta?.title || "Página" });
+    items.push({ label: route?.meta?.title || t("breadcrumb.page") });
   }
 
   const filtered = items.filter((item) => item.label);

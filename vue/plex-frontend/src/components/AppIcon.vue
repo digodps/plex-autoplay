@@ -109,6 +109,28 @@ const sizeClass = computed(() => {
     <svg v-else-if="name === 'circle-dotted'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="100%" height="100%">
       <circle cx="12" cy="12" r="10" stroke-dasharray="4 4" />
     </svg>
+    <svg v-else-if="name === 'globe'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="100%" height="100%">
+      <rect x="3" y="4" width="18" height="16" rx="2" />
+      <path d="M12 8l3 4-3 4-3-4 3-4z" />
+      <circle cx="12" cy="12" r="3.5" />
+      <path d="M12 8.5V15.5" />
+      <path d="M8.5 12H15.5" />
+    </svg>
+    <svg v-else-if="name === 'flag-br'" viewBox="0 0 24 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" width="100%" height="100%">
+      <rect x="1" y="1" width="22" height="14" rx="1.5" />
+      <path d="M12 4l6 7-6 7-6-7 6-7z" stroke-width="1" />
+      <circle cx="12" cy="11" r="3" stroke-width="1" />
+    </svg>
+    <svg v-else-if="name === 'flag-us'" viewBox="0 0 24 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" width="100%" height="100%">
+      <rect x="1" y="1" width="22" height="14" rx="1.5" />
+      <rect x="1" y="1" width="9" height="8" stroke-width="1" />
+      <path d="M2 3h6M2 4.5h6M2 6h6" stroke-width="0.8" />
+      <path d="M3 10h5M3 11.5h5M3 13h5" stroke-width="0.8" />
+    </svg>
+    <svg v-else-if="name === 'flag-es'" viewBox="0 0 24 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" width="100%" height="100%">
+      <rect x="1" y="1" width="22" height="14" rx="1.5" />
+      <path d="M1 5h22M1 12h22" stroke-width="1" />
+    </svg>
     <svg v-else viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="100%" height="100%">
       <circle cx="12" cy="12" r="10" />
     </svg>
