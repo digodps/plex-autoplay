@@ -52,8 +52,6 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IAuthCredentialStore>(
             new PlexAutoplay.Infrastructure.Persistence.Repositories.SqliteAuthCredentialStore(sqliteConnectionString));
         services.AddSingleton<IPasswordHasher>(new Pbkdf2PasswordHasher());
-        services.AddSingleton<SetupTokenService>();
-        services.AddSingleton<ISetupTokenValidator>(sp => sp.GetRequiredService<SetupTokenService>());
         services.AddSingleton<LoginUseCase>();
         services.AddTransient<CompleteSetupUseCase>();
         services.AddSingleton<ChangePasswordUseCase>();
