@@ -13,7 +13,6 @@ const router = useRouter();
 const authStore = useAuthStore();
 
 const step = ref(1);
-const token = ref("");
 const newPassword = ref("");
 const confirmPassword = ref("");
 const plexUrl = ref("");
@@ -33,9 +32,9 @@ const setupConfirmRef = ref(null);
 const setupPlexTokenRef = ref(null);
 
 const steps = [
-  { id: 1, label: t("auth.stepPassword") },
-  { id: 2, label: t("auth.stepPlex") },
-  { id: 3, label: t("auth.stepMedia") },
+  { id: 1, label: t("auth.newPassword") },
+  { id: 2, label: t("auth.plexUrl") },
+  { id: 3, label: t("libraries.libraryName") },
 ];
 
 function clearMessages() {
@@ -56,10 +55,6 @@ const toggleSetupPlexToken = makeTogglePassword(showSetupPlexToken, setupPlexTok
 function validateStep() {
   clearMessages();
   if (step.value === 1) {
-    if (!token.value.trim()) {
-      error.value = t("auth.loginError");
-      return false;
-    }
     if (newPassword.value.length < 8) {
       error.value = t("auth.passwordMinLength");
       return false;
@@ -131,7 +126,6 @@ async function finish() {
   loading.value = true;
   try {
     const response = await submitSetup(
-      token.value.trim(),
       newPassword.value,
       plexUrl.value.trim(),
       plexToken.value.trim(),
@@ -218,30 +212,8 @@ async function loginAfterSetup() {
 
         <!-- Step 1: Password -->
         <form v-if="step === 1" data-testid="setup-panel-password" style="display: flex; flex-direction: column; gap: var(--s-4);" @submit.prevent="next">
-          <div class="alert alert--info" data-testid="setup-token-hint" style="display: flex; align-items: flex-start; gap: var(--s-3); background: color-mix(in oklab, var(--action) 8%, transparent); border-color: color-mix(in oklab, var(--action) 25%, transparent);">
-            <img src="/assets/icons/ui-info.svg" data-icon="ui-info" class="icon" width="20" height="20" aria-hidden="true" style="flex-shrink: 0; margin-top: 2px;" />
-            <div>
-              <p style="margin: 0; font-size: var(--t-small);">O token de setup é de <strong>uso único</strong> e está no log do container.</p>
-              <p style="margin: var(--s-1) 0 0; font-size: var(--t-small);">Execute <code class="mono" style="background: color-mix(in oklab, var(--ink) 8%, transparent); padding: 2px 6px; border-radius: var(--r-sm);">docker logs plex-autoplay</code> para obtê-lo.</p>
-            </div>
-          </div>
-
           <div class="field" style="display: flex; flex-direction: column; gap: var(--s-1);">
-            <label for="setup-token" class="t-label">Token de Setup</label>
-            <input
-              id="setup-token"
-              v-model="token"
-              type="text"
-              autocomplete="one-time-code"
-              :placeholder="t('auth.tokenPlaceholder')"
-              class="field__input"
-              data-testid="setup-token"
-              required
-            />
-          </div>
-
-          <div class="field" style="display: flex; flex-direction: column; gap: var(--s-1);">
-            <label for="setup-password" class="t-label">Nova Senha</label>
+            <label for="setup-password" class="t-label">{{ t("auth.newPassword") }}</label>
             <div class="field__wrapper" style="position: relative; display: flex;">
               <input
                 id="setup-password"
@@ -271,7 +243,7 @@ async function loginAfterSetup() {
           </div>
 
           <div class="field" style="display: flex; flex-direction: column; gap: var(--s-1);">
-            <label for="setup-confirm" class="t-label">Confirmar Senha</label>
+            <label for="setup-confirm" class="t-label">{{ t("auth.confirmPassword") }}</label>
             <div class="field__wrapper" style="position: relative; display: flex;">
               <input
                 id="setup-confirm"
