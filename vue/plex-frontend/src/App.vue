@@ -1,12 +1,8 @@
 <script setup>
-import { RouterView, useRoute } from "vue-router";
-import { computed, onMounted, ref } from "vue";
+import { RouterView } from "vue-router";
+import { onMounted, ref } from "vue";
 import AppHeader from "@/components/AppHeader.vue";
 import { fetchLibraries } from "@/api";
-
-const route = useRoute();
-
-const showShell = computed(() => route.meta.shell !== false);
 
 const libraries = ref([]);
 const loading = ref(true);
@@ -24,8 +20,8 @@ onMounted(async () => {
 </script>
 
 <template>
-  <RouterView v-slot="{ Component, route }">
-    <template v-if="route.meta.shell !== false">
+  <RouterView v-slot="{ Component, route: routed }">
+    <template v-if="routed.meta.shell !== false">
       <AppHeader />
       <main id="main-content" class="main" role="main">
         <transition name="page" mode="out-in">

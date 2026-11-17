@@ -210,7 +210,7 @@ async function loginAfterSetup() {
   <Teleport to="body">
     <main id="main-content">
       <!-- Hero Section: Intro/Credit Marker Setup - EXACTLY one screen (SR-1) -->
-      <section class="hero setup-hero hero--split" data-enter data-moment="liquid-type" data-moment-opts='{"strength": 0.8}'>
+      <section class="hero setup-hero hero--split" data-enter data-moment="liquid-type" :data-moment-opts="{ strength: 0.8 }">
         <div class="wrap">
           <!-- Hero text with proper 12-column grid -->
           <div class="hero-text hero__grid">
