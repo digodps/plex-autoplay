@@ -45,6 +45,7 @@
 <!-- Page CSS: only visual-internal and --p-h per card group -->
 <style>
 :root {
+  /* Dark palette (default) - blue-black-cornflower */
   --p-bg: #0a0d14; --p-surface: #131824; --p-ink: #e9edf3; --p-muted: #8891a1;
   --p-accent: #5ab9fc; --p-accent-ink: #0a0d14; --p-action: #5ab9fc; --p-action-ink: #0a0d14;
   --p-inv-bg: #e9edf3; --p-inv-surface: #d7dbe1; --p-inv-ink: #0a0d14; --p-inv-muted: #54575f;
@@ -58,6 +59,15 @@
   --display-stretch: 96%;
   --ly-scale: 1.04;
 }
+
+/* Light theme: swap to inverse palette when .dark class is NOT present */
+html:not(.dark) {
+  --p-bg: #e9edf3; --p-surface: #d7dbe1; --p-ink: #0a0d14; --p-muted: #54575f;
+  --p-accent: #0a0d14; --p-accent-ink: #e9edf3; --p-action: #0a0d14; --p-action-ink: #e9edf3;
+  --p-inv-bg: #0a0d14; --p-inv-surface: #131824; --p-inv-ink: #e9edf3; --p-inv-muted: #8891a1;
+  --p-inv-accent: #5ab9fc; --p-inv-accent-ink: #0a0d14; --p-inv-action: #5ab9fc; --p-inv-action-ink: #0a0d14;
+}
+
   .metrics-grid .panel { --p-h: 280px; }
   .library-grid .panel { --p-h: 220px; }
   .series-grid .panel { --p-h: 320px; }

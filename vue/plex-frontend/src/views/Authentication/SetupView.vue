@@ -232,7 +232,7 @@ async function loginAfterSetup() {
                 </ol>
 
                 <!-- Headline with liquid-type moment -->
-                <h1 class="t-h2 mo-lt__type">Intro/Credit Marker Setup</h1>
+                <h1 class="t-h2 mo-lt__type">{{ t("auth.setupTitle") }}</h1>
                 <p class="t-body">Create your admin account and connect to Plex</p>
                 <p class="t-label" style="color: var(--accent); margin-top: var(--s-3);">6 min setup · 4 platforms · Linux, Windows, macOS, Docker</p>
 
@@ -310,8 +310,9 @@ async function loginAfterSetup() {
                     type="submit"
                     class="btn btn--primary btn-lg btn--no-chevron btn--full"
                     data-testid="setup-next"
+                    style="margin-top: var(--s-2);"
                   >
-                    <span>Create account</span>
+                    <span>{{ t("auth.createAccountBtn") }}</span>
                   </button>
                 </form>
 

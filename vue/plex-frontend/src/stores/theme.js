@@ -12,7 +12,7 @@ function resolveTheme(mode) {
 }
 
 export const useThemeStore = defineStore("theme", () => {
-  const mode = ref(localStorage.getItem(STORAGE_KEY) || "light");
+  const mode = ref(localStorage.getItem(STORAGE_KEY) || "dark");
   const effective = computed(() => resolveTheme(mode.value));
 
   function applyTheme() {

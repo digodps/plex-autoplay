@@ -239,7 +239,7 @@ function selectLocale(code) {
             class="flex w-full items-center gap-2 rounded px-3 py-2 text-left text-[var(--p-action)] hover:bg-[var(--p-action)]/10"
             @click="logout"
           >
-            <AppIcon name="logout" size="sm" />
+            <AppIcon name="log-out" size="sm" />
             {{ t("userMenu.logout") }}
           </button>
         </div>
