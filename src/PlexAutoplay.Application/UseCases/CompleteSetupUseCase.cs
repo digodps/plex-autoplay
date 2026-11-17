@@ -3,14 +3,12 @@ namespace PlexAutoplay.Application.UseCases;
 public enum SetupStatus
 {
     Success,
-    InvalidToken,
     InvalidPassword,
     InvalidSettings,
     AlreadyConfigured
 }
 
 public sealed record CompleteSetupRequest(
-    string? Token,
     string? NewPassword,
     string? PlexUrl,
     string? PlexToken,
@@ -23,9 +21,8 @@ public sealed record CompleteSetupResult(SetupStatus Status, IReadOnlyList<strin
 }
 
 /// <summary>
-/// Conclui o primeiro acesso: valida token de uso único, credenciais do Plex e
+/// Conclui o primeiro acesso: credenciais do Plex e
 /// diretórios de mídia, persiste a configuração e só então cria a senha do operador.
-/// A ordem garante que uma falha nunca deixe credencial criada sem configuração.
 /// </summary>
 public class CompleteSetupUseCase
 {
@@ -33,20 +30,17 @@ public class CompleteSetupUseCase
 
     private readonly IAuthCredentialStore _credentials;
     private readonly IPasswordHasher _hasher;
-    private readonly ISetupTokenValidator _setupTokens;
     private readonly IAppSettingsStore _settings;
     private readonly IPlexApiClient _plexClient;
 
     public CompleteSetupUseCase(
         IAuthCredentialStore credentials,
         IPasswordHasher hasher,
-        ISetupTokenValidator setupTokens,
         IAppSettingsStore settings,
         IPlexApiClient plexClient)
     {
         _credentials = credentials;
         _hasher = hasher;
-        _setupTokens = setupTokens;
         _settings = settings;
         _plexClient = plexClient;
     }
@@ -56,11 +50,6 @@ public class CompleteSetupUseCase
         if (await _credentials.IsConfiguredAsync())
         {
             return CompleteSetupResult.Fail(SetupStatus.AlreadyConfigured, "Configuração inicial já concluída");
-        }
-
-        if (!_setupTokens.TryValidate(request.Token ?? ""))
-        {
-            return CompleteSetupResult.Fail(SetupStatus.InvalidToken, "Token de setup inválido ou já utilizado");
         }
 
         if (!PasswordPolicy.IsValid(request.NewPassword))
@@ -120,7 +109,6 @@ public class CompleteSetupUseCase
             return CompleteSetupResult.Fail(SetupStatus.AlreadyConfigured, "Configuração inicial já concluída");
         }
 
-        _setupTokens.Invalidate();
         return CompleteSetupResult.Ok();
     }
 }

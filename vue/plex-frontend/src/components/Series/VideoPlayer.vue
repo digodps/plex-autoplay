@@ -98,7 +98,10 @@ function handleLoadedMetadata() {
 
 function handleKeyDown(e: KeyboardEvent) {
   // Don't handle keys if user is typing in an input
-  if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+  const target = e.target;
+  const tag = target && typeof target === "object" && "tagName" in target ? (target as { tagName?: string }).tagName : undefined;
+  const isContentEditable = target && typeof target === "object" && "isContentEditable" in target ? (target as { isContentEditable?: boolean }).isContentEditable : false;
+  if (tag === "INPUT" || tag === "TEXTAREA" || isContentEditable) return;
 
   switch (e.key) {
     case " ":
@@ -168,13 +171,13 @@ watch(
       class="video-player__video"
       :src="episode?.local_path"
       :poster="episode?.thumb"
+      playsinline
+      crossorigin="anonymous"
       @ended="handleVideoEnded"
       @timeupdate="handleTimeUpdate"
       @loadedmetadata="handleLoadedMetadata"
       @play="() => (isPlaying = true)"
       @pause="() => (isPlaying = false)"
-      playsinline
-      crossorigin="anonymous"
     ></video>
 
     <div v-if="showCountdown && !countdownCancelled">
@@ -213,9 +216,9 @@ watch(
         <div class="video-player__center">
           <button
             class="video-player__btn"
-            @click="togglePlay"
             :aria-label="isPlaying ? 'Pausar' : 'Reproduzir'"
             :title="isPlaying ? 'Pausar (Espaço)' : 'Reproduzir (Espaço)'"
+            @click="togglePlay"
           >
             <AppIcon v-if="isPlaying" name="pause" size="md" />
             <AppIcon v-else name="play" size="md" />
@@ -225,9 +228,9 @@ watch(
         <div class="video-player__right">
           <button
             class="video-player__btn"
-            @click="toggleMute"
             :aria-label="isMuted ? 'Ativar som' : 'Mutar'"
             :title="isMuted ? 'Ativar som (M)' : 'Mutar (M)'"
+            @click="toggleMute"
           >
             <AppIcon v-if="isMuted" name="volume-x" size="md" />
             <AppIcon v-else name="volume-2" size="md" />
@@ -237,9 +240,9 @@ watch(
 
           <button
             class="video-player__btn"
-            @click="toggleFullscreen"
             :aria-label="isFullscreen ? 'Sair de tela cheia' : 'Tela cheia'"
             :title="isFullscreen ? 'Sair de tela cheia (F)' : 'Tela cheia (F)'"
+            @click="toggleFullscreen"
           >
             <AppIcon v-if="isFullscreen" name="minimize-2" size="md" />
             <AppIcon v-else name="maximize-2" size="md" />

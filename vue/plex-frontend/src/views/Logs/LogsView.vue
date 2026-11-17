@@ -77,17 +77,17 @@ const jobRunning = computed(() => logsStore.jobs.some((j) => j.status === "runni
             <button
               class="btn btn--primary"
               :disabled="jobRunning"
-              @click="handleStartScan"
               data-testid="log-btn-scan"
+              @click="handleStartScan"
             >
               <img src="/assets/icons/ui-play.svg" data-icon="ui-play" class="icon" width="20" height="20" aria-hidden="true" />
               Iniciar Escaneamento
             </button>
-            <button class="btn btn--secondary" @click="handleClearLogs" data-testid="log-btn-clear">
+            <button class="btn btn--secondary" data-testid="log-btn-clear" @click="handleClearLogs">
               <img src="/assets/icons/ui-square-pen.svg" data-icon="ui-square-pen" class="icon" width="20" height="20" aria-hidden="true" />
               Limpar Logs
             </button>
-            <button class="btn btn--secondary" @click="handleCleanup" data-testid="log-btn-cleanup">
+            <button class="btn btn--secondary" data-testid="log-btn-cleanup" @click="handleCleanup">
               <img src="/assets/icons/ui-folder-open.svg" data-icon="ui-folder-open" class="icon" width="20" height="20" aria-hidden="true" />
               Limpar Antigos
             </button>

@@ -38,59 +38,177 @@ function navigateToSeries(libraryKey, libraryTitle) {
 </script>
 
 <template>
-  <div class="mx-auto max-w-6xl px-4 py-3">
-    <div class="flex items-center justify-between gap-3">
-      <div>
-        <h1 class="text-2xl font-semibold text-gray-900 dark:text-gray-100">{{ t("libraries.title") }}</h1>
-        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-          {{ t("libraries.subtitle") }}
-        </p>
-      </div>
-      <div class="flex items-center gap-2">
-        <button
-          class="rounded-lg border border-stroke px-4 py-2 text-sm font-medium text-gray-700 transition hover:border-accent hover:text-accent dark:border-strokedark dark:text-bodydark"
-          @click="loadLibraries"
-        >
+  <div class="libraries-view" data-enter>
+    <header class="page-header" style="margin-bottom: var(--s-6);">
+      <h1 class="t-h2" style="font: var(--font-display); font-weight: var(--display-weight); letter-spacing: var(--display-tracking); margin-bottom: var(--s-2);">{{ t("libraries.title") }}</h1>
+      <p class="t-body muted" style="margin: 0;">{{ t("libraries.subtitle") }}</p>
+      <div style="margin-top: var(--s-4);">
+        <button class="btn btn--secondary" :disabled="loading" @click="loadLibraries">
+          <AppIcon :name="loading ? 'spinner' : 'refresh-cw'" size="sm" :class="{ 'animate-spin': loading }" />
           {{ t("common.refresh") }}
         </button>
       </div>
+    </header>
+
+    <div v-if="error" class="alert alert--error" role="alert" style="margin-bottom: var(--s-6); display: flex; align-items: center; gap: var(--s-3);">
+      <AppIcon name="triangle-alert" size="lg" />
+      {{ error }}
     </div>
 
-    <div class="p-4 md:p-6 lg:p-8 max-w-6xl mx-auto">
-      <div v-if="error" class="rounded-lg border border-stroke bg-red-50 dark:bg-red-900/20 p-4 text-sm text-red-600 dark:text-red-400 mb-6" role="alert">
-        {{ error }}
-      </div>
+    <div v-if="loading" class="library-grid" style="display: grid; grid-template-columns: 1fr; gap: var(--s-4);">
+      <div class="skeleton-card" style="height: 220px;"></div>
+      <div class="skeleton-card" style="height: 220px;"></div>
+      <div class="skeleton-card" style="height: 220px;"></div>
+    </div>
 
-      <div v-if="loading" class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 animate-pulse">
-        <div class="h-44 rounded-xl border border-stroke bg-white dark:bg-gray-800 dark:border-gray-700"></div>
-        <div class="h-44 rounded-xl border border-stroke bg-white dark:bg-gray-800 dark:border-gray-700"></div>
-        <div class="h-44 rounded-xl border border-stroke bg-white dark:bg-gray-800 dark:border-gray-700"></div>
-      </div>
+    <div v-else-if="libraries.length" class="library-grid" style="display: grid; grid-template-columns: 1fr; gap: var(--s-4);">
+      <button
+        v-for="lib in libraries"
+        :key="lib.key"
+        type="button"
+        data-testid="library-card"
+        class="library-card"
+        @click="navigateToSeries(lib.key, lib.title)"
+      >
+        <LibraryMosaic :library-key="lib.key" />
+        <h3 class="card__title">{{ lib.title }}</h3>
+        <p class="card__meta">{{ t("series.seriesCount", { count: lib.seriesCount || 0 }) }}</p>
+      </button>
+    </div>
 
-      <div v-else-if="libraries.length" class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        <button
-          v-for="lib in libraries"
-          :key="lib.key"
-          type="button"
-          data-testid="library-card"
-          class="rounded-xl border border-stroke bg-white dark:bg-gray-800 p-5 dark:border-gray-700 hover:border-accent/50 transition-colors"
-          @click="navigateToSeries(lib.key, lib.title)"
-        >
-          <LibraryMosaic :library-key="lib.key" />
-          <h3 class="mt-4 text-xl font-semibold text-gray-900 dark:text-gray-100 tracking-tight">{{ lib.title }}</h3>
-          <span class="mt-6 flex items-center gap-1 text-sm font-medium text-gray-500 dark:text-gray-400 group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">
-            {{ t("series.seriesCount", { count: lib.seriesCount || 0 }) }}
-            <span class="transform transition-transform group-hover:translate-x-0.5">›</span>
-          </span>
-        </button>
-      </div>
-
-      <div v-else class="rounded-xl border border-stroke bg-white dark:bg-gray-800 p-12 text-center dark:border-gray-700">
-        <AppIcon name="tv" size="lg" class="mx-auto text-gray-500 dark:text-gray-400" />
-        <p class="mt-3 text-sm font-medium text-gray-500 dark:text-gray-400">
-          {{ t("libraries.noLibraries") }}
-        </p>
-      </div>
+    <div v-else class="card panel empty-state" style="--p-h: auto; padding: var(--s-8); text-align: center;">
+      <AppIcon name="tv" size="xl" style="margin: 0 auto var(--s-4); color: var(--muted);" />
+      <p class="t-body muted" style="margin: 0;">{{ t("libraries.noLibraries") }}</p>
     </div>
   </div>
 </template>
+
+<style scoped>
+.libraries-view {
+  width: 100%;
+}
+
+.page-header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+  margin-bottom: var(--s-6);
+}
+
+@media (min-width: 640px) {
+  .page-header {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+}
+
+.library-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--s-4);
+}
+
+@media (min-width: 640px) {
+  .library-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .library-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.library-card {
+  display: flex;
+  flex-direction: column;
+  padding: var(--s-4);
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  cursor: pointer;
+  transition: border-color var(--m-fast) var(--m-ease), box-shadow var(--m-fast) var(--m-ease);
+  text-align: left;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .library-card:hover {
+    border-color: color-mix(in oklab, var(--action) 50%, transparent);
+    box-shadow: var(--shadow-md);
+  }
+}
+
+.library-card:focus-visible {
+  outline: 2px solid var(--action);
+  outline-offset: 2px;
+}
+
+.card__title {
+  margin: var(--s-4) 0 var(--s-2);
+  font: var(--font-display);
+  font-size: var(--t-h3);
+  font-weight: var(--display-weight);
+  color: var(--ink);
+  line-height: 1.2;
+}
+
+.card__meta {
+  margin-top: auto;
+  font-size: var(--t-small);
+  font-weight: 500;
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  gap: var(--s-1);
+}
+
+.card__meta::after {
+  content: "›";
+  display: inline-block;
+  transition: transform var(--m-fast) var(--m-ease);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .library-card:hover .card__meta::after {
+    transform: translateX(4px);
+  }
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--s-3);
+}
+
+.skeleton-card {
+  background: linear-gradient(90deg, var(--surface) 25%, var(--border) 50%, var(--surface) 75%);
+  background-size: 200% 100%;
+  animation: skeleton-loading 1.5s infinite;
+  border-radius: var(--r-lg);
+  border: 1px solid var(--border);
+}
+
+@keyframes skeleton-loading {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.alert {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  padding: var(--s-3) var(--s-4);
+  border-radius: var(--r-md);
+  font-size: var(--t-body);
+  line-height: 1.5;
+}
+
+.alert--error {
+  background: color-mix(in oklab, var(--danger, #e03e3e) 10%, transparent);
+  border: 1px solid color-mix(in oklab, var(--danger, #e03e3e) 25%, transparent);
+  color: var(--ink);
+}
+</style>

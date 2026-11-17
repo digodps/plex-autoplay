@@ -2,20 +2,20 @@
 /* global HTMLElement */
 import { computed, ref, watch, nextTick } from "vue";
 import EpisodeItem from "./EpisodeItem.vue";
+import AppIcon from "@/components/AppIcon.vue";
 
-interface Props {
-  episodes: typeof import("@/stores/series").useSeriesStore extends () => infer T ? T extends { episodes: infer E } ? E : never : never;
-  currentEpisode: typeof import("@/stores/series").useSeriesStore extends () => infer T ? T extends { currentEpisode: infer E } ? E : never : never;
-}
+const props = defineProps({
+  episodes: { type: Array, default: () => [] },
+  currentEpisode: { type: Object, default: null },
+});
 
-const props = defineProps<Props>();
-const emit = defineEmits<{ play: [episode: Props["episodes"][0]] }>();
+const emit = defineEmits<{ play: [episode: Record<string, unknown>] }>();
 
 const listContainer = ref<HTMLElement | null>(null);
 
 const hasEpisodes = computed(() => props.episodes.length > 0);
 
-function handlePlay(episode: typeof props.episodes[0]) {
+function handlePlay(episode) {
   emit("play", episode);
 }
 
@@ -36,7 +36,7 @@ watch(
 </script>
 
 <template>
-  <div class="episode-list" ref="listContainer" role="list" aria-label="Episódios da série">
+  <div ref="listContainer" class="episode-list" role="list" aria-label="Episódios da série">
     <div v-if="hasEpisodes" class="episode-list__items">
       <EpisodeItem
         v-for="episode in episodes"
@@ -49,7 +49,7 @@ watch(
 
     <div v-else class="episode-list__empty">
       <AppIcon name="tv" size="lg" class="episode-list__empty-icon" />
-      <p class="episode-list__empty-text">Nenhum episódio encontrado</p>
+      <p class="episode-list__empty-text">{{ $t("series.noEpisodes") }}</p>
     </div>
   </div>
 </template>
@@ -58,16 +58,16 @@ watch(
 .episode-list {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: var(--s-2);
   overflow-y: auto;
   max-height: 100%;
-  padding: 0.5rem;
+  padding: var(--s-2);
 }
 
 .episode-list__items {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: var(--s-2);
 }
 
 .episode-list__empty {
@@ -75,24 +75,18 @@ watch(
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 3rem 1rem;
-  color: var(--text-tertiary);
+  padding: var(--s-8) var(--s-4);
+  color: var(--muted);
   text-align: center;
 }
 
 .episode-list__empty-icon {
-  margin-bottom: 0.75rem;
+  margin-bottom: var(--s-3);
   opacity: 0.5;
 }
 
 .episode-list__empty-text {
   margin: 0;
-  font-size: 0.9rem;
-}
-
-@media (max-width: 767px) {
-  .episode-list {
-    padding: 0.75rem;
-  }
+  font-size: var(--t-small);
 }
 </style>

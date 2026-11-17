@@ -74,7 +74,7 @@ onUnmounted(() => window.removeEventListener("keydown", handleKeydown));
     data-testid="directory-picker"
     @click.self="emit('close')"
   >
-    <div class="modal panel" style="max-width: 560px; width: 100%;">
+    <div class="modal panel ground-inverse" style="max-width: 560px; width: 100%;">
       <header class="modal__header">
         <p class="t-body mono truncate" data-testid="directory-picker-path">
           {{ currentPath || startPath }}
@@ -164,7 +164,7 @@ onUnmounted(() => window.removeEventListener("keydown", handleKeydown));
   align-items: center;
   justify-content: center;
   padding: var(--s-4);
-  background: color-mix(in oklab, var(--ink) 50%, transparent);
+  background: color-mix(in oklab, #111111 60%, transparent);
 }
 
 .modal {
@@ -173,6 +173,10 @@ onUnmounted(() => window.removeEventListener("keydown", handleKeydown));
   border-radius: var(--r-lg);
   box-shadow: var(--shadow-xl);
   overflow: hidden;
+}
+
+html[data-tone="dark"] .modal-overlay {
+  background: color-mix(in oklab, #000000 70%, transparent);
 }
 
 .modal__header {

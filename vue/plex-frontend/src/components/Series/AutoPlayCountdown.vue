@@ -103,8 +103,8 @@ onUnmounted(() => {
 
       <button
         class="autoplay-countdown__cancel btn btn-ghost"
-        @click="handleCancel"
         aria-label="Cancelar auto-play"
+        @click="handleCancel"
       >
         <AppIcon name="x" size="sm" />
         Cancelar

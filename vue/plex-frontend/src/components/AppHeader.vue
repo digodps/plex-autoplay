@@ -51,7 +51,7 @@ function handleKeydown(event) {
 const isDark = computed(() => theme.effective === "dark");
 
 const navItems = [
-  { to: "/", label: "nav.dashboard", icon: "home", exact: true },
+  { to: "/", label: "nav.dashboard", icon: "house", exact: true },
   { to: "/libraries", label: "nav.libraries", icon: "server" },
   { to: "/sync", label: "nav.sync", icon: "refresh-cw" },
   { to: "/settings", label: "nav.settings", icon: "settings" },
@@ -89,7 +89,7 @@ function selectLocale(code) {
 
     <!-- Main Navigation (nav-cards pattern) -->
     <nav class="nav__links" aria-label="Navegação principal">
-      <div class="nav__item" v-for="item in navItems" :key="item.to">
+      <div v-for="item in navItems" :key="item.to" class="nav__item">
         <RouterLink
           :to="item.to"
           class="nav__link"
@@ -103,9 +103,9 @@ function selectLocale(code) {
           </svg>
         </RouterLink>
         <!-- Dropdown menu for nav-cards (could be expanded with mega-menu later) -->
-        <div class="nav__menu" v-if="item.to === '/libraries' || item.to === '/settings'">
+        <div v-if="item.to === '/libraries' || item.to === '/settings'" class="nav__menu">
           <div class="wrap grid">
-            <div class="menu-col span-3" v-if="item.to === '/libraries'">
+            <div v-if="item.to === '/libraries'" class="menu-col span-3">
               <p class="t-label">{{ $t('nav.menu.libraries') }}</p>
               <RouterLink to="/libraries" class="menu-link" @click="uiStore.closeProfile">
                 <span>{{ $t('nav.menu.allLibraries') }}</span>
@@ -116,7 +116,7 @@ function selectLocale(code) {
                 <span class="menu-desc">{{ $t('nav.menu.syncDesc') }}</span>
               </RouterLink>
             </div>
-            <div class="menu-col span-3" v-if="item.to === '/settings'">
+            <div v-if="item.to === '/settings'" class="menu-col span-3">
               <p class="t-label">{{ $t('nav.menu.settings') }}</p>
               <RouterLink to="/settings" class="menu-link" @click="uiStore.closeProfile">
                 <span>{{ $t('nav.menu.general') }}</span>
@@ -151,21 +151,21 @@ function selectLocale(code) {
         type="button"
         :aria-label="isDark ? $t('theme.light') : $t('theme.dark')"
         :title="isDark ? $t('theme.light') : $t('theme.dark')"
-        @click="theme.cycleMode"
         data-testid="theme-toggle"
+        @click="theme.cycleMode"
       >
         <AppIcon :name="isDark ? 'sun' : 'moon'" size="sm" />
       </button>
 
       <!-- User Menu -->
-      <div class="relative" ref="userMenuRef">
+      <div ref="userMenuRef" class="relative">
         <button
           class="btn btn--ghost nav__user-toggle"
           type="button"
           aria-label="Menu do usuário"
           :aria-expanded="uiStore.showProfile"
-          @click="uiStore.toggleProfile"
           data-testid="user-menu-button"
+          @click="uiStore.toggleProfile"
         >
           <AppIcon name="user" size="sm" />
         </button>
@@ -178,8 +178,8 @@ function selectLocale(code) {
           <RouterLink
             to="/settings"
             class="flex items-center gap-2 rounded px-3 py-2 text-[var(--p-ink)] hover:bg-[var(--p-muted)]/10 dark:hover:bg-[var(--p-inv-muted)]/10"
-            @click="uiStore.closeProfile"
             data-testid="settings-link"
+            @click="uiStore.closeProfile"
           >
             <AppIcon name="settings" size="sm" />
             {{ t("userMenu.settings") }}
@@ -188,15 +188,15 @@ function selectLocale(code) {
           <div class="border-t border-[var(--border)] my-1" />
 
           <!-- Language Selector -->
-          <div class="relative" ref="languageMenuRef">
+          <div ref="languageMenuRef" class="relative">
             <button
               type="button"
               class="flex w-full items-center gap-2 rounded px-3 py-2 text-left text-[var(--p-ink)] hover:bg-[var(--p-muted)]/10"
               :aria-expanded="uiStore.showLanguageMenu"
               aria-haspopup="menu"
               aria-label="Selecionar idioma"
-              @click="uiStore.toggleLanguageMenu"
               data-testid="language-selector-button"
+              @click="uiStore.toggleLanguageMenu"
             >
               <AppIcon :name="localeStore.currentLocaleInfo.icon" size="sm" class="w-6 h-4" aria-hidden="true" />
               <span>{{ localeStore.currentLocaleInfo.label }}</span>
@@ -216,8 +216,8 @@ function selectLocale(code) {
                   locale.code === localeStore.locale ? 'bg-[var(--p-muted)]/10' : 'hover:bg-[var(--p-muted)]/10',
                   'text-[var(--p-ink)]'
                 ]"
-                @click="selectLocale(locale.code)"
                 data-testid="language-option"
+                @click="selectLocale(locale.code)"
               >
                 <AppIcon :name="locale.icon" size="sm" class="w-6 h-4" aria-hidden="true" />
                 <span class="font-medium">{{ locale.label }}</span>
@@ -247,7 +247,7 @@ function selectLocale(code) {
 
       <!-- Mobile menu toggle -->
       <button class="nav__toggle" type="button" aria-expanded="false" aria-label="Menu" aria-controls="main-nav">
-        <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M2 5h14M2 13h14" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+        <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M2 5h14M2 13h14" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" /></svg>
       </button>
     </div>
   </div>

@@ -9,13 +9,13 @@ const routes = [
     path: "/login",
     name: "login",
     component: SigninView,
-    meta: { titleKey: "auth.login" },
+    meta: { titleKey: "auth.login", shell: false },
   },
   {
     path: "/setup",
     name: "setup",
     component: () => import("../views/Authentication/SetupView.vue"),
-    meta: { titleKey: "auth.setupTitle" },
+    meta: { titleKey: "auth.setupTitle", shell: false },
   },
   {
     path: "/dashboard",

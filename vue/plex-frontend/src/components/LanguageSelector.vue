@@ -87,8 +87,8 @@ import { nextTick } from 'vue';
 <template>
   <div class="relative">
     <button
-      type="button"
       ref="buttonRef"
+      type="button"
       :aria-expanded="isOpen"
       :aria-haspopup="listbox"
       :aria-label="$t('languageSelector.label')"

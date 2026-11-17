@@ -92,7 +92,7 @@ function getKindLabel(kind) {
 
     <div class="marker-controls">
       <div v-if="!showInputs && !hasMarker" class="marker-empty">
-        <button class="btn btn--secondary btn-sm" @click="toggleEdit" :disabled="saving" data-testid="marker-btn-create">
+        <button class="btn btn--secondary btn-sm" :disabled="saving" data-testid="marker-btn-create" @click="toggleEdit">
           <img :src="`/assets/icons/${getKindIcon(kind)}.svg`" :data-icon="getKindIcon(kind)" class="icon" width="16" height="16" aria-hidden="true" />
           {{ t("markers.add", { kind: t(`markers.${kind}`) }) }}
         </button>
@@ -106,10 +106,10 @@ function getKindLabel(kind) {
           </span>
         </div>
         <div class="marker-actions">
-          <button class="btn btn--secondary btn-sm" @click="toggleEdit" :disabled="saving" data-testid="marker-btn-edit">
+          <button class="btn btn--secondary btn-sm" :disabled="saving" data-testid="marker-btn-edit" @click="toggleEdit">
             <img src="/assets/icons/ui-square-pen.svg" data-icon="ui-square-pen" class="icon" width="14" height="14" aria-hidden="true" />
           </button>
-          <button class="btn btn--secondary btn-sm" @click="deleteMarker" :disabled="saving" data-testid="marker-btn-delete">
+          <button class="btn btn--secondary btn-sm" :disabled="saving" data-testid="marker-btn-delete" @click="deleteMarker">
             <img src="/assets/icons/ui-trash-2.svg" data-icon="ui-trash-2" class="icon" width="14" height="14" aria-hidden="true" />
           </button>
         </div>
@@ -139,11 +139,11 @@ function getKindLabel(kind) {
             @keyup.enter="saveMarker"
           />
         </div>
-        <button class="btn btn--primary btn-sm" @click="saveMarker" :disabled="isSaving || saving" data-testid="marker-btn-save">
+        <button class="btn btn--primary btn-sm" :disabled="isSaving || saving" data-testid="marker-btn-save" @click="saveMarker">
           <img src="/assets/icons/ui-check.svg" data-icon="ui-check" class="icon" width="14" height="14" aria-hidden="true" />
           {{ t("common.save") }}
         </button>
-        <button class="btn btn--secondary btn-sm" @click="toggleEdit" :disabled="isSaving || saving" data-testid="marker-btn-cancel">
+        <button class="btn btn--secondary btn-sm" :disabled="isSaving || saving" data-testid="marker-btn-cancel" @click="toggleEdit">
           <img src="/assets/icons/ui-circle-x.svg" data-icon="ui-circle-x" class="icon" width="14" height="14" aria-hidden="true" />
           {{ t("common.cancel") }}
         </button>

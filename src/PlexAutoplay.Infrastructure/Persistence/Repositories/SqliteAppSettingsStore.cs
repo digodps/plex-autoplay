@@ -144,7 +144,10 @@ public static class AppSettingsSeeder
         {
             var secret = GenerateJwtSecret();
             await connection.ExecuteAsync(
-                "INSERT INTO AppSetting (Key, Value) VALUES (@Key, @Value)",
+                """
+                INSERT INTO AppSetting (Key, Value) VALUES (@Key, @Value)
+                ON CONFLICT(Key) DO NOTHING
+                """,
                 new { Key = AppSettingKeys.JwtSecret, Value = secret });
         }
     }

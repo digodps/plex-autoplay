@@ -116,4 +116,26 @@ function handleSelect(path) {
   border: 1px solid var(--border);
   border-radius: var(--r-md);
 }
+
+.field__input {
+  width: 100%;
+  padding: var(--s-3) var(--s-4);
+  font: var(--font-text);
+  font-size: var(--t-body);
+  color: var(--ink);
+  background: color-mix(in oklab, var(--surface) 70%, var(--ink) 30%);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  transition: border-color var(--m-fast) var(--m-ease), box-shadow var(--m-fast) var(--m-ease);
+}
+
+.field__input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--accent) 25%, transparent);
+}
+
+.field__input.mono {
+  font-family: var(--font-mono);
+}
 </style>

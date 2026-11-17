@@ -38,7 +38,7 @@
     "stepPlex": "Plex",
     "stepMedia": "Media",
     "tokenPlaceholder": "Paste the setup token here",
-    "passwordMinLength": "Password must be at least 8 characters",
+    "passwordMinLength": "Password must be at least 6 characters",
     "passwordMismatch": "Passwords do not match"
   },
   "dashboard": {

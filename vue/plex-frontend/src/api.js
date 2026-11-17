@@ -65,11 +65,11 @@ export async function fetchSetupStatus() {
   return await res.json();
 }
 
-export async function submitSetup(token, newPassword, plexUrl, plexToken, mediaRoots) {
+export async function submitSetup(newPassword, plexUrl, plexToken, mediaRoots) {
   return fetch("/api/auth/setup", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ token, newPassword, plexUrl, plexToken, mediaRoots }),
+    body: JSON.stringify({ newPassword, plexUrl, plexToken, mediaRoots }),
   });
 }
 

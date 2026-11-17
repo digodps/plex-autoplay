@@ -238,7 +238,7 @@ function validateInterval(value: number) {
       <div class="wrap">
         <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--s-6);">
           <h2 id="advanced-h" class="t-h2">Avançado</h2>
-          <button class="btn btn--secondary btn-sm" @click="advancedOptions = !advancedOptions" :aria-expanded="advancedOptions">
+          <button class="btn btn--secondary btn-sm" :aria-expanded="advancedOptions" @click="advancedOptions = !advancedOptions">
             <img :src="advancedOptions ? '/assets/icons/ui-chevron-down.svg' : '/assets/icons/ui-chevron-down.svg'" :data-icon="advancedOptions ? 'ui-chevron-down' : 'ui-chevron-down'" class="icon" width="16" height="16" aria-hidden="true" :style="advancedOptions ? 'transform: scaleY(-1);' : ''" />
             {{ advancedOptions ? 'Ocultar' : 'Mostrar' }} opções avançadas
           </button>

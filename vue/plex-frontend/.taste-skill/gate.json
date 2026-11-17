@@ -2,7 +2,7 @@
  "start": "2026-11-16T22:09:38.670Z",
  "round": 0,
  "idle": 0,
- "errors": 2,
+ "errors": 3,
  "status": "error",
  "history": [
   {
@@ -22,6 +22,15 @@
    "round": 0,
    "reused": false,
    "stopHookActive": false
+  },
+  {
+   "at": "2026-11-17T02:21:45.456Z",
+   "mode": "manual",
+   "status": "error",
+   "fails": 0,
+   "round": 0,
+   "reused": false,
+   "stopHookActive": false
   }
  ],
  "max": 3,
@@ -35,7 +44,7 @@
   "root": "dist"
  },
  "manual": true,
- "fp": "d2f9b38b73ca157f",
+ "fp": "dfa54ae0a399ac8a",
  "page": "dist/index.html",
  "found": {
   "fails": [],
@@ -54,5 +63,5 @@
  "waived": [],
  "warnCount": 0,
  "note": "the copy (the page showed no <main>, <section> or <h1> to lint); consistency.mjs gave no report (exit 1: Error: No Chrome, Edge or Chromium found; set CHROME_PATH.); check.mjs could not run (exit 2: no Chrome found (set CHROME_PATH))",
- "at": "2026-11-16T23:51:50.730Z"
+ "at": "2026-11-17T02:21:45.456Z"
 }

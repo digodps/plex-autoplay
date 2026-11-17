@@ -67,10 +67,10 @@ const contentStyle = computed(() => ({
     <div class="absolute inset-0 rounded-xl bg-gradient-to-b from-transparent to-black/20 opacity-0 transition-opacity duration-300 pointer-events-none" aria-hidden="true"></div>
 
     <LogCardHeader
+      :id="buttonId"
       :log="log"
       :is-expanded="props.isExpanded"
       :on-toggle="onToggle"
-      :id="buttonId"
     />
 
     <!-- Expanded Content with smooth height animation -->
@@ -81,7 +81,7 @@ const contentStyle = computed(() => ({
       class="log-card-content-wrapper overflow-hidden"
       :style="contentStyle"
     >
-      <LogCardContent :log="log" v-show="props.isExpanded" />
+      <LogCardContent v-show="props.isExpanded" :log="log" />
     </div>
   </article>
 </template>

@@ -38,10 +38,10 @@ function handleKeydown(e: KeyboardEvent, direction: "previous" | "next") {
       class="episode-navigation__btn"
       :class="{ 'episode-navigation__btn--disabled': !hasPrevious }"
       :disabled="!hasPrevious"
-      @click="handlePrevious"
-      @keydown="($event) => handleKeydown($event, 'previous')"
       aria-label="Episódio anterior"
       :title="previousTitle || 'Episódio anterior (←)'"
+      @click="handlePrevious"
+      @keydown="($event) => handleKeydown($event, 'previous')"
     >
       <AppIcon name="chevron-left" size="md" />
       <span class="episode-navigation__label">Anterior</span>
@@ -54,10 +54,10 @@ function handleKeydown(e: KeyboardEvent, direction: "previous" | "next") {
       class="episode-navigation__btn"
       :class="{ 'episode-navigation__btn--disabled': !hasNext }"
       :disabled="!hasNext"
-      @click="handleNext"
-      @keydown="($event) => handleKeydown($event, 'next')"
       aria-label="Próximo episódio"
       :title="nextTitle || 'Próximo episódio (→)'"
+      @click="handleNext"
+      @keydown="($event) => handleKeydown($event, 'next')"
     >
       <span class="episode-navigation__label">Próximo</span>
       <AppIcon name="chevron-right" size="md" />

@@ -54,7 +54,7 @@ function close() {
 async function apply() {
   error.value = "";
 
-  if (newPassword.value.length < 8) {
+  if (newPassword.value.length < 6) {
     error.value = t("auth.passwordMinLength");
     return;
   }
@@ -144,7 +144,7 @@ onUnmounted(() => document.removeEventListener("keydown", onKeydown));
           v-model="newPassword"
           :type="showNewPassword ? 'text' : 'password'"
           autocomplete="new-password"
-          minlength="8"
+          minlength="6"
           maxlength="128"
           class="mb-3 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-black dark:border-gray-700 dark:bg-gray-800 dark:text-white pr-12"
           data-testid="password-new"
@@ -172,7 +172,7 @@ onUnmounted(() => document.removeEventListener("keydown", onKeydown));
           v-model="confirmPassword"
           :type="showConfirmPassword ? 'text' : 'password'"
           autocomplete="new-password"
-          minlength="8"
+          minlength="6"
           maxlength="128"
           class="mb-2 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-black dark:border-gray-700 dark:bg-gray-800 dark:text-white pr-12"
           data-testid="password-confirm"

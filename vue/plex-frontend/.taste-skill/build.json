@@ -1,9 +1,9 @@
 {
- "page": "dist/index.html",
+ "page": null,
  "dir": "/home/hermes/plex-autoplay-frontend-refactor-taste/vue/plex-frontend",
  "kind": "software",
  "start": "2026-11-16T22:09:38.670Z",
  "by": "start.mjs",
- "url": null,
+ "url": "http://192.168.18.5:8080/setup",
  "root": "dist"
 }

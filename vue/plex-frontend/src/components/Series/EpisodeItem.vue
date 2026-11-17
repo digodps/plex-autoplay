@@ -2,22 +2,15 @@
 import { computed } from "vue";
 import AppIcon from "@/components/AppIcon.vue";
 
-interface Props {
+const props = defineProps({
   episode: {
-    rating_key: string;
-    title: string;
-    season: number;
-    episode: number;
-    thumb: string | null;
-    watched: boolean;
-    watch_progress: number;
-    duration_seconds: number;
-  };
-  isCurrent: boolean;
-}
+    type: Object,
+    required: true,
+  },
+  isCurrent: { type: Boolean, default: false },
+});
 
-const props = defineProps<Props>();
-const emit = defineEmits<{ play: [episode: typeof props.episode] }>();
+const emit = defineEmits(["play"]);
 
 const progressPercent = computed(() => props.episode.watch_progress || 0);
 const isWatched = computed(() => props.episode.watched);
@@ -31,7 +24,7 @@ const statusIcon = computed(() => {
   return "play";
 });
 
-function formatDuration(seconds: number): string {
+function formatDuration(seconds) {
   const h = Math.floor(seconds / 3600);
   const m = Math.floor((seconds % 3600) / 60);
   return h > 0 ? `${h}h ${m}m` : `${m}m`;
@@ -50,9 +43,9 @@ function handleClick() {
       'episode-item--watched': isWatched,
       'episode-item--in-progress': isInProgress,
     }"
-    @click="handleClick"
     role="button"
     tabindex="0"
+    @click="handleClick"
     @keydown.enter="handleClick"
     @keydown.space.prevent="handleClick"
   >
@@ -91,28 +84,30 @@ function handleClick() {
 <style scoped>
 .episode-item {
   display: flex;
-  gap: 1rem;
-  padding: 0.75rem;
-  border-radius: var(--radius);
+  gap: var(--s-3);
+  padding: var(--s-3);
+  border-radius: var(--r-md);
   background: var(--surface);
   border: 1px solid var(--border);
   cursor: pointer;
-  transition: background var(--speed) var(--ease), border-color var(--speed) var(--ease), box-shadow var(--speed) var(--ease);
+  transition: background var(--dur) var(--ease), border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
 }
 
-.episode-item:hover {
-  background: var(--bg-sunken);
-  border-color: var(--border-strong);
+@media (hover: hover) and (pointer: fine) {
+  .episode-item:hover {
+    background: var(--border);
+    border-color: var(--line-strong);
+  }
 }
 
 .episode-item:focus-visible {
-  outline: 2px solid var(--accent);
+  outline: 2px solid var(--action);
   outline-offset: 2px;
 }
 
 .episode-item--current {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 1px var(--accent);
+  border-color: var(--action);
+  box-shadow: 0 0 0 1px var(--action);
 }
 
 .episode-item--watched {
@@ -120,20 +115,20 @@ function handleClick() {
 }
 
 .episode-item--watched .episode-item__title {
-  color: var(--text-secondary);
+  color: var(--muted);
 }
 
 .episode-item--in-progress {
-  border-color: var(--accent);
+  border-color: var(--action);
 }
 
 .episode-item__thumb {
   position: relative;
   flex: 0 0 160px;
   aspect-ratio: 16 / 9;
-  border-radius: var(--radius-sm);
+  border-radius: var(--r-sm);
   overflow: hidden;
-  background: var(--bg-sunken);
+  background: var(--border);
 }
 
 .episode-item__thumb img {
@@ -145,7 +140,7 @@ function handleClick() {
 .episode-item__pulse {
   position: absolute;
   inset: 0;
-  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--accent) 30%, transparent), transparent);
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--action) 30%, transparent), transparent);
   background-size: 200% 100%;
   animation: pulse-shimmer 1.5s ease-in-out infinite;
   pointer-events: none;
@@ -161,30 +156,30 @@ function handleClick() {
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 0.35rem;
+  gap: var(--s-1);
 }
 
 .episode-item__header {
   display: flex;
   align-items: flex-start;
-  gap: 0.75rem;
+  gap: var(--s-3);
 }
 
 .episode-item__ep-badge {
   flex: 0 0 auto;
-  font-size: 0.7rem;
+  font-size: var(--t-label);
   font-weight: 700;
-  color: var(--accent);
-  background: color-mix(in srgb, var(--accent) 12%, transparent);
-  padding: 0.15rem 0.4rem;
+  color: var(--action);
+  background: color-mix(in srgb, var(--action) 12%, transparent);
+  padding: var(--s-1) var(--s-2);
   border-radius: 999px;
   white-space: nowrap;
 }
 
 .episode-item__title {
-  font-size: 0.95rem;
+  font-size: var(--t-body);
   font-weight: 600;
-  color: var(--text);
+  color: var(--ink);
   line-height: 1.3;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -195,38 +190,38 @@ function handleClick() {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 0.5rem;
+  gap: var(--s-2);
 }
 
 .episode-item__duration {
-  font-size: 0.75rem;
-  color: var(--text-tertiary);
-  font-family: var(--mono);
+  font-size: var(--t-small);
+  color: var(--muted);
+  font-family: var(--font-mono);
 }
 
 .episode-item__status {
   display: flex;
   align-items: center;
-  gap: 0.35rem;
-  font-size: 0.75rem;
-  color: var(--text-secondary);
+  gap: var(--s-1);
+  font-size: var(--t-small);
+  color: var(--muted);
 }
 
 .episode-item__status :deep(.icon) {
-  color: var(--accent);
+  color: var(--action);
 }
 
 .episode-item__progress {
   height: 4px;
-  background: var(--bg-sunken);
+  background: var(--border);
   border-radius: 999px;
   overflow: hidden;
-  margin-top: 0.25rem;
+  margin-top: var(--s-1);
 }
 
 .episode-item__progress-bar {
   height: 100%;
-  background: var(--accent);
+  background: var(--action);
   border-radius: 999px;
   transition: width 0.3s var(--ease);
 }
@@ -234,7 +229,7 @@ function handleClick() {
 @media (max-width: 480px) {
   .episode-item {
     flex-direction: column;
-    gap: 0.5rem;
+    gap: var(--s-2);
   }
 
   .episode-item__thumb {
@@ -244,7 +239,19 @@ function handleClick() {
 
   .episode-item__header {
     flex-direction: column;
-    gap: 0.25rem;
+    gap: var(--s-1);
   }
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 </style>

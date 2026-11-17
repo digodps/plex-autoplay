@@ -29,6 +29,17 @@ htmlcov/
 .DS_Store
 config/
 
+# Core dumps
+core.*
+
+# Taste Skill generated files
+.taste-skill/
+assets/
+
+# Build output
+dist/
+build/
+
 # Artefatos gerados (não versionados)
 test-artifacts/*
 

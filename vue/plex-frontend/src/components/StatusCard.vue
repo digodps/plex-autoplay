@@ -46,15 +46,15 @@ function handleClick(e) {
       'panel--error': error,
     }"
     :aria-label="href ? `Ir para ${label}` : undefined"
-    @click="handleClick"
     role="listitem"
+    @click="handleClick"
   >
     <!-- Skeleton loading -->
     <div v-if="loading" class="panel__skeleton" aria-hidden="true">
       <div class="skeleton skeleton--icon" />
       <div class="skeleton skeleton--label" />
       <div class="skeleton skeleton--value" />
-      <div class="skeleton skeleton--breakdown" v-if="breakdown.length" />
+      <div v-if="breakdown.length" class="skeleton skeleton--breakdown" />
     </div>
 
     <!-- Conteúdo real -->

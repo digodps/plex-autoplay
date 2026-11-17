@@ -16,8 +16,8 @@ const sizeMap = {
 const size = computed(() => sizeMap[props.size] || "24");
 
 const iconPath = computed(() => {
-  // Lucide UI icons are stored with 'ui-' prefix; plex.svg is the exception
-  const name = props.name === 'plex' ? 'plex' : `ui-${props.name}`;
+  // Custom Plex Autoplay icon; Lucide UI icons stored with 'ui-' prefix
+  const name = props.name === 'plex' ? 'plex-autoplay' : `ui-${props.name}`;
   return `/assets/icons/${name}.svg`;
 });
 </script>

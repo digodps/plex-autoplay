@@ -33,9 +33,7 @@ async function handleStartScan() {
   }
 }
 
-function handleViewFullLog() {
-  router.push("/logs");
-}
+
 </script>
 
 <template>
@@ -47,7 +45,7 @@ function handleViewFullLog() {
           <h1 id="dashboard-hero-h">Início</h1>
           <p class="t-lead">Dashboard para gerenciar marcadores de intro/créditos no Plex via API oficial.</p>
           <div class="btn-row">
-            <button class="btn btn--primary" :disabled="store.isLoading" @click="handleStartScan" data-testid="btn-start-scan">
+            <button class="btn btn--primary" :disabled="store.isLoading" data-testid="btn-start-scan" @click="handleStartScan">
               <img src="/assets/icons/play.svg" data-icon="play" class="icon" width="20" height="20" aria-hidden="true" />
               Iniciar Escaneamento
             </button>
@@ -101,7 +99,7 @@ function handleViewFullLog() {
     <div v-if="store.isTotalFailure" class="dashboard-error" role="alert">
       <img src="/assets/icons/warning.svg" data-icon="warning" class="icon icon-lg" width="48" height="48" aria-hidden="true" />
       <p>{{ store.error }}</p>
-      <button class="btn btn--primary" @click="store.retry" data-testid="btn-retry">
+      <button class="btn btn--primary" data-testid="btn-retry" @click="store.retry">
         <img src="/assets/icons/sync.svg" data-icon="sync" class="icon" width="20" height="20" aria-hidden="true" />
         Tentar novamente
       </button>
@@ -115,7 +113,7 @@ function handleViewFullLog() {
         Verifique se o servidor Plex está acessível, se a URL e o token (X-Plex-Token) estão
         configurados corretamente e se há conectividade de rede.
       </p>
-      <button class="btn btn--primary" @click="store.retry" data-testid="btn-retry">
+      <button class="btn btn--primary" data-testid="btn-retry" @click="store.retry">
         <img src="/assets/icons/sync.svg" data-icon="sync" class="icon" width="20" height="20" aria-hidden="true" />
         Tentar novamente
       </button>

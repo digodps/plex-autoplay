@@ -184,14 +184,14 @@ watch(
 
           <!-- Episode Drawer -->
           <Transition name="drawer">
-            <div class="series-page__drawer-overlay" v-if="showEpisodeDrawer" @click="closeDrawer"></div>
+            <div v-if="showEpisodeDrawer" class="series-page__drawer-overlay" @click="closeDrawer"></div>
           </Transition>
 
           <Transition name="drawer">
-            <aside class="series-page__drawer" v-if="showEpisodeDrawer" role="dialog" aria-label="Episódios" aria-modal="true">
+            <aside v-if="showEpisodeDrawer" class="series-page__drawer" role="dialog" aria-label="Episódios" aria-modal="true">
               <div class="series-page__drawer-header">
                 <h3>Episódios</h3>
-                <button class="btn btn--secondary btn-sm" @click="closeDrawer" aria-label="Fechar lista">
+                <button class="btn btn--secondary btn-sm" aria-label="Fechar lista" @click="closeDrawer">
                   <img src="/assets/icons/ui-circle-x.svg" data-icon="ui-circle-x" class="icon" width="16" height="16" aria-hidden="true" />
                   <span>Fechar</span>
                 </button>
@@ -240,15 +240,15 @@ watch(
 
           <!-- Episode Bottom Sheet -->
           <Transition name="sheet">
-            <div class="series-page__sheet-overlay" v-if="showEpisodeSheet" @click="closeSheet"></div>
+            <div v-if="showEpisodeSheet" class="series-page__sheet-overlay" @click="closeSheet"></div>
           </Transition>
 
           <Transition name="sheet">
-            <aside class="series-page__sheet" v-if="showEpisodeSheet" role="dialog" aria-label="Episódios" aria-modal="true">
-              <div class="series-page__sheet-handle" @click="closeSheet" aria-hidden="true"></div>
+            <aside v-if="showEpisodeSheet" class="series-page__sheet" role="dialog" aria-label="Episódios" aria-modal="true">
+              <div class="series-page__sheet-handle" aria-hidden="true" @click="closeSheet"></div>
               <div class="series-page__sheet-header">
                 <h3>Episódios</h3>
-                <button class="btn btn--secondary btn-sm" @click="closeSheet" aria-label="Fechar lista">
+                <button class="btn btn--secondary btn-sm" aria-label="Fechar lista" @click="closeSheet">
                   <img src="/assets/icons/ui-circle-x.svg" data-icon="ui-circle-x" class="icon" width="16" height="16" aria-hidden="true" />
                   <span>Fechar</span>
                 </button>

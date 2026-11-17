@@ -96,18 +96,4 @@ await DatabaseInitializer.InitializeAsync(DatabaseInitializer.DefaultConnectionS
 await PlexAutoplay.Infrastructure.Persistence.Repositories.AppSettingsSeeder.SeedAsync(DatabaseInitializer.DefaultConnectionString);
 Log.Information("Schema do banco inicializado e configurações semeadas.");
 
-// Setup inicial: sem credencial no SQLite, emite um token de uso único no log.
-var credentials = app.Services.GetRequiredService<PlexAutoplay.Application.IAuthCredentialStore>();
-if (!await credentials.IsConfiguredAsync())
-{
-    var setupToken = app.Services.GetRequiredService<PlexAutoplay.Infrastructure.Auth.SetupTokenService>().EnsureGenerated();
-    Console.Out.WriteLine("============================================================");
-    Console.Out.WriteLine("CONFIGURACAO INICIAL - TOKEN DE SETUP (USO UNICO)");
-    Console.Out.WriteLine($"SETUP_TOKEN={setupToken}");
-    Console.Out.WriteLine("Informe este token em /setup para criar a senha do operador.");
-    Console.Out.WriteLine("O token deixa de valer apos a primeira conclusao do setup.");
-    Console.Out.WriteLine("============================================================");
-    Console.Out.Flush();
-}
-
 app.Run();

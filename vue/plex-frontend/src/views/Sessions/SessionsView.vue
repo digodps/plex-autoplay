@@ -106,12 +106,12 @@ function fmtTime(iso) {
           <div v-if="loading" class="text-sm text-gray-500">{{ t("common.loading") }}</div>
           <div v-else-if="error" class="text-xs text-meta-1">{{ error }}</div>
           <template v-else>
-            <div class="py-4 text-center text-gray-500 dark:text-gray-400 text-sm" v-if="activeSessions.length === 0">
+            <div v-if="activeSessions.length === 0" class="py-4 text-center text-gray-500 dark:text-gray-400 text-sm">
               {{ t("sessions.noSessions") }}
             </div>
 
             <!-- Mobile cards view (< md) -->
-            <div class="space-y-3 md:hidden" v-if="activeSessions.length > 0">
+            <div v-if="activeSessions.length > 0" class="space-y-3 md:hidden">
               <div
                 v-for="s in activeSessions"
                 :key="'mobile-' + s.machineIdentifier + s.ratingKey"
@@ -158,7 +158,7 @@ function fmtTime(iso) {
             </div>
 
             <!-- Desktop table view (>= md) -->
-            <table class="hidden md:table w-full text-left text-sm" v-if="activeSessions.length > 0">
+            <table v-if="activeSessions.length > 0" class="hidden md:table w-full text-left text-sm">
               <thead>
                 <tr class="border-b border-stroke dark:border-gray-700">
                   <th class="pb-2 font-medium text-gray-600 dark:text-gray-300">{{ t("sessions.client") }}</th>
@@ -224,12 +224,12 @@ function fmtTime(iso) {
           <div v-if="loading" class="text-sm text-gray-500">{{ t("common.loading") }}</div>
           <div v-else-if="error" class="text-xs text-meta-1">{{ error }}</div>
           <template v-else>
-            <div class="py-4 text-center text-gray-500 dark:text-gray-400 text-sm" v-if="recentSkips.length === 0">
+            <div v-if="recentSkips.length === 0" class="py-4 text-center text-gray-500 dark:text-gray-400 text-sm">
               {{ t("sessions.noSkipsYet") }}
             </div>
 
             <!-- Mobile cards view (< md) -->
-            <div class="space-y-3 md:hidden" v-if="recentSkips.length > 0">
+            <div v-if="recentSkips.length > 0" class="space-y-3 md:hidden">
               <div
                 v-for="s in recentSkips"
                 :key="'mobile-' + s.timestamp + s.ratingKey"
@@ -259,7 +259,7 @@ function fmtTime(iso) {
             </div>
 
             <!-- Desktop table view (>= md) -->
-            <table class="hidden md:table w-full text-left text-sm" v-if="recentSkips.length > 0">
+            <table v-if="recentSkips.length > 0" class="hidden md:table w-full text-left text-sm">
               <thead>
                 <tr class="border-b border-stroke dark:border-gray-700">
                   <th class="pb-2 font-medium text-gray-600 dark:text-gray-300">{{ t("sessions.datetime") }}</th>

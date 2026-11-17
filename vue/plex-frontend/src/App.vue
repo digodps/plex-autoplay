@@ -6,12 +6,10 @@ import { fetchLibraries } from "@/api";
 
 const route = useRoute();
 
-const showShell = computed(() => route.name !== "login" && route.name !== "setup");
+const showShell = computed(() => route.meta.shell !== false);
 
 const libraries = ref([]);
 const loading = ref(true);
-
-// Breadcrumb is built in AppHeader via nav-cards pattern
 
 onMounted(async () => {
   try {
@@ -26,19 +24,19 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="app">
-    <div v-if="showShell" class="shell">
+  <RouterView v-slot="{ Component, route }">
+    <template v-if="route.meta.shell !== false">
       <AppHeader />
       <main id="main-content" class="main" role="main">
-        <router-view v-slot="{ Component }">
-          <transition name="page" mode="out-in">
-            <component :is="Component" />
-          </transition>
-        </router-view>
+        <transition name="page" mode="out-in">
+          <component :is="Component" />
+        </transition>
       </main>
-    </div>
-    <RouterView v-else />
-  </div>
+    </template>
+    <template v-else>
+      <component :is="Component" />
+    </template>
+  </RouterView>
 </template>
 
 <style>
@@ -48,20 +46,7 @@ onMounted(async () => {
   --wrap-max: 1440px;
 }
 
-.app {
-  min-height: 100vh;
-  background: var(--p-bg);
-  color: var(--p-ink);
-}
-
-.shell {
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
-}
-
 .main {
-  flex: 1;
   padding-top: calc(var(--nav-h) + var(--s-6));
   padding-bottom: var(--s-8);
   width: 100%;
