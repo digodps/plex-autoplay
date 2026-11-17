@@ -233,8 +233,8 @@ async function loginAfterSetup() {
 
                 <!-- Headline with liquid-type moment -->
                 <h1 class="t-h2 mo-lt__type">{{ t("auth.setupTitle") }}</h1>
-                <p class="t-body">Create your admin account and connect to Plex</p>
-                <p class="t-label" style="color: var(--accent); margin-top: var(--s-3);">6 min setup · 4 platforms · Linux, Windows, macOS, Docker</p>
+                <p class="t-body">{{ t("auth.setupSubtitle") }}</p>
+                <p class="t-label" style="color: var(--accent); margin-top: var(--s-3);">{{ t("auth.setupDetails") }}</p>
 
                 <!-- Step 1: Create Account -->
                 <form v-if="step === 1" data-testid="setup-panel-password" @submit.prevent="next">
@@ -400,7 +400,7 @@ async function loginAfterSetup() {
                       class="btn btn--primary btn-lg btn--no-chevron btn--full"
                       data-testid="setup-next"
                     >
-                      <span>Connect Plex</span>
+                      <span>{{ t("auth.connectPlexBtn") }}</span>
                     </button>
                   </div>
                 </form>
@@ -474,32 +474,32 @@ async function loginAfterSetup() {
     <footer class="closing">
       <div class="wrap closing__grid">
         <div class="closing-call">
-          <p class="t-body">Plex Autoplay — Intro/Credit Marker Manager for Plex</p>
-          <p class="t-body">Set up your Plex server to automatically skip intros and credits</p>
-          <p class="t-body">Built with Vue 3, TypeScript, and .NET 9</p>
-          <p class="t-body">Automatically detects and marks intros, recaps, and credits in your media library</p>
-          <p class="t-body">No cloud dependencies — your media, your server, your rules</p>
-          <p class="t-body">Open source under MIT license with active community support</p>
-          <p class="t-body">Supports multiple Plex libraries with granular marker control</p>
-          <p class="t-body">Real-time marker preview with waveform visualization</p>
-          <p class="t-body">Frame-perfect intro/credit detection with ML-powered analysis</p>
-          <p class="t-body">Cross-platform: Linux, Windows, macOS, Docker</p>
-          <p class="t-body">Automatic library scanning with configurable schedules</p>
-          <p class="t-body">Privacy-first: no telemetry, no external connections</p>
-          <p class="t-body">Free forever — no subscriptions, no limits</p>
-          <p class="t-body">Community-driven development with transparent roadmap</p>
-          <p class="t-body">Works with any Plex server version 1.20+</p>
-          <p class="t-body">No external API keys required — fully self-contained</p>
-          <p class="t-body">Configurable marker types: intro, recap, credits, custom</p>
-          <p class="t-body">Batch processing with progress tracking and logs</p>
-          <p class="t-body">Export/import marker configurations between servers</p>
+          <p class="t-body">{{ t("auth.footerTagline") }}</p>
+          <p class="t-body">{{ t("auth.footerSetupDesc") }}</p>
+          <p class="t-body">{{ t("auth.footerTechStack") }}</p>
+          <p class="t-body">{{ t("auth.footerAutoDetect") }}</p>
+          <p class="t-body">{{ t("auth.footerNoCloud") }}</p>
+          <p class="t-body">{{ t("auth.footerOpenSource") }}</p>
+          <p class="t-body">{{ t("auth.footerMultiLib") }}</p>
+          <p class="t-body">{{ t("auth.footerPreview") }}</p>
+          <p class="t-body">{{ t("auth.footerML") }}</p>
+          <p class="t-body">{{ t("auth.footerCrossPlatform") }}</p>
+          <p class="t-body">{{ t("auth.footerScheduling") }}</p>
+          <p class="t-body">{{ t("auth.footerPrivacy") }}</p>
+          <p class="t-body">{{ t("auth.footerFree") }}</p>
+          <p class="t-body">{{ t("auth.footerCommunity") }}</p>
+          <p class="t-body">{{ t("auth.footerCompat") }}</p>
+          <p class="t-body">{{ t("auth.footerNoAPI") }}</p>
+          <p class="t-body">{{ t("auth.footerMarkerTypes") }}</p>
+          <p class="t-body">{{ t("auth.footerBatch") }}</p>
+          <p class="t-body">{{ t("auth.footerImportExport") }}</p>
         </div>
         <div class="closing-side">
           <nav class="closing-legal" aria-label="Footer navigation">
-            <p class="t-label closing-nav__title">Open source project</p>
-            <a href="https://github.com/digodps/plex-autoplay" class="closing-nav__link">GitHub Repository</a>
-            <a href="https://github.com/digodps/plex-autoplay/issues" class="closing-nav__link">Report an Issue</a>
-            <a href="https://github.com/digodps/plex-autoplay/discussions" class="closing-nav__link">Discussions</a>
+            <p class="t-label closing-nav__title">{{ t("auth.footerOpenSourceTitle") }}</p>
+            <a href="https://github.com/digodps/plex-autoplay" class="closing-nav__link">{{ t("auth.footerGitHub") }}</a>
+            <a href="https://github.com/digodps/plex-autoplay/issues" class="closing-nav__link">{{ t("auth.footerIssues") }}</a>
+            <a href="https://github.com/digodps/plex-autoplay/discussions" class="closing-nav__link">{{ t("auth.footerDiscussions") }}</a>
           </nav>
           <!-- Visual element to fill empty area - more substantial with fills -->
           <div class="closing-visual" aria-hidden="true">
