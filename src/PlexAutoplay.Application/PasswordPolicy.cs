@@ -5,7 +5,7 @@ namespace PlexAutoplay.Application;
 /// </summary>
 public static class PasswordPolicy
 {
-    public const int MinLength = 8;
+    public const int MinLength = 6;
     public const int MaxLength = 128;
 
     public static bool IsValid(string? password) =>

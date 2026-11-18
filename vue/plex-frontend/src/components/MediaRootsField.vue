@@ -52,6 +52,7 @@ function handleSelect(path) {
         style="display: flex; align-items: center; justify-content: space-between; gap: var(--s-3); padding: var(--s-3) var(--s-4); background: var(--card); border: 1px solid var(--border); border-radius: var(--r-md);"
       >
         <span class="mono truncate" style="flex: 1; min-width: 0; font-size: var(--t-body);">{{ path }}</span>
+        <input type="hidden" name="mediaRoots" :value="path" />
         <button
           type="button"
           class="btn btn--secondary btn-sm"

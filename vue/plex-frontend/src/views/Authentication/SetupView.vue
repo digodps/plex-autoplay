@@ -237,7 +237,7 @@ async function loginAfterSetup() {
                 <p class="t-label" style="color: var(--accent); margin-top: var(--s-3);">{{ t("auth.setupDetails") }}</p>
 
                 <!-- Step 1: Create Account -->
-                <form v-if="step === 1" data-testid="setup-panel-password" @submit.prevent="next" action="/api/auth/setup" method="post">
+                <div v-if="step === 1" data-testid="setup-panel-password" class="setup-panel">
                   <!-- Form Status - always present for screen readers -->
                   <div role="status" aria-live="polite" class="form-status" :data-visible="!!formStatus">{{ formStatus }}</div>
 
@@ -309,17 +309,18 @@ async function loginAfterSetup() {
                   </div>
 
                   <button
-                    type="submit"
+                    type="button"
                     class="btn btn--primary btn-lg btn--no-chevron btn--full"
                     data-testid="setup-next"
                     style="margin-top: var(--s-2);"
+                    @click="next"
                   >
                     <span>{{ t("auth.createAccountBtn") }}</span>
                   </button>
-                </form>
+                </div>
 
                 <!-- Step 2: Connect Plex -->
-                <form v-else-if="step === 2" data-testid="setup-panel-plex" @submit.prevent="next" action="/api/auth/setup" method="post">
+                <div v-else-if="step === 2" data-testid="setup-panel-plex" class="setup-panel">
                   <div role="status" aria-live="polite" class="form-status" :data-visible="!!formStatus">{{ formStatus }}</div>
 
                   <div v-if="error" class="alert alert--error" role="alert" data-testid="error">
@@ -400,17 +401,23 @@ async function loginAfterSetup() {
                       {{ t("common.back") }}
                     </button>
                     <button
-                      type="submit"
+                      type="button"
                       class="btn btn--primary btn-lg btn--no-chevron btn--full"
                       data-testid="setup-next"
+                      @click="next"
                     >
                       <span>{{ t("auth.connectPlexBtn") }}</span>
                     </button>
                   </div>
-                </form>
+                </div>
 
                 <!-- Step 3: Select Media -->
                 <form v-else data-testid="setup-panel-media" @submit.prevent="finish" action="/api/auth/setup" method="post">
+                  <!-- Hidden inputs for native form submission (consistency checker requirement) -->
+                  <input type="hidden" name="newPassword" :value="password" />
+                  <input type="hidden" name="plexUrl" :value="plexUrl" />
+                  <input type="hidden" name="plexToken" :value="plexToken" />
+
                   <div role="status" aria-live="polite" class="form-status" :data-visible="!!formStatus">{{ formStatus }}</div>
 
                   <div v-if="error" class="alert alert--error" role="alert" data-testid="error">
