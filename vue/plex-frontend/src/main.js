@@ -13,7 +13,7 @@ app.use(router);
 
 // Initialize locale store (detects/saves locale, loads messages)
 const localeStore = useLocaleStore();
-localeStore.init();
+await localeStore.init();
 
 // Apply theme before mount to avoid FOUC
 const themeStore = useThemeStore();

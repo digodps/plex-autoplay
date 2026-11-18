@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
-import { SUPPORTED_LOCALES, LOCALE_INFO, DEFAULT_LOCALE, getStoredLocale, setStoredLocale, detectLocale, loadAndSetLocale } from '@/i18n';
+import { SUPPORTED_LOCALES, LOCALE_INFO, DEFAULT_LOCALE, getStoredLocale, setStoredLocale, loadAndSetLocale } from '@/i18n';
 
 export const useLocaleStore = defineStore('locale', () => {
   const locale = ref(DEFAULT_LOCALE);
@@ -24,7 +24,7 @@ export const useLocaleStore = defineStore('locale', () => {
     loadAndSetLocale(newLocale);
   }
 
-  function init() {
+  async function init() {
     if (isInitialized.value) return;
 
     const stored = getStoredLocale();
@@ -32,16 +32,13 @@ export const useLocaleStore = defineStore('locale', () => {
     if (stored) {
       initialLocale = stored;
     } else {
-      initialLocale = detectLocale();
-      // Don't persist auto-detected locale to localStorage
-      // User must explicitly choose a locale to persist it
+      initialLocale = DEFAULT_LOCALE;
+      // Persist default locale so subsequent visits don't re-detect
+      setStoredLocale(initialLocale);
     }
 
     locale.value = initialLocale;
-    if (stored) {
-      setStoredLocale(initialLocale);
-    }
-    loadAndSetLocale(initialLocale);
+    await loadAndSetLocale(initialLocale);
     isInitialized.value = true;
   }
 

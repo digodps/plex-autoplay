@@ -54,6 +54,8 @@
     "configureServer": "Configure seu servidor Plex para continuar",
     "plexUrl": "URL do Plex",
     "plexToken": "Token do Plex",
+    "plexUrlLabel": "URL do Servidor Plex",
+    "plexTokenLabel": "Token do Plex",
     "testConnection": "Testar Conexão",
     "connectionSuccess": "Conexão bem-sucedida!",
     "connectionFailed": "Falha na conexão. Verifique URL e token.",

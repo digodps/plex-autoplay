@@ -237,7 +237,7 @@ async function loginAfterSetup() {
                 <p class="t-label" style="color: var(--accent); margin-top: var(--s-3);">{{ t("auth.setupDetails") }}</p>
 
                 <!-- Step 1: Create Account -->
-                <form v-if="step === 1" data-testid="setup-panel-password" @submit.prevent="next">
+                <form v-if="step === 1" data-testid="setup-panel-password" @submit.prevent="next" action="/api/auth/setup" method="post">
                   <!-- Form Status - always present for screen readers -->
                   <div role="status" aria-live="polite" class="form-status" :data-visible="!!formStatus">{{ formStatus }}</div>
 
@@ -264,6 +264,7 @@ async function loginAfterSetup() {
                         class="field__input field__input--full"
                         data-testid="setup-password"
                         required
+                        name="password"
                       />
                       <button
                         type="button"
@@ -292,6 +293,7 @@ async function loginAfterSetup() {
                         class="field__input field__input--full"
                         data-testid="setup-confirm"
                         required
+                        name="confirmPassword"
                       />
                       <button
                         type="button"
@@ -317,7 +319,7 @@ async function loginAfterSetup() {
                 </form>
 
                 <!-- Step 2: Connect Plex -->
-                <form v-else-if="step === 2" data-testid="setup-panel-plex" @submit.prevent="next">
+                <form v-else-if="step === 2" data-testid="setup-panel-plex" @submit.prevent="next" action="/api/auth/setup" method="post">
                   <div role="status" aria-live="polite" class="form-status" :data-visible="!!formStatus">{{ formStatus }}</div>
 
                   <div v-if="error" class="alert alert--error" role="alert" data-testid="error">
@@ -339,6 +341,7 @@ async function loginAfterSetup() {
                       class="field__input field__input--full"
                       data-testid="setup-plex-url"
                       required
+                      name="plexUrl"
                     />
                   </div>
 
@@ -354,6 +357,7 @@ async function loginAfterSetup() {
                         class="field__input field__input--full"
                         data-testid="setup-plex-token"
                         required
+                        name="plexToken"
                       />
                       <button
                         type="button"
@@ -406,7 +410,7 @@ async function loginAfterSetup() {
                 </form>
 
                 <!-- Step 3: Select Media -->
-                <form v-else data-testid="setup-panel-media" @submit.prevent="finish">
+                <form v-else data-testid="setup-panel-media" @submit.prevent="finish" action="/api/auth/setup" method="post">
                   <div role="status" aria-live="polite" class="form-status" :data-visible="!!formStatus">{{ formStatus }}</div>
 
                   <div v-if="error" class="alert alert--error" role="alert" data-testid="error">
@@ -470,59 +474,67 @@ async function loginAfterSetup() {
   </Teleport>
 
   <Teleport to="body">
-    <!-- Footer Closing - exactly two children: .closing-call and .closing-side -->
+    <!-- Footer Closing - exactly two children: .closing-call and .closing-side (SR-2) -->
     <footer class="closing">
       <div class="wrap closing__grid">
         <div class="closing-call">
           <p class="t-body">{{ t("auth.footerTagline") }}</p>
-          <p class="t-body">{{ t("auth.footerSetupDesc") }}</p>
           <p class="t-body">{{ t("auth.footerTechStack") }}</p>
-          <p class="t-body">{{ t("auth.footerAutoDetect") }}</p>
-          <p class="t-body">{{ t("auth.footerNoCloud") }}</p>
           <p class="t-body">{{ t("auth.footerOpenSource") }}</p>
-          <p class="t-body">{{ t("auth.footerMultiLib") }}</p>
-          <p class="t-body">{{ t("auth.footerPreview") }}</p>
-          <p class="t-body">{{ t("auth.footerML") }}</p>
-          <p class="t-body">{{ t("auth.footerCrossPlatform") }}</p>
-          <p class="t-body">{{ t("auth.footerScheduling") }}</p>
-          <p class="t-body">{{ t("auth.footerPrivacy") }}</p>
           <p class="t-body">{{ t("auth.footerFree") }}</p>
+          <p class="t-body">{{ t("auth.footerNoCloud") }}</p>
+          <p class="t-body">{{ t("auth.footerMultiLib") }}</p>
+          <p class="t-body">{{ t("auth.footerPrivacy") }}</p>
           <p class="t-body">{{ t("auth.footerCommunity") }}</p>
           <p class="t-body">{{ t("auth.footerCompat") }}</p>
-          <p class="t-body">{{ t("auth.footerNoAPI") }}</p>
-          <p class="t-body">{{ t("auth.footerMarkerTypes") }}</p>
-          <p class="t-body">{{ t("auth.footerBatch") }}</p>
-          <p class="t-body">{{ t("auth.footerImportExport") }}</p>
+          <p class="t-body">{{ t("auth.footerAutoDetect") }}</p>
         </div>
         <div class="closing-side">
           <nav class="closing-legal" aria-label="Footer navigation">
             <p class="t-label closing-nav__title">{{ t("auth.footerOpenSourceTitle") }}</p>
             <a href="https://github.com/digodps/plex-autoplay" class="closing-nav__link">{{ t("auth.footerGitHub") }}</a>
             <a href="https://github.com/digodps/plex-autoplay/issues" class="closing-nav__link">{{ t("auth.footerIssues") }}</a>
-            <a href="https://github.com/digodps/plex-autoplay/discussions" class="closing-nav__link">{{ t("auth.footerDiscussions") }}</a>
           </nav>
-          <!-- Visual element to fill empty area - more substantial with fills -->
+          <!-- Visual element to fill empty area - substantial with fills, multiple colors -->
           <div class="closing-visual" aria-hidden="true">
-            <svg viewBox="0 0 400 300" fill="none" xmlns="http://www.w3.org/2000/svg" style="width: 100%; height: 100%;">
-              <rect x="50" y="50" width="300" height="200" rx="12" fill="#5ab9fc" opacity="0.15" stroke="#5ab9fc" stroke-width="1.5" />
-              <rect x="80" y="80" width="240" height="120" rx="8" fill="#5ab9fc" opacity="0.12" stroke="#5ab9fc" stroke-width="1" />
-              <circle cx="200" cy="100" r="50" fill="#5ab9fc" opacity="0.2" stroke="#5ab9fc" stroke-width="1.5" />
-              <circle cx="200" cy="100" r="30" fill="#5ab9fc" opacity="0.15" />
-              <path d="M200 150 L200 200 M175 175 L225 175" stroke="#5ab9fc" stroke-width="2.5" stroke-linecap="round" opacity="0.8" />
-              <rect x="100" y="220" width="200" height="10" rx="5" fill="#5ab9fc" opacity="0.5" />
-              <rect x="100" y="240" width="160" height="10" rx="5" fill="#5ab9fc" opacity="0.4" />
-              <rect x="100" y="260" width="120" height="10" rx="5" fill="#5ab9fc" opacity="0.3" />
-              <rect x="100" y="280" width="80" height="10" rx="5" fill="#5ab9fc" opacity="0.2" />
-              <circle cx="300" cy="80" r="35" fill="#5ab9fc" opacity="0.12" />
-              <circle cx="350" cy="250" r="25" fill="#5ab9fc" opacity="0.1" />
-              <rect x="50" y="280" width="25" height="25" rx="4" fill="#5ab9fc" opacity="0.18" />
-              <rect x="330" y="50" width="25" height="25" rx="4" fill="#5ab9fc" opacity="0.12" />
-              <ellipse cx="150" cy="50" rx="45" ry="25" fill="#5ab9fc" opacity="0.1" />
-              <ellipse cx="250" cy="280" rx="35" ry="18" fill="#5ab9fc" opacity="0.08" />
-              <rect x="70" y="70" width="60" height="4" rx="2" fill="#5ab9fc" opacity="0.3" />
-              <rect x="70" y="80" width="40" height="4" rx="2" fill="#5ab9fc" opacity="0.25" />
-              <rect x="270" y="180" width="50" height="4" rx="2" fill="#5ab9fc" opacity="0.2" />
-              <rect x="270" y="190" width="30" height="4" rx="2" fill="#5ab9fc" opacity="0.15" />
+            <svg viewBox="0 0 400 300" fill="none" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
+              <defs>
+                <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" style="stop-color:#5ab9fc;stop-opacity:0.2" />
+                  <stop offset="100%" style="stop-color:#7c3aed;stop-opacity:0.15" />
+                </linearGradient>
+                <linearGradient id="grad2" x1="0%" y1="100%" x2="100%" y2="0%">
+                  <stop offset="0%" style="stop-color:#ec4899;stop-opacity:0.18" />
+                  <stop offset="100%" style="stop-color:#f59e0b;stop-opacity:0.15" />
+                </linearGradient>
+                <radialGradient id="grad3" cx="50%" cy="50%" r="50%">
+                  <stop offset="0%" style="stop-color:#5ab9fc;stop-opacity:0.25" />
+                  <stop offset="100%" style="stop-color:#5ab9fc;stop-opacity:0" />
+                </radialGradient>
+              </defs>
+              <rect x="20" y="15" width="360" height="270" rx="20" fill="url(#grad1)" stroke="#5ab9fc" stroke-width="2" opacity="0.3" />
+              <circle cx="200" cy="100" r="70" fill="url(#grad3)" stroke="#5ab9fc" stroke-width="2" />
+              <circle cx="200" cy="100" r="45" fill="#5ab9fc" opacity="0.25" />
+              <path d="M200 145 L200 235 M155 190 L245 190 M135 210 L265 210" stroke="#5ab9fc" stroke-width="3.5" stroke-linecap="round" opacity="0.95" />
+              <rect x="60" y="250" width="280" height="14" rx="7" fill="#5ab9fc" opacity="0.7" />
+              <rect x="60" y="270" width="220" height="14" rx="7" fill="#5ab9fc" opacity="0.55" />
+              <rect x="60" y="290" width="160" height="14" rx="7" fill="#5ab9fc" opacity="0.4" />
+              <circle cx="340" cy="45" r="55" fill="url(#grad2)" opacity="0.3" />
+              <circle cx="380" cy="270" r="40" fill="#ec4899" opacity="0.15" />
+              <rect x="20" y="270" width="35" height="35" rx="8" fill="#7c3aed" opacity="0.25" />
+              <rect x="350" y="15" width="35" height="35" rx="8" fill="#f59e0b" opacity="0.2" />
+              <ellipse cx="130" cy="30" rx="65" ry="35" fill="#5ab9fc" opacity="0.15" />
+              <ellipse cx="270" cy="300" rx="55" ry="28" fill="#ec4899" opacity="0.12" />
+              <rect x="80" y="70" width="120" height="6" rx="3" fill="#5ab9fc" opacity="0.4" />
+              <rect x="80" y="82" width="90" height="6" rx="3" fill="#5ab9fc" opacity="0.3" />
+              <rect x="200" y="180" width="100" height="6" rx="3" fill="#7c3aed" opacity="0.35" />
+              <rect x="200" y="192" width="70" height="6" rx="3" fill="#7c3aed" opacity="0.25" />
+              <circle cx="320" cy="120" r="12" fill="#f59e0b" opacity="0.3" />
+              <circle cx="350" cy="80" r="8" fill="#ec4899" opacity="0.25" />
+              <circle cx="50" cy="200" r="10" fill="#7c3aed" opacity="0.2" />
+              <circle cx="80" cy="150" r="6" fill="#f59e0b" opacity="0.2" />
+              <path d="M300 180 Q350 200 340 240" stroke="#ec4899" stroke-width="2" stroke-linecap="round" opacity="0.3" fill="none" />
+              <path d="M60 180 Q10 200 20 240" stroke="#7c3aed" stroke-width="2" stroke-linecap="round" opacity="0.25" fill="none" />
             </svg>
           </div>
         </div>
@@ -582,7 +594,7 @@ async function loginAfterSetup() {
   border-radius: var(--r-md);
 }
 
-/* Hero - EXACTLY 100svh, starts at 0 (behind fixed nav) */
+/* Hero - EXACTLY 100svh on desktop, min-height on mobile to prevent footer overlap */
 .setup-hero {
   height: 100svh;
   min-height: 600px;
@@ -590,6 +602,13 @@ async function loginAfterSetup() {
   flex-direction: column;
   position: relative;
   box-sizing: border-box;
+}
+
+@media (max-width: 639px) {
+  .setup-hero {
+    height: auto;
+    min-height: 100svh;
+  }
 }
 
 /* Hero split: two direct children of wrap */
@@ -916,20 +935,20 @@ async function loginAfterSetup() {
   min-height: 0;
 }
 
-/* Footer Closing - exactly two children: .closing-call and .closing-side */
+/* Footer Closing - exactly two children: .closing-call and .closing-side -- exactly 1 screen (SR-2) */
 .closing {
   padding: var(--s-12) var(--s-4);
   border-top: 1px solid var(--border);
-  min-height: 500px;
-  overflow-x: clip;
+  height: 100vh;
+  max-height: 900px;
 }
 
 .closing__grid {
   display: grid;
   grid-template-columns: repeat(12, minmax(0, 1fr));
   column-gap: var(--gutter);
-  align-items: start;
-  min-height: 400px;
+  align-items: stretch;
+  height: 100%;
   max-width: 1440px;
   margin: 0 auto;
   box-sizing: border-box;
@@ -941,6 +960,8 @@ async function loginAfterSetup() {
   flex-direction: column;
   gap: var(--s-3);
   min-width: 280px;
+  height: 100%;
+  padding-top: var(--s-4);
 }
 
 .closing-call p {
@@ -952,11 +973,12 @@ async function loginAfterSetup() {
   grid-column: 8 / -1;
   display: flex;
   flex-direction: column;
-  gap: var(--s-8);
   min-width: 200px;
   width: 100%;
   max-width: 100%;
   overflow: visible;
+  padding-top: var(--s-4);
+  height: 100%;
 }
 
 .closing-legal {
@@ -965,6 +987,25 @@ async function loginAfterSetup() {
   gap: var(--s-2);
   align-items: flex-start;
   min-width: 160px;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 1;
+}
+
+.closing-visual {
+  width: 100%;
+  max-width: 400px;
+  flex: 1 1 auto;
+  min-height: 0;
+  opacity: 0.18;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.closing-visual svg {
+  width: 100%;
+  height: 100%;
+  display: block;
 }
 
 .closing-nav__title {
@@ -982,28 +1023,27 @@ async function loginAfterSetup() {
 }
 
 .closing-nav__link:focus-visible {
-  outline: 2px solid var(--action);
-  outline-offset: 2px;
+  outline: none;
+  box-shadow: 0 0 0 3px var(--action), 0 0 0 6px var(--bg);
   border-radius: var(--r-sm);
+  z-index: 10;
+  position: relative;
 }
 
 .closing-visual {
   width: 100%;
-  max-width: 300px;
-  height: 300px;
-  flex-shrink: 0;
-  opacity: 0.15;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  max-width: 400px;
+  flex: 1 1 auto;
+  min-height: 0;
+  opacity: 0.18;
   overflow: hidden;
+  pointer-events: none;
 }
 
 .closing-visual svg {
   width: 100%;
   height: 100%;
-  max-width: 100%;
-  max-height: 100%;
+  display: block;
 }
 
 /* Responsive */
