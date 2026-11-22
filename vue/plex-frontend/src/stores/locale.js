@@ -11,6 +11,7 @@ export const useLocaleStore = defineStore('locale', () => {
       code,
       label: LOCALE_INFO[code].label,
       flag: LOCALE_INFO[code].flag,
+      icon: LOCALE_INFO[code].icon,
     }))
   );
 

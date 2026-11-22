@@ -1,11 +1,13 @@
 <script setup>
 import { RouterView, useRoute } from "vue-router";
 import { computed, onMounted, ref } from "vue";
-import AppHeader from "@/components/AppHeader.vue";
+import TopBar from "@/components/TopBar.vue";
+import { useSidebarStore } from "@/stores/sidebar";
 import { buildBreadcrumb } from "@/lib/breadcrumb";
 import { fetchLibraries } from "@/api";
 
 const route = useRoute();
+const sidebar = useSidebarStore();
 
 const showShell = computed(() => route.name !== "login" && route.name !== "setup");
 
@@ -29,7 +31,10 @@ onMounted(async () => {
 <template>
   <div>
     <div v-if="showShell" class="shell">
-      <AppHeader :items="breadcrumbItems" />
+      <TopBar
+        :breadcrumbs="breadcrumbItems"
+        :on-toggle-sidebar="sidebar.toggleSidebar"
+      />
       <main class="main">
         <router-view v-slot="{ Component }">
           <transition name="page" mode="out-in">

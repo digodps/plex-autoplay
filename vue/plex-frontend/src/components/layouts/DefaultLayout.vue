@@ -1,11 +1,13 @@
 <script setup>
 import { computed, onMounted, ref, watch } from "vue";
 import { useRoute } from "vue-router";
-import AppHeader from "@/components/AppHeader.vue";
+import TopBar from "@/components/TopBar.vue";
+import { useSidebarStore } from "@/stores/sidebar";
 import { fetchLibraries } from "@/api";
 import { buildBreadcrumb } from "@/lib/breadcrumb";
 
 const route = useRoute();
+const sidebar = useSidebarStore();
 const libraries = ref([]);
 const loading = ref(true);
 const scroller = ref(null);
@@ -35,7 +37,10 @@ onMounted(async () => {
 
 <template>
   <div class="flex h-dvh flex-col overflow-hidden">
-    <AppHeader :items="breadcrumbs" />
+    <TopBar
+      :breadcrumbs="breadcrumbs"
+      :on-toggle-sidebar="sidebar.toggleSidebar"
+    />
     <main class="min-h-0 flex-1 p-2 md:p-3">
       <div
         ref="scroller"
