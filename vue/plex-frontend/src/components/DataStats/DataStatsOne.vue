@@ -9,7 +9,7 @@ const cards = computed(() => [serviceCard.value, syncCard.value, librariesCard.v
 </script>
 
 <template>
-  <div class="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
+  <div class="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-4">
     <CardDataStats v-for="(card, idx) in cards" :key="idx" v-bind="card" />
   </div>
 </template>
