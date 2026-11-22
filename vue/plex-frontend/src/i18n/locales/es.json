@@ -157,7 +157,15 @@
   "logs": {
     "title": "Registros",
     "subtitle": "Visualiza registros del sistema",
-    "filter": "Filtrar",
+    "filter": {
+      "text": "Texto",
+      "level": "Nivel",
+      "from": "Desde",
+      "to": "Hasta",
+      "placeholder": "Buscar registros...",
+      "allLevels": "Todos los niveles",
+      "dateRange": "Rango de fechas"
+    },
     "level": "Nivel",
     "message": "Mensaje",
     "timestamp": "Fecha/Hora",
@@ -169,13 +177,32 @@
     "noLogs": "No se encontraron registros",
     "loading": "Cargando registros...",
     "error": "Error al cargar registros",
+    "clearLogs": "Limpiar registros",
+    "cleanupLogs": "Limpiar registros antiguos",
+    "groupBy": {
+      "label": "Agrupar por",
+      "date": "Fecha",
+      "status": "Estado",
+      "level": "Nivel",
+      "library": "Biblioteca"
+    },
     "levels": {
       "debug": "Depuración",
       "info": "Info",
       "warn": "Advertencia",
       "error": "Error",
       "fatal": "Fatal"
-    }
+    },
+    "syncNow": "Sincronizar ahora",
+    "syncFailed": "Falha na sincronização",
+    "confirmClearLogs": "¿Seguro que quieres limpiar todos los registros?",
+    "logsCleared": "Registros limpiados",
+    "cleanupPrompt": "Eliminar registros anteriores a cuántos días?",
+    "cleanupComplete": "Limpieza completada",
+    "noDate": "Sin fecha",
+    "noStatus": "Sin estado",
+    "noType": "Sin tipo",
+    "noLibrary": "Sin biblioteca"
   },
   "sync": {
     "title": "Sincronización",

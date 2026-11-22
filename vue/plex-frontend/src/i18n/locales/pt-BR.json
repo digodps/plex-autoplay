@@ -157,7 +157,15 @@
   "logs": {
     "title": "Logs",
     "subtitle": "Visualize logs do sistema",
-    "filter": "Filtrar",
+    "filter": {
+      "text": "Texto",
+      "level": "Nível",
+      "from": "De",
+      "to": "Até",
+      "placeholder": "Buscar logs...",
+      "allLevels": "Todos os níveis",
+      "dateRange": "Período"
+    },
     "level": "Nível",
     "message": "Mensagem",
     "timestamp": "Data/Hora",
@@ -171,14 +179,12 @@
     "error": "Erro ao carregar logs",
     "clearLogs": "Limpar Logs",
     "cleanupLogs": "Limpar Logs Antigos",
-    "filter": {
-      "text": "Texto",
-      "level": "Nível",
-      "from": "De",
-      "to": "Até"
-    },
     "groupBy": {
-      "label": "Agrupar por"
+      "label": "Agrupar por",
+      "date": "Data",
+      "status": "Status",
+      "level": "Nível",
+      "library": "Biblioteca"
     },
     "levels": {
       "debug": "Debug",
@@ -186,7 +192,17 @@
       "warn": "Aviso",
       "error": "Erro",
       "fatal": "Fatal"
-    }
+    },
+    "syncNow": "Sincronizar Agora",
+    "syncFailed": "Falha na sincronização",
+    "confirmClearLogs": "Tem certeza que deseja limpar todos os logs?",
+    "logsCleared": "Logs limpos",
+    "cleanupPrompt": "Excluir logs anteriores a quantos dias?",
+    "cleanupComplete": "Limpeza concluída",
+    "noDate": "Sem data",
+    "noStatus": "Sem status",
+    "noType": "Sem tipo",
+    "noLibrary": "Sem biblioteca"
   },
   "sync": {
     "title": "Sincronização",

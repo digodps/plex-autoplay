@@ -157,7 +157,15 @@
   "logs": {
     "title": "Logs",
     "subtitle": "View system logs",
-    "filter": "Filter",
+    "filter": {
+      "text": "Text",
+      "level": "Level",
+      "from": "From",
+      "to": "To",
+      "placeholder": "Search logs...",
+      "allLevels": "All levels",
+      "dateRange": "Date range"
+    },
     "level": "Level",
     "message": "Message",
     "timestamp": "Timestamp",
@@ -171,14 +179,12 @@
     "error": "Error loading logs",
     "clearLogs": "Clear Logs",
     "cleanupLogs": "Cleanup Old Logs",
-    "filter": {
-      "text": "Text",
-      "level": "Level",
-      "from": "From",
-      "to": "To"
-    },
     "groupBy": {
-      "label": "Group By"
+      "label": "Group By",
+      "date": "Date",
+      "status": "Status",
+      "level": "Level",
+      "library": "Library"
     },
     "levels": {
       "debug": "Debug",
@@ -186,7 +192,17 @@
       "warn": "Warning",
       "error": "Error",
       "fatal": "Fatal"
-    }
+    },
+    "syncNow": "Sync Now",
+    "syncFailed": "Sync failed",
+    "confirmClearLogs": "Are you sure you want to clear all logs?",
+    "logsCleared": "Logs cleared",
+    "cleanupPrompt": "Delete logs older than how many days?",
+    "cleanupComplete": "Cleanup complete",
+    "noDate": "No date",
+    "noStatus": "No status",
+    "noType": "No type",
+    "noLibrary": "No library"
   },
   "sync": {
     "title": "Sync",

@@ -5,6 +5,7 @@ import LogFilterBar from "@/components/Logs/LogFilterBar.vue";
 import LogCarouselView from "@/components/Logs/LogCarouselView.vue";
 import { useLogsStore } from "@/stores/logs";
 import { apiFetch } from "@/api";
+import AppIcon from "@/components/AppIcon.vue";
 
 const { t } = useI18n();
 const logsStore = useLogsStore();
@@ -61,48 +62,55 @@ async function handleCleanup() {
 </script>
 
 <template>
-  <div class="mx-auto max-w-6xl px-4 py-3">
-    <div class="mx-auto max-w-6xl px-4 py-6">
-      <div class="flex items-center justify-between gap-3 flex-wrap">
-        <div>
-          <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">{{ t("logs.title") }}</h1>
-          <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            {{ t("logs.subtitle") }}
-          </p>
-        </div>
-        <div class="flex items-center gap-2 flex-wrap">
-          <button
-            data-testid="log-btn-scan"
-            class="rounded-lg border border-stroke px-4 py-2 text-sm font-medium text-gray-700 transition hover:border-accent hover:text-accent dark:border-strokedark dark:text-bodydark"
-            @click="handleStartScan"
-          >
-            {{ t("sync.syncNow") }}
-          </button>
-          <button
-            data-testid="log-btn-clear"
-            class="rounded-lg border border-stroke px-4 py-2 text-sm font-medium text-gray-700 transition hover:border-accent hover:text-accent dark:border-strokedark dark:text-bodydark"
-            @click="handleClearLogs"
-          >
-            {{ t("logs.clearLogs") }}
-          </button>
-          <button
-            data-testid="log-btn-cleanup"
-            class="rounded-lg border border-stroke px-4 py-2 text-sm font-medium text-gray-700 transition hover:border-accent hover:text-accent dark:border-strokedark dark:text-bodydark"
-            @click="handleCleanup"
-          >
-            {{ t("logs.cleanupLogs") }}
-          </button>
-        </div>
+  <div class="mx-auto max-w-7xl px-4 py-6">
+    <!-- Header -->
+    <header class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div>
+        <h1 class="text-2xl font-semibold text-black dark:text-white">{{ t("logs.title") }}</h1>
+        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">{{ t("logs.subtitle") }}</p>
       </div>
 
-      <div class="mt-6">
-        <LogFilterBar />
-        <LogCarouselView
-          :items="logsStore.logs"
-          :group-by="logsStore.groupBy"
-          :loading="logsStore.loadingLogs"
-        />
+      <div class="flex flex-wrap items-center gap-2" role="group" aria-label="Ações de logs">
+        <button
+          type="button"
+          @click="handleStartScan"
+          class="btn btn-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900"
+          data-testid="log-btn-scan"
+        >
+          <AppIcon name="refresh-cw" size="sm" class="mr-1" aria-hidden="true" />
+          {{ t("logs.syncNow") }}
+        </button>
+
+        <button
+          type="button"
+          @click="handleClearLogs"
+          class="btn btn-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900"
+          data-testid="log-btn-clear"
+        >
+          <AppIcon name="trash-2" size="sm" class="mr-1" aria-hidden="true" />
+          {{ t("logs.clearLogs") }}
+        </button>
+
+        <button
+          type="button"
+          @click="handleCleanup"
+          class="btn btn-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900"
+          data-testid="log-btn-cleanup"
+        >
+          <AppIcon name="archive" size="sm" class="mr-1" aria-hidden="true" />
+          {{ t("logs.cleanupLogs") }}
+        </button>
       </div>
-    </div>
+    </header>
+
+    <!-- Filter Bar & Carousel -->
+    <main>
+      <LogFilterBar />
+      <LogCarouselView
+        :items="logsStore.logs"
+        :group-by="logsStore.groupBy"
+        :loading="logsStore.loadingLogs"
+      />
+    </main>
   </div>
 </template>
