@@ -15,6 +15,7 @@
     "email": "Correo electrónico",
     "password": "Contraseña",
     "signIn": "Entrar",
+    "signingIn": "Iniciando sesión...",
     "setupTitle": "Configuración inicial",
     "changePassword": "Cambiar contraseña",
     "currentPassword": "Contraseña actual",
@@ -26,6 +27,7 @@
     "noAccount": "¿No tienes cuenta?",
     "createAccount": "Crear cuenta",
     "loginError": "Contraseña inválida",
+    "invalidPassword": "Contraseña inválida",
     "setupRequired": "Se requiere configuración inicial",
     "welcome": "Bienvenido a Plex Autoplay",
     "configureServer": "Configura tu servidor Plex para continuar",
@@ -33,7 +35,11 @@
     "plexToken": "Token de Plex",
     "testConnection": "Probar conexión",
     "connectionSuccess": "¡Conexión exitosa!",
-    "connectionFailed": "Falló la conexión. Verifica URL y token."
+    "connectionFailed": "Falló la conexión. Verifica URL y token.",
+    "showPassword": "Mostrar contraseña",
+    "hidePassword": "Ocultar contraseña",
+    "adminPanel": "Panel Administrativo",
+    "passwordPlaceholder": "Ingrese su contraseña"
   },
   "dashboard": {
     "title": "Panel",
@@ -74,7 +80,10 @@
     "error": "Error al cargar bibliotecas",
     "confirmDelete": "¿Seguro que quieres eliminar esta biblioteca?",
     "seriesCount": "{count} series",
-    "moviesCount": "{count} películas"
+    "moviesCount": "{count} películas",
+    "viewGrid": "Vista en cuadrícula",
+    "viewList": "Vista en lista",
+    "openLibrary": "Abrir biblioteca {title}"
   },
   "series": {
     "title": "Series",
@@ -96,7 +105,10 @@
     "sortRating": "Valoración",
     "sortYear": "Año",
     "filterGenre": "Filtrar por género",
-    "allGenres": "Todos los géneros"
+    "allGenres": "Todos los géneros",
+    "seriesCount": "{count} series",
+    "series": "series",
+    "clearSearch": "Limpiar búsqueda"
   },
   "seriesDetail": {
     "title": "Detalles de la serie",

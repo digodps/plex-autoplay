@@ -15,6 +15,7 @@
     "email": "Email",
     "password": "Password",
     "signIn": "Sign In",
+    "signingIn": "Signing in...",
     "setupTitle": "Initial Setup",
     "changePassword": "Change Password",
     "currentPassword": "Current Password",
@@ -26,6 +27,7 @@
     "noAccount": "Don't have an account?",
     "createAccount": "Create account",
     "loginError": "Invalid password",
+    "invalidPassword": "Invalid password",
     "setupRequired": "Initial setup required",
     "welcome": "Welcome to Plex Autoplay",
     "configureServer": "Configure your Plex server to continue",
@@ -33,7 +35,11 @@
     "plexToken": "Plex Token",
     "testConnection": "Test Connection",
     "connectionSuccess": "Connection successful!",
-    "connectionFailed": "Connection failed. Check URL and token."
+    "connectionFailed": "Connection failed. Check URL and token.",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password",
+    "adminPanel": "Admin Panel",
+    "passwordPlaceholder": "Enter your password"
   },
   "dashboard": {
     "title": "Dashboard",
@@ -74,7 +80,10 @@
     "error": "Error loading libraries",
     "confirmDelete": "Are you sure you want to delete this library?",
     "seriesCount": "{count} series",
-    "moviesCount": "{count} movies"
+    "moviesCount": "{count} movies",
+    "viewGrid": "Grid view",
+    "viewList": "List view",
+    "openLibrary": "Open library {title}"
   },
   "series": {
     "title": "Series",
@@ -98,7 +107,8 @@
     "filterGenre": "Filter by genre",
     "allGenres": "All genres",
     "seriesCount": "{count} series",
-    "series": "series"
+    "series": "series",
+    "clearSearch": "Clear search"
   },
   "seriesDetail": {
     "title": "Series Details",
