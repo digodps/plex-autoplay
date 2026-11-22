@@ -7,4 +7,7 @@ public class Library
     public string Title { get; set; } = string.Empty;
     public string Type { get; set; } = string.Empty;
     public string Agent { get; set; } = string.Empty;
+    
+    // Hierarquia: Library → Series → Episodes
+    public List<Series> Series { get; set; } = new();
 }
