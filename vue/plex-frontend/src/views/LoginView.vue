@@ -1,13 +1,18 @@
 <script setup>
 import { onMounted, ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import AppIcon from "../components/AppIcon.vue";
 import { useAuthStore } from "../stores/auth";
+import AppIcon from "@/components/AppIcon.vue";
+import DefaultAuthCard from "@/components/Auths/DefaultAuthCard.vue";
+import { useI18n } from "vue-i18n";
 
+const { t } = useI18n();
 const authStore = useAuthStore();
 const route = useRoute();
 const router = useRouter();
+
 const password = ref("");
+const showPassword = ref(false);
 const error = ref("");
 const loading = ref(false);
 
@@ -17,9 +22,7 @@ const getRedirect = () =>
 onMounted(async () => {
   if (!authStore.isAuthenticated) return;
 
-  const response = await fetch("/api/status", {
-    credentials: "include",
-  });
+  const response = await fetch("/api/status", { credentials: "include" });
   if (response.ok) {
     await router.replace(getRedirect());
     return;
@@ -44,10 +47,10 @@ const handleLogin = async () => {
       authStore.login(data.token);
       await router.push(getRedirect());
     } else {
-      error.value = "Senha inválida";
+      error.value = t("auth.invalidPassword");
     }
   } catch {
-    error.value = "Erro ao conectar com o servidor";
+    error.value = t("auth.serverError");
   } finally {
     loading.value = false;
   }
@@ -55,112 +58,65 @@ const handleLogin = async () => {
 </script>
 
 <template>
-  <div class="login-container">
-    <div class="login-card">
-      <h1>Plex Autoplay</h1>
-      <p>Painel Administrativo</p>
-
-      <div v-if="error" class="alert error" role="alert">
-        <AppIcon name="warning" size="sm" />
-        {{ error }}
-      </div>
-
-      <form @submit.prevent="handleLogin">
-        <div class="form-group">
-          <label for="password">Senha</label>
-          <input
-            id="password"
-            v-model="password"
-            type="password"
-            placeholder="Digite a senha"
-            data-testid="password-input"
-          />
+  <div class="min-h-screen flex items-center justify-center p-4 bg-surface dark:bg-surfacedark">
+    <DefaultAuthCard :title="t('app.name')" :subtitle="t('auth.adminPanel')">
+      <template #default>
+        <div v-if="error" class="mb-4 rounded-lg bg-danger/10 border border-danger/30 p-3 text-sm text-danger flex items-center gap-2" role="alert" aria-live="assertive">
+          <AppIcon name="warning" size="sm" class="flex-shrink-0" />
+          <span>{{ error }}</span>
         </div>
 
-        <button
-          :disabled="loading"
-          type="submit"
-          data-testid="login-submit"
-        >
-          <AppIcon v-if="!loading" name="check" size="sm" />
-          <AppIcon v-else name="spinner" size="sm" class="spin" />
-          {{ loading ? "Entrando..." : "Entrar" }}
-        </button>
-      </form>
-    </div>
+        <form @submit.prevent="handleLogin" class="space-y-4" novalidate>
+          <div>
+            <label for="password" class="block mb-1.5 text-sm font-medium text-body dark:text-bodydark">
+              {{ t("auth.password") }}
+            </label>
+            <div class="relative">
+              <input
+                id="password"
+                v-model="password"
+                :type="showPassword ? 'text' : 'password'"
+                :placeholder="t('auth.passwordPlaceholder')"
+                class="input w-full"
+                autocomplete="current-password"
+                aria-describedby="password-toggle"
+                data-testid="password-input"
+              />
+              <button
+                type="button"
+                id="password-toggle"
+                @click="showPassword = !showPassword"
+                class="absolute inset-y-0 right-0 pr-3 flex items-center"
+                :aria-label="showPassword ? t('auth.hidePassword') : t('auth.showPassword')"
+                :aria-pressed="showPassword"
+                data-testid="password-toggle"
+              >
+                <AppIcon :name="showPassword ? 'eye-off' : 'eye'" size="sm" class="text-bodydark dark:text-body" />
+              </button>
+            </div>
+          </div>
+
+          <button
+            type="submit"
+            :disabled="loading"
+            class="btn btn-primary w-full py-2.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900"
+            data-testid="login-submit"
+          >
+            <AppIcon v-if="loading" name="spinner" size="sm" class="spin" aria-hidden="true" />
+            <AppIcon v-else name="check" size="sm" aria-hidden="true" />
+            <span>{{ loading ? t("auth.signingIn") : t("auth.signIn") }}</span>
+          </button>
+        </form>
+      </template>
+    </DefaultAuthCard>
   </div>
 </template>
 
 <style scoped>
-.login-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 100dvh;
-  background: var(--bg-sunken, #f5f5f5);
-}
-.login-card {
-  background: var(--surface, white);
-  padding: 2rem;
-  border-radius: var(--radius-lg, 8px);
-  box-shadow: var(--shadow-2, 0 2px 10px rgba(0, 0, 0, 0.1));
-  width: 100%;
-  max-width: 400px;
-}
-.login-card h1 {
-  margin: 0 0 0.5rem;
-  color: var(--accent, #e5a00d);
-}
-.login-card p {
-  margin: 0 0 1.5rem;
-  color: var(--text-secondary, #666);
-}
-.alert.error {
-  margin-bottom: 1rem;
-}
-.form-group {
-  margin-bottom: 1rem;
-}
-.form-group label {
-  display: block;
-  margin-bottom: 0.5rem;
-  font-weight: 500;
-}
-.form-group input {
-  width: 100%;
-  padding: 0.75rem;
-  border: 1px solid var(--border, #ddd);
-  border-radius: var(--radius-sm, 4px);
-  box-sizing: border-box;
-}
-button {
-  width: 100%;
-  padding: 0.75rem;
-  background: var(--accent, #e5a00d);
-  color: var(--accent-contrast, white);
-  border: none;
-  border-radius: var(--radius-sm, 4px);
-  font-size: 1rem;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  font-weight: 600;
-}
-button:hover:not(:disabled) {
-  background: var(--accent-hover, #f5b21e);
-}
-button:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
 .spin {
   animation: rotate 0.9s linear infinite;
 }
 @keyframes rotate {
-  to {
-    transform: rotate(360deg);
-  }
+  to { transform: rotate(360deg); }
 }
 </style>
